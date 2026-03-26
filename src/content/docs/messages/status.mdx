@@ -1,0 +1,217 @@
+---
+title: Status da Mensagem
+description: Acompanhe o andamento e possiveis falhas das mensagens enviadas pela API Turbo Notify.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+import ExternalLink from '@components/ExternalLink.astro';
+
+Apos enviar uma mensagem, voce pode consultar o status dela a qualquer momento pela API. O status reflete o andamento do processamento e entrega no WhatsApp.
+
+## Tabela de status
+
+| Status      | Descricao                                                                 |
+| ----------- | ------------------------------------------------------------------------- |
+| `pending`   | A mensagem foi recebida pelo Turbo Notify e aguarda processamento.        |
+| `sent`      | A mensagem foi enviada ao WhatsApp com sucesso.                           |
+| `delivered` | A mensagem foi entregue ao dispositivo do destinatario.                   |
+| `read`      | A mensagem foi lida pelo destinatario.                                    |
+| `failed`    | O envio falhou. Consulte o campo `reason` para detalhes sobre a falha.    |
+
+## Consultar status
+
+Para consultar o status de uma mensagem, faca uma requisicao `GET` informando o `message_id` retornado no envio.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X GET \
+      https://api.turbonotify.com/messages/msg_abc123/status \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch(
+      'https://api.turbonotify.com/messages/msg_abc123/status',
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer SUA_CHAVE'
+        }
+      }
+    );
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/messages/msg_abc123/status"
+    headers = {
+        "Authorization": "Bearer SUA_CHAVE"
+    }
+
+    response = requests.get(url, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/messages/msg_abc123/status", nil)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/messages/msg_abc123/status';
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer SUA_CHAVE'
+            ],
+            'method' => 'GET'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var response = await client.GetAsync(
+        "https://api.turbonotify.com/messages/msg_abc123/status"
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/messages/msg_abc123/status"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .GET()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+## Exemplos de resposta
+
+### Pendente
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_abc123',
+    status: { state: 'pending', at: '2025-07-16T10:00:00Z' },
+  }}
+/>
+
+### Enviada
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_abc123',
+    status: { state: 'sent', at: '2025-07-16T10:00:02Z' },
+  }}
+/>
+
+### Entregue
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_abc123',
+    status: { state: 'delivered', at: '2025-07-16T10:00:05Z' },
+  }}
+/>
+
+### Lida
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_abc123',
+    status: { state: 'read', at: '2025-07-16T10:01:12Z' },
+  }}
+/>
+
+### Falha
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_abc123',
+    status: { state: 'failed', at: '2025-07-16T10:00:03Z', reason: 'whatsapp_unavailable' },
+  }}
+/>
+
+## Motivos de falha
+
+Quando o status e `failed`, o campo `reason` indica o motivo. Veja os valores possiveis:
+
+| Motivo                  | Descricao                                                        |
+| ----------------------- | ---------------------------------------------------------------- |
+| `whatsapp_unavailable`  | O WhatsApp esta temporariamente fora do ar ou indisponivel.      |
+| `blocked`               | O destinatario bloqueou o remetente ou o numero foi bloqueado.   |
+
+## Erros possiveis
+
+| Status | Codigo de erro   | Descricao                                            |
+| :----: | ---------------- | ---------------------------------------------------- |
+| `403`  | `not_authorized` | A chave de acesso esta invalida ou ausente.          |
+| `404`  | `not_found`      | A mensagem nao foi encontrada ou ja expirou.         |
+| `500`  | `internal_error` | Erro interno inesperado no servidor.                 |
+| `503`  | `service_unavailable` | O servico esta temporariamente indisponivel.    |
+
+## Retencao
+
+As mensagens ficam disponiveis para consulta por um periodo limitado. Apos esse prazo, o status nao podera mais ser consultado. Para detalhes, veja a documentacao de [Retencao](/messages/retention/).
+
+## Atualizacoes em tempo real
+
+Para receber atualizacoes automaticas sobre o status das mensagens sem precisar consultar a API repetidamente, configure um webhook. Veja como em [Respostas e Webhook](/messages/webhook/).

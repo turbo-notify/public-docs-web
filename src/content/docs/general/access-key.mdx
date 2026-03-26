@@ -1,0 +1,38 @@
+---
+title: Chave de Acesso
+description: Como criar, gerenciar e revogar chaves de acesso para autenticar suas requisicoes na API Turbo Notify.
+---
+
+import DashboardLink from '@components/DashboardLink.astro';
+
+Para utilizar a API do Turbo Notify, e indispensavel possuir uma chave de acesso valida.
+
+O gerenciamento dessas chaves e feito de forma simples e segura pelo dashboard, permitindo total controle sobre quem pode interagir com sua conta e seus numeros.
+
+## Inclusao
+
+Novas chaves podem ser geradas diretamente no dashboard, acessando o menu <DashboardLink path="/access-keys">Chaves de Acesso</DashboardLink>. E possivel criar ate 100 chaves por conta, facilitando integracoes com diferentes sistemas ou equipes.
+
+O valor da chave e exibido apenas uma vez, no momento da criacao. Por seguranca, copie e armazene imediatamente, pois nao sera possivel visualizar novamente.
+
+## Cabecalho
+
+Toda requisicao a API deve conter o header `Authorization` com o valor da chave de acesso. Sem esse cabecalho, nenhuma chamada sera autorizada.
+
+```http
+Authorization: Bearer SUA_CHAVE
+```
+
+## Revogacao
+
+Uma chave de acesso pode ser temporariamente revogada ou permanentemente excluida, conforme a necessidade de controle sobre o acesso a sua conta.
+
+Para revogacao temporaria, basta desativar a chave pelo dashboard. Enquanto estiver desativada, qualquer tentativa de uso sera bloqueada pela API, mas voce pode reativa-la a qualquer momento, restabelecendo o acesso.
+
+Se desejar remover o acesso de forma definitiva, exclua a chave pelo dashboard. Apos a exclusao, nao sera mais possivel recuperar ou reativar a chave, e todas as requisicoes feitas com ela serao permanentemente bloqueadas.
+
+## Permissao
+
+Todas as chaves criadas tem permissao para enviar mensagens tanto para o numero principal da conta quanto para os numeros extra associados. Nao e possivel limitar o acesso de uma chave a um numero especifico; todas tem acesso irrestrito aos numeros vinculados a conta.
+
+Caso precise restringir o acesso a determinados numeros, e necessario criar contas separadas para cada numero desejado. Essa limitacao existe para evitar uso indevido do Turbo Notify.

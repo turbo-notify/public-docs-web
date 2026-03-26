@@ -1,0 +1,377 @@
+---
+title: Reacoes nas Mensagens
+description: Adicione ou remova reacoes em mensagens especificas para interacoes mais expressivas no WhatsApp.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+O recurso de reacao permite que sua aplicacao envie ou remova reacoes em mensagens especificas, tornando as interacoes mais expressivas.
+
+## Adicionar uma Reacao
+
+Este servico e utilizado para adicionar uma reacao a uma mensagem enviada.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="reaction.sh"
+    curl -X POST \
+      https://api.turbonotify.com/reactions \
+      -H "Authorization: Bearer SUA_CHAVE" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": "+5511999999999",
+        "message_id": "msg_abc123",
+        "reaction": "🎉"
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="reaction.js"
+    const response = await fetch('https://api.turbonotify.com/reactions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer SUA_CHAVE',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: '+5511999999999',
+        message_id: 'msg_abc123',
+        reaction: '🎉'
+      })
+    });
+
+    console.log(response.status); // 202
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="reaction.py"
+    import requests
+
+    url = "https://api.turbonotify.com/reactions"
+    headers = {
+        "Authorization": "Bearer SUA_CHAVE",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "to": "+5511999999999",
+        "message_id": "msg_abc123",
+        "reaction": "🎉"
+    }
+
+    response = requests.post(url, json=data, headers=headers)
+    print(response.status_code)  # 202
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="reaction.go"
+    package main
+
+    import (
+        "fmt"
+        "net/http"
+        "strings"
+    )
+
+    func main() {
+        payload := strings.NewReader(`{"to": "+5511999999999", "message_id": "msg_abc123", "reaction": "🎉"}`)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/reactions", payload)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        req.Header.Set("Content-Type", "application/json")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        fmt.Println(resp.StatusCode) // 202
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="reaction.php"
+    <?php
+    $url = 'https://api.turbonotify.com/reactions';
+    $data = [
+        'to' => '+5511999999999',
+        'message_id' => 'msg_abc123',
+        'reaction' => '🎉'
+    ];
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer SUA_CHAVE',
+                'Content-Type: application/json'
+            ],
+            'method' => 'POST',
+            'content' => json_encode($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    file_get_contents($url, false, $context);
+    var_dump($http_response_header);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="Reaction.cs"
+    using System.Text;
+    using System.Text.Json;
+
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var data = new {
+        to = "+5511999999999",
+        message_id = "msg_abc123",
+        reaction = "🎉"
+    };
+
+    var json = JsonSerializer.Serialize(data);
+    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+    var response = await client.PostAsync("https://api.turbonotify.com/reactions", content);
+    Console.WriteLine((int)response.StatusCode); // 202
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="Reaction.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class Reaction {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var json = """
+                {
+                    "to": "+5511999999999",
+                    "message_id": "msg_abc123",
+                    "reaction": "🎉"
+                }
+                """;
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/reactions"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.statusCode()); // 202
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+Apos enviar, o Turbo Notify retorna aceite assincrono:
+
+<ApiResponse
+  status={202}
+  body={{
+    operation_id: 'op_reaction_001',
+    message_id: 'msg_abc123',
+    status: { state: 'pending', at: '2025-07-16T10:00:00Z' },
+  }}
+/>
+
+## Remover uma Reacao
+
+Para remover uma reacao previamente enviada, envie a propriedade `reaction` como `null`.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="reaction.sh"
+    curl -X POST \
+      https://api.turbonotify.com/reactions \
+      -H "Authorization: Bearer SUA_CHAVE" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": "+5511999999999",
+        "message_id": "msg_abc123",
+        "reaction": null
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="reaction.js"
+    const response = await fetch('https://api.turbonotify.com/reactions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer SUA_CHAVE',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: '+5511999999999',
+        message_id: 'msg_abc123',
+        reaction: null
+      })
+    });
+
+    console.log(response.status); // 202
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="reaction.py"
+    import requests
+
+    url = "https://api.turbonotify.com/reactions"
+    headers = {
+        "Authorization": "Bearer SUA_CHAVE",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "to": "+5511999999999",
+        "message_id": "msg_abc123",
+        "reaction": None
+    }
+
+    response = requests.post(url, json=data, headers=headers)
+    print(response.status_code)  # 202
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="reaction.go"
+    package main
+
+    import (
+        "fmt"
+        "net/http"
+        "strings"
+    )
+
+    func main() {
+        payload := strings.NewReader(`{"to": "+5511999999999", "message_id": "msg_abc123", "reaction": null}`)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/reactions", payload)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        req.Header.Set("Content-Type", "application/json")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        fmt.Println(resp.StatusCode) // 202
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="reaction.php"
+    <?php
+    $url = 'https://api.turbonotify.com/reactions';
+    $data = [
+        'to' => '+5511999999999',
+        'message_id' => 'msg_abc123',
+        'reaction' => null
+    ];
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer SUA_CHAVE',
+                'Content-Type: application/json'
+            ],
+            'method' => 'POST',
+            'content' => json_encode($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    file_get_contents($url, false, $context);
+    var_dump($http_response_header);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="Reaction.cs"
+    using System.Text;
+
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var json = """{"to": "+5511999999999", "message_id": "msg_abc123", "reaction": null}""";
+    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+    var response = await client.PostAsync("https://api.turbonotify.com/reactions", content);
+    Console.WriteLine((int)response.StatusCode); // 202
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="Reaction.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class Reaction {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var json = """
+                {
+                    "to": "+5511999999999",
+                    "message_id": "msg_abc123",
+                    "reaction": null
+                }
+                """;
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/reactions"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.statusCode()); // 202
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+Apos enviar, o Turbo Notify retorna aceite assincrono:
+
+<ApiResponse
+  status={202}
+  body={{
+    operation_id: 'op_reaction_002',
+    message_id: 'msg_abc123',
+    status: { state: 'pending', at: '2025-07-16T10:00:05Z' },
+  }}
+/>
+
+A conclusao da operacao chega via webhook com `message.reacted` (sucesso) ou `message.reacted.failed` (falha).
+
+## Reacao com numero extra
+
+Para escolher o remetente da reacao, informe o campo `from` com um [numero extra](/extra-numbers/add/) cadastrado e ativo na sua conta.
+
+```bash title="reaction.sh"
+curl -X POST \
+  https://api.turbonotify.com/reactions \
+  -H "Authorization: Bearer SUA_CHAVE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "+5511888888888",
+    "to": "+5511999999999",
+    "message_id": "msg_abc123",
+    "reaction": "🎉"
+  }'
+```
+
+Tambem e possivel usar o alias definido no cadastro do numero extra para identificar o remetente de forma mais pratica.
+
+Caso o numero ou alias informado no campo `from` nao estiver cadastrado como numero extra ou nao estiver ativo, a operacao sera rejeitada.
+
+Saiba mais sobre os numeros extra em [Numeros Extra](/extra-numbers/add/).
+
+## Erros possiveis
+
+| Status | Codigo de erro          | Descricao                                          |
+| :----: | ----------------------- | -------------------------------------------------- |
+| `400`  | `invalid_json`          | O JSON da requisicao esta malformado ou invalido.  |
+| `402`  | `not_available_in_plan` | O recurso nao esta disponivel no plano contratado. |
+| `403`  | `not_authorized`        | A chave de acesso esta invalida ou ausente.        |
+| `422`  | `message_not_found`     | O `message_id` nao foi encontrado.                 |
+| `422`  | `sender_not_authorized` | O campo `from` nao esta ativo na conta.            |
+| `500`  | `internal_error`        | Erro interno inesperado no servidor.               |
+| `503`  | `whatsapp_unavailable`  | O WhatsApp esta temporariamente fora do ar.        |
+
+Para entender mais sobre o erro `message_not_found`, consulte a documentacao sobre [Retencao](/messages/retention/).

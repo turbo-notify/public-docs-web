@@ -1,0 +1,381 @@
+---
+title: Aviso de Digitacao
+description: Controle o indicador de digitacao no WhatsApp para simular uma experiencia de conversa mais natural.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+O aviso de digitacao permite que sua aplicacao sinalize ao destinatario que uma mensagem esta sendo preparada, simulando uma experiencia de conversa mais natural.
+
+## Aviso Automatico
+
+O Turbo Notify gerencia automaticamente o aviso de digitacao antes do envio de mensagens. Quando uma mensagem e enviada, o indicador de digitacao e ativado por um breve periodo antes da entrega, proporcionando uma experiencia mais humana sem necessidade de configuracao adicional.
+
+Use os endpoints abaixo apenas quando precisar de controle manual sobre o indicador de digitacao.
+
+## Inicio da Digitacao
+
+Para sinalizar que uma mensagem esta sendo preparada, envie uma requisicao com `value` igual a `true`.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="typing.sh"
+    curl -X POST \
+      https://api.turbonotify.com/typing-indicator \
+      -H "Authorization: Bearer SUA_CHAVE" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": "+5511999999999",
+        "value": true
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="typing.js"
+    const response = await fetch('https://api.turbonotify.com/typing-indicator', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer SUA_CHAVE',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: '+5511999999999',
+        value: true
+      })
+    });
+
+    console.log(response.status); // 202
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="typing.py"
+    import requests
+
+    url = "https://api.turbonotify.com/typing-indicator"
+    headers = {
+        "Authorization": "Bearer SUA_CHAVE",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "to": "+5511999999999",
+        "value": True
+    }
+
+    response = requests.post(url, json=data, headers=headers)
+    print(response.status_code)  # 202
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="typing.go"
+    package main
+
+    import (
+        "fmt"
+        "net/http"
+        "strings"
+    )
+
+    func main() {
+        payload := strings.NewReader(`{"to": "+5511999999999", "value": true}`)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/typing-indicator", payload)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        req.Header.Set("Content-Type", "application/json")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        fmt.Println(resp.StatusCode) // 202
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="typing.php"
+    <?php
+    $url = 'https://api.turbonotify.com/typing-indicator';
+    $data = [
+        'to' => '+5511999999999',
+        'value' => true
+    ];
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer SUA_CHAVE',
+                'Content-Type: application/json'
+            ],
+            'method' => 'POST',
+            'content' => json_encode($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    file_get_contents($url, false, $context);
+    var_dump($http_response_header);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="Typing.cs"
+    using System.Text;
+    using System.Text.Json;
+
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var data = new {
+        to = "+5511999999999",
+        value = true
+    };
+
+    var json = JsonSerializer.Serialize(data);
+    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+    var response = await client.PostAsync("https://api.turbonotify.com/typing-indicator", content);
+    Console.WriteLine((int)response.StatusCode); // 202
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="Typing.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class Typing {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var json = """
+                {
+                    "to": "+5511999999999",
+                    "value": true
+                }
+                """;
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/typing-indicator"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.statusCode()); // 202
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+Apos enviar, o Turbo Notify retorna aceite assincrono:
+
+<ApiResponse
+  status={202}
+  body={{
+    operation_id: 'op_typing_001',
+    status: { state: 'pending', at: '2025-07-16T10:00:00Z' },
+  }}
+/>
+
+## Fim da Digitacao
+
+Para interromper o aviso de digitacao manualmente, envie a mesma requisicao com `value` igual a `false`.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="typing.sh"
+    curl -X POST \
+      https://api.turbonotify.com/typing-indicator \
+      -H "Authorization: Bearer SUA_CHAVE" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": "+5511999999999",
+        "value": false
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="typing.js"
+    const response = await fetch('https://api.turbonotify.com/typing-indicator', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer SUA_CHAVE',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: '+5511999999999',
+        value: false
+      })
+    });
+
+    console.log(response.status); // 202
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="typing.py"
+    import requests
+
+    url = "https://api.turbonotify.com/typing-indicator"
+    headers = {
+        "Authorization": "Bearer SUA_CHAVE",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "to": "+5511999999999",
+        "value": False
+    }
+
+    response = requests.post(url, json=data, headers=headers)
+    print(response.status_code)  # 202
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="typing.go"
+    package main
+
+    import (
+        "fmt"
+        "net/http"
+        "strings"
+    )
+
+    func main() {
+        payload := strings.NewReader(`{"to": "+5511999999999", "value": false}`)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/typing-indicator", payload)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        req.Header.Set("Content-Type", "application/json")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        fmt.Println(resp.StatusCode) // 202
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="typing.php"
+    <?php
+    $url = 'https://api.turbonotify.com/typing-indicator';
+    $data = [
+        'to' => '+5511999999999',
+        'value' => false
+    ];
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer SUA_CHAVE',
+                'Content-Type: application/json'
+            ],
+            'method' => 'POST',
+            'content' => json_encode($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    file_get_contents($url, false, $context);
+    var_dump($http_response_header);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="Typing.cs"
+    using System.Text;
+    using System.Text.Json;
+
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var data = new {
+        to = "+5511999999999",
+        value = false
+    };
+
+    var json = JsonSerializer.Serialize(data);
+    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+    var response = await client.PostAsync("https://api.turbonotify.com/typing-indicator", content);
+    Console.WriteLine((int)response.StatusCode); // 202
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="Typing.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class Typing {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var json = """
+                {
+                    "to": "+5511999999999",
+                    "value": false
+                }
+                """;
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/typing-indicator"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.statusCode()); // 202
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+Apos enviar, o Turbo Notify retorna aceite assincrono:
+
+<ApiResponse
+  status={202}
+  body={{
+    operation_id: 'op_typing_002',
+    status: { state: 'pending', at: '2025-07-16T10:00:05Z' },
+  }}
+/>
+
+## Aviso com numero extra
+
+Para escolher o remetente do aviso de digitacao, informe o campo `from` com um [numero extra](/extra-numbers/add/) cadastrado e ativo na sua conta.
+
+```bash title="typing.sh"
+curl -X POST \
+  https://api.turbonotify.com/typing-indicator \
+  -H "Authorization: Bearer SUA_CHAVE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "+5511888888888",
+    "to": "+5511999999999",
+    "value": true
+  }'
+```
+
+Tambem e possivel usar o alias definido no cadastro do numero extra para identificar o remetente de forma mais pratica.
+
+Caso o numero ou alias informado no campo `from` nao estiver cadastrado como numero extra ou nao estiver ativo, a operacao sera rejeitada.
+
+Saiba mais sobre os numeros extra em [Numeros Extra](/extra-numbers/add/).
+
+## Eventos de webhook
+
+A conclusao da operacao chega via webhook com os seguintes eventos:
+
+| Evento            | Descricao                                             |
+| ----------------- | ----------------------------------------------------- |
+| `typing.started`  | O aviso de digitacao foi ativado com sucesso.         |
+| `typing.stopped`  | O aviso de digitacao foi interrompido com sucesso.    |
+| `typing.failed`   | Ocorreu um erro ao processar o aviso de digitacao.    |
+
+## Erros possiveis
+
+| Status | Codigo de erro          | Descricao                                          |
+| :----: | ----------------------- | -------------------------------------------------- |
+| `400`  | `invalid_json`          | O JSON da requisicao esta malformado ou invalido.  |
+| `402`  | `not_available_in_plan` | O recurso nao esta disponivel no plano contratado. |
+| `403`  | `not_authorized`        | A chave de acesso esta invalida ou ausente.        |
+| `422`  | `contact_not_found`     | O numero informado em `to` nao foi encontrado.     |
+| `422`  | `sender_not_authorized` | O campo `from` nao esta ativo na conta.            |
+| `500`  | `internal_error`        | Erro interno inesperado no servidor.               |
+| `503`  | `whatsapp_unavailable`  | O WhatsApp esta temporariamente fora do ar.        |

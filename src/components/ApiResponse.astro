@@ -1,0 +1,31 @@
+---
+interface Props {
+  status: number;
+  body: unknown;
+  headers?: Record<string, string>;
+}
+
+const { status, body, headers } = Astro.props;
+const bodyJson = body === null ? '<VAZIO>' : JSON.stringify(body, null, 2);
+---
+
+<div class="api-response">
+  <div class="api-response-header">
+    <strong style="color: var(--sl-color-gray-2);">HTTP Status:</strong>
+    <span class="api-response-status" data-status={status}>
+      {status}
+    </span>
+  </div>
+  {headers && Object.keys(headers).length > 0 && (
+    <ul class="api-response-headers">
+      {Object.entries(headers).map(([key, value]) => (
+        <li>
+          <span class="header-key">{key}:</span>{' '}
+          <span class="header-value">{value}</span>
+        </li>
+      ))}
+    </ul>
+  )}
+  <div class="api-response-divider"></div>
+  <pre class="api-response-body" set:text={bodyJson} />
+</div>

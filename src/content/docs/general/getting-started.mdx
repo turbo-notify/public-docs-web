@@ -1,0 +1,194 @@
+---
+title: Comeco Rapido
+description: Guia rapido para comecar a integrar o Turbo Notify e enviar sua primeira notificacao via WhatsApp.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+import DashboardLink from '@components/DashboardLink.astro';
+
+Com o Turbo Notify, voce envia notificacoes pelo WhatsApp de forma rapida e facil. A integracao e simples, a API e direta e o <DashboardLink path="/">dashboard</DashboardLink> permite gerenciar tudo em poucos cliques.
+
+Veja como e simples comecar:
+
+## Criacao da conta
+
+O primeiro passo e criar uma conta gratuita. Basta acessar [Criar Conta Gratis](https://app.turbonotify.com/register) e seguir as instrucoes. Caso ja tenha uma conta, avance para a proxima etapa.
+
+## Chave de acesso
+
+Com a conta criada, acesse o dashboard e toque no menu <DashboardLink path="/access-keys">Chaves de Acesso</DashboardLink>. Gere uma nova chave e copie o valor gerado. Se voce ja possui uma chave, pode utiliza-la normalmente.
+
+## Primeira notificacao
+
+Agora e so enviar sua primeira notificacao! Veja abaixo exemplos praticos de envio em diferentes linguagens e tecnologias.
+Nao se esqueca de substituir o valor da `SUA_CHAVE`. Para detalhes sobre autenticacao, consulte a documentacao [Chave de Acesso](/general/access-key/).
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X POST \
+      https://api.turbonotify.com/messages \
+      -H "Authorization: Bearer SUA_CHAVE" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": "+5511999999999",
+        "text": "Seu pedido foi confirmado!"
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch('https://api.turbonotify.com/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer SUA_CHAVE',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: '+5511999999999',
+        text: 'Seu pedido foi confirmado!'
+      })
+    });
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/messages"
+    headers = {
+        "Authorization": "Bearer SUA_CHAVE",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "to": "+5511999999999",
+        "text": "Seu pedido foi confirmado!"
+    }
+
+    response = requests.post(url, json=data, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+        "strings"
+    )
+
+    func main() {
+        payload := strings.NewReader(`{"to": "+5511999999999", "text": "Seu pedido foi confirmado!"}`)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/messages", payload)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        req.Header.Set("Content-Type", "application/json")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/messages';
+    $data = [
+        'to' => '+5511999999999',
+        'text' => 'Seu pedido foi confirmado!'
+    ];
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer SUA_CHAVE',
+                'Content-Type: application/json'
+            ],
+            'method' => 'POST',
+            'content' => json_encode($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    using System.Text;
+    using System.Text.Json;
+
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var data = new {
+        to = "+5511999999999",
+        text = "Seu pedido foi confirmado!"
+    };
+
+    var json = JsonSerializer.Serialize(data);
+    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+    var response = await client.PostAsync(
+        "https://api.turbonotify.com/messages",
+        content
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var json = """
+                {
+                    "to": "+5511999999999",
+                    "text": "Seu pedido foi confirmado!"
+                }
+                """;
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/messages"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+Apos o envio, voce recebera uma resposta semelhante a esta, indicando que sua mensagem foi recebida pelo Turbo Notify e em poucos instantes sera enviada para o WhatsApp. Para saber mais, acesse a documentacao sobre [Envio de Mensagens](/messages/send/).
+
+<ApiResponse
+  status={202}
+  body={{
+    message_id: 'msg_abc123',
+    operation_id: 'op_msg_001',
+    status: { state: 'pending', at: '2025-07-16T10:00:00Z' },
+  }}
+/>
+
+Pronto! Agora voce ja pode integrar o Turbo Notify a sua plataforma, ou ao seu sistema, e comecar a enviar notificacoes. Para dominar todos os recursos, leia toda a documentacao.

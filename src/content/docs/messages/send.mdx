@@ -1,0 +1,376 @@
+---
+title: Envio de Mensagens
+description: Como enviar mensagens pelo Turbo Notify de forma simples e segura via WhatsApp.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+import ExternalLink from '@components/ExternalLink.astro';
+
+Envie mensagens pelo Turbo Notify de forma simples, segura e em conformidade com as <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">politicas do WhatsApp</ExternalLink>.
+
+## Envio basico
+
+O envio mais simples exige apenas o numero do destinatario e o texto da mensagem. O Turbo Notify usara automaticamente o numero principal da sua conta como remetente.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X POST \
+      https://api.turbonotify.com/messages \
+      -H "Authorization: Bearer SUA_CHAVE" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": "+5511999999999",
+        "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch('https://api.turbonotify.com/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer SUA_CHAVE',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: '+5511999999999',
+        text: 'Ola, esta e uma mensagem enviada pelo Turbo Notify!'
+      })
+    });
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/messages"
+    headers = {
+        "Authorization": "Bearer SUA_CHAVE",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "to": "+5511999999999",
+        "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+    }
+
+    response = requests.post(url, json=data, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+        "strings"
+    )
+
+    func main() {
+        payload := strings.NewReader(`{"to": "+5511999999999", "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"}`)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/messages", payload)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        req.Header.Set("Content-Type", "application/json")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/messages';
+    $data = [
+        'to' => '+5511999999999',
+        'text' => 'Ola, esta e uma mensagem enviada pelo Turbo Notify!'
+    ];
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer SUA_CHAVE',
+                'Content-Type: application/json'
+            ],
+            'method' => 'POST',
+            'content' => json_encode($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    using System.Text;
+    using System.Text.Json;
+
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var data = new {
+        to = "+5511999999999",
+        text = "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+    };
+
+    var json = JsonSerializer.Serialize(data);
+    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+    var response = await client.PostAsync(
+        "https://api.turbonotify.com/messages",
+        content
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var json = """
+                {
+                    "to": "+5511999999999",
+                    "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+                }
+                """;
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/messages"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+## Envio com numero extra
+
+Se voce quiser escolher o remetente, basta informar o campo `from` com um [numero extra](/extra-numbers/add/) cadastrado e ativo na sua conta.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X POST \
+      https://api.turbonotify.com/messages \
+      -H "Authorization: Bearer SUA_CHAVE" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "from": "+5511888888888",
+        "to": "+5511999999999",
+        "text": "Mensagem enviada a partir de um numero extra."
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch('https://api.turbonotify.com/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer SUA_CHAVE',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: '+5511888888888',
+        to: '+5511999999999',
+        text: 'Mensagem enviada a partir de um numero extra.'
+      })
+    });
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/messages"
+    headers = {
+        "Authorization": "Bearer SUA_CHAVE",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "from": "+5511888888888",
+        "to": "+5511999999999",
+        "text": "Mensagem enviada a partir de um numero extra."
+    }
+
+    response = requests.post(url, json=data, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+        "strings"
+    )
+
+    func main() {
+        payload := strings.NewReader(`{"from": "+5511888888888", "to": "+5511999999999", "text": "Mensagem enviada a partir de um numero extra."}`)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/messages", payload)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        req.Header.Set("Content-Type", "application/json")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/messages';
+    $data = [
+        'from' => '+5511888888888',
+        'to' => '+5511999999999',
+        'text' => 'Mensagem enviada a partir de um numero extra.'
+    ];
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer SUA_CHAVE',
+                'Content-Type: application/json'
+            ],
+            'method' => 'POST',
+            'content' => json_encode($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    using System.Text;
+    using System.Text.Json;
+
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var data = new {
+        from = "+5511888888888",
+        to = "+5511999999999",
+        text = "Mensagem enviada a partir de um numero extra."
+    };
+
+    var json = JsonSerializer.Serialize(data);
+    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+    var response = await client.PostAsync(
+        "https://api.turbonotify.com/messages",
+        content
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var json = """
+                {
+                    "from": "+5511888888888",
+                    "to": "+5511999999999",
+                    "text": "Mensagem enviada a partir de um numero extra."
+                }
+                """;
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/messages"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+Tambem e possivel usar o alias definido no cadastro do numero extra para identificar o remetente de forma mais pratica.
+
+Caso o numero ou alias informado no campo `from` nao estiver cadastrado como numero extra ou nao estiver ativo, o envio sera rejeitado.
+
+Saiba mais sobre os numeros extra em [Numeros Extra](/extra-numbers/add/).
+
+## Erros possiveis
+
+Veja os principais erros que podem ocorrer no envio de mensagens e como interpreta-los:
+
+| Status | Codigo de erro          | Descricao                                         |
+| :----: | ----------------------- | ------------------------------------------------- |
+| `400`  | `invalid_json`          | O JSON da requisicao esta malformado ou invalido. |
+| `403`  | `not_authorized`        | A chave de acesso esta invalida ou ausente.       |
+| `422`  | `sender_not_authorized` | O campo `from` nao esta ativo na conta.           |
+| `429`  | `rate_limit_exceeded`   | Limite de envio do plano ultrapassado.            |
+| `500`  | `internal_error`        | Erro interno inesperado no servidor.              |
+| `503`  | `whatsapp_unavailable`  | O WhatsApp esta temporariamente fora do ar.       |
+
+## Status da mensagem
+
+O status informa o andamento do processamento da mensagem. Para detalhes completos sobre cada status, consulte a documentacao [Status](/messages/status/).
+
+<ApiResponse
+  status={202}
+  body={{
+    message_id: 'msg_abc123',
+    operation_id: 'op_msg_001',
+    status: { state: 'pending', at: '2025-07-16T10:00:00Z' },
+  }}
+/>
+
+O retorno final do processamento chega via webhook com os eventos `message.sent`, `message.delivered`, `message.read` ou `message.failed`.
+
+## Seguranca e Privacidade
+
+Toda comunicacao entre seu sistema e a API do Turbo Notify ocorre exclusivamente por HTTPS, assegurando que os dados estejam sempre criptografados durante o trafego.
+
+Para saber por quanto tempo as mensagens ficam disponiveis para consulta e operacoes, veja a documentacao de [Retencao](/messages/retention/).

@@ -1,0 +1,152 @@
+---
+title: Listagem de Numeros Extras
+description: Como listar todos os numeros extras cadastrados na sua conta do Turbo Notify.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+Liste todos os numeros extras vinculados a sua conta para consultar alias, numero de telefone e status de cada um.
+
+## Listar numeros extras
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X GET \
+      https://api.turbonotify.com/extra-numbers \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch('https://api.turbonotify.com/extra-numbers', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer SUA_CHAVE'
+      }
+    });
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/extra-numbers"
+    headers = {
+        "Authorization": "Bearer SUA_CHAVE"
+    }
+
+    response = requests.get(url, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/extra-numbers", nil)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/extra-numbers';
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer SUA_CHAVE'
+            ],
+            'method' => 'GET'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var response = await client.GetAsync(
+        "https://api.turbonotify.com/extra-numbers"
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/extra-numbers"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .GET()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+<ApiResponse
+  status={200}
+  body={[
+    {
+      alias: 'condominio_1',
+      number: '+5511999999997',
+      status: { state: 'active', at: '2025-07-16T10:01:00Z' },
+    },
+    {
+      alias: 'condominio_2',
+      number: '+5511999999998',
+      status: { state: 'active', at: '2025-07-18T14:22:00Z' },
+    },
+    {
+      alias: 'condominio_3',
+      number: '+5511999999999',
+      status: { state: 'active', at: '2025-07-20T09:45:00Z' },
+    },
+  ]}
+/>
+
+## Erros possiveis
+
+| Status | Codigo de erro          | Descricao                                           |
+| :----: | ----------------------- | --------------------------------------------------- |
+| `402`  | `not_available_in_plan` | O plano atual nao suporta numeros extras.           |
+| `403`  | `not_authorized`        | A chave de acesso esta invalida ou ausente.         |
+| `500`  | `internal_error`        | Erro interno inesperado no servidor.                |

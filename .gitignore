@@ -1,0 +1,41 @@
+# =============================================================================
+# PROPRIEDADE INTELECTUAL - NAO ENTREGAR
+# =============================================================================
+# Este repo e entregavel - .claude/ e IDE configs devem ser ignorados
+.claude/
+.codex/
+.cursor/
+.gemini/
+.openai/
+
+# =============================================================================
+
+# Astro build output
+dist/
+.astro/
+
+# Dependencies
+node_modules/
+
+# Lockfiles
+yarn.lock
+pnpm-lock.yaml
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

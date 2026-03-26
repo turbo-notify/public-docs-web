@@ -1,0 +1,126 @@
+---
+title: Respostas e Webhook
+description: Como receber eventos de mensagens e operacoes assincronas via webhook no Turbo Notify.
+---
+
+import DashboardLink from '@components/DashboardLink.astro';
+import ExternalLink from '@components/ExternalLink.astro';
+
+O Turbo Notify utiliza webhooks para notificar seu sistema sobre eventos importantes, como a confirmacao de envio de uma mensagem, a entrega ao destinatario ou a ocorrencia de uma falha. Dessa forma, voce nao precisa consultar a API repetidamente para acompanhar o andamento das operacoes.
+
+## Recebimento dos eventos
+
+Para comecar a receber eventos, cadastre a URL do seu webhook no <DashboardLink path="/webhook">Dashboard</DashboardLink>. A URL deve ser publica, acessivel via HTTPS e responder com status `200` dentro de 5 segundos.
+
+## Privacidade
+
+Recomendamos que sua URL de webhook nao exponha informacoes sensiveis, como chaves de acesso ou identificadores internos. Use caminhos genericos e valide a autenticidade da requisicao pelo cabecalho de assinatura.
+
+## Seguranca
+
+Toda requisicao de webhook enviada pelo Turbo Notify inclui o cabecalho `X-Turbo-Signature` com uma assinatura HMAC SHA-256. Utilize essa assinatura para garantir que a requisicao foi realmente enviada pelo Turbo Notify e nao por terceiros.
+
+O segredo para validacao esta disponivel no <DashboardLink path="/webhook">Dashboard</DashboardLink>, na mesma secao onde voce cadastra a URL.
+
+Exemplo de validacao da assinatura:
+
+```python title="validacao.py"
+import hmac
+import hashlib
+
+def verificar_assinatura(payload: bytes, assinatura: str, segredo: str) -> bool:
+    esperado = hmac.new(
+        segredo.encode(),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(esperado, assinatura)
+```
+
+```js title="validacao.js"
+const crypto = require('crypto');
+
+function verificarAssinatura(payload, assinatura, segredo) {
+  const esperado = crypto
+    .createHmac('sha256', segredo)
+    .update(payload)
+    .digest('hex');
+  return crypto.timingSafeEqual(
+    Buffer.from(esperado),
+    Buffer.from(assinatura)
+  );
+}
+```
+
+## Estrutura do evento
+
+Toda requisicao de webhook segue a mesma estrutura base:
+
+| Propriedade | Tipo     | Descricao                                          |
+| ----------- | -------- | -------------------------------------------------- |
+| `id`        | `string` | Identificador unico do evento.                     |
+| `type`      | `string` | Tipo do evento (ex: `message.sent`).               |
+| `timestamp` | `string` | Data e hora do evento em formato ISO 8601.         |
+| `data`      | `object` | Dados especificos do evento.                       |
+
+### Exemplo
+
+```json title="webhook-payload.json"
+{
+  "id": "evt_abc123",
+  "type": "message.sent",
+  "timestamp": "2025-07-16T10:00:02Z",
+  "data": {
+    "message_id": "msg_abc123",
+    "to": "+5511999999999",
+    "status": "sent"
+  }
+}
+```
+
+## Tipos de evento
+
+| Evento                          | Descricao                                                           |
+| ------------------------------- | ------------------------------------------------------------------- |
+| `message.sent`                  | A mensagem foi enviada ao WhatsApp com sucesso.                     |
+| `message.delivered`             | A mensagem foi entregue ao dispositivo do destinatario.             |
+| `message.read`                  | A mensagem foi lida pelo destinatario.                              |
+| `message.failed`                | O envio da mensagem falhou.                                         |
+| `message.received`              | Uma mensagem foi recebida de um contato.                            |
+| `message.reaction`              | Uma reacao foi adicionada ou removida de uma mensagem.              |
+| `session.connected`             | A sessao do WhatsApp foi conectada com sucesso.                     |
+| `session.disconnected`          | A sessao do WhatsApp foi desconectada.                              |
+| `extra_number.paired`           | Um numero extra foi pareado com sucesso.                            |
+| `extra_number.disconnected`     | Um numero extra foi desconectado.                                   |
+| `extra_number.removed`          | Um numero extra foi removido da conta.                              |
+| `extra_number.pairing_failed`   | O pareamento de um numero extra falhou.                             |
+| `extra_number.pairing_expired`  | O codigo de pareamento de um numero extra expirou.                  |
+
+## Mapeamento de operacoes assincronas
+
+Algumas operacoes da API retornam um `operation_id` para rastreamento. Veja como cada operacao se relaciona com os eventos de webhook:
+
+| Operacao                   | Evento de sucesso             | Evento de falha                   |
+| -------------------------- | ----------------------------- | --------------------------------- |
+| Enviar mensagem            | `message.sent`                | `message.failed`                  |
+| Responder mensagem         | `message.sent`                | `message.failed`                  |
+| Parear numero extra        | `extra_number.paired`         | `extra_number.pairing_failed`     |
+| Remover numero extra       | `extra_number.removed`        | -                                 |
+
+## Tentativas de entrega
+
+Caso o seu endpoint nao responda com status `200` dentro de 5 segundos, o Turbo Notify fara novas tentativas com backoff exponencial:
+
+| Tentativa | Intervalo aproximado |
+| :-------: | -------------------- |
+| 1         | Imediata             |
+| 2         | 30 segundos          |
+| 3         | 2 minutos            |
+| 4         | 10 minutos           |
+| 5         | 1 hora               |
+
+Apos 5 tentativas sem sucesso, o evento sera descartado.
+
+## Garantia de entrega
+
+O Turbo Notify adota o modelo **at-least-once delivery**. Isso significa que, em situacoes excepcionais, o mesmo evento pode ser entregue mais de uma vez. Utilize o campo `id` do evento para implementar idempotencia no seu sistema e evitar processamento duplicado.

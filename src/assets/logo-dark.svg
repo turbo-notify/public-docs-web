@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 40" fill="none">
+  <rect x="0" y="4" width="32" height="32" rx="6" fill="#22c55e"/>
+  <path d="M8 20l6 6 12-12" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="40" y="28" font-family="system-ui, sans-serif" font-size="20" font-weight="700" fill="#ffffff">Turbo Notify</text>
+</svg>

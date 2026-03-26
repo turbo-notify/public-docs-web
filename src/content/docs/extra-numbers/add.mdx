@@ -1,0 +1,204 @@
+---
+title: Inclusao de Numeros Extra
+description: Como adicionar numeros extras de WhatsApp a sua conta no Turbo Notify para envio de mensagens com multiplos remetentes.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+import DashboardLink from '@components/DashboardLink.astro';
+import ExternalLink from '@components/ExternalLink.astro';
+
+Numeros extras permitem que voce envie mensagens a partir de multiplos numeros de WhatsApp, alem do numero principal da sua conta. Cada numero extra e vinculado via codigo de pareamento.
+
+## Cadastro pelo Painel
+
+A forma mais simples de adicionar um numero extra e pelo painel do Turbo Notify. Acesse a pagina de <DashboardLink path="/extra-numbers">Numeros Extra</DashboardLink> e clique em **Adicionar numero**.
+
+Voce devera informar o numero de telefone com codigo do pais e aguardar o codigo de pareamento que sera exibido na tela. Insira esse codigo no WhatsApp do aparelho correspondente para concluir a vinculacao.
+
+## Cadastro via API
+
+Tambem e possivel cadastrar numeros extras de forma programatica pela API.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X POST \
+      https://api.turbonotify.com/extra-numbers \
+      -H "Authorization: Bearer SUA_CHAVE" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "phone": "+5511988888888"
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch('https://api.turbonotify.com/extra-numbers', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer SUA_CHAVE',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        phone: '+5511988888888'
+      })
+    });
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/extra-numbers"
+    headers = {
+        "Authorization": "Bearer SUA_CHAVE",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "phone": "+5511988888888"
+    }
+
+    response = requests.post(url, json=data, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+        "strings"
+    )
+
+    func main() {
+        payload := strings.NewReader(`{"phone": "+5511988888888"}`)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/extra-numbers", payload)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        req.Header.Set("Content-Type", "application/json")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/extra-numbers';
+    $data = [
+        'phone' => '+5511988888888'
+    ];
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer SUA_CHAVE',
+                'Content-Type: application/json'
+            ],
+            'method' => 'POST',
+            'content' => json_encode($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    using System.Text;
+    using System.Text.Json;
+
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var data = new {
+        phone = "+5511988888888"
+    };
+
+    var json = JsonSerializer.Serialize(data);
+    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+    var response = await client.PostAsync(
+        "https://api.turbonotify.com/extra-numbers",
+        content
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var json = """
+                {
+                    "phone": "+5511988888888"
+                }
+                """;
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/extra-numbers"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+A resposta contera o codigo de pareamento que deve ser inserido no WhatsApp do aparelho.
+
+<ApiResponse
+  status={200}
+  body={{
+    code: 'AAAA-BBBB',
+  }}
+/>
+
+## Usabilidade
+
+- Cada numero extra deve pertencer a um aparelho com WhatsApp ativo.
+- O codigo de pareamento tem validade limitada. Caso expire, sera necessario refazer a solicitacao.
+- Voce pode definir um alias para o numero extra durante o cadastro, facilitando o uso no envio de mensagens via campo `from`.
+- Apos o pareamento, o numero ficara com status `pending` ate que a vinculacao seja confirmada.
+
+## Status
+
+Apos cadastrar o numero extra, acompanhe o andamento da vinculacao consultando o [Status dos Numeros Extra](/extra-numbers/status/).
+
+## Erros possiveis
+
+Veja os principais erros que podem ocorrer no cadastro de numeros extras:
+
+| Status | Codigo de erro           | Descricao                                              |
+| :----: | ------------------------ | ------------------------------------------------------ |
+| `400`  | `invalid_json`           | O JSON da requisicao esta malformado ou invalido.      |
+| `402`  | `not_available_in_plan`  | O plano atual nao suporta numeros extras.              |
+| `403`  | `not_authorized`         | A chave de acesso esta invalida ou ausente.            |
+| `409`  | `number_already_exists`  | O numero informado ja esta cadastrado na conta.        |
+| `500`  | `internal_error`         | Erro interno inesperado no servidor.                   |
+| `503`  | `whatsapp_unavailable`   | O WhatsApp esta temporariamente fora do ar.            |

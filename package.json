@@ -1,0 +1,21 @@
+{
+  "name": "public-docs-web",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "0.28.4",
+    "astro": "4.16.18",
+    "sharp": "^0.33.0",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.0",
+    "typescript": "^5.7.0"
+  }
+}

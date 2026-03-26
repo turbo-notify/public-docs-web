@@ -1,0 +1,37 @@
+---
+title: Documentacao
+description: Explore todos os recursos da plataforma Turbo Notify para integrar, automatizar e monitorar suas comunicacoes via WhatsApp.
+template: splash
+hero:
+  title: Documentacao Turbo Notify
+  tagline: Integre, automatize e monitore suas comunicacoes via WhatsApp. Descubra como enviar notificacoes, gerenciar numeros, acompanhar conversas e garantir seguranca e praticidade em cada etapa.
+  actions:
+    - text: Comeco Rapido
+      link: /general/getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: Referencia da API
+      link: /messages/send/
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid>
+  <Card title="Geral" icon="setting">
+    Primeiros passos, autenticacao e visao geral da plataforma.
+    [Comecar →](/general/getting-started/)
+  </Card>
+  <Card title="Mensagens" icon="document">
+    Envio, recebimento e gerenciamento de mensagens.
+    [Ver mais →](/messages/send/)
+  </Card>
+  <Card title="Outros recursos" icon="puzzle">
+    Digitacao, reacoes e outros recursos avancados.
+    [Explorar →](/other-features/reaction/)
+  </Card>
+  <Card title="Numeros Extra" icon="add-document">
+    Como adicionar, remover e gerenciar numeros adicionais.
+    [Gerenciar →](/extra-numbers/add/)
+  </Card>
+</CardGrid>

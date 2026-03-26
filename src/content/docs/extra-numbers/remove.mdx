@@ -1,0 +1,150 @@
+---
+title: Remocao de Numeros Extra
+description: Como remover numeros extras da sua conta no Turbo Notify.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+import DashboardLink from '@components/DashboardLink.astro';
+
+Remova numeros extras que nao sao mais necessarios para liberar vagas no seu plano e encerrar a cobranca correspondente.
+
+## Cobranca
+
+Ao remover um numero extra, a cobranca sera encerrada proporcionalmente ao periodo utilizado. Para mais detalhes, consulte a documentacao de [Cobranca de Numeros Extra](/extra-numbers/billing/).
+
+## Remover pelo Painel
+
+Acesse a pagina de <DashboardLink path="/extra-numbers">Numeros Extra</DashboardLink> no painel, localize o numero desejado e clique em **Remover**. Confirme a acao na caixa de dialogo.
+
+## Remover via API
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X DELETE \
+      https://api.turbonotify.com/extra-numbers/ALIAS_DO_NUMERO \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch('https://api.turbonotify.com/extra-numbers/ALIAS_DO_NUMERO', {
+      method: 'DELETE',
+      headers: {
+        'Authorization': 'Bearer SUA_CHAVE'
+      }
+    });
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/extra-numbers/ALIAS_DO_NUMERO"
+    headers = {
+        "Authorization": "Bearer SUA_CHAVE"
+    }
+
+    response = requests.delete(url, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest("DELETE", "https://api.turbonotify.com/extra-numbers/ALIAS_DO_NUMERO", nil)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/extra-numbers/ALIAS_DO_NUMERO';
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer SUA_CHAVE'
+            ],
+            'method' => 'DELETE'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var response = await client.DeleteAsync(
+        "https://api.turbonotify.com/extra-numbers/ALIAS_DO_NUMERO"
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/extra-numbers/ALIAS_DO_NUMERO"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .DELETE()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+<ApiResponse
+  status={200}
+  body={{
+    number: '+5511988888888',
+    alias: 'clinica_tal',
+  }}
+/>
+
+## Erros possiveis
+
+| Status | Codigo de erro           | Descricao                                           |
+| :----: | ------------------------ | --------------------------------------------------- |
+| `402`  | `not_available_in_plan`  | O plano atual nao suporta numeros extras.           |
+| `403`  | `not_authorized`         | A chave de acesso esta invalida ou ausente.         |
+| `404`  | `not_found`              | O alias informado nao foi encontrado na conta.      |
+| `500`  | `internal_error`         | Erro interno inesperado no servidor.                |
+| `503`  | `whatsapp_unavailable`   | O WhatsApp esta temporariamente fora do ar.         |

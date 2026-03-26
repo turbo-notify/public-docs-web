@@ -1,0 +1,12 @@
+---
+interface Props {
+  path: string;
+}
+
+const { path } = Astro.props;
+const dashboardUrl = `https://app.turbonotify.com${path}`;
+---
+
+<a href={dashboardUrl} target="_blank" rel="noopener noreferrer">
+  <slot />
+</a>

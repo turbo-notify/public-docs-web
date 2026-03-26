@@ -1,0 +1,45 @@
+---
+title: Retencao das Mensagens
+description: Como funciona o ciclo de vida das mensagens no Turbo Notify.
+---
+
+O Turbo Notify adota uma politica de retencao curta para garantir a privacidade dos dados e manter a infraestrutura leve e eficiente.
+
+## Armazenamento e Privacidade
+
+O Turbo Notify nao armazena o conteudo das mensagens de forma permanente. O texto enviado e utilizado apenas para processar o envio e, apos a conclusao, os dados sao descartados automaticamente conforme o prazo de retencao.
+
+Essa abordagem prioriza a privacidade dos seus usuarios e esta alinhada com as melhores praticas de protecao de dados.
+
+## Prazo de retencao
+
+O status e os metadados da mensagem ficam disponiveis para consulta durante um periodo limitado. Apos esse prazo, a mensagem deixa de existir no sistema.
+
+| Periodo apos o envio | Consulta de status | Resposta da API |
+| -------------------- | :----------------: | :-------------: |
+| Ate 8 horas          | Disponivel         | `200`           |
+| Entre 8 e 24 horas   | Expirado           | `410`           |
+| Apos 24 horas        | Removido           | `404`           |
+
+### Ate 8 horas
+
+A mensagem e seus metadados estao totalmente disponiveis. Voce pode consultar o status, verificar se foi entregue, lida ou se houve falha.
+
+### Entre 8 e 24 horas
+
+A mensagem entra em periodo de expiracao. A API retorna `410 Gone`, indicando que o recurso existiu mas nao esta mais disponivel. Nenhum dado e retornado.
+
+### Apos 24 horas
+
+A mensagem e completamente removida do sistema. A API retorna `404 Not Found`, como se a mensagem nunca tivesse existido.
+
+## Implicacoes praticas
+
+- Consulte o status da mensagem o mais cedo possivel apos o envio.
+- Configure um [webhook](/messages/webhook/) para receber atualizacoes em tempo real e nao depender exclusivamente da consulta manual.
+- Armazene no seu sistema os dados que forem relevantes para o seu negocio, como o `message_id` e o status final.
+- Operacoes que dependem da mensagem original, como [responder](/messages/reply/), tambem estao sujeitas ao prazo de retencao.
+
+## Consulta de status
+
+Para verificar o status de uma mensagem dentro do prazo de retencao, veja a documentacao de [Status](/messages/status/).
