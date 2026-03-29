@@ -1,21 +1,21 @@
 ---
-title: Status dos Numeros Extra
-description: Como consultar o status de vinculacao e funcionamento dos numeros extras cadastrados no Turbo Notify.
+title: Status dos Números Extra
+description: Como consultar o status de vinculação e funcionamento dos números extras cadastrados no Turbo Notify.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 import DashboardLink from '@components/DashboardLink.astro';
 
-Acompanhe o status de cada numero extra cadastrado na sua conta para garantir que estejam ativos e prontos para envio.
+Acompanhe o status de cada número extra cadastrado na sua conta para garantir que estejam ativos e prontos para envio.
 
-## Cobranca
+## Cobrança
 
-A cobranca de numeros extras e feita de forma proporcional ao periodo de uso. Para entender os valores e o ciclo de faturamento, consulte a documentacao de [Cobranca de Numeros Extra](/extra-numbers/billing/).
+A cobrança de números extras é feita de forma proporcional ao período de uso. Para entender os valores e o ciclo de faturamento, consulte a documentação de [Cobrança de Números Extra](/extra-numbers/billing/).
 
 ## Consultar status
 
-Para verificar o status de um numero extra especifico, faca uma requisicao GET informando o alias do numero.
+Para verificar o status de um número extra específico, faça uma requisição GET informando o alias do número.
 
 <Tabs>
   <TabItem label="cURL">
@@ -139,27 +139,27 @@ Para verificar o status de um numero extra especifico, faca uma requisicao GET i
 
 ## Tabela de status
 
-| Status     | Descricao                                                        |
+| Status     | Descrição                                                        |
 | ---------- | ---------------------------------------------------------------- |
-| `active`   | O numero esta vinculado e pronto para envio de mensagens.        |
-| `inactive` | O numero foi desativado manualmente e nao pode enviar mensagens. |
-| `pending`  | A vinculacao esta em andamento, aguardando pareamento.           |
-| `failed`   | A vinculacao falhou. Verifique o motivo abaixo.                  |
+| `active`   | O número está vinculado e pronto para envio de mensagens.        |
+| `inactive` | O número foi desativado manualmente e não pode enviar mensagens. |
+| `pending`  | A vinculação está em andamento, aguardando pareamento.           |
+| `failed`   | A vinculação falhou. Verifique o motivo abaixo.                  |
 
 ## Motivos de falha
 
-Quando o status e `failed`, o campo `reason` indica o motivo:
+Quando o status é `failed`, o campo `reason` indica o motivo:
 
-| Motivo                  | Descricao                                                     |
+| Motivo                  | Descrição                                                     |
 | ----------------------- | ------------------------------------------------------------- |
-| `invalid_code`          | O codigo de pareamento inserido esta incorreto ou expirado.   |
-| `whatsapp_unavailable`  | O WhatsApp esta temporariamente fora do ar.                   |
+| `invalid_code`          | O código de pareamento inserido está incorreto ou expirado.   |
+| `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.                   |
 
-## Erros possiveis
+## Erros possíveis
 
-| Status | Codigo de erro          | Descricao                                           |
+| Status | Código de erro          | Descrição                                           |
 | :----: | ----------------------- | --------------------------------------------------- |
-| `402`  | `not_available_in_plan` | O plano atual nao suporta numeros extras.           |
-| `403`  | `not_authorized`        | A chave de acesso esta invalida ou ausente.         |
-| `404`  | `not_found`             | O alias informado nao foi encontrado na conta.      |
+| `402`  | `not_available_in_plan` | O plano atual não suporta números extras.           |
+| `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.         |
+| `404`  | `not_found`             | O alias informado não foi encontrado na conta.      |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.                |

@@ -1,49 +1,49 @@
 ---
 title: Limites de Uso
-description: Entenda os limites de envio e boas praticas para garantir estabilidade e seguranca no Turbo Notify.
+description: Entenda os limites de envio e boas práticas para garantir estabilidade e segurança no Turbo Notify.
 ---
 
 import ApiResponse from '@components/ApiResponse.astro';
 import ExternalLink from '@components/ExternalLink.astro';
 
-O Turbo Notify aplica limites de uso para garantir estabilidade, seguranca e qualidade do servico para todos os clientes. Os limites variam de acordo com o plano contratado e o comportamento de envio.
+O Turbo Notify aplica limites de uso para garantir estabilidade, segurança e qualidade do serviço para todos os clientes. Os limites variam de acordo com o plano contratado e o comportamento de envio.
 
 ## Tipos de limite
 
-| Limite              | Descricao                                                                     |
+| Limite              | Descrição                                                                     |
 | ------------------- | ----------------------------------------------------------------------------- |
-| Mensagens por minuto | Quantidade maxima de mensagens que podem ser enviadas por minuto.             |
-| Mensagens por hora   | Quantidade maxima de mensagens que podem ser enviadas por hora.               |
-| Mensagens por dia    | Quantidade maxima de mensagens que podem ser enviadas em um periodo de 24h.   |
-| Requisicoes por minuto | Quantidade maxima de chamadas a API por minuto, independente do endpoint.  |
+| Mensagens por minuto | Quantidade máxima de mensagens que podem ser enviadas por minuto.             |
+| Mensagens por hora   | Quantidade máxima de mensagens que podem ser enviadas por hora.               |
+| Mensagens por dia    | Quantidade máxima de mensagens que podem ser enviadas em um período de 24h.   |
+| Requisições por minuto | Quantidade máxima de chamadas à API por minuto, independente do endpoint.  |
 
 Os valores exatos de cada limite dependem do plano contratado. Consulte os detalhes do seu plano no dashboard ou entre em contato com o suporte.
 
-## Numeros extra
+## Números extra
 
-Cada numero extra cadastrado na conta possui seus proprios limites de envio, independentes do numero principal. Os limites de cada numero extra seguem as mesmas regras do plano contratado.
+Cada número extra cadastrado na conta possui seus próprios limites de envio, independentes do número principal. Os limites de cada número extra seguem as mesmas regras do plano contratado.
 
-Isso permite distribuir o volume de envio entre varios numeros, aumentando a capacidade total de envio da sua conta.
+Isso permite distribuir o volume de envio entre vários números, aumentando a capacidade total de envio da sua conta.
 
 ## Controles internos
 
-Alem dos limites do plano, o Turbo Notify aplica controles internos para proteger a infraestrutura e evitar abusos. Esses controles podem restringir temporariamente o envio em situacoes como:
+Além dos limites do plano, o Turbo Notify aplica controles internos para proteger a infraestrutura e evitar abusos. Esses controles podem restringir temporariamente o envio em situações como:
 
-- Picos anormais de trafego vindos de uma unica conta.
-- Padroes de envio que possam comprometer a estabilidade do servico.
-- Alta taxa de falhas ou rejeicoes consecutivas.
+- Picos anormais de tráfego vindos de uma única conta.
+- Padrões de envio que possam comprometer a estabilidade do serviço.
+- Alta taxa de falhas ou rejeições consecutivas.
 
-Esses controles sao transparentes e, na maioria dos casos, nao impactam o uso normal da plataforma.
+Esses controles são transparentes e, na maioria dos casos, não impactam o uso normal da plataforma.
 
 ## Risco de bloqueio
 
-O WhatsApp possui suas proprias regras e limites de uso. Mesmo que voce esteja dentro dos limites do Turbo Notify, o envio excessivo, nao solicitado ou considerado spam pelos destinatarios pode resultar em bloqueio do seu numero pelo WhatsApp.
+O WhatsApp possui suas próprias regras e limites de uso. Mesmo que você esteja dentro dos limites do Turbo Notify, o envio excessivo, não solicitado ou considerado spam pelos destinatários pode resultar em bloqueio do seu número pelo WhatsApp.
 
-Para evitar problemas, siga as recomendacoes de uso responsavel descritas em [Evite o Abuso](/general/abuse/) e as <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">politicas do WhatsApp</ExternalLink>.
+Para evitar problemas, siga as recomendações de uso responsável descritas em [Evite o Abuso](/general/abuse/) e as <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">políticas do WhatsApp</ExternalLink>.
 
 ## Resposta ao exceder o limite
 
-Quando o limite e atingido, a API retorna o status `429` com o cabecalho `Retry-After` indicando quantos segundos voce deve aguardar antes de tentar novamente.
+Quando o limite é atingido, a API retorna o status `429` com o cabeçalho `Retry-After` indicando quantos segundos você deve aguardar antes de tentar novamente.
 
 <ApiResponse
   status={429}
@@ -58,16 +58,16 @@ Quando o limite e atingido, a API retorna o status `429` com o cabecalho `Retry-
 
 ## Erros relacionados
 
-| Status | Codigo de erro          | Descricao                                                  |
+| Status | Código de erro          | Descrição                                                  |
 | :----: | ----------------------- | ---------------------------------------------------------- |
 | `429`  | `rate_limit_exceeded`   | Limite de envio do plano ultrapassado.                     |
-| `429`  | `too_many_requests`     | Limite de requisicoes por minuto ultrapassado.             |
-| `503`  | `service_unavailable`   | Servico temporariamente indisponivel por sobrecarga.       |
+| `429`  | `too_many_requests`     | Limite de requisições por minuto ultrapassado.             |
+| `503`  | `service_unavailable`   | Serviço temporariamente indisponível por sobrecarga.       |
 
-## Boas praticas
+## Boas práticas
 
-- Respeite o cabecalho `Retry-After` ao receber um status `429`.
+- Respeite o cabeçalho `Retry-After` ao receber um status `429`.
 - Distribua o envio ao longo do tempo em vez de enviar tudo de uma vez.
-- Utilize numeros extra para aumentar a capacidade de envio.
-- Monitore os codigos de resposta da API para identificar rapidamente quando um limite e atingido.
+- Utilize números extra para aumentar a capacidade de envio.
+- Monitore os códigos de resposta da API para identificar rapidamente quando um limite é atingido.
 - Configure [webhooks](/messages/webhook/) para acompanhar o status das mensagens sem precisar consultar a API repetidamente.

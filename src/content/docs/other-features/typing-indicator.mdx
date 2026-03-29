@@ -1,22 +1,22 @@
 ---
-title: Aviso de Digitacao
-description: Controle o indicador de digitacao no WhatsApp para simular uma experiencia de conversa mais natural.
+title: Aviso de Digitação
+description: Controle o indicador de digitação no WhatsApp para simular uma experiência de conversa mais natural.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-O aviso de digitacao permite que sua aplicacao sinalize ao destinatario que uma mensagem esta sendo preparada, simulando uma experiencia de conversa mais natural.
+O aviso de digitação permite que sua aplicação sinalize ao destinatário que uma mensagem está sendo preparada, simulando uma experiência de conversa mais natural.
 
-## Aviso Automatico
+## Aviso Automático
 
-O Turbo Notify gerencia automaticamente o aviso de digitacao antes do envio de mensagens. Quando uma mensagem e enviada, o indicador de digitacao e ativado por um breve periodo antes da entrega, proporcionando uma experiencia mais humana sem necessidade de configuracao adicional.
+O Turbo Notify gerencia automaticamente o aviso de digitação antes do envio de mensagens. Quando uma mensagem é enviada, o indicador de digitação é ativado por um breve período antes da entrega, proporcionando uma experiência mais humana sem necessidade de configuração adicional.
 
-Use os endpoints abaixo apenas quando precisar de controle manual sobre o indicador de digitacao.
+Use os endpoints abaixo apenas quando precisar de controle manual sobre o indicador de digitação.
 
-## Inicio da Digitacao
+## Início da Digitação
 
-Para sinalizar que uma mensagem esta sendo preparada, envie uma requisicao com `value` igual a `true`.
+Para sinalizar que uma mensagem está sendo preparada, envie uma requisição com `value` igual a `true`.
 
 <Tabs>
   <TabItem label="cURL">
@@ -165,7 +165,7 @@ Para sinalizar que uma mensagem esta sendo preparada, envie uma requisicao com `
   </TabItem>
 </Tabs>
 
-Apos enviar, o Turbo Notify retorna aceite assincrono:
+Após enviar, o Turbo Notify retorna aceite assíncrono:
 
 <ApiResponse
   status={202}
@@ -175,9 +175,9 @@ Apos enviar, o Turbo Notify retorna aceite assincrono:
   }}
 />
 
-## Fim da Digitacao
+## Fim da Digitação
 
-Para interromper o aviso de digitacao manualmente, envie a mesma requisicao com `value` igual a `false`.
+Para interromper o aviso de digitação manualmente, envie a mesma requisição com `value` igual a `false`.
 
 <Tabs>
   <TabItem label="cURL">
@@ -326,7 +326,7 @@ Para interromper o aviso de digitacao manualmente, envie a mesma requisicao com 
   </TabItem>
 </Tabs>
 
-Apos enviar, o Turbo Notify retorna aceite assincrono:
+Após enviar, o Turbo Notify retorna aceite assíncrono:
 
 <ApiResponse
   status={202}
@@ -336,9 +336,9 @@ Apos enviar, o Turbo Notify retorna aceite assincrono:
   }}
 />
 
-## Aviso com numero extra
+## Aviso com número extra
 
-Para escolher o remetente do aviso de digitacao, informe o campo `from` com um [numero extra](/extra-numbers/add/) cadastrado e ativo na sua conta.
+Para escolher o remetente do aviso de digitação, informe o campo `from` com um [número extra](/extra-numbers/add/) cadastrado e ativo na sua conta.
 
 ```bash title="typing.sh"
 curl -X POST \
@@ -352,30 +352,30 @@ curl -X POST \
   }'
 ```
 
-Tambem e possivel usar o alias definido no cadastro do numero extra para identificar o remetente de forma mais pratica.
+Também é possível usar o alias definido no cadastro do número extra para identificar o remetente de forma mais prática.
 
-Caso o numero ou alias informado no campo `from` nao estiver cadastrado como numero extra ou nao estiver ativo, a operacao sera rejeitada.
+Caso o número ou alias informado no campo `from` não estiver cadastrado como número extra ou não estiver ativo, a operação será rejeitada.
 
-Saiba mais sobre os numeros extra em [Numeros Extra](/extra-numbers/add/).
+Saiba mais sobre os números extra em [Números Extra](/extra-numbers/add/).
 
 ## Eventos de webhook
 
-A conclusao da operacao chega via webhook com os seguintes eventos:
+A conclusão da operação chega via webhook com os seguintes eventos:
 
-| Evento            | Descricao                                             |
+| Evento            | Descrição                                             |
 | ----------------- | ----------------------------------------------------- |
-| `typing.started`  | O aviso de digitacao foi ativado com sucesso.         |
-| `typing.stopped`  | O aviso de digitacao foi interrompido com sucesso.    |
-| `typing.failed`   | Ocorreu um erro ao processar o aviso de digitacao.    |
+| `typing.started`  | O aviso de digitação foi ativado com sucesso.         |
+| `typing.stopped`  | O aviso de digitação foi interrompido com sucesso.    |
+| `typing.failed`   | Ocorreu um erro ao processar o aviso de digitação.    |
 
-## Erros possiveis
+## Erros possíveis
 
-| Status | Codigo de erro          | Descricao                                          |
+| Status | Código de erro          | Descrição                                          |
 | :----: | ----------------------- | -------------------------------------------------- |
-| `400`  | `invalid_json`          | O JSON da requisicao esta malformado ou invalido.  |
-| `402`  | `not_available_in_plan` | O recurso nao esta disponivel no plano contratado. |
-| `403`  | `not_authorized`        | A chave de acesso esta invalida ou ausente.        |
-| `422`  | `contact_not_found`     | O numero informado em `to` nao foi encontrado.     |
-| `422`  | `sender_not_authorized` | O campo `from` nao esta ativo na conta.            |
+| `400`  | `invalid_json`          | O JSON da requisição está malformado ou inválido.  |
+| `402`  | `not_available_in_plan` | O recurso não está disponível no plano contratado. |
+| `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
+| `422`  | `contact_not_found`     | O número informado em `to` não foi encontrado.     |
+| `422`  | `sender_not_authorized` | O campo `from` não está ativo na conta.            |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.               |
-| `503`  | `whatsapp_unavailable`  | O WhatsApp esta temporariamente fora do ar.        |
+| `503`  | `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.        |

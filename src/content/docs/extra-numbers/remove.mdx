@@ -1,21 +1,21 @@
 ---
-title: Remocao de Numeros Extra
-description: Como remover numeros extras da sua conta no Turbo Notify.
+title: Remoção de Números Extra
+description: Como remover números extras da sua conta no Turbo Notify.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 import DashboardLink from '@components/DashboardLink.astro';
 
-Remova numeros extras que nao sao mais necessarios para liberar vagas no seu plano e encerrar a cobranca correspondente.
+Remova números extras que não são mais necessários para liberar vagas no seu plano e encerrar a cobrança correspondente.
 
-## Cobranca
+## Cobrança
 
-Ao remover um numero extra, a cobranca sera encerrada proporcionalmente ao periodo utilizado. Para mais detalhes, consulte a documentacao de [Cobranca de Numeros Extra](/extra-numbers/billing/).
+Ao remover um número extra, a cobrança será encerrada proporcionalmente ao período utilizado. Para mais detalhes, consulte a documentação de [Cobrança de Números Extra](/extra-numbers/billing/).
 
 ## Remover pelo Painel
 
-Acesse a pagina de <DashboardLink path="/extra-numbers">Numeros Extra</DashboardLink> no painel, localize o numero desejado e clique em **Remover**. Confirme a acao na caixa de dialogo.
+Acesse a página de <DashboardLink path="/extra-numbers">Números Extra</DashboardLink> no painel, localize o número desejado e clique em **Remover**. Confirme a ação na caixa de diálogo.
 
 ## Remover via API
 
@@ -139,12 +139,12 @@ Acesse a pagina de <DashboardLink path="/extra-numbers">Numeros Extra</Dashboard
   }}
 />
 
-## Erros possiveis
+## Erros possíveis
 
-| Status | Codigo de erro           | Descricao                                           |
+| Status | Código de erro           | Descrição                                           |
 | :----: | ------------------------ | --------------------------------------------------- |
-| `402`  | `not_available_in_plan`  | O plano atual nao suporta numeros extras.           |
-| `403`  | `not_authorized`         | A chave de acesso esta invalida ou ausente.         |
-| `404`  | `not_found`              | O alias informado nao foi encontrado na conta.      |
+| `402`  | `not_available_in_plan`  | O plano atual não suporta números extras.           |
+| `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.         |
+| `404`  | `not_found`              | O alias informado não foi encontrado na conta.      |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                |
-| `503`  | `whatsapp_unavailable`   | O WhatsApp esta temporariamente fora do ar.         |
+| `503`  | `whatsapp_unavailable`   | O WhatsApp está temporariamente fora do ar.         |

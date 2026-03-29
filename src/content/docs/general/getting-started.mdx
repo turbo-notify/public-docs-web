@@ -1,28 +1,28 @@
 ---
-title: Comeco Rapido
-description: Guia rapido para comecar a integrar o Turbo Notify e enviar sua primeira notificacao via WhatsApp.
+title: Começo Rápido
+description: Guia rápido para começar a integrar o Turbo Notify e enviar sua primeira notificação via WhatsApp.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 import DashboardLink from '@components/DashboardLink.astro';
 
-Com o Turbo Notify, voce envia notificacoes pelo WhatsApp de forma rapida e facil. A integracao e simples, a API e direta e o <DashboardLink path="/">dashboard</DashboardLink> permite gerenciar tudo em poucos cliques.
+Com o Turbo Notify, você envia notificações pelo WhatsApp de forma rápida e fácil. A integração é simples, a API é direta e o <DashboardLink path="/">dashboard</DashboardLink> permite gerenciar tudo em poucos cliques.
 
-Veja como e simples comecar:
+Veja como é simples começar:
 
-## Criacao da conta
+## Criação da conta
 
-O primeiro passo e criar uma conta gratuita. Basta acessar [Criar Conta Gratis](https://app.turbonotify.com/register) e seguir as instrucoes. Caso ja tenha uma conta, avance para a proxima etapa.
+O primeiro passo é criar uma conta gratuita. Basta acessar [Criar Conta Grátis](https://app.turbonotify.com/register) e seguir as instruções. Caso já tenha uma conta, avance para a próxima etapa.
 
 ## Chave de acesso
 
-Com a conta criada, acesse o dashboard e toque no menu <DashboardLink path="/access-keys">Chaves de Acesso</DashboardLink>. Gere uma nova chave e copie o valor gerado. Se voce ja possui uma chave, pode utiliza-la normalmente.
+Com a conta criada, acesse o dashboard e toque no menu <DashboardLink path="/access-keys">Chaves de Acesso</DashboardLink>. Gere uma nova chave e copie o valor gerado. Se você já possui uma chave, pode utilizá-la normalmente.
 
-## Primeira notificacao
+## Primeira notificação
 
-Agora e so enviar sua primeira notificacao! Veja abaixo exemplos praticos de envio em diferentes linguagens e tecnologias.
-Nao se esqueca de substituir o valor da `SUA_CHAVE`. Para detalhes sobre autenticacao, consulte a documentacao [Chave de Acesso](/general/access-key/).
+Agora é só enviar sua primeira notificação! Veja abaixo exemplos práticos de envio em diferentes linguagens e tecnologias.
+Não se esqueça de substituir o valor da `SUA_CHAVE`. Para detalhes sobre autenticação, consulte a documentação [Chave de Acesso](/general/access-key/).
 
 <Tabs>
   <TabItem label="cURL">
@@ -180,7 +180,7 @@ Nao se esqueca de substituir o valor da `SUA_CHAVE`. Para detalhes sobre autenti
   </TabItem>
 </Tabs>
 
-Apos o envio, voce recebera uma resposta semelhante a esta, indicando que sua mensagem foi recebida pelo Turbo Notify e em poucos instantes sera enviada para o WhatsApp. Para saber mais, acesse a documentacao sobre [Envio de Mensagens](/messages/send/).
+Após o envio, você receberá uma resposta semelhante a esta, indicando que sua mensagem foi recebida pelo Turbo Notify e em poucos instantes será enviada para o WhatsApp. Para saber mais, acesse a documentação sobre [Envio de Mensagens](/messages/send/).
 
 <ApiResponse
   status={202}
@@ -191,4 +191,4 @@ Apos o envio, voce recebera uma resposta semelhante a esta, indicando que sua me
   }}
 />
 
-Pronto! Agora voce ja pode integrar o Turbo Notify a sua plataforma, ou ao seu sistema, e comecar a enviar notificacoes. Para dominar todos os recursos, leia toda a documentacao.
+Pronto! Agora você já pode integrar o Turbo Notify à sua plataforma, ou ao seu sistema, e começar a enviar notificações. Para dominar todos os recursos, leia toda a documentação.

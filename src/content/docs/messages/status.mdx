@@ -1,27 +1,27 @@
 ---
 title: Status da Mensagem
-description: Acompanhe o andamento e possiveis falhas das mensagens enviadas pela API Turbo Notify.
+description: Acompanhe o andamento e possíveis falhas das mensagens enviadas pela API Turbo Notify.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 import ExternalLink from '@components/ExternalLink.astro';
 
-Apos enviar uma mensagem, voce pode consultar o status dela a qualquer momento pela API. O status reflete o andamento do processamento e entrega no WhatsApp.
+Após enviar uma mensagem, você pode consultar o status dela a qualquer momento pela API. O status reflete o andamento do processamento e entrega no WhatsApp.
 
 ## Tabela de status
 
-| Status      | Descricao                                                                 |
+| Status      | Descrição                                                                 |
 | ----------- | ------------------------------------------------------------------------- |
 | `pending`   | A mensagem foi recebida pelo Turbo Notify e aguarda processamento.        |
 | `sent`      | A mensagem foi enviada ao WhatsApp com sucesso.                           |
-| `delivered` | A mensagem foi entregue ao dispositivo do destinatario.                   |
-| `read`      | A mensagem foi lida pelo destinatario.                                    |
+| `delivered` | A mensagem foi entregue ao dispositivo do destinatário.                   |
+| `read`      | A mensagem foi lida pelo destinatário.                                    |
 | `failed`    | O envio falhou. Consulte o campo `reason` para detalhes sobre a falha.    |
 
 ## Consultar status
 
-Para consultar o status de uma mensagem, faca uma requisicao `GET` informando o `message_id` retornado no envio.
+Para consultar o status de uma mensagem, faça uma requisição `GET` informando o `message_id` retornado no envio.
 
 <Tabs>
   <TabItem label="cURL">
@@ -192,26 +192,26 @@ Para consultar o status de uma mensagem, faca uma requisicao `GET` informando o 
 
 ## Motivos de falha
 
-Quando o status e `failed`, o campo `reason` indica o motivo. Veja os valores possiveis:
+Quando o status é `failed`, o campo `reason` indica o motivo. Veja os valores possíveis:
 
-| Motivo                  | Descricao                                                        |
+| Motivo                  | Descrição                                                        |
 | ----------------------- | ---------------------------------------------------------------- |
-| `whatsapp_unavailable`  | O WhatsApp esta temporariamente fora do ar ou indisponivel.      |
-| `blocked`               | O destinatario bloqueou o remetente ou o numero foi bloqueado.   |
+| `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar ou indisponível.      |
+| `blocked`               | O destinatário bloqueou o remetente ou o número foi bloqueado.   |
 
-## Erros possiveis
+## Erros possíveis
 
-| Status | Codigo de erro   | Descricao                                            |
+| Status | Código de erro   | Descrição                                            |
 | :----: | ---------------- | ---------------------------------------------------- |
-| `403`  | `not_authorized` | A chave de acesso esta invalida ou ausente.          |
-| `404`  | `not_found`      | A mensagem nao foi encontrada ou ja expirou.         |
+| `403`  | `not_authorized` | A chave de acesso está inválida ou ausente.          |
+| `404`  | `not_found`      | A mensagem não foi encontrada ou já expirou.         |
 | `500`  | `internal_error` | Erro interno inesperado no servidor.                 |
-| `503`  | `service_unavailable` | O servico esta temporariamente indisponivel.    |
+| `503`  | `service_unavailable` | O serviço está temporariamente indisponível.    |
 
-## Retencao
+## Retenção
 
-As mensagens ficam disponiveis para consulta por um periodo limitado. Apos esse prazo, o status nao podera mais ser consultado. Para detalhes, veja a documentacao de [Retencao](/messages/retention/).
+As mensagens ficam disponíveis para consulta por um período limitado. Após esse prazo, o status não poderá mais ser consultado. Para detalhes, veja a documentação de [Retenção](/messages/retention/).
 
-## Atualizacoes em tempo real
+## Atualizações em tempo real
 
-Para receber atualizacoes automaticas sobre o status das mensagens sem precisar consultar a API repetidamente, configure um webhook. Veja como em [Respostas e Webhook](/messages/webhook/).
+Para receber atualizações automáticas sobre o status das mensagens sem precisar consultar a API repetidamente, configure um webhook. Veja como em [Respostas e Webhook](/messages/webhook/).

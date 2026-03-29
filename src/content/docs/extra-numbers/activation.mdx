@@ -1,25 +1,25 @@
 ---
-title: Ativacao e Desativacao de Numeros
-description: Como ativar e desativar numeros extras na sua conta do Turbo Notify.
+title: Ativação e Desativação de Números
+description: Como ativar e desativar números extras na sua conta do Turbo Notify.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 import DashboardLink from '@components/DashboardLink.astro';
 
-Controle quais numeros extras estao ativos para envio de mensagens. Numeros desativados permanecem cadastrados na conta, mas nao podem ser usados como remetente.
+Controle quais números extras estão ativos para envio de mensagens. Números desativados permanecem cadastrados na conta, mas não podem ser usados como remetente.
 
-## Cobranca
+## Cobrança
 
-Numeros extras desativados continuam sendo cobrados enquanto estiverem cadastrados. Para encerrar a cobranca, e necessario remover o numero. Consulte os detalhes em [Cobranca de Numeros Extra](/extra-numbers/billing/).
+Números extras desativados continuam sendo cobrados enquanto estiverem cadastrados. Para encerrar a cobrança, é necessário remover o número. Consulte os detalhes em [Cobrança de Números Extra](/extra-numbers/billing/).
 
 ## Pelo Painel
 
-Acesse a pagina de <DashboardLink path="/extra-numbers">Numeros Extra</DashboardLink> no painel para ativar ou desativar numeros com um clique.
+Acesse a página de <DashboardLink path="/extra-numbers">Números Extra</DashboardLink> no painel para ativar ou desativar números com um clique.
 
-## Ativacao
+## Ativação
 
-Para ativar um numero extra que esta inativo, faca uma requisicao POST para o endpoint de ativacao.
+Para ativar um número extra que está inativo, faça uma requisição POST para o endpoint de ativação.
 
 <Tabs>
   <TabItem label="cURL">
@@ -179,9 +179,9 @@ Para ativar um numero extra que esta inativo, faca uma requisicao POST para o en
   }}
 />
 
-## Desativacao
+## Desativação
 
-Para desativar um numero extra que esta ativo, faca uma requisicao POST para o endpoint de desativacao.
+Para desativar um número extra que está ativo, faça uma requisição POST para o endpoint de desativação.
 
 <Tabs>
   <TabItem label="cURL">
@@ -341,12 +341,12 @@ Para desativar um numero extra que esta ativo, faca uma requisicao POST para o e
   }}
 />
 
-## Erros possiveis
+## Erros possíveis
 
-| Status | Codigo de erro     | Descricao                                                     |
+| Status | Código de erro     | Descrição                                                     |
 | :----: | ------------------ | ------------------------------------------------------------- |
-| `400`  | `invalid_json`     | O JSON da requisicao esta malformado ou invalido.             |
-| `403`  | `not_authorized`   | A chave de acesso esta invalida ou ausente.                   |
-| `409`  | `invalid_status`   | O numero ja esta no status solicitado.                        |
-| `422`  | `number_not_found` | O alias informado nao corresponde a nenhum numero cadastrado. |
+| `400`  | `invalid_json`     | O JSON da requisição está malformado ou inválido.             |
+| `403`  | `not_authorized`   | A chave de acesso está inválida ou ausente.                   |
+| `409`  | `invalid_status`   | O número já está no status solicitado.                        |
+| `422`  | `number_not_found` | O alias informado não corresponde a nenhum número cadastrado. |
 | `500`  | `internal_error`   | Erro interno inesperado no servidor.                          |

@@ -7,11 +7,11 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 import ExternalLink from '@components/ExternalLink.astro';
 
-Envie mensagens pelo Turbo Notify de forma simples, segura e em conformidade com as <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">politicas do WhatsApp</ExternalLink>.
+Envie mensagens pelo Turbo Notify de forma simples, segura e em conformidade com as <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">políticas do WhatsApp</ExternalLink>.
 
-## Envio basico
+## Envio básico
 
-O envio mais simples exige apenas o numero do destinatario e o texto da mensagem. O Turbo Notify usara automaticamente o numero principal da sua conta como remetente.
+O envio mais simples exige apenas o número do destinatário e o texto da mensagem. O Turbo Notify usará automaticamente o número principal da sua conta como remetente.
 
 <Tabs>
   <TabItem label="cURL">
@@ -169,9 +169,9 @@ O envio mais simples exige apenas o numero do destinatario e o texto da mensagem
   </TabItem>
 </Tabs>
 
-## Envio com numero extra
+## Envio com número extra
 
-Se voce quiser escolher o remetente, basta informar o campo `from` com um [numero extra](/extra-numbers/add/) cadastrado e ativo na sua conta.
+Se você quiser escolher o remetente, basta informar o campo `from` com um [número extra](/extra-numbers/add/) cadastrado e ativo na sua conta.
 
 <Tabs>
   <TabItem label="cURL">
@@ -335,28 +335,28 @@ Se voce quiser escolher o remetente, basta informar o campo `from` com um [numer
   </TabItem>
 </Tabs>
 
-Tambem e possivel usar o alias definido no cadastro do numero extra para identificar o remetente de forma mais pratica.
+Também é possível usar o alias definido no cadastro do número extra para identificar o remetente de forma mais prática.
 
-Caso o numero ou alias informado no campo `from` nao estiver cadastrado como numero extra ou nao estiver ativo, o envio sera rejeitado.
+Caso o número ou alias informado no campo `from` não estiver cadastrado como número extra ou não estiver ativo, o envio será rejeitado.
 
-Saiba mais sobre os numeros extra em [Numeros Extra](/extra-numbers/add/).
+Saiba mais sobre os números extra em [Números Extra](/extra-numbers/add/).
 
-## Erros possiveis
+## Erros possíveis
 
-Veja os principais erros que podem ocorrer no envio de mensagens e como interpreta-los:
+Veja os principais erros que podem ocorrer no envio de mensagens e como interpretá-los:
 
-| Status | Codigo de erro          | Descricao                                         |
+| Status | Código de erro          | Descrição                                         |
 | :----: | ----------------------- | ------------------------------------------------- |
-| `400`  | `invalid_json`          | O JSON da requisicao esta malformado ou invalido. |
-| `403`  | `not_authorized`        | A chave de acesso esta invalida ou ausente.       |
-| `422`  | `sender_not_authorized` | O campo `from` nao esta ativo na conta.           |
+| `400`  | `invalid_json`          | O JSON da requisição está malformado ou inválido. |
+| `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.       |
+| `422`  | `sender_not_authorized` | O campo `from` não está ativo na conta.           |
 | `429`  | `rate_limit_exceeded`   | Limite de envio do plano ultrapassado.            |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.              |
-| `503`  | `whatsapp_unavailable`  | O WhatsApp esta temporariamente fora do ar.       |
+| `503`  | `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.       |
 
 ## Status da mensagem
 
-O status informa o andamento do processamento da mensagem. Para detalhes completos sobre cada status, consulte a documentacao [Status](/messages/status/).
+O status informa o andamento do processamento da mensagem. Para detalhes completos sobre cada status, consulte a documentação [Status](/messages/status/).
 
 <ApiResponse
   status={202}
@@ -369,8 +369,8 @@ O status informa o andamento do processamento da mensagem. Para detalhes complet
 
 O retorno final do processamento chega via webhook com os eventos `message.sent`, `message.delivered`, `message.read` ou `message.failed`.
 
-## Seguranca e Privacidade
+## Segurança e Privacidade
 
-Toda comunicacao entre seu sistema e a API do Turbo Notify ocorre exclusivamente por HTTPS, assegurando que os dados estejam sempre criptografados durante o trafego.
+Toda comunicação entre seu sistema e a API do Turbo Notify ocorre exclusivamente por HTTPS, assegurando que os dados estejam sempre criptografados durante o tráfego.
 
-Para saber por quanto tempo as mensagens ficam disponiveis para consulta e operacoes, veja a documentacao de [Retencao](/messages/retention/).
+Para saber por quanto tempo as mensagens ficam disponíveis para consulta e operações, veja a documentação de [Retenção](/messages/retention/).

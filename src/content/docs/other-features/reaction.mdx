@@ -1,16 +1,16 @@
 ---
-title: Reacoes nas Mensagens
-description: Adicione ou remova reacoes em mensagens especificas para interacoes mais expressivas no WhatsApp.
+title: Reações nas Mensagens
+description: Adicione ou remova reações em mensagens específicas para interações mais expressivas no WhatsApp.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-O recurso de reacao permite que sua aplicacao envie ou remova reacoes em mensagens especificas, tornando as interacoes mais expressivas.
+O recurso de reação permite que sua aplicação envie ou remova reações em mensagens específicas, tornando as interações mais expressivas.
 
-## Adicionar uma Reacao
+## Adicionar uma Reação
 
-Este servico e utilizado para adicionar uma reacao a uma mensagem enviada.
+Este serviço é utilizado para adicionar uma reação a uma mensagem enviada.
 
 <Tabs>
   <TabItem label="cURL">
@@ -165,7 +165,7 @@ Este servico e utilizado para adicionar uma reacao a uma mensagem enviada.
   </TabItem>
 </Tabs>
 
-Apos enviar, o Turbo Notify retorna aceite assincrono:
+Após enviar, o Turbo Notify retorna aceite assíncrono:
 
 <ApiResponse
   status={202}
@@ -176,9 +176,9 @@ Apos enviar, o Turbo Notify retorna aceite assincrono:
   }}
 />
 
-## Remover uma Reacao
+## Remover uma Reação
 
-Para remover uma reacao previamente enviada, envie a propriedade `reaction` como `null`.
+Para remover uma reação previamente enviada, envie a propriedade `reaction` como `null`.
 
 <Tabs>
   <TabItem label="cURL">
@@ -326,7 +326,7 @@ Para remover uma reacao previamente enviada, envie a propriedade `reaction` como
   </TabItem>
 </Tabs>
 
-Apos enviar, o Turbo Notify retorna aceite assincrono:
+Após enviar, o Turbo Notify retorna aceite assíncrono:
 
 <ApiResponse
   status={202}
@@ -337,11 +337,11 @@ Apos enviar, o Turbo Notify retorna aceite assincrono:
   }}
 />
 
-A conclusao da operacao chega via webhook com `message.reacted` (sucesso) ou `message.reacted.failed` (falha).
+A conclusão da operação chega via webhook com `message.reacted` (sucesso) ou `message.reacted.failed` (falha).
 
-## Reacao com numero extra
+## Reação com número extra
 
-Para escolher o remetente da reacao, informe o campo `from` com um [numero extra](/extra-numbers/add/) cadastrado e ativo na sua conta.
+Para escolher o remetente da reação, informe o campo `from` com um [número extra](/extra-numbers/add/) cadastrado e ativo na sua conta.
 
 ```bash title="reaction.sh"
 curl -X POST \
@@ -356,22 +356,22 @@ curl -X POST \
   }'
 ```
 
-Tambem e possivel usar o alias definido no cadastro do numero extra para identificar o remetente de forma mais pratica.
+Também é possível usar o alias definido no cadastro do número extra para identificar o remetente de forma mais prática.
 
-Caso o numero ou alias informado no campo `from` nao estiver cadastrado como numero extra ou nao estiver ativo, a operacao sera rejeitada.
+Caso o número ou alias informado no campo `from` não estiver cadastrado como número extra ou não estiver ativo, a operação será rejeitada.
 
-Saiba mais sobre os numeros extra em [Numeros Extra](/extra-numbers/add/).
+Saiba mais sobre os números extra em [Números Extra](/extra-numbers/add/).
 
-## Erros possiveis
+## Erros possíveis
 
-| Status | Codigo de erro          | Descricao                                          |
+| Status | Código de erro          | Descrição                                          |
 | :----: | ----------------------- | -------------------------------------------------- |
-| `400`  | `invalid_json`          | O JSON da requisicao esta malformado ou invalido.  |
-| `402`  | `not_available_in_plan` | O recurso nao esta disponivel no plano contratado. |
-| `403`  | `not_authorized`        | A chave de acesso esta invalida ou ausente.        |
-| `422`  | `message_not_found`     | O `message_id` nao foi encontrado.                 |
-| `422`  | `sender_not_authorized` | O campo `from` nao esta ativo na conta.            |
+| `400`  | `invalid_json`          | O JSON da requisição está malformado ou inválido.  |
+| `402`  | `not_available_in_plan` | O recurso não está disponível no plano contratado. |
+| `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
+| `422`  | `message_not_found`     | O `message_id` não foi encontrado.                 |
+| `422`  | `sender_not_authorized` | O campo `from` não está ativo na conta.            |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.               |
-| `503`  | `whatsapp_unavailable`  | O WhatsApp esta temporariamente fora do ar.        |
+| `503`  | `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.        |
 
-Para entender mais sobre o erro `message_not_found`, consulte a documentacao sobre [Retencao](/messages/retention/).
+Para entender mais sobre o erro `message_not_found`, consulte a documentação sobre [Retenção](/messages/retention/).

@@ -7,25 +7,22 @@ export default defineConfig({
     starlight({
       title: 'Turbo Notify',
       logo: {
-        light: './src/assets/logo-light.svg',
-        dark: './src/assets/logo-dark.svg',
-        replacesTitle: false,
+        light: './src/assets/brand/logo-light.png',
+        dark: './src/assets/brand/logo-dark.png',
+        replacesTitle: true,
       },
       defaultLocale: 'root',
       locales: {
         root: {
-          label: 'Portugues',
+          label: 'Português',
           lang: 'pt-BR',
         },
         en: {
           label: 'English',
         },
         es: {
-          label: 'Espanol',
+          label: 'Español',
         },
-      },
-      social: {
-        github: 'https://github.com/turbo-notify',
       },
       sidebar: [
         {
@@ -34,8 +31,8 @@ export default defineConfig({
           items: [
             {
               slug: 'general/getting-started',
-              label: 'Comeco rapido',
-              translations: { en: 'Quick Start', es: 'Inicio rapido' },
+              label: 'Começo rápido',
+              translations: { en: 'Quick Start', es: 'Inicio rápido' },
             },
             {
               slug: 'general/access-key',
@@ -45,12 +42,12 @@ export default defineConfig({
             {
               slug: 'general/abuse',
               label: 'Abuso',
-              translations: { en: 'Abuse Prevention', es: 'Prevencion de Abuso' },
+              translations: { en: 'Abuse Prevention', es: 'Prevención de Abuso' },
             },
             {
               slug: 'general/next-steps',
-              label: 'Proximos Passos',
-              translations: { en: 'Next Steps', es: 'Proximos Pasos' },
+              label: 'Próximos Passos',
+              translations: { en: 'Next Steps', es: 'Próximos Pasos' },
             },
           ],
         },
@@ -80,8 +77,8 @@ export default defineConfig({
             },
             {
               slug: 'messages/retention',
-              label: 'Retencao',
-              translations: { en: 'Retention', es: 'Retencion' },
+              label: 'Retenção',
+              translations: { en: 'Retention', es: 'Retención' },
             },
             {
               slug: 'messages/rate-limits',
@@ -91,12 +88,12 @@ export default defineConfig({
           ],
         },
         {
-          label: 'Numeros Extras',
-          translations: { en: 'Extra Numbers', es: 'Numeros Extra' },
+          label: 'Números Extras',
+          translations: { en: 'Extra Numbers', es: 'Números Extra' },
           items: [
             {
               slug: 'extra-numbers/add',
-              label: 'Inclusao',
+              label: 'Inclusão',
               translations: { en: 'Add', es: 'Agregar' },
             },
             {
@@ -111,43 +108,39 @@ export default defineConfig({
             },
             {
               slug: 'extra-numbers/remove',
-              label: 'Remocao',
+              label: 'Remoção',
               translations: { en: 'Remove', es: 'Eliminar' },
             },
             {
               slug: 'extra-numbers/activation',
-              label: 'Ativacao',
-              translations: { en: 'Activation', es: 'Activacion' },
+              label: 'Ativação',
+              translations: { en: 'Activation', es: 'Activación' },
             },
             {
               slug: 'extra-numbers/billing',
-              label: 'Cobranca',
-              translations: { en: 'Billing', es: 'Facturacion' },
+              label: 'Cobrança',
+              translations: { en: 'Billing', es: 'Facturación' },
             },
           ],
         },
         {
           label: 'Mais Recursos',
-          translations: { en: 'More Features', es: 'Mas Recursos' },
+          translations: { en: 'More Features', es: 'Más Recursos' },
           items: [
             {
               slug: 'other-features/reaction',
-              label: 'Reacao',
+              label: 'Reação',
               translations: { en: 'Reactions', es: 'Reacciones' },
             },
             {
               slug: 'other-features/typing-indicator',
-              label: 'Digitacao',
+              label: 'Digitação',
               translations: { en: 'Typing Indicator', es: 'Indicador de Escritura' },
             },
           ],
         },
       ],
       customCss: ['./src/styles/custom.css'],
-      editLink: {
-        baseUrl: 'https://github.com/turbo-notify/public-docs-web/edit/main/',
-      },
-      lastUpdated: true,
     }),
   ],
 });

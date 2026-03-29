@@ -1,14 +1,14 @@
 ---
-title: Listagem de Numeros Extras
-description: Como listar todos os numeros extras cadastrados na sua conta do Turbo Notify.
+title: Listagem de Números Extras
+description: Como listar todos os números extras cadastrados na sua conta do Turbo Notify.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-Liste todos os numeros extras vinculados a sua conta para consultar alias, numero de telefone e status de cada um.
+Liste todos os números extras vinculados à sua conta para consultar alias, número de telefone e status de cada um.
 
-## Listar numeros extras
+## Listar números extras
 
 <Tabs>
   <TabItem label="cURL">
@@ -143,10 +143,10 @@ Liste todos os numeros extras vinculados a sua conta para consultar alias, numer
   ]}
 />
 
-## Erros possiveis
+## Erros possíveis
 
-| Status | Codigo de erro          | Descricao                                           |
+| Status | Código de erro          | Descrição                                           |
 | :----: | ----------------------- | --------------------------------------------------- |
-| `402`  | `not_available_in_plan` | O plano atual nao suporta numeros extras.           |
-| `403`  | `not_authorized`        | A chave de acesso esta invalida ou ausente.         |
+| `402`  | `not_available_in_plan` | O plano atual não suporta números extras.           |
+| `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.         |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.                |

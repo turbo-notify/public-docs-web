@@ -6,11 +6,11 @@ description: Envie mensagens que citam uma mensagem anterior, criando encadeamen
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-Responda mensagens recebidas criando um encadeamento visual no WhatsApp. A resposta aparece vinculada a mensagem original, facilitando o acompanhamento da conversa pelo destinatario.
+Responda mensagens recebidas criando um encadeamento visual no WhatsApp. A resposta aparece vinculada à mensagem original, facilitando o acompanhamento da conversa pelo destinatário.
 
 ## Enviar resposta
 
-Para responder uma mensagem, faca uma requisicao `POST` informando o `message_id` da mensagem original na URL e o texto da resposta no corpo.
+Para responder uma mensagem, faça uma requisição `POST` informando o `message_id` da mensagem original na URL e o texto da resposta no corpo.
 
 <Tabs>
   <TabItem label="cURL">
@@ -174,9 +174,9 @@ Para responder uma mensagem, faca uma requisicao `POST` informando o `message_id
   }}
 />
 
-## Resposta com numero extra
+## Resposta com número extra
 
-Para responder usando um numero extra, informe o campo `from` com o numero cadastrado e ativo na sua conta.
+Para responder usando um número extra, informe o campo `from` com o número cadastrado e ativo na sua conta.
 
 <Tabs>
   <TabItem label="cURL">
@@ -337,11 +337,11 @@ Para responder usando um numero extra, informe o campo `from` com o numero cadas
   </TabItem>
 </Tabs>
 
-Tambem e possivel usar o alias definido no cadastro do numero extra no campo `from`, em vez do numero completo.
+Também é possível usar o alias definido no cadastro do número extra no campo `from`, em vez do número completo.
 
-## Idempotencia
+## Idempotência
 
-Para evitar respostas duplicadas em caso de falhas de rede ou retentativas, utilize o cabecalho `Idempotency-Key` com um valor unico por requisicao.
+Para evitar respostas duplicadas em caso de falhas de rede ou retentativas, utilize o cabeçalho `Idempotency-Key` com um valor único por requisição.
 
 <Tabs>
   <TabItem label="cURL">
@@ -503,20 +503,20 @@ Para evitar respostas duplicadas em caso de falhas de rede ou retentativas, util
   </TabItem>
 </Tabs>
 
-Se a mesma `Idempotency-Key` for enviada novamente dentro do periodo de retencao, a API retornara a resposta original sem processar a requisicao novamente.
+Se a mesma `Idempotency-Key` for enviada novamente dentro do período de retenção, a API retornará a resposta original sem processar a requisição novamente.
 
 ## Acompanhamento
 
 A resposta segue o mesmo fluxo de status de uma mensagem comum. Acompanhe o andamento pela API ou via webhook. Veja mais em [Status](/messages/status/).
 
-## Erros possiveis
+## Erros possíveis
 
-| Status | Codigo de erro            | Descricao                                                       |
+| Status | Código de erro            | Descrição                                                       |
 | :----: | ------------------------- | --------------------------------------------------------------- |
-| `400`  | `invalid_json`            | O JSON da requisicao esta malformado ou invalido.               |
-| `403`  | `not_authorized`          | A chave de acesso esta invalida ou ausente.                     |
-| `422`  | `message_not_found`       | A mensagem original nao foi encontrada ou ja expirou.           |
-| `422`  | `sender_not_authorized`   | O campo `from` nao esta ativo na conta.                         |
-| `422`  | `reply_not_allowed`       | A mensagem original nao permite resposta.                       |
+| `400`  | `invalid_json`            | O JSON da requisição está malformado ou inválido.               |
+| `403`  | `not_authorized`          | A chave de acesso está inválida ou ausente.                     |
+| `422`  | `message_not_found`       | A mensagem original não foi encontrada ou já expirou.           |
+| `422`  | `sender_not_authorized`   | O campo `from` não está ativo na conta.                         |
+| `422`  | `reply_not_allowed`       | A mensagem original não permite resposta.                       |
 | `500`  | `internal_error`          | Erro interno inesperado no servidor.                            |
-| `503`  | `whatsapp_unavailable`    | O WhatsApp esta temporariamente fora do ar.                     |
+| `503`  | `whatsapp_unavailable`    | O WhatsApp está temporariamente fora do ar.                     |

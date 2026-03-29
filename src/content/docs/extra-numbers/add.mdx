@@ -1,6 +1,6 @@
 ---
-title: Inclusao de Numeros Extra
-description: Como adicionar numeros extras de WhatsApp a sua conta no Turbo Notify para envio de mensagens com multiplos remetentes.
+title: Inclusão de Números Extra
+description: Como adicionar números extras de WhatsApp à sua conta no Turbo Notify para envio de mensagens com múltiplos remetentes.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
@@ -8,17 +8,17 @@ import ApiResponse from '@components/ApiResponse.astro';
 import DashboardLink from '@components/DashboardLink.astro';
 import ExternalLink from '@components/ExternalLink.astro';
 
-Numeros extras permitem que voce envie mensagens a partir de multiplos numeros de WhatsApp, alem do numero principal da sua conta. Cada numero extra e vinculado via codigo de pareamento.
+Números extras permitem que você envie mensagens a partir de múltiplos números de WhatsApp, além do número principal da sua conta. Cada número extra é vinculado via código de pareamento.
 
 ## Cadastro pelo Painel
 
-A forma mais simples de adicionar um numero extra e pelo painel do Turbo Notify. Acesse a pagina de <DashboardLink path="/extra-numbers">Numeros Extra</DashboardLink> e clique em **Adicionar numero**.
+A forma mais simples de adicionar um número extra é pelo painel do Turbo Notify. Acesse a página de <DashboardLink path="/extra-numbers">Números Extra</DashboardLink> e clique em **Adicionar número**.
 
-Voce devera informar o numero de telefone com codigo do pais e aguardar o codigo de pareamento que sera exibido na tela. Insira esse codigo no WhatsApp do aparelho correspondente para concluir a vinculacao.
+Você deverá informar o número de telefone com código do país e aguardar o código de pareamento que será exibido na tela. Insira esse código no WhatsApp do aparelho correspondente para concluir a vinculação.
 
 ## Cadastro via API
 
-Tambem e possivel cadastrar numeros extras de forma programatica pela API.
+Também é possível cadastrar números extras de forma programática pela API.
 
 <Tabs>
   <TabItem label="cURL">
@@ -170,7 +170,7 @@ Tambem e possivel cadastrar numeros extras de forma programatica pela API.
   </TabItem>
 </Tabs>
 
-A resposta contera o codigo de pareamento que deve ser inserido no WhatsApp do aparelho.
+A resposta conterá o código de pareamento que deve ser inserido no WhatsApp do aparelho.
 
 <ApiResponse
   status={200}
@@ -181,24 +181,24 @@ A resposta contera o codigo de pareamento que deve ser inserido no WhatsApp do a
 
 ## Usabilidade
 
-- Cada numero extra deve pertencer a um aparelho com WhatsApp ativo.
-- O codigo de pareamento tem validade limitada. Caso expire, sera necessario refazer a solicitacao.
-- Voce pode definir um alias para o numero extra durante o cadastro, facilitando o uso no envio de mensagens via campo `from`.
-- Apos o pareamento, o numero ficara com status `pending` ate que a vinculacao seja confirmada.
+- Cada número extra deve pertencer a um aparelho com WhatsApp ativo.
+- O código de pareamento tem validade limitada. Caso expire, será necessário refazer a solicitação.
+- Você pode definir um alias para o número extra durante o cadastro, facilitando o uso no envio de mensagens via campo `from`.
+- Após o pareamento, o número ficará com status `pending` até que a vinculação seja confirmada.
 
 ## Status
 
-Apos cadastrar o numero extra, acompanhe o andamento da vinculacao consultando o [Status dos Numeros Extra](/extra-numbers/status/).
+Após cadastrar o número extra, acompanhe o andamento da vinculação consultando o [Status dos Números Extra](/extra-numbers/status/).
 
-## Erros possiveis
+## Erros possíveis
 
-Veja os principais erros que podem ocorrer no cadastro de numeros extras:
+Veja os principais erros que podem ocorrer no cadastro de números extras:
 
-| Status | Codigo de erro           | Descricao                                              |
+| Status | Código de erro           | Descrição                                              |
 | :----: | ------------------------ | ------------------------------------------------------ |
-| `400`  | `invalid_json`           | O JSON da requisicao esta malformado ou invalido.      |
-| `402`  | `not_available_in_plan`  | O plano atual nao suporta numeros extras.              |
-| `403`  | `not_authorized`         | A chave de acesso esta invalida ou ausente.            |
-| `409`  | `number_already_exists`  | O numero informado ja esta cadastrado na conta.        |
+| `400`  | `invalid_json`           | O JSON da requisição está malformado ou inválido.      |
+| `402`  | `not_available_in_plan`  | O plano atual não suporta números extras.              |
+| `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.            |
+| `409`  | `number_already_exists`  | O número informado já está cadastrado na conta.        |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                   |
-| `503`  | `whatsapp_unavailable`   | O WhatsApp esta temporariamente fora do ar.            |
+| `503`  | `whatsapp_unavailable`   | O WhatsApp está temporariamente fora do ar.            |

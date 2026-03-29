@@ -1,42 +1,482 @@
-/* Turbo Notify - Custom Starlight Theme */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+/* ============================================================
+   Turbo Notify - Documentation Theme
+   Clean, calm, content-first design.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. Design Tokens (Starlight custom properties)
+   ------------------------------------------------------------ */
 
 :root {
-  --sl-color-accent-low: #1a3a2a;
-  --sl-color-accent: #22c55e;
-  --sl-color-accent-high: #bbf7d0;
-  --sl-color-white: #ffffff;
-  --sl-color-gray-1: #eceef2;
-  --sl-color-gray-2: #c0c2c7;
-  --sl-color-gray-3: #888b96;
-  --sl-color-gray-4: #545861;
-  --sl-color-gray-5: #353841;
-  --sl-color-gray-6: #24272f;
-  --sl-color-black: #17181c;
+  --sl-font: 'Manrope', system-ui, sans-serif;
+  --sl-font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --sl-sidebar-width: 16rem;
+  --sl-content-width: 48rem;
+
+  /* Dark theme accent palette */
+  --sl-color-accent-low: #123328;
+  --sl-color-accent: #77d1b7;
+  --sl-color-accent-high: #d5f3ea;
+
+  /* Dark theme grays */
+  --sl-color-white: #f8fafb;
+  --sl-color-gray-1: #eef2f5;
+  --sl-color-gray-2: #c9d2dc;
+  --sl-color-gray-3: #95a3b2;
+  --sl-color-gray-4: #627182;
+  --sl-color-gray-5: #243140;
+  --sl-color-gray-6: #16202b;
+  --sl-color-black: #0f1720;
 }
 
 :root[data-theme='light'] {
-  --sl-color-accent-low: #dcfce7;
-  --sl-color-accent: #16a34a;
-  --sl-color-accent-high: #14532d;
-  --sl-color-white: #17181c;
-  --sl-color-gray-1: #24272f;
-  --sl-color-gray-2: #353841;
-  --sl-color-gray-3: #545861;
-  --sl-color-gray-4: #888b96;
-  --sl-color-gray-5: #c0c2c7;
-  --sl-color-gray-6: #eceef2;
+  --sl-color-accent-low: #e7f5f1;
+  --sl-color-accent: #167c63;
+  --sl-color-accent-high: #115e4d;
+
+  --sl-color-white: #0f1720;
+  --sl-color-gray-1: #1d2935;
+  --sl-color-gray-2: #314050;
+  --sl-color-gray-3: #5c6776;
+  --sl-color-gray-4: #8f99a5;
+  --sl-color-gray-5: #d8dee6;
+  --sl-color-gray-6: #f4f6f8;
   --sl-color-black: #ffffff;
 }
 
-/* API Response component */
+/* ------------------------------------------------------------
+   2. Base
+   ------------------------------------------------------------ */
+
+body {
+  letter-spacing: -0.012em;
+}
+
+:root[data-theme='light'] body {
+  background: #fafbfc;
+}
+
+:root[data-theme='light'] .page,
+:root[data-theme='dark'] .page {
+  background: transparent;
+}
+
+/* ------------------------------------------------------------
+   3. Header
+   ------------------------------------------------------------ */
+
+:root[data-theme='light'] .header {
+  border-bottom: 0;
+  background: rgba(250, 251, 252, 0.88);
+  backdrop-filter: blur(12px);
+}
+
+:root[data-theme='dark'] .header {
+  border-bottom: 0;
+  background: rgba(15, 23, 32, 0.88);
+  backdrop-filter: blur(12px);
+}
+
+.site-title {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.header .title-wrapper {
+  gap: 0.65rem;
+}
+
+.header .site-title {
+  font-size: 0.94rem;
+}
+
+/* Header controls alignment */
+.right-group {
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Hide social icons (config removed, CSS fallback for safety) */
+.social-icons {
+  display: none !important;
+}
+
+/* Header control elements */
+:root[data-theme='light'] site-search button,
+:root[data-theme='light'] starlight-theme-select label,
+:root[data-theme='light'] starlight-lang-select label {
+  border: 1px solid #e2e6ea;
+  background: #ffffff;
+}
+
+:root[data-theme='dark'] site-search button,
+:root[data-theme='dark'] starlight-theme-select label,
+:root[data-theme='dark'] starlight-lang-select label {
+  border: 1px solid rgba(201, 210, 220, 0.12);
+  background: rgba(22, 32, 43, 0.7);
+}
+
+site-search button,
+starlight-theme-select label,
+starlight-lang-select label {
+  border-radius: 0.5rem;
+}
+
+starlight-theme-select,
+starlight-lang-select {
+  display: flex;
+  align-items: center;
+}
+
+/* ------------------------------------------------------------
+   4. Layout Panels (remove all borders/shadows between panels)
+   ------------------------------------------------------------ */
+
+:root[data-theme='light'] .main-frame {
+  background: transparent;
+}
+
+:root[data-theme='dark'] .main-frame {
+  background: linear-gradient(180deg, rgba(15, 23, 32, 1) 0%, rgba(12, 18, 24, 1) 100%);
+}
+
+/* Strip borders and shadows from all layout panels.
+   Starlight applies these via inline styles and deeply nested
+   selectors, so !important is needed here. */
+.main-frame,
+.main-pane,
+.sidebar-pane,
+.right-sidebar-panel,
+.sidebar,
+.right-sidebar-container {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme='light'] .sidebar-pane,
+:root[data-theme='light'] .right-sidebar-panel,
+:root[data-theme='dark'] .sidebar-pane,
+:root[data-theme='dark'] .right-sidebar-panel {
+  background: transparent;
+}
+
+:root[data-theme='light'] .content-panel,
+:root[data-theme='dark'] .content-panel,
+:root[data-theme='light'] .sidebar-content,
+:root[data-theme='light'] .right-sidebar,
+:root[data-theme='dark'] .sidebar-content,
+:root[data-theme='dark'] .right-sidebar {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+  backdrop-filter: none;
+}
+
+/* ------------------------------------------------------------
+   5. Left Sidebar
+   ------------------------------------------------------------ */
+
+.sidebar-content,
+.right-sidebar-panel .sl-container {
+  padding-inline: 0.75rem;
+}
+
+.sidebar-content summary {
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.375rem;
+  letter-spacing: -0.02em;
+}
+
+.sidebar-content a {
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.375rem;
+  color: var(--sl-color-gray-3);
+}
+
+:root[data-theme='light'] .sidebar-content a[aria-current='page'] {
+  background: rgba(22, 124, 99, 0.07);
+  color: #115e4d;
+}
+
+:root[data-theme='dark'] .sidebar-content a[aria-current='page'] {
+  background: rgba(119, 209, 183, 0.1);
+  color: #d5f3ea;
+}
+
+/* ------------------------------------------------------------
+   6. Right Sidebar (Table of Contents)
+   ------------------------------------------------------------ */
+
+.right-sidebar h2 {
+  margin-bottom: 0.7rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.right-sidebar ul {
+  gap: 0.15rem;
+}
+
+.right-sidebar a {
+  padding: 0.35rem 0;
+  color: var(--sl-color-gray-3);
+}
+
+.right-sidebar a[aria-current='true'] {
+  color: var(--sl-color-accent);
+}
+
+/* ------------------------------------------------------------
+   7. Content Area
+   ------------------------------------------------------------ */
+
+.main-pane .sl-container {
+  max-width: 54rem;
+}
+
+.main-pane > main > .content-panel + .content-panel {
+  margin-top: 0.1rem;
+}
+
+.main-pane > main > .content-panel:first-child {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.main-pane > main > .content-panel:first-child > .sl-container {
+  padding-top: 0;
+  padding-bottom: 0.35rem;
+}
+
+.main-pane > main > .content-panel:first-child h1 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* ------------------------------------------------------------
+   8. Typography
+   ------------------------------------------------------------ */
+
+.content-panel h1,
+.content-panel h2,
+.content-panel h3 {
+  letter-spacing: -0.03em;
+}
+
+.sl-markdown-content h1 {
+  font-size: clamp(1.85rem, 3.2vw, 2.6rem);
+  line-height: 1;
+}
+
+.sl-markdown-content h2 {
+  font-size: clamp(1.3rem, 2.2vw, 1.65rem);
+}
+
+.sl-markdown-content p,
+.sl-markdown-content li {
+  max-width: 68ch;
+  line-height: 1.75;
+}
+
+:root[data-theme='light'] .sl-markdown-content p,
+:root[data-theme='light'] .sl-markdown-content li {
+  color: #445161;
+}
+
+:root[data-theme='dark'] .sl-markdown-content p,
+:root[data-theme='dark'] .sl-markdown-content li {
+  color: #c9d2dc;
+}
+
+/* ------------------------------------------------------------
+   9. Hero / Splash Page
+   ------------------------------------------------------------ */
+
+.hero {
+  padding: 1.5rem 0;
+  max-inline-size: 56rem;
+}
+
+.hero h1 {
+  letter-spacing: -0.04em;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 0.96;
+  max-width: 12ch;
+}
+
+.hero .tagline {
+  max-width: 38rem;
+  line-height: 1.7;
+  font-size: 0.98rem;
+}
+
+:root[data-theme='light'] .hero .tagline {
+  color: #5c6776;
+}
+
+:root[data-theme='dark'] .hero .tagline {
+  color: #c9d2dc;
+}
+
+/* Hero action buttons */
+.sl-link-button {
+  border-radius: 0.5rem;
+  font-weight: 700;
+  padding-inline: 0.95rem;
+  min-height: 2.6rem;
+}
+
+:root[data-theme='light'] .sl-link-button.primary {
+  background: #167c63;
+  border-color: #167c63;
+  color: #ffffff;
+}
+
+:root[data-theme='dark'] .sl-link-button.primary {
+  background: #77d1b7;
+  border-color: #77d1b7;
+  color: #0f1720;
+}
+
+:root[data-theme='light'] .sl-link-button.minimal {
+  color: #167c63;
+}
+
+:root[data-theme='dark'] .sl-link-button.minimal {
+  color: #d5f3ea;
+}
+
+/* ------------------------------------------------------------
+   10. Cards
+   ------------------------------------------------------------ */
+
+:root[data-theme='light'] .card-grid .card {
+  background: #ffffff;
+  border: 1px solid #eef1f4;
+  border-radius: 0.5rem;
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .card-grid .card {
+  background: rgba(22, 32, 43, 0.7);
+  border: 1px solid rgba(201, 210, 220, 0.08);
+  border-radius: 0.5rem;
+  box-shadow: none;
+}
+
+.card-grid .title {
+  letter-spacing: -0.02em;
+  font-size: 1.05rem;
+}
+
+/* ------------------------------------------------------------
+   11. Tabs
+   ------------------------------------------------------------ */
+
+/* Starlight tabs use deeply nested selectors with border-bottom
+   on the tab list. !important needed to override internal styles. */
+.tablist-wrapper,
+[role='tablist'] {
+  border-bottom: 0 !important;
+}
+
+[role='tablist'] {
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  padding: 0;
+}
+
+.tab {
+  margin-bottom: 0 !important;
+}
+
+.tab > [role='tab'] {
+  border: 0 !important;
+  border-radius: 0.375rem;
+  padding: 0.45rem 0.8rem !important;
+  color: var(--sl-color-gray-3);
+}
+
+:root[data-theme='light'] .tab > [role='tab'][aria-selected='true'] {
+  background: rgba(22, 124, 99, 0.07);
+  color: #115e4d;
+}
+
+:root[data-theme='dark'] .tab > [role='tab'][aria-selected='true'] {
+  background: rgba(119, 209, 183, 0.1);
+  color: #d5f3ea;
+}
+
+.tablist-wrapper ~ [role='tabpanel'] {
+  margin-top: 0.75rem !important;
+}
+
+/* ------------------------------------------------------------
+   12. Code Blocks (Expressive Code)
+   ------------------------------------------------------------ */
+
+/* Expressive Code applies inline styles on frame and pre;
+   !important needed to clear those. */
+.expressive-code .frame {
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: 0.5rem;
+}
+
+:root[data-theme='light'] .expressive-code .frame {
+  background: #f3f5f7;
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .expressive-code .frame {
+  background: rgba(22, 32, 43, 0.9);
+  box-shadow: none;
+}
+
+.expressive-code .header {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0.75rem 1rem 0.25rem;
+}
+
+.expressive-code .title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.expressive-code pre {
+  border: 0 !important;
+  background: transparent !important;
+  margin: 0;
+}
+
+/* ------------------------------------------------------------
+   13. API Response Component
+   ------------------------------------------------------------ */
+
 .api-response {
-  background: var(--sl-color-gray-6);
-  border: 1px solid var(--sl-color-gray-5);
-  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0.5rem;
   padding: 1rem 1.5rem;
   margin: 1.5rem 0;
   font-family: var(--sl-font-mono);
   font-size: var(--sl-text-sm);
+}
+
+:root[data-theme='light'] .api-response {
+  background: #f3f5f7;
+}
+
+:root[data-theme='dark'] .api-response {
+  background: rgba(22, 32, 43, 0.9);
 }
 
 .api-response-header {
@@ -44,6 +484,9 @@
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
 }
 
 .api-response-status {
@@ -70,7 +513,7 @@
 }
 
 .api-response-divider {
-  border-top: 1px solid var(--sl-color-gray-5);
+  border-top: 1px solid rgba(143, 153, 165, 0.15);
   margin: 0.5rem 0;
 }
 
@@ -78,6 +521,8 @@
   margin: 0;
   padding: 0;
   background: transparent;
+  border: 0;
+  box-shadow: none;
   color: #4ade80;
   white-space: pre-wrap;
   word-break: break-word;
@@ -102,8 +547,11 @@
   color: #4ade80;
 }
 
-/* External link icon */
+/* ------------------------------------------------------------
+   14. External Link Icon
+   ------------------------------------------------------------ */
+
 .external-link::after {
-  content: ' ↗';
+  content: ' \2197';
   font-size: 0.8em;
 }
