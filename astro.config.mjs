@@ -7,8 +7,8 @@ export default defineConfig({
     starlight({
       title: 'Turbo Notify',
       logo: {
-        light: './src/assets/brand/logo-light.png',
-        dark: './src/assets/brand/logo-dark.png',
+        light: './src/assets/logo-light.svg',
+        dark: './src/assets/logo-dark.svg',
         replacesTitle: true,
       },
       defaultLocale: 'root',
