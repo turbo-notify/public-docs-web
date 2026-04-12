@@ -6,6 +6,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Turbo Notify',
+      favicon: { type: 'image/svg+xml', href: '/favicon.svg' },
       logo: {
         light: './src/assets/logo-light.svg',
         dark: './src/assets/logo-dark.svg',
