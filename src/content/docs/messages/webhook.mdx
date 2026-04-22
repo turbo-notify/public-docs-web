@@ -18,7 +18,7 @@ Recomendamos que sua URL de webhook não exponha informações sensíveis, como 
 
 ## Segurança
 
-Toda requisição de webhook enviada pelo Turbo Notify inclui o cabeçalho `X-Turbo-Signature` com uma assinatura HMAC SHA-256. Utilize essa assinatura para garantir que a requisição foi realmente enviada pelo Turbo Notify e não por terceiros.
+Toda requisição de webhook enviada pelo Turbo Notify inclui os cabeçalhos `X-Webhook-Signature` e `X-Webhook-Timestamp` com uma assinatura HMAC SHA-256. Utilize essa assinatura para garantir que a requisição foi realmente enviada pelo Turbo Notify e não por terceiros.
 
 O segredo para validação está disponível no <DashboardLink path="/webhook">Dashboard</DashboardLink>, na mesma seção onde você cadastra a URL.
 
@@ -28,28 +28,40 @@ Exemplo de validação da assinatura:
 import hmac
 import hashlib
 
-def verificar_assinatura(payload: bytes, assinatura: str, segredo: str) -> bool:
-    esperado = hmac.new(
+def verificar_assinatura(payload: bytes, timestamp: str, assinatura: str, segredo: str) -> bool:
+    dados_assinados = f"{timestamp}.".encode() + payload
+    esperado = "sha256=" + hmac.new(
         segredo.encode(),
-        payload,
+        dados_assinados,
         hashlib.sha256
     ).hexdigest()
     return hmac.compare_digest(esperado, assinatura)
+
+# Uso:
+# timestamp = request.headers["X-Webhook-Timestamp"]
+# assinatura = request.headers["X-Webhook-Signature"]
+# verificar_assinatura(request.body, timestamp, assinatura, segredo)
 ```
 
 ```js title="validacao.js"
 const crypto = require('crypto');
 
-function verificarAssinatura(payload, assinatura, segredo) {
-  const esperado = crypto
+function verificarAssinatura(payload, timestamp, assinatura, segredo) {
+  const dadosAssinados = `${timestamp}.${payload}`;
+  const esperado = 'sha256=' + crypto
     .createHmac('sha256', segredo)
-    .update(payload)
+    .update(dadosAssinados)
     .digest('hex');
   return crypto.timingSafeEqual(
     Buffer.from(esperado),
     Buffer.from(assinatura)
   );
 }
+
+// Uso:
+// const timestamp = req.headers['x-webhook-timestamp'];
+// const assinatura = req.headers['x-webhook-signature'];
+// verificarAssinatura(req.body, timestamp, assinatura, segredo);
 ```
 
 ## Estrutura do evento
