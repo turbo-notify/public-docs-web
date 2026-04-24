@@ -1,0 +1,226 @@
+---
+title: Consultar Mensagem
+description: Como recuperar o conteúdo completo, status e referência de mídia de uma mensagem pelo seu identificador.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+import DashboardLink from '@components/DashboardLink.astro';
+
+Recupere o conteúdo completo, o status de entrega e a referência de mídia de qualquer mensagem enviada ou recebida na sua conta, usando o `message_id` como identificador.
+
+**Escopo obrigatório:** `messages:read`
+
+## Consultar mensagem
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="get-mensagem.sh"
+    curl -X GET \
+      https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70 \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="get-mensagem.js"
+    const messageId = 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70';
+    const response = await fetch(
+      `https://api.turbonotify.com/v1/messages/${messageId}`,
+      {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer SUA_CHAVE' }
+      }
+    );
+
+    const message = await response.json();
+    console.log(message);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="get_mensagem.py"
+    import requests
+
+    message_id = "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70"
+    url = f"https://api.turbonotify.com/v1/messages/{message_id}"
+    headers = {"Authorization": "Bearer SUA_CHAVE"}
+
+    response = requests.get(url, headers=headers)
+    message = response.json()
+    print(message)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="get_mensagem.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        messageID := "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70"
+        req, _ := http.NewRequest("GET",
+            "https://api.turbonotify.com/v1/messages/"+messageID, nil)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="get-mensagem.php"
+    <?php
+    $messageId = 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70';
+    $url = "https://api.turbonotify.com/v1/messages/{$messageId}";
+
+    $options = [
+        'http' => [
+            'header' => ['Authorization: Bearer SUA_CHAVE'],
+            'method' => 'GET'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="GetMensagem.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var messageId = "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70";
+    var response = await client.GetAsync(
+        $"https://api.turbonotify.com/v1/messages/{messageId}"
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="GetMensagem.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class GetMensagem {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+            var messageId = "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70";
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create(
+                    "https://api.turbonotify.com/v1/messages/" + messageId))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .GET()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+## Resposta — mensagem de texto
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
+    direction: 'outbound',
+    from: '+5511973117056',
+    to: '+5511999999999',
+    content_type: 'text',
+    status: { state: 'delivered', at: '2026-04-21T10:01:00Z' },
+    preview: 'Olá, seu pedido foi confirmado!',
+    body: { text: 'Olá, seu pedido foi confirmado!' },
+    body_expired: false,
+    media: null,
+    created_at: '2026-04-21T10:00:00Z',
+    updated_at: '2026-04-21T10:01:00Z',
+  }}
+/>
+
+## Resposta — mensagem de mídia
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f71',
+    direction: 'inbound',
+    from: '+5511999999999',
+    to: '+5511973117056',
+    content_type: 'image',
+    status: { state: 'read', at: '2026-04-21T10:05:00Z' },
+    preview: '[image]',
+    body: null,
+    body_expired: false,
+    media: {
+      storage: 'whatsapp_direct',
+      url: 'https://mmg.whatsapp.net/...',
+      url_expires_at: '2026-04-22T10:00:00Z',
+      mime_type: 'image/jpeg',
+      size_bytes: 123456,
+      media_expired: false,
+    },
+    created_at: '2026-04-21T10:00:00Z',
+    updated_at: '2026-04-21T10:05:00Z',
+  }}
+/>
+
+## Campos da resposta
+
+| Campo | Tipo | Descrição |
+| ----- | ---- | --------- |
+| `message_id` | string | Identificador público da mensagem (`msg_` + 32 hex) |
+| `direction` | string | `outbound` (enviada) ou `inbound` (recebida) |
+| `from` | string | Número do remetente |
+| `to` | string | Número do destinatário |
+| `content_type` | string | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `contact` ou `reaction` |
+| `status` | object | `{state, at}` — estado atual de entrega |
+| `preview` | string | Permanente — primeiros 50 caracteres do conteúdo, sempre presente |
+| `body` | object\|null | Conteúdo estruturado completo; `null` quando expirado pela política de retenção |
+| `body_expired` | boolean | `true` quando o corpo foi removido pelo ciclo de retenção |
+| `media` | object\|null | Bloco de mídia; `null` para tipos não-mídia |
+| `created_at` | string | Timestamp ISO 8601 de criação |
+| `updated_at` | string | Timestamp ISO 8601 da última atualização de status |
+
+### Bloco de mídia
+
+Presente quando `content_type` é `image`, `audio`, `video`, `document` ou `sticker`:
+
+| Campo | Tipo | Descrição |
+| ----- | ---- | --------- |
+| `storage` | string | `whatsapp_direct` (URL efêmera do WhatsApp) ou `tenant_s3` (URL pré-assinada do seu bucket) |
+| `url` | string\|null | URL de download; `null` quando `media_expired: true` |
+| `url_expires_at` | string | Timestamp de expiração da URL |
+| `mime_type` | string | Tipo MIME do arquivo (ex: `image/jpeg`, `application/pdf`) |
+| `size_bytes` | integer | Tamanho do arquivo em bytes |
+| `media_expired` | boolean | `true` quando o TTL de ~24h do WhatsApp expirou e a URL não está mais disponível |
+
+### Sobre `body_expired`
+
+O campo `body` contém o conteúdo estruturado completo da mensagem. Após o período de retenção (padrão: 30 dias), o corpo é removido e `body_expired` passa a ser `true`. O campo `preview` — primeiros 50 caracteres — é permanente e sempre estará presente.
+
+### Sobre `media_expired`
+
+URLs de mídia do WhatsApp expiram em aproximadamente 24 horas. Quando `media_expired: true`, a `url` retorna `null`. Se você precisar de acesso permanente à mídia recebida, configure a <DashboardLink path="/settings/integrations/storage">integração de Object Storage</DashboardLink> no Dashboard para que o Turbo Notify copie automaticamente a mídia para o seu bucket.
+
+## Erros possíveis
+
+| Status | Código de erro | Descrição |
+| :----: | -------------- | --------- |
+| `400` | `invalid_message_id` | O identificador não corresponde ao formato `msg_` + 32 hex. |
+| `403` | `not_authorized` | A chave de acesso está inválida, ausente ou sem o escopo `messages:read`. |
+| `404` | `not_found` | Mensagem não encontrada ou pertence a outro tenant. |
+| `429` | `rate_limit_exceeded` | Limite de requisições ultrapassado. |
+| `500` | `internal_error` | Erro interno inesperado no servidor. |

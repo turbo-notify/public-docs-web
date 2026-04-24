@@ -1,16 +1,16 @@
 ---
 title: Respostas e Webhook
-description: Como receber eventos de mensagens e operações assíncronas via webhook no Turbo Notify.
+description: Como receber eventos do Turbo Notify via webhook (HTTP push) — mesmos dados do endpoint GET /events.
 ---
 
 import DashboardLink from '@components/DashboardLink.astro';
 import ExternalLink from '@components/ExternalLink.astro';
 
-O Turbo Notify utiliza webhooks para notificar seu sistema sobre eventos importantes, como a confirmação de envio de uma mensagem, a entrega ao destinatário ou a ocorrência de uma falha. Dessa forma, você não precisa consultar a API repetidamente para acompanhar o andamento das operações.
+O Turbo Notify notifica seu sistema sobre eventos — envio confirmado, entrega, leitura, mensagem recebida, reação, falha — via webhook (HTTP POST). O objeto `data` de cada evento é **idêntico** ao retornado pelo endpoint [`GET /events`](/messages/polling/); a diferença entre os dois canais está apenas no envelope (campos `timestamp` vs `created_at` e a presença do tag `object: "event"` no polling).
 
 ## Recebimento dos eventos
 
-Para começar a receber eventos, cadastre a URL do seu webhook no <DashboardLink path="/webhook">Dashboard</DashboardLink>. A URL deve ser pública, acessível via HTTPS e responder com status `200` dentro de 5 segundos.
+Para começar a receber eventos, cadastre a URL do seu webhook no <DashboardLink path="/webhook">Dashboard</DashboardLink>. A URL deve ser pública, acessível via HTTPS e responder com status `2xx` dentro de 5 segundos.
 
 ## Privacidade
 
@@ -68,71 +68,124 @@ function verificarAssinatura(payload, timestamp, assinatura, segredo) {
 
 Toda requisição de webhook segue a mesma estrutura base:
 
-| Propriedade | Tipo     | Descrição                                          |
-| ----------- | -------- | -------------------------------------------------- |
-| `id`        | `string` | Identificador único do evento.                     |
-| `type`      | `string` | Tipo do evento (ex: `message.sent`).               |
-| `timestamp` | `string` | Data e hora do evento em formato ISO 8601.         |
-| `data`      | `object` | Dados específicos do evento.                       |
+| Propriedade  | Tipo      | Descrição                                                                 |
+| ------------ | --------- | ------------------------------------------------------------------------- |
+| `id`         | `string`  | Identificador único do evento (`evt_…`). Use como chave de idempotência.  |
+| `type`       | `string`  | Tipo do evento (ex.: `message.sent`).                                     |
+| `timestamp`  | `string`  | Data e hora do evento em ISO 8601 UTC, com sufixo `Z`.                    |
+| `request_id` | `string?` | ID de rastreamento da requisição que originou o evento. Omitido quando ausente. |
+| `data`       | `object`  | Dados específicos do evento (veja a tabela em [Tipos de evento](#tipos-de-evento)). |
 
-### Exemplo
+### Exemplo — `message.sent`
 
 ```json title="webhook-payload.json"
 {
-  "id": "evt_abc123",
+  "id": "evt_abc123def456789012345678",
   "type": "message.sent",
-  "timestamp": "2025-07-16T10:00:02Z",
+  "timestamp": "2026-04-22T10:00:05Z",
+  "request_id": "req_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "data": {
-    "message_id": "msg_abc123",
-    "to": "+5511999999999",
-    "status": "sent"
+    "message_id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
+    "from": "+5511999990001",
+    "to": "+5511999990002",
+    "sent_at": "2026-04-22T10:00:05Z"
   }
 }
 ```
 
 ## Tipos de evento
 
-| Evento                          | Descrição                                                           |
-| ------------------------------- | ------------------------------------------------------------------- |
-| `message.sent`                  | A mensagem foi enviada ao WhatsApp com sucesso.                     |
-| `message.delivered`             | A mensagem foi entregue ao dispositivo do destinatário.             |
-| `message.read`                  | A mensagem foi lida pelo destinatário.                              |
-| `message.failed`                | O envio da mensagem falhou.                                         |
-| `message.received`              | Uma mensagem foi recebida de um contato.                            |
-| `message.reaction`              | Uma reação foi adicionada ou removida de uma mensagem.              |
-| `session.connected`             | A sessão do WhatsApp foi conectada com sucesso.                     |
-| `session.disconnected`          | A sessão do WhatsApp foi desconectada.                              |
-| `extra_number.paired`           | Um número extra foi pareado com sucesso.                            |
-| `extra_number.disconnected`     | Um número extra foi desconectado.                                   |
-| `extra_number.removed`          | Um número extra foi removido da conta.                              |
-| `extra_number.pairing_failed`   | O pareamento de um número extra falhou.                             |
-| `extra_number.pairing_expired`  | O código de pareamento de um número extra expirou.                  |
+O catálogo público é fechado — seu endpoint só recebe os eventos listados aqui.
+
+### Mensagens — ciclo de envio
+
+| Tipo                      | Quando é emitido                                                   |
+| ------------------------- | ------------------------------------------------------------------ |
+| `message.sent`            | Mensagem enviada com sucesso ao WhatsApp.                          |
+| `message.send.failed`     | Falha no envio da mensagem.                                        |
+| `message.delivered`       | Mensagem entregue ao dispositivo do destinatário.                  |
+| `message.read`            | Mensagem lida pelo destinatário.                                   |
+
+### Mensagens — recebimento e operações
+
+| Tipo                      | Quando é emitido                                                   |
+| ------------------------- | ------------------------------------------------------------------ |
+| `message.received`        | Mensagem recebida de um contato (texto, mídia, resposta).          |
+| `message.edited`          | Mensagem foi editada (sua ou do contato).                          |
+| `message.edit.failed`     | Falha ao editar uma mensagem.                                      |
+| `message.deleted`         | Mensagem foi deletada/revogada (sua ou do contato).                |
+| `message.delete.failed`   | Falha ao deletar uma mensagem.                                     |
+| `message.reacted`         | Uma reação foi adicionada ou removida.                             |
+| `message.react.failed`    | Falha ao reagir a uma mensagem.                                    |
+
+### Números — ciclo de vida
+
+| Tipo                          | Quando é emitido                                                  |
+| ----------------------------- | ----------------------------------------------------------------- |
+| `number.created`              | Número extra provisionado.                                        |
+| `number.connected`            | Número principal ou extra conectado ao WhatsApp.                  |
+| `number.disconnected`         | Número desconectado temporariamente.                              |
+| `number.connect.failed`       | Falha no pareamento/conexão.                                      |
+| `number.revoked`              | Dispositivo desvinculado pelo WhatsApp.                           |
+| `number.remove.scheduled`     | Exclusão de número extra agendada (período de carência).          |
+| `number.remove.canceled`      | Exclusão agendada foi cancelada.                                  |
+| `number.removed`              | Número extra foi removido.                                        |
+
+### Operacionais
+
+| Tipo                          | Quando é emitido                                                  |
+| ----------------------------- | ----------------------------------------------------------------- |
+| `message.media.unavailable`   | Mídia de mensagem recebida não está mais disponível (TTL do WhatsApp expirado ou upload BYO falhou). |
+| `integration.s3.degraded`     | Integração BYO object storage (S3/R2) está degradada.             |
 
 ## Mapeamento de operações assíncronas
 
-Algumas operações da API retornam um `operation_id` para rastreamento. Veja como cada operação se relaciona com os eventos de webhook:
+Operações da API que disparam processamento assíncrono retornam um `request_id`. O mesmo `request_id` aparece no webhook do evento resultante — use para correlacionar:
 
 | Operação                   | Evento de sucesso             | Evento de falha                   |
 | -------------------------- | ----------------------------- | --------------------------------- |
-| Enviar mensagem            | `message.sent`                | `message.failed`                  |
-| Responder mensagem         | `message.sent`                | `message.failed`                  |
-| Parear número extra        | `extra_number.paired`         | `extra_number.pairing_failed`     |
-| Remover número extra       | `extra_number.removed`        | -                                 |
+| Enviar mensagem            | `message.sent`                | `message.send.failed`             |
+| Responder mensagem         | `message.sent`                | `message.send.failed`             |
+| Editar mensagem            | `message.edited`              | `message.edit.failed`             |
+| Deletar mensagem           | `message.deleted`             | `message.delete.failed`           |
+| Reagir a uma mensagem      | `message.reacted`             | `message.react.failed`            |
+| Conectar número extra      | `number.connected`            | `number.connect.failed`           |
+| Agendar remoção de número  | `number.remove.scheduled`     | —                                 |
+| Cancelar remoção agendada  | `number.remove.canceled`      | —                                 |
 
 ## Tentativas de entrega
 
-Caso o seu endpoint não responda com status `200` dentro de 5 segundos, o Turbo Notify fará novas tentativas com backoff exponencial:
+Se seu endpoint não responder com status `2xx` dentro de 5 segundos, o Turbo Notify refará a tentativa com backoff exponencial:
 
 | Tentativa | Intervalo aproximado |
 | :-------: | -------------------- |
 | 1         | Imediata             |
-| 2         | 30 segundos          |
-| 3         | 2 minutos            |
-| 4         | 10 minutos           |
-| 5         | 1 hora               |
+| 2         | 12 segundos          |
+| 3         | 24 segundos          |
+| 4         | 48 segundos          |
+| 5         | 96 segundos          |
+| 6         | 192 segundos         |
 
-Após 5 tentativas sem sucesso, o evento será descartado.
+Após esgotar as tentativas, o evento é marcado como `dead_letter` e descartado.
 
 ## Garantia de entrega
 
-O Turbo Notify adota o modelo **at-least-once delivery**. Isso significa que, em situações excepcionais, o mesmo evento pode ser entregue mais de uma vez. Utilize o campo `id` do evento para implementar idempotência no seu sistema e evitar processamento duplicado.
+O Turbo Notify adota o modelo **at-least-once**. Em situações excepcionais, o mesmo evento pode ser entregue mais de uma vez. Use o campo `id` para implementar idempotência e evitar processamento duplicado.
+
+```js title="dedup.js"
+const seen = new Set();
+
+function handleEvent(event) {
+  if (seen.has(event.id)) {
+    return; // já processado
+  }
+  seen.add(event.id);
+  // ... processar
+}
+```
+
+Em produção, persista o `id` em uma tabela ou cache com TTL de ~72 h.
+
+## Alternativa: polling
+
+Se preferir consumir eventos sob demanda em vez de expor um endpoint público, utilize o [polling via `GET /events`](/messages/polling/). O objeto `data` é o mesmo do webhook.

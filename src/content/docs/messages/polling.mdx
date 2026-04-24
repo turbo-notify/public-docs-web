@@ -1,0 +1,287 @@
+---
+title: Polling de Eventos
+description: Como consultar eventos via API de forma alternativa ou complementar ao webhook no Turbo Notify.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+O Turbo Notify disponibiliza uma API de eventos que permite consultar o histórico de eventos da sua conta de forma paginada. Use o polling como alternativa ao webhook ou para reconciliar eventos que possam ter sido perdidos durante uma indisponibilidade do seu endpoint.
+
+## Quando usar polling
+
+O webhook é a forma principal de receber eventos em tempo real. O polling é recomendado em dois cenários:
+
+- **Sem webhook configurado** — consulte eventos regularmente para processar mensagens recebidas, confirmações de envio e demais notificações.
+- **Recuperação após falha** — após uma interrupção do seu endpoint de webhook, use o polling para buscar os eventos perdidos e reconciliar o estado do seu sistema.
+
+## Endpoint
+
+```
+GET /v1/events
+```
+
+**Escopo obrigatório:** `events:read`
+
+## Parâmetros de consulta
+
+| Parâmetro | Tipo | Descrição |
+| --------- | ---- | --------- |
+| `types[]` | string[] | Filtrar por tipos de evento (OR). Ex: `types[]=message.received&types[]=message.sent` |
+| `type` | string | Filtrar por um tipo de evento com suporte a wildcard. Ex: `type=message.*` |
+| `starting_after` | string | Cursor para paginação progressiva. Passe o `id` do último item da página anterior. |
+| `ending_before` | string | Cursor para paginação retroativa. Passe o `id` do primeiro item da página atual. |
+| `limit` | integer | Número de eventos por página. Intervalo: 1–100. Padrão: 25. |
+| `created[gte]` | ISO-8601 | Retornar eventos criados a partir deste timestamp. |
+| `created[lte]` | ISO-8601 | Retornar eventos criados até este timestamp. |
+| `request_id` | string | Filtrar eventos vinculados a uma requisição de API específica. |
+
+## Formato de resposta
+
+Os resultados são ordenados por `created_at DESC` (mais recentes primeiro).
+
+<ApiResponse
+  status={200}
+  body={{
+    object: 'list',
+    data: [
+      {
+        id: 'evt_01993c5a1b24d3e9f01a2b3c',
+        object: 'event',
+        type: 'message.received',
+        request_id: 'req_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+        created_at: '2026-04-21T10:00:00Z',
+        data: {
+          message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
+          from: '+5511999999999',
+          to: '+5511973117056',
+          content_type: 'text',
+          preview: 'Olá, gostaria de saber sobre o pedido',
+          received_at: '2026-04-21T10:00:00Z',
+        },
+      },
+    ],
+    has_more: true,
+  }}
+/>
+
+### Envelope da lista
+
+| Campo | Tipo | Descrição |
+| ----- | ---- | --------- |
+| `object` | string | Sempre `"list"`. |
+| `data` | array | Lista de eventos (no máximo `limit` itens). |
+| `has_more` | boolean | `true` quando existem mais eventos além da página atual. |
+
+### Envelope de cada evento
+
+| Campo | Tipo | Descrição |
+| ----- | ---- | --------- |
+| `id` | string | Identificador único (`evt_…`). Use como chave de idempotência. |
+| `object` | string | Sempre `"event"`. |
+| `type` | string | Tipo do evento (ex.: `message.received`). |
+| `request_id` | `string \| null` | ID de rastreamento da requisição que originou o evento. `null` para eventos operacionais (sem requisição original). |
+| `created_at` | string | ISO 8601 UTC, com sufixo `Z`. |
+| `data` | object | Payload específico do evento — **idêntico** ao entregue via webhook. |
+
+## Paginação por cursor
+
+A paginação é baseada em cursor, o que garante páginas estáveis mesmo enquanto novos eventos chegam. O cursor é o `id` de um evento.
+
+**Avançar para a próxima página** — passe o `id` do último evento retornado em `starting_after`:
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="polling.sh"
+    # Primeira página
+    curl "https://api.turbonotify.com/v1/events?limit=20" \
+      -H "Authorization: Bearer SUA_CHAVE"
+
+    # Próxima página (starting_after = id do último evento retornado)
+    curl "https://api.turbonotify.com/v1/events?limit=20&starting_after=evt_abc123" \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="polling.js"
+    async function buscarTodosOsEventos() {
+      let startingAfter = null;
+      const todos = [];
+
+      while (true) {
+        const params = new URLSearchParams({ limit: '20' });
+        if (startingAfter) params.set('starting_after', startingAfter);
+
+        const response = await fetch(
+          `https://api.turbonotify.com/v1/events?${params}`,
+          { headers: { 'Authorization': 'Bearer SUA_CHAVE' } }
+        );
+        const page = await response.json();
+        todos.push(...page.data);
+
+        if (!page.has_more) break;
+        startingAfter = page.data[page.data.length - 1].id;
+      }
+
+      return todos;
+    }
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="polling.py"
+    import requests
+
+    def buscar_todos_os_eventos():
+      url = "https://api.turbonotify.com/v1/events"
+      headers = {"Authorization": "Bearer SUA_CHAVE"}
+      todos = []
+      starting_after = None
+
+      while True:
+          params = {"limit": 20}
+          if starting_after:
+              params["starting_after"] = starting_after
+
+          response = requests.get(url, headers=headers, params=params)
+          page = response.json()
+          todos.extend(page["data"])
+
+          if not page["has_more"]:
+              break
+          starting_after = page["data"][-1]["id"]
+
+      return todos
+    ```
+  </TabItem>
+</Tabs>
+
+## Filtrar por tipo de evento
+
+Filtre os eventos que seu sistema precisa processar usando o parâmetro `types[]`:
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="polling-filtrado.sh"
+    curl "https://api.turbonotify.com/v1/events?types[]=message.received&types[]=message.sent" \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="polling-filtrado.js"
+    const params = new URLSearchParams();
+    params.append('types[]', 'message.received');
+    params.append('types[]', 'message.sent');
+    params.set('limit', '20');
+
+    const response = await fetch(
+      `https://api.turbonotify.com/v1/events?${params}`,
+      { headers: { 'Authorization': 'Bearer SUA_CHAVE' } }
+    );
+    const page = await response.json();
+    console.log(page);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="polling-filtrado.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/events"
+    headers = {"Authorization": "Bearer SUA_CHAVE"}
+    params = {
+        "types[]": ["message.received", "message.sent"],
+        "limit": 20
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+    page = response.json()
+    print(page)
+    ```
+  </TabItem>
+</Tabs>
+
+## Intervalo recomendado
+
+Respeite um intervalo mínimo de **10 segundos** entre requisições de polling. Intervalos menores podem acionar o rate limit e resultar em respostas `429 Too Many Requests`.
+
+Para sistemas de alta demanda, prefira o uso de webhooks para receber eventos em tempo real e reserve o polling para reconciliação.
+
+## Paridade com webhooks
+
+O objeto `data` de cada evento retornado pela API é **byte-a-byte idêntico** ao `data` entregue via webhook para o mesmo evento. Apenas o envelope ao redor difere:
+
+| Campo | Webhook | Polling |
+| ----- | ------- | ------- |
+| `id` | presente | presente |
+| `object` | ausente | `"event"` |
+| `type` | presente | presente |
+| `request_id` | omitido quando ausente | sempre presente (`null` quando ausente) |
+| `timestamp` | presente | — |
+| `created_at` | — | presente (mesmo valor) |
+| `data` | **idêntico** | **idêntico** |
+
+Isso permite:
+
+- Sistemas que usam **apenas polling** processam os mesmos dados que sistemas baseados em webhook.
+- Sistemas **híbridos** podem usar a API para reconciliar eventos perdidos reaproveitando o mesmo código de processamento.
+- Catálogo completo de `type` e `data`: consulte a [referência de eventos no documento de webhook](/messages/webhook/#tipos-de-evento).
+
+## Recuperação após falha de webhook
+
+Para recuperar eventos perdidos durante uma indisponibilidade do seu endpoint:
+
+1. Identifique o timestamp aproximado do início da falha.
+2. Consulte `GET /v1/events?created[gte]=<timestamp_da_falha>` para buscar os eventos do período.
+3. Processe apenas os eventos não vistos usando o `id` de cada evento como chave de idempotência.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="recuperacao.sh"
+    curl "https://api.turbonotify.com/v1/events?created[gte]=2026-04-21T08:00:00Z" \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="recuperacao.js"
+    const params = new URLSearchParams({
+      'created[gte]': '2026-04-21T08:00:00Z',
+      limit: '100'
+    });
+
+    const response = await fetch(
+      `https://api.turbonotify.com/v1/events?${params}`,
+      { headers: { 'Authorization': 'Bearer SUA_CHAVE' } }
+    );
+    const page = await response.json();
+    console.log(page);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="recuperacao.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/events"
+    headers = {"Authorization": "Bearer SUA_CHAVE"}
+    params = {
+        "created[gte]": "2026-04-21T08:00:00Z",
+        "limit": 100
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+    page = response.json()
+    print(page)
+    ```
+  </TabItem>
+</Tabs>
+
+## Retenção de eventos
+
+Eventos ficam disponíveis para consulta por **30 dias**. Consultas além desse período retornam resultado vazio.
+
+## Erros possíveis
+
+| Status | Código de erro | Descrição |
+| :----: | -------------- | --------- |
+| `400` | `invalid_cursor` | O cursor fornecido em `starting_after` ou `ending_before` é inválido. |
+| `403` | `not_authorized` | A chave de acesso está inválida, ausente ou sem o escopo `events:read`. |
+| `429` | `rate_limit_exceeded` | Limite de requisições ultrapassado. Aguarde antes de tentar novamente. |
+| `500` | `internal_error` | Erro interno inesperado no servidor. |
