@@ -76,7 +76,7 @@ Toda requisição de webhook segue a mesma estrutura base:
 | `request_id` | `string?` | ID de rastreamento da requisição que originou o evento. Omitido quando ausente. |
 | `data`       | `object`  | Dados específicos do evento (veja a tabela em [Tipos de evento](#tipos-de-evento)). |
 
-### Exemplo — `message.sent`
+### Exemplo — `message.sent` (outbound)
 
 ```json title="webhook-payload.json"
 {
@@ -86,12 +86,34 @@ Toda requisição de webhook segue a mesma estrutura base:
   "request_id": "req_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "data": {
     "message_id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
-    "from": "+5511999990001",
-    "to": "+5511999990002",
+    "from": { "number": "5511999990001", "alias": "main" },
+    "to":   { "number": "5511999990002" },
     "sent_at": "2026-04-22T10:00:05Z"
   }
 }
 ```
+
+`from.alias` é sempre preenchido. Use `"main"` para identificar o número principal ou o alias do número extra (ex.: `"vendas-sp"`).
+
+### Exemplo — `message.received` (inbound)
+
+```json title="webhook-payload.json"
+{
+  "id": "evt_def789abc234567890123456",
+  "type": "message.received",
+  "timestamp": "2026-04-24T15:32:11Z",
+  "data": {
+    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "from": { "number": "5511777777777", "name": "João Silva" },
+    "to":   { "number": "5511999990001", "alias": "main" },
+    "content_type": "text",
+    "preview": "Olá, gostaria de saber...",
+    "received_at": "2026-04-24T15:32:11Z"
+  }
+}
+```
+
+`from.name` traz o nome de exibição que o contato configurou no WhatsApp (push name); o campo é omitido quando o contato não definiu nenhum. `to.alias` resolve para `"main"` quando a mensagem chegou no número principal ou para o alias do número extra que recebeu.
 
 ## Tipos de evento
 

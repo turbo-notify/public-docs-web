@@ -20,7 +20,7 @@ Este serviço é utilizado para adicionar uma reação a uma mensagem enviada.
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "message_id": "msg_abc123",
         "reaction": "🎉"
       }'
@@ -35,7 +35,7 @@ Este serviço é utilizado para adicionar uma reação a uma mensagem enviada.
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
+        to: { number: '+5511999999999' },
         message_id: 'msg_abc123',
         reaction: '🎉'
       })
@@ -54,7 +54,7 @@ Este serviço é utilizado para adicionar uma reação a uma mensagem enviada.
         "Content-Type": "application/json"
     }
     data = {
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "message_id": "msg_abc123",
         "reaction": "🎉"
     }
@@ -74,7 +74,7 @@ Este serviço é utilizado para adicionar uma reação a uma mensagem enviada.
     )
 
     func main() {
-        payload := strings.NewReader(`{"to": "+5511999999999", "message_id": "msg_abc123", "reaction": "🎉"}`)
+        payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "message_id": "msg_abc123", "reaction": "🎉"}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/reactions", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -89,7 +89,7 @@ Este serviço é utilizado para adicionar uma reação a uma mensagem enviada.
     <?php
     $url = 'https://api.turbonotify.com/reactions';
     $data = [
-        'to' => '+5511999999999',
+        'to' => ['number' => '+5511999999999'],
         'message_id' => 'msg_abc123',
         'reaction' => '🎉'
     ];
@@ -120,7 +120,7 @@ Este serviço é utilizado para adicionar uma reação a uma mensagem enviada.
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var data = new {
-        to = "+5511999999999",
+        to = new { number = "+5511999999999" },
         message_id = "msg_abc123",
         reaction = "🎉"
     };
@@ -143,7 +143,7 @@ Este serviço é utilizado para adicionar uma reação a uma mensagem enviada.
 
             var json = """
                 {
-                    "to": "+5511999999999",
+                    "to": {"number": "+5511999999999"},
                     "message_id": "msg_abc123",
                     "reaction": "🎉"
                 }
@@ -188,7 +188,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "message_id": "msg_abc123",
         "reaction": null
       }'
@@ -203,7 +203,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
+        to: { number: '+5511999999999' },
         message_id: 'msg_abc123',
         reaction: null
       })
@@ -222,7 +222,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
         "Content-Type": "application/json"
     }
     data = {
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "message_id": "msg_abc123",
         "reaction": None
     }
@@ -242,7 +242,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
     )
 
     func main() {
-        payload := strings.NewReader(`{"to": "+5511999999999", "message_id": "msg_abc123", "reaction": null}`)
+        payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "message_id": "msg_abc123", "reaction": null}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/reactions", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -257,7 +257,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
     <?php
     $url = 'https://api.turbonotify.com/reactions';
     $data = [
-        'to' => '+5511999999999',
+        'to' => ['number' => '+5511999999999'],
         'message_id' => 'msg_abc123',
         'reaction' => null
     ];
@@ -286,7 +286,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
     var client = new HttpClient();
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
-    var json = """{"to": "+5511999999999", "message_id": "msg_abc123", "reaction": null}""";
+    var json = """{"to": {"number": "+5511999999999"}, "message_id": "msg_abc123", "reaction": null}""";
     var content = new StringContent(json, Encoding.UTF8, "application/json");
 
     var response = await client.PostAsync("https://api.turbonotify.com/reactions", content);
@@ -304,7 +304,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
 
             var json = """
                 {
-                    "to": "+5511999999999",
+                    "to": {"number": "+5511999999999"},
                     "message_id": "msg_abc123",
                     "reaction": null
                 }
@@ -349,8 +349,8 @@ curl -X POST \
   -H "Authorization: Bearer SUA_CHAVE" \
   -H "Content-Type: application/json" \
   -d '{
-    "from": "+5511888888888",
-    "to": "+5511999999999",
+    "from": {"alias": "vendas-sp"},
+    "to": {"number": "+5511999999999"},
     "message_id": "msg_abc123",
     "reaction": "🎉"
   }'

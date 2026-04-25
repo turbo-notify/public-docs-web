@@ -21,7 +21,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
       }'
     ```
@@ -35,7 +35,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
+        to: { number: '+5511999999999' },
         text: 'Ola, esta e uma mensagem enviada pelo Turbo Notify!'
       })
     });
@@ -54,7 +54,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
         "Content-Type": "application/json"
     }
     data = {
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
     }
 
@@ -75,7 +75,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     )
 
     func main() {
-        payload := strings.NewReader(`{"to": "+5511999999999", "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"}`)
+        payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/messages", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -91,7 +91,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     <?php
     $url = 'https://api.turbonotify.com/messages';
     $data = [
-        'to' => '+5511999999999',
+        'to' => ['number' => '+5511999999999'],
         'text' => 'Ola, esta e uma mensagem enviada pelo Turbo Notify!'
     ];
 
@@ -122,7 +122,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var data = new {
-        to = "+5511999999999",
+        to = new { number = "+5511999999999" },
         text = "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
     };
 
@@ -148,7 +148,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
 
             var json = """
                 {
-                    "to": "+5511999999999",
+                    "to": {"number": "+5511999999999"},
                     "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
                 }
                 """;
@@ -181,8 +181,8 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "from": "+5511888888888",
-        "to": "+5511999999999",
+        "from": {"alias": "vendas-sp"},
+        "to": {"number": "+5511999999999"},
         "text": "Mensagem enviada a partir de um numero extra."
       }'
     ```
@@ -196,8 +196,8 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: '+5511888888888',
-        to: '+5511999999999',
+        from: { alias: 'vendas-sp' },
+        to: { number: '+5511999999999' },
         text: 'Mensagem enviada a partir de um numero extra.'
       })
     });
@@ -216,8 +216,8 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
         "Content-Type": "application/json"
     }
     data = {
-        "from": "+5511888888888",
-        "to": "+5511999999999",
+        "from": {"alias": "vendas-sp"},
+        "to": {"number": "+5511999999999"},
         "text": "Mensagem enviada a partir de um numero extra."
     }
 
@@ -238,7 +238,7 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
     )
 
     func main() {
-        payload := strings.NewReader(`{"from": "+5511888888888", "to": "+5511999999999", "text": "Mensagem enviada a partir de um numero extra."}`)
+        payload := strings.NewReader(`{"from": {"alias": "vendas-sp"}, "to": {"number": "+5511999999999"}, "text": "Mensagem enviada a partir de um numero extra."}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/messages", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -254,8 +254,8 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
     <?php
     $url = 'https://api.turbonotify.com/messages';
     $data = [
-        'from' => '+5511888888888',
-        'to' => '+5511999999999',
+        'from' => ['alias' => 'vendas-sp'],
+        'to' => ['number' => '+5511999999999'],
         'text' => 'Mensagem enviada a partir de um numero extra.'
     ];
 
@@ -286,8 +286,8 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var data = new {
-        from = "+5511888888888",
-        to = "+5511999999999",
+        from = new { alias = "vendas-sp" },
+        to = new { number = "+5511999999999" },
         text = "Mensagem enviada a partir de um numero extra."
     };
 
@@ -313,8 +313,8 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
 
             var json = """
                 {
-                    "from": "+5511888888888",
-                    "to": "+5511999999999",
+                    "from": {"alias": "vendas-sp"},
+                    "to": {"number": "+5511999999999"},
                     "text": "Mensagem enviada a partir de um numero extra."
                 }
                 """;

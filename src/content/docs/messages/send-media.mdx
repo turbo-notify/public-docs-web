@@ -31,7 +31,7 @@ Forneça uma URL HTTPS acessível publicamente. O Turbo Notify busca o arquivo n
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "content_type": "image",
         "media": {
           "url": "https://cdn.exemplo.com/foto-produto.jpg",
@@ -49,7 +49,7 @@ Forneça uma URL HTTPS acessível publicamente. O Turbo Notify busca o arquivo n
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
+        to: { number: '+5511999999999' },
         content_type: 'image',
         media: {
           url: 'https://cdn.exemplo.com/foto-produto.jpg',
@@ -72,7 +72,7 @@ Forneça uma URL HTTPS acessível publicamente. O Turbo Notify busca o arquivo n
         "Content-Type": "application/json"
     }
     data = {
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "content_type": "image",
         "media": {
             "url": "https://cdn.exemplo.com/foto-produto.jpg",
@@ -98,7 +98,7 @@ Forneça uma URL HTTPS acessível publicamente. O Turbo Notify busca o arquivo n
 
     func main() {
         payload := strings.NewReader(`{
-            "to": "+5511999999999",
+            "to": {"number": "+5511999999999"},
             "content_type": "image",
             "media": {
                 "url": "https://cdn.exemplo.com/foto-produto.jpg",
@@ -120,7 +120,7 @@ Forneça uma URL HTTPS acessível publicamente. O Turbo Notify busca o arquivo n
     <?php
     $url = 'https://api.turbonotify.com/v1/messages';
     $data = [
-        'to' => '+5511999999999',
+        'to' => ['number' => '+5511999999999'],
         'content_type' => 'image',
         'media' => [
             'url' => 'https://cdn.exemplo.com/foto-produto.jpg',
@@ -155,7 +155,7 @@ Forneça uma URL HTTPS acessível publicamente. O Turbo Notify busca o arquivo n
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var data = new {
-        to = "+5511999999999",
+        to = new { number = "+5511999999999" },
         content_type = "image",
         media = new {
             url = "https://cdn.exemplo.com/foto-produto.jpg",
@@ -185,7 +185,7 @@ Forneça uma URL HTTPS acessível publicamente. O Turbo Notify busca o arquivo n
 
             var json = """
                 {
-                    "to": "+5511999999999",
+                    "to": {"number": "+5511999999999"},
                     "content_type": "image",
                     "media": {
                         "url": "https://cdn.exemplo.com/foto-produto.jpg",
@@ -233,7 +233,7 @@ Forneça a chave de um objeto no seu bucket S3 configurado. Esta modalidade exig
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "content_type": "document",
         "media": {
           "s3_object_key": "faturas/2026-04/fatura-00142.pdf",
@@ -251,7 +251,7 @@ Forneça a chave de um objeto no seu bucket S3 configurado. Esta modalidade exig
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
+        to: { number: '+5511999999999' },
         content_type: 'document',
         media: {
           s3_object_key: 'faturas/2026-04/fatura-00142.pdf',
@@ -274,7 +274,7 @@ Forneça a chave de um objeto no seu bucket S3 configurado. Esta modalidade exig
         "Content-Type": "application/json"
     }
     data = {
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "content_type": "document",
         "media": {
             "s3_object_key": "faturas/2026-04/fatura-00142.pdf",
@@ -300,7 +300,7 @@ Forneça a chave de um objeto no seu bucket S3 configurado. Esta modalidade exig
 
     func main() {
         payload := strings.NewReader(`{
-            "to": "+5511999999999",
+            "to": {"number": "+5511999999999"},
             "content_type": "document",
             "media": {
                 "s3_object_key": "faturas/2026-04/fatura-00142.pdf",
@@ -322,7 +322,7 @@ Forneça a chave de um objeto no seu bucket S3 configurado. Esta modalidade exig
     <?php
     $url = 'https://api.turbonotify.com/v1/messages';
     $data = [
-        'to' => '+5511999999999',
+        'to' => ['number' => '+5511999999999'],
         'content_type' => 'document',
         'media' => [
             's3_object_key' => 'faturas/2026-04/fatura-00142.pdf',
@@ -357,7 +357,7 @@ Forneça a chave de um objeto no seu bucket S3 configurado. Esta modalidade exig
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var data = new {
-        to = "+5511999999999",
+        to = new { number = "+5511999999999" },
         content_type = "document",
         media = new {
             s3_object_key = "faturas/2026-04/fatura-00142.pdf",
@@ -387,7 +387,7 @@ Forneça a chave de um objeto no seu bucket S3 configurado. Esta modalidade exig
 
             var json = """
                 {
-                    "to": "+5511999999999",
+                    "to": {"number": "+5511999999999"},
                     "content_type": "document",
                     "media": {
                         "s3_object_key": "faturas/2026-04/fatura-00142.pdf",

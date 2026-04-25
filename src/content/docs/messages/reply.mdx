@@ -186,7 +186,7 @@ Para responder usando um número extra, informe o campo `from` com o número cad
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "from": "+5511888888888",
+        "from": {"alias": "vendas-sp"},
         "text": "Obrigado pela sua mensagem!"
       }'
     ```
@@ -202,7 +202,7 @@ Para responder usando um número extra, informe o campo `from` com o número cad
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: '+5511888888888',
+          from: { alias: 'vendas-sp' },
           text: 'Obrigado pela sua mensagem!'
         })
       }
@@ -222,7 +222,7 @@ Para responder usando um número extra, informe o campo `from` com o número cad
         "Content-Type": "application/json"
     }
     data = {
-        "from": "+5511888888888",
+        "from": {"alias": "vendas-sp"},
         "text": "Obrigado pela sua mensagem!"
     }
 
@@ -243,7 +243,7 @@ Para responder usando um número extra, informe o campo `from` com o número cad
     )
 
     func main() {
-        payload := strings.NewReader(`{"from": "+5511888888888", "text": "Obrigado pela sua mensagem!"}`)
+        payload := strings.NewReader(`{"from": {"alias": "vendas-sp"}, "text": "Obrigado pela sua mensagem!"}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/messages/msg_abc123/reply", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -259,7 +259,7 @@ Para responder usando um número extra, informe o campo `from` com o número cad
     <?php
     $url = 'https://api.turbonotify.com/messages/msg_abc123/reply';
     $data = [
-        'from' => '+5511888888888',
+        'from' => ['alias' => 'vendas-sp'],
         'text' => 'Obrigado pela sua mensagem!'
     ];
 
@@ -290,7 +290,7 @@ Para responder usando um número extra, informe o campo `from` com o número cad
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var data = new {
-        from = "+5511888888888",
+        from = new { alias = "vendas-sp" },
         text = "Obrigado pela sua mensagem!"
     };
 
@@ -316,7 +316,7 @@ Para responder usando um número extra, informe o campo `from` com o número cad
 
             var json = """
                 {
-                    "from": "+5511888888888",
+                    "from": {"alias": "vendas-sp"},
                     "text": "Obrigado pela sua mensagem!"
                 }
                 """;
