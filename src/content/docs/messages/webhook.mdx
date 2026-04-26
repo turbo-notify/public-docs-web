@@ -117,7 +117,7 @@ Toda requisição de webhook segue a mesma estrutura base:
 
 ## Tipos de evento
 
-O catálogo público é fechado — seu endpoint só recebe os eventos listados aqui.
+O catálogo público é fechado — seu endpoint só recebe os 22 eventos listados aqui.
 
 ### Mensagens — ciclo de envio
 
@@ -153,12 +153,83 @@ O catálogo público é fechado — seu endpoint só recebe os eventos listados 
 | `number.remove.canceled`      | Exclusão agendada foi cancelada.                                  |
 | `number.removed`              | Número extra foi removido.                                        |
 
-### Operacionais
+### Armazenamento e mídia
+
+Eventos relacionados à integração BYO Object Storage (AWS S3, Cloudflare R2, Supabase Storage) e à disponibilidade de mídia recebida.
+
+:::note
+Estes eventos são **provider-agnostic**: o payload é o mesmo independentemente do vendor configurado (AWS S3, Cloudflare R2 ou Supabase Storage). O protocolo de transporte é sempre a S3 HTTP API.
+:::
+
+:::caution[Mensagens recebidas com mídia — entrega só após resolução do upload]
+Para mensagens **inbound com mídia** (imagem, vídeo, áudio, documento, sticker), o webhook `message.received` só é enviado depois que o upload chega a um estado *terminal* para o seu tenant — bytes salvos no seu bucket BYO (`media.storage = "tenant_storage"`), fallback intencional para a URL direta do WhatsApp (`media.storage = "whatsapp_direct"`), ou falha permanente sinalizada por `media.unavailable`.
+
+Em caso de falha transitória de upload (rede, 5xx do storage, etc.), Turbo Notify faz retry em background e só então decide o desfecho. Você nunca verá um `message.received` com `media.storage = "whatsapp_direct"` apenas porque um retry ainda está em andamento.
+
+Se os retries esgotarem ou a janela de 24 h do WhatsApp expirar, **o `message.received` daquela mensagem é intencionalmente suprimido** e você recebe `media.unavailable` no lugar — enviar um webhook de mensagem recebida cujos bytes estão perdidos seria enganoso. Use `media.unavailable` como sinal definitivo de que aquela mídia não pôde ser entregue.
+:::
+
+#### Saúde do storage
 
 | Tipo                          | Quando é emitido                                                  |
 | ----------------------------- | ----------------------------------------------------------------- |
-| `message.media.unavailable`   | Mídia de mensagem recebida não está mais disponível (TTL do WhatsApp expirado ou upload BYO falhou). |
-| `integration.s3.degraded`     | Integração BYO object storage (S3/R2) está degradada.             |
+| `storage.degraded`            | Falhas consecutivas na integração BYO Object Storage abriram o circuito. |
+| `storage.recovered`           | Primeira operação bem-sucedida após o circuito ter sido aberto — operação normal restabelecida. |
+
+#### Disponibilidade de mídia
+
+| Tipo                          | Quando é emitido                                                  |
+| ----------------------------- | ----------------------------------------------------------------- |
+| `media.unavailable`           | Mídia de mensagem recebida não está mais disponível (TTL do WhatsApp expirado ou upload BYO falhou). |
+
+#### Exemplo — `storage.degraded`
+
+```json title="webhook-payload.json"
+{
+  "id": "evt_storage_deg_abc123def4567890",
+  "type": "storage.degraded",
+  "timestamp": "2026-04-25T10:00:00Z",
+  "data": {
+    "reason": "upload_failed",
+    "consecutive_failures": 5,
+    "since": "2026-04-25T10:00:00Z",
+    "error_code": "access_denied",
+    "affected_messages_count": 3
+  }
+}
+```
+
+#### Exemplo — `storage.recovered`
+
+```json title="webhook-payload.json"
+{
+  "id": "evt_storage_rec_def789abc2345678",
+  "type": "storage.recovered",
+  "timestamp": "2026-04-25T10:08:00Z",
+  "data": {
+    "recovered_at": "2026-04-25T10:08:00Z",
+    "degraded_since": "2026-04-25T10:00:00Z",
+    "duration_seconds": 480
+  }
+}
+```
+
+#### Exemplo — `media.unavailable`
+
+```json title="webhook-payload.json"
+{
+  "id": "evt_media_unav_ghi456jkl7890123",
+  "type": "media.unavailable",
+  "timestamp": "2026-04-25T11:15:30Z",
+  "data": {
+    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "content_type": "image",
+    "direction": "inbound",
+    "reason": "whatsapp_ttl_expired",
+    "preview": "Foto"
+  }
+}
+```
 
 ## Mapeamento de operações assíncronas
 
