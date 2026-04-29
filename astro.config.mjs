@@ -72,11 +72,6 @@ export default defineConfig({
               translations: { en: 'Webhook', es: 'Webhook' },
             },
             {
-              slug: 'messages/reply',
-              label: 'Resposta',
-              translations: { en: 'Reply', es: 'Respuesta' },
-            },
-            {
               slug: 'messages/retention',
               label: 'Retenção',
               translations: { en: 'Retention', es: 'Retención' },

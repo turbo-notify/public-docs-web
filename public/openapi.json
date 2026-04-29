@@ -243,75 +243,6 @@
         }
       }
     },
-    "/v1/messages/{message_id}/reply": {
-      "post": {
-        "tags": [
-          "Messages"
-        ],
-        "summary": "Reply To Message",
-        "description": "Send a reply quoting an existing message.\n\nReturns 202 Accepted. Delivered/read status via webhook (message.delivered, message.read).",
-        "operationId": "reply_to_message_v1_messages__message_id__reply_post",
-        "parameters": [
-          {
-            "name": "message_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Message Id"
-            }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Idempotency-Key"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReplyMessageRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReplyMessageResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/requests/{request_id}": {
       "get": {
         "tags": [
@@ -925,49 +856,6 @@
         ],
         "title": "ReactionStatusPayload"
       },
-      "ReplyMessageRequest": {
-        "properties": {
-          "text": {
-            "type": "string",
-            "maxLength": 65536,
-            "minLength": 1,
-            "title": "Text"
-          },
-          "from": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "From"
-          }
-        },
-        "type": "object",
-        "required": [
-          "text"
-        ],
-        "title": "ReplyMessageRequest"
-      },
-      "ReplyMessageResponse": {
-        "properties": {
-          "request_id": {
-            "type": "string",
-            "title": "Request Id"
-          },
-          "status": {
-            "$ref": "#/components/schemas/MessageStatusPayload"
-          }
-        },
-        "type": "object",
-        "required": [
-          "request_id",
-          "status"
-        ],
-        "title": "ReplyMessageResponse"
-      },
       "RequestEventItem": {
         "properties": {
           "type": {
@@ -1012,6 +900,19 @@
               }
             ],
             "title": "From"
+          },
+          "reply_to_message_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^msg_[0-9a-f]{32}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reply To Message Id",
+            "description": "Optional public id of the message being quoted (msg_{hex32}). When set, the resulting webhook is `message.replied` (instead of `message.sent`); failures route to `message.reply.failed`."
           }
         },
         "type": "object",

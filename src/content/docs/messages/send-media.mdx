@@ -7,42 +7,60 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 import DashboardLink from '@components/DashboardLink.astro';
 
-O Turbo Notify suporta envio de mensagens de mídia: imagens, áudios, vídeos, documentos e figurinhas. Existem duas formas de fornecer o arquivo: por **URL pública** ou por **chave de objeto S3** (requer integração BYO S3 configurada).
+Mídia (imagens, áudios, vídeos, documentos e figurinhas) é enviada
+pelo mesmo endpoint `POST /v1/messages` usado para texto. Cada tipo é
+uma variante do `content` discriminado por `content_type`.
+
+:::caution[Implementação em progresso]
+O contrato HTTP é final, mas o upload outbound de mídia para o
+WhatsApp está em finalização (gateway neonize). Requests para os 5
+tipos de mídia abaixo são aceitos pela API e geram `message_id`, mas
+o worker pode retornar `message.send.failed` com `whatsapp_send_failed`
+até o release que completa o gateway. Acompanhe o webhook
+`message.sent` para confirmar o envio.
+:::
 
 ## Tipos de mídia suportados
 
-| `content_type` | Formatos comuns | Tamanho máximo |
-| -------------- | --------------- | :------------: |
-| `image` | JPEG, PNG, WebP | 16 MB |
-| `audio` | MP3, OGG, M4A | 16 MB |
-| `video` | MP4 | 100 MB |
-| `document` | PDF, DOCX, XLSX, etc. | 100 MB |
-| `sticker` | WebP animado | 500 KB |
+| `content_type` | Formatos comuns | Tamanho máximo | `caption`? | `filename`? |
+| -------------- | --------------- | :------------: | :--------: | :---------: |
+| `image` | JPEG, PNG, WebP | 16 MB | ✓ | — |
+| `video` | MP4 | 100 MB | ✓ | — |
+| `audio` | MP3, OGG, M4A | 16 MB | — | — |
+| `document` | PDF, DOCX, XLSX, etc. | 100 MB | ✓ | ✓ |
+| `sticker` | WebP animado | 500 KB | — | — |
 
-## Modalidade 1 — URL pública
+`caption` é descartado server-side em `audio` e `sticker` — o WhatsApp
+ignora o campo nesses tipos.
 
-Forneça uma URL HTTPS acessível publicamente. O Turbo Notify busca o arquivo no servidor antes de entregar ao WhatsApp.
+## Modalidade — URL pública
+
+Forneça uma URL HTTPS acessível publicamente. O Turbo Notify busca o
+arquivo antes de entregar ao WhatsApp.
+
+### Imagem
 
 <Tabs>
   <TabItem label="cURL">
-    ```bash title="envio-midia-url.sh"
+    ```bash title="send-image.sh"
     curl -X POST \
       https://api.turbonotify.com/v1/messages \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
         "to": {"number": "+5511999999999"},
-        "content_type": "image",
-        "media": {
+        "content": {
+          "content_type": "image",
           "url": "https://cdn.exemplo.com/foto-produto.jpg",
+          "mime_type": "image/jpeg",
           "caption": "Foto do produto"
         }
       }'
     ```
   </TabItem>
   <TabItem label="Node">
-    ```js title="envio-midia-url.js"
-    const response = await fetch('https://api.turbonotify.com/v1/messages', {
+    ```js title="send-image.js"
+    await fetch('https://api.turbonotify.com/v1/messages', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE',
@@ -50,201 +68,63 @@ Forneça uma URL HTTPS acessível publicamente. O Turbo Notify busca o arquivo n
       },
       body: JSON.stringify({
         to: { number: '+5511999999999' },
-        content_type: 'image',
-        media: {
+        content: {
+          content_type: 'image',
           url: 'https://cdn.exemplo.com/foto-produto.jpg',
+          mime_type: 'image/jpeg',
           caption: 'Foto do produto'
         }
       })
     });
-
-    const result = await response.json();
-    console.log(result);
     ```
   </TabItem>
   <TabItem label="Python">
-    ```python title="envio_midia_url.py"
+    ```python title="send_image.py"
     import requests
 
-    url = "https://api.turbonotify.com/v1/messages"
-    headers = {
-        "Authorization": "Bearer SUA_CHAVE",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "to": {"number": "+5511999999999"},
-        "content_type": "image",
-        "media": {
-            "url": "https://cdn.exemplo.com/foto-produto.jpg",
-            "caption": "Foto do produto"
-        }
-    }
-
-    response = requests.post(url, json=data, headers=headers)
-    result = response.json()
-    print(result)
-    ```
-  </TabItem>
-  <TabItem label="Go">
-    ```go title="envio_midia_url.go"
-    package main
-
-    import (
-        "fmt"
-        "io"
-        "net/http"
-        "strings"
-    )
-
-    func main() {
-        payload := strings.NewReader(`{
-            "to": {"number": "+5511999999999"},
-            "content_type": "image",
-            "media": {
-                "url": "https://cdn.exemplo.com/foto-produto.jpg",
-                "caption": "Foto do produto"
-            }
-        }`)
-        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/messages", payload)
-        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
-        req.Header.Set("Content-Type", "application/json")
-        resp, _ := http.DefaultClient.Do(req)
-        defer resp.Body.Close()
-        body, _ := io.ReadAll(resp.Body)
-        fmt.Println(string(body))
-    }
-    ```
-  </TabItem>
-  <TabItem label="PHP">
-    ```php title="envio-midia-url.php"
-    <?php
-    $url = 'https://api.turbonotify.com/v1/messages';
-    $data = [
-        'to' => ['number' => '+5511999999999'],
-        'content_type' => 'image',
-        'media' => [
-            'url' => 'https://cdn.exemplo.com/foto-produto.jpg',
-            'caption' => 'Foto do produto'
-        ]
-    ];
-
-    $options = [
-        'http' => [
-            'header' => [
-                'Authorization: Bearer SUA_CHAVE',
-                'Content-Type: application/json'
-            ],
-            'method' => 'POST',
-            'content' => json_encode($data)
-        ]
-    ];
-
-    $context = stream_context_create($options);
-    $result = file_get_contents($url, false, $context);
-    $response = json_decode($result, true);
-    var_dump($response);
-    ?>
-    ```
-  </TabItem>
-  <TabItem label="C#">
-    ```csharp title="EnvioMidiaUrl.cs"
-    using System.Text;
-    using System.Text.Json;
-
-    var client = new HttpClient();
-    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
-
-    var data = new {
-        to = new { number = "+5511999999999" },
-        content_type = "image",
-        media = new {
-            url = "https://cdn.exemplo.com/foto-produto.jpg",
-            caption = "Foto do produto"
-        }
-    };
-
-    var json = JsonSerializer.Serialize(data);
-    var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-    var response = await client.PostAsync(
+    requests.post(
         "https://api.turbonotify.com/v1/messages",
-        content
-    );
-    var result = await response.Content.ReadAsStringAsync();
-    Console.WriteLine(result);
-    ```
-  </TabItem>
-  <TabItem label="Java">
-    ```java title="EnvioMidiaUrl.java"
-    import java.net.http.*;
-    import java.net.URI;
-
-    public class EnvioMidiaUrl {
-        public static void main(String[] args) throws Exception {
-            var client = HttpClient.newHttpClient();
-
-            var json = """
-                {
-                    "to": {"number": "+5511999999999"},
-                    "content_type": "image",
-                    "media": {
-                        "url": "https://cdn.exemplo.com/foto-produto.jpg",
-                        "caption": "Foto do produto"
-                    }
-                }
-                """;
-
-            var request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.turbonotify.com/v1/messages"))
-                .header("Authorization", "Bearer SUA_CHAVE")
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .build();
-
-            var response = client.send(request,
-                HttpResponse.BodyHandlers.ofString());
-            System.out.println(response.body());
-        }
-    }
+        headers={
+            "Authorization": "Bearer SUA_CHAVE",
+            "Content-Type": "application/json",
+        },
+        json={
+            "to": {"number": "+5511999999999"},
+            "content": {
+                "content_type": "image",
+                "url": "https://cdn.exemplo.com/foto-produto.jpg",
+                "mime_type": "image/jpeg",
+                "caption": "Foto do produto",
+            },
+        },
+    )
     ```
   </TabItem>
 </Tabs>
 
-### Restrição SSRF
-
-A URL fornecida deve apontar para um servidor público. As seguintes origens são bloqueadas por segurança:
-
-- IPs privados: `10.x.x.x`, `172.16–31.x.x`, `192.168.x.x`, `127.x.x.x`
-- Metadata AWS: `169.254.169.254`
-- Metadata GCP: `metadata.google.internal`
-- Qualquer esquema diferente de `https://`
-
-Tentativas de usar URLs bloqueadas retornam `422 media_url_blocked`.
-
-## Modalidade 2 — Chave de objeto S3
-
-Forneça a chave de um objeto no seu bucket S3 configurado. Esta modalidade exige que a <DashboardLink path="/settings/integrations/storage">integração de Object Storage</DashboardLink> esteja ativa na sua conta.
+### Vídeo
 
 <Tabs>
   <TabItem label="cURL">
-    ```bash title="envio-midia-s3.sh"
+    ```bash title="send-video.sh"
     curl -X POST \
       https://api.turbonotify.com/v1/messages \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
         "to": {"number": "+5511999999999"},
-        "content_type": "document",
-        "media": {
-          "s3_object_key": "faturas/2026-04/fatura-00142.pdf",
-          "caption": "Fatura de abril"
+        "content": {
+          "content_type": "video",
+          "url": "https://cdn.exemplo.com/clip-produto.mp4",
+          "mime_type": "video/mp4",
+          "caption": "Veja o vídeo"
         }
       }'
     ```
   </TabItem>
   <TabItem label="Node">
-    ```js title="envio-midia-s3.js"
-    const response = await fetch('https://api.turbonotify.com/v1/messages', {
+    ```js title="send-video.js"
+    await fetch('https://api.turbonotify.com/v1/messages', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE',
@@ -252,201 +132,292 @@ Forneça a chave de um objeto no seu bucket S3 configurado. Esta modalidade exig
       },
       body: JSON.stringify({
         to: { number: '+5511999999999' },
-        content_type: 'document',
-        media: {
-          s3_object_key: 'faturas/2026-04/fatura-00142.pdf',
-          caption: 'Fatura de abril'
+        content: {
+          content_type: 'video',
+          url: 'https://cdn.exemplo.com/clip-produto.mp4',
+          mime_type: 'video/mp4',
+          caption: 'Veja o vídeo'
         }
       })
     });
-
-    const result = await response.json();
-    console.log(result);
     ```
   </TabItem>
   <TabItem label="Python">
-    ```python title="envio_midia_s3.py"
+    ```python title="send_video.py"
     import requests
 
-    url = "https://api.turbonotify.com/v1/messages"
-    headers = {
-        "Authorization": "Bearer SUA_CHAVE",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "to": {"number": "+5511999999999"},
-        "content_type": "document",
-        "media": {
-            "s3_object_key": "faturas/2026-04/fatura-00142.pdf",
-            "caption": "Fatura de abril"
-        }
-    }
-
-    response = requests.post(url, json=data, headers=headers)
-    result = response.json()
-    print(result)
-    ```
-  </TabItem>
-  <TabItem label="Go">
-    ```go title="envio_midia_s3.go"
-    package main
-
-    import (
-        "fmt"
-        "io"
-        "net/http"
-        "strings"
-    )
-
-    func main() {
-        payload := strings.NewReader(`{
-            "to": {"number": "+5511999999999"},
-            "content_type": "document",
-            "media": {
-                "s3_object_key": "faturas/2026-04/fatura-00142.pdf",
-                "caption": "Fatura de abril"
-            }
-        }`)
-        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/messages", payload)
-        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
-        req.Header.Set("Content-Type", "application/json")
-        resp, _ := http.DefaultClient.Do(req)
-        defer resp.Body.Close()
-        body, _ := io.ReadAll(resp.Body)
-        fmt.Println(string(body))
-    }
-    ```
-  </TabItem>
-  <TabItem label="PHP">
-    ```php title="envio-midia-s3.php"
-    <?php
-    $url = 'https://api.turbonotify.com/v1/messages';
-    $data = [
-        'to' => ['number' => '+5511999999999'],
-        'content_type' => 'document',
-        'media' => [
-            's3_object_key' => 'faturas/2026-04/fatura-00142.pdf',
-            'caption' => 'Fatura de abril'
-        ]
-    ];
-
-    $options = [
-        'http' => [
-            'header' => [
-                'Authorization: Bearer SUA_CHAVE',
-                'Content-Type: application/json'
-            ],
-            'method' => 'POST',
-            'content' => json_encode($data)
-        ]
-    ];
-
-    $context = stream_context_create($options);
-    $result = file_get_contents($url, false, $context);
-    $response = json_decode($result, true);
-    var_dump($response);
-    ?>
-    ```
-  </TabItem>
-  <TabItem label="C#">
-    ```csharp title="EnvioMidiaS3.cs"
-    using System.Text;
-    using System.Text.Json;
-
-    var client = new HttpClient();
-    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
-
-    var data = new {
-        to = new { number = "+5511999999999" },
-        content_type = "document",
-        media = new {
-            s3_object_key = "faturas/2026-04/fatura-00142.pdf",
-            caption = "Fatura de abril"
-        }
-    };
-
-    var json = JsonSerializer.Serialize(data);
-    var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-    var response = await client.PostAsync(
+    requests.post(
         "https://api.turbonotify.com/v1/messages",
-        content
-    );
-    var result = await response.Content.ReadAsStringAsync();
-    Console.WriteLine(result);
-    ```
-  </TabItem>
-  <TabItem label="Java">
-    ```java title="EnvioMidiaS3.java"
-    import java.net.http.*;
-    import java.net.URI;
-
-    public class EnvioMidiaS3 {
-        public static void main(String[] args) throws Exception {
-            var client = HttpClient.newHttpClient();
-
-            var json = """
-                {
-                    "to": {"number": "+5511999999999"},
-                    "content_type": "document",
-                    "media": {
-                        "s3_object_key": "faturas/2026-04/fatura-00142.pdf",
-                        "caption": "Fatura de abril"
-                    }
-                }
-                """;
-
-            var request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.turbonotify.com/v1/messages"))
-                .header("Authorization", "Bearer SUA_CHAVE")
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .build();
-
-            var response = client.send(request,
-                HttpResponse.BodyHandlers.ofString());
-            System.out.println(response.body());
-        }
-    }
+        headers={
+            "Authorization": "Bearer SUA_CHAVE",
+            "Content-Type": "application/json",
+        },
+        json={
+            "to": {"number": "+5511999999999"},
+            "content": {
+                "content_type": "video",
+                "url": "https://cdn.exemplo.com/clip-produto.mp4",
+                "mime_type": "video/mp4",
+                "caption": "Veja o vídeo",
+            },
+        },
+    )
     ```
   </TabItem>
 </Tabs>
 
-## Campos da requisição
+### Áudio
 
-| Campo | Tipo | Obrigatório | Descrição |
-| ----- | ---- | :---------: | --------- |
-| `to` | string | Sim | Número do destinatário com DDI |
-| `content_type` | string | Sim | `image`, `audio`, `video`, `document` ou `sticker` |
-| `media.url` | string | Condicional | URL HTTPS pública. Exclusivo com `s3_object_key` |
-| `media.s3_object_key` | string | Condicional | Chave do objeto no bucket S3 configurado. Exclusivo com `url` |
-| `media.caption` | string | Não | Legenda exibida abaixo da mídia. Máximo 1024 caracteres. Não suportado em `audio` e `sticker` |
-| `from` | string | Não | Telefone ou alias de um número extra |
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="send-audio.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/messages \
+      -H "Authorization: Bearer SUA_CHAVE" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": {"number": "+5511999999999"},
+        "content": {
+          "content_type": "audio",
+          "url": "https://cdn.exemplo.com/voice-note.ogg",
+          "mime_type": "audio/ogg"
+        }
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="send-audio.js"
+    await fetch('https://api.turbonotify.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer SUA_CHAVE',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: { number: '+5511999999999' },
+        content: {
+          content_type: 'audio',
+          url: 'https://cdn.exemplo.com/voice-note.ogg',
+          mime_type: 'audio/ogg'
+        }
+      })
+    });
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="send_audio.py"
+    import requests
 
-Exatamente um dos campos `media.url` ou `media.s3_object_key` deve ser fornecido.
+    requests.post(
+        "https://api.turbonotify.com/v1/messages",
+        headers={
+            "Authorization": "Bearer SUA_CHAVE",
+            "Content-Type": "application/json",
+        },
+        json={
+            "to": {"number": "+5511999999999"},
+            "content": {
+                "content_type": "audio",
+                "url": "https://cdn.exemplo.com/voice-note.ogg",
+                "mime_type": "audio/ogg",
+            },
+        },
+    )
+    ```
+  </TabItem>
+</Tabs>
 
-## Resposta de sucesso
+`mime_type` para voice notes geralmente é `audio/ogg`; para músicas
+use `audio/mpeg` ou `audio/mp4`.
 
-<ApiResponse
-  status={202}
-  body={{
-    message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
-    status: { state: 'pending', at: '2026-04-21T10:00:00Z' },
-  }}
-/>
+### Documento
 
-O resultado final é entregue de forma assíncrona via webhook com os eventos `message.sent` ou `message.send.failed`.
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="send-document.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/messages \
+      -H "Authorization: Bearer SUA_CHAVE" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": {"number": "+5511999999999"},
+        "content": {
+          "content_type": "document",
+          "url": "https://cdn.exemplo.com/fatura.pdf",
+          "mime_type": "application/pdf",
+          "filename": "Fatura-Abril.pdf",
+          "caption": "Sua fatura do mês de abril"
+        }
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="send-document.js"
+    await fetch('https://api.turbonotify.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer SUA_CHAVE',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: { number: '+5511999999999' },
+        content: {
+          content_type: 'document',
+          url: 'https://cdn.exemplo.com/fatura.pdf',
+          mime_type: 'application/pdf',
+          filename: 'Fatura-Abril.pdf',
+          caption: 'Sua fatura do mês de abril'
+        }
+      })
+    });
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="send_document.py"
+    import requests
 
-## Erros possíveis
+    requests.post(
+        "https://api.turbonotify.com/v1/messages",
+        headers={
+            "Authorization": "Bearer SUA_CHAVE",
+            "Content-Type": "application/json",
+        },
+        json={
+            "to": {"number": "+5511999999999"},
+            "content": {
+                "content_type": "document",
+                "url": "https://cdn.exemplo.com/fatura.pdf",
+                "mime_type": "application/pdf",
+                "filename": "Fatura-Abril.pdf",
+                "caption": "Sua fatura do mês de abril",
+            },
+        },
+    )
+    ```
+  </TabItem>
+</Tabs>
 
-| Status | Código de erro | Descrição |
-| :----: | -------------- | --------- |
-| `400` | `invalid_json` | O JSON da requisição está malformado ou inválido. |
-| `403` | `not_authorized` | A chave de acesso está inválida ou ausente. |
-| `422` | `media_url_blocked` | A URL aponta para um host bloqueado (proteção SSRF). |
-| `413` | `media_too_large` | O arquivo ultrapassa o limite para este tipo de conteúdo. |
-| `422` | `byo_s3_not_configured` | `media.s3_object_key` foi fornecido mas nenhuma integração S3 está configurada. |
-| `422` | `sender_not_authorized` | O campo `from` não está ativo na conta. |
-| `429` | `rate_limit_exceeded` | Limite de envio do plano ultrapassado. |
-| `500` | `internal_error` | Erro interno inesperado no servidor. |
-| `503` | `whatsapp_unavailable` | O WhatsApp está temporariamente fora do ar. |
+`filename` aparece como o nome do anexo no chat do destinatário.
+
+### Figurinha (sticker)
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="send-sticker.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/messages \
+      -H "Authorization: Bearer SUA_CHAVE" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": {"number": "+5511999999999"},
+        "content": {
+          "content_type": "sticker",
+          "url": "https://cdn.exemplo.com/sticker-animado.webp",
+          "mime_type": "image/webp"
+        }
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="send-sticker.js"
+    await fetch('https://api.turbonotify.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer SUA_CHAVE',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: { number: '+5511999999999' },
+        content: {
+          content_type: 'sticker',
+          url: 'https://cdn.exemplo.com/sticker-animado.webp',
+          mime_type: 'image/webp'
+        }
+      })
+    });
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="send_sticker.py"
+    import requests
+
+    requests.post(
+        "https://api.turbonotify.com/v1/messages",
+        headers={
+            "Authorization": "Bearer SUA_CHAVE",
+            "Content-Type": "application/json",
+        },
+        json={
+            "to": {"number": "+5511999999999"},
+            "content": {
+                "content_type": "sticker",
+                "url": "https://cdn.exemplo.com/sticker-animado.webp",
+                "mime_type": "image/webp",
+            },
+        },
+    )
+    ```
+  </TabItem>
+</Tabs>
+
+Stickers devem ser WebP animados (formato exigido pelo WhatsApp) e
+respeitar o limite de 500 KB.
+
+## Esquema de campos (todos os tipos)
+
+| Campo | Tipo | Obrigatório | Notas |
+|---|---|---|---|
+| `content.content_type` | enum | sim | `image` / `video` / `audio` / `document` / `sticker` |
+| `content.url` | URL | sim | apenas `http://` / `https://` |
+| `content.mime_type` | string | não | recomendado; o worker pode inferir do `Content-Type` da resposta |
+| `content.caption` | string | parcial | aceito em `image`, `video`, `document`; **descartado** em `audio` e `sticker` |
+| `content.filename` | string | não | apenas em `document`; aparece como nome do anexo no chat |
+
+## Resposta
+
+```json title="response.json"
+{
+  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e8f90",
+  "status": {
+    "state": "pending",
+    "at": "2026-04-27T10:00:05.123456+00:00",
+    "reason": null
+  }
+}
+```
+
+A confirmação real chega via webhook `message.sent`. Em caso de falha
+(URL inacessível, formato não suportado, tamanho excedido) você recebe
+`message.send.failed` com `error_code` específico.
+
+## Webhook outbound
+
+Quando o envio é confirmado pelo WhatsApp, o webhook `message.sent`
+carrega `content_type` e `preview` (mesmo shape de `message.received`):
+
+```json title="webhook-message-sent.json"
+{
+  "id": "evt_abc123def456789012345678",
+  "type": "message.sent",
+  "request_id": "req_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "timestamp": "2026-04-27T10:00:08Z",
+  "data": {
+    "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e8f90",
+    "from": { "number": "5511999990001", "alias": "main" },
+    "to":   { "number": "5511999999999" },
+    "content_type": "image",
+    "preview": "Foto do produto",
+    "sent_at": "2026-04-27T10:00:08Z"
+  }
+}
+```
+
+Para baixar o arquivo de uma mídia recebida, consulte
+[`GET /v1/messages/{id}`](/messages/get/) — o body inclui `media.url`
+com URL pré-assinada (BYO Object Storage) ou URL direta da WhatsApp.
+
+## Relacionado
+
+- [Envio de mensagens](/messages/send/) — texto, localização, contato, calendário (mesmo endpoint).
+- [Webhook outbound](/messages/webhook/) — payloads de `message.sent` e `message.delivered`.
+- [Recuperar mensagem](/messages/get/) — obter o body completo, inclusive mídia.

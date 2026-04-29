@@ -12,13 +12,25 @@ O Turbo Notify notifica seu sistema sobre eventos — envio confirmado, entrega,
 
 Para começar a receber eventos, cadastre a URL do seu webhook no <DashboardLink path="/webhook">Dashboard</DashboardLink>. A URL deve ser pública, acessível via HTTPS e responder com status `2xx` dentro de 5 segundos.
 
+:::tip[Inspecione e aprenda em tempo real]
+Antes de plugar o webhook na sua aplicação, abra o <ExternalLink href="https://webhook.turbonotify.com">Webhook Inspector</ExternalLink> e cadastre a URL gerada. O Inspector recebe cada delivery em tempo real (via WebSocket), exibe headers/body completos, valida a assinatura HMAC interativamente e sugere a próxima chamada REST típica para cada tipo de evento (`message.received` → `GET /v1/messages/{id}`).
+:::
+
 ## Privacidade
 
 Recomendamos que sua URL de webhook não exponha informações sensíveis, como chaves de acesso ou identificadores internos. Use caminhos genéricos e valide a autenticidade da requisição pelo cabeçalho de assinatura.
 
 ## Segurança
 
-Toda requisição de webhook enviada pelo Turbo Notify inclui os cabeçalhos `X-Webhook-Signature` e `X-Webhook-Timestamp` com uma assinatura HMAC SHA-256. Utilize essa assinatura para garantir que a requisição foi realmente enviada pelo Turbo Notify e não por terceiros.
+Toda requisição de webhook enviada pelo Turbo Notify inclui os cabeçalhos abaixo. Utilize a assinatura para garantir que a requisição foi realmente enviada pelo Turbo Notify e não por terceiros.
+
+| Header | Descrição |
+|--------|-----------|
+| `X-Webhook-Signature` | `sha256=<hex>` — HMAC-SHA256 de `{X-Webhook-Timestamp}.{raw_body}` com seu segredo. |
+| `X-Webhook-Timestamp` | Unix epoch (segundos) — utilize para rejeitar deliveries com mais de ~5 minutos (proteção contra replay). |
+| `X-Webhook-Attempt` | Número da tentativa atual (começa em 1, incrementa nos retries). |
+| `X-Webhook-Max-Attempts` | Total de tentativas que o Turbo Notify fará antes de desistir. |
+| `User-Agent` | `TurboNotify-Webhook/1.0` — útil para WAF allowlists. |
 
 O segredo para validação está disponível no <DashboardLink path="/webhook">Dashboard</DashboardLink>, na mesma seção onde você cadastra a URL.
 
@@ -88,12 +100,19 @@ Toda requisição de webhook segue a mesma estrutura base:
     "message_id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
     "from": { "number": "5511999990001", "alias": "main" },
     "to":   { "number": "5511999990002" },
+    "content_type": "text",
+    "preview": "Sua mensagem...",
     "sent_at": "2026-04-22T10:00:05Z"
   }
 }
 ```
 
 `from.alias` é sempre preenchido. Use `"main"` para identificar o número principal ou o alias do número extra (ex.: `"vendas-sp"`).
+
+`content_type` e `preview` espelham `message.received` — `text`,
+`image`, `audio`, `video`, `document`, `sticker`, `location`,
+`contact` ou `calendar`. Para o body completo (vCard, coordenadas,
+descrição do evento, etc.), faça `GET /v1/messages/{message_id}`.
 
 ### Exemplo — `message.received` (inbound)
 
@@ -115,24 +134,343 @@ Toda requisição de webhook segue a mesma estrutura base:
 
 `from.name` traz o nome de exibição que o contato configurou no WhatsApp (push name); o campo é omitido quando o contato não definiu nenhum. `to.alias` resolve para `"main"` quando a mensagem chegou no número principal ou para o alias do número extra que recebeu.
 
+### Exemplo — `message.replied` (inbound/outbound)
+
+Disponível desde 2026-04-28. Replies (mensagens que citam outra) são entregues como evento dedicado em vez de `message.sent`/`message.received`. Carrega qualquer `content_type` (text/image/video/audio/document/sticker/location/contact/calendar) — o tipo real do conteúdo é preservado, e a discriminação como reply vem do campo `quoted_message_id` (sempre presente neste evento).
+
+```json title="message.replied (inbound)"
+{
+  "id": "evt_replied_inbound",
+  "type": "message.replied",
+  "timestamp": "2026-04-28T10:00:00Z",
+  "data": {
+    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "direction": "inbound",
+    "from": { "number": "5511777777777", "name": "João Silva" },
+    "to":   { "number": "5511999990001", "alias": "main" },
+    "content_type": "text",
+    "preview": "Sim, é esse pedido mesmo!",
+    "replied_at": "2026-04-28T10:00:00Z",
+    "quoted_message_id": "msg_99887766554433221100ffeeddccbbaa"
+  }
+}
+```
+
+```json title="message.replied (outbound — enviado via API)"
+{
+  "id": "evt_replied_outbound",
+  "type": "message.replied",
+  "timestamp": "2026-04-28T10:01:00Z",
+  "request_id": "req_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "data": {
+    "message_id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
+    "direction": "outbound",
+    "from": { "number": "5511999990001", "alias": "main" },
+    "to":   { "number": "5511777777777" },
+    "content_type": "text",
+    "preview": "Sem problemas, vou conferir.",
+    "replied_at": "2026-04-28T10:01:00Z",
+    "quoted_message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
+  }
+}
+```
+
+Para responder uma mensagem via API, envie `POST /v1/messages` com `reply_to_message_id` apontando para a mensagem citada (qualquer mensagem do chat, inbound ou outbound). Veja [/messages/send/](/messages/send/).
+
+`quoted_message_id` é sempre o id público (`msg_{hex32}`) da mensagem citada. Use `GET /v1/messages/{quoted_message_id}` para recuperar o conteúdo completo da mensagem original.
+
+### Exemplo — `message.delivered` / `message.read` (receipt inbound)
+
+Receipts são sempre **inbound** — o peer A confirma a entrega/leitura de uma mensagem que o seu número (B) enviou. O evento carrega `direction: "inbound"`, party shape inbound (peer no `from`, seu número no `to`) e snapshot do conteúdo original (`content_type` + `preview`) para facilitar debug sem `GET /v1/messages/{id}` extra.
+
+```json title="message.delivered"
+{
+  "id": "evt_delivered_001",
+  "type": "message.delivered",
+  "timestamp": "2026-04-28T10:00:30Z",
+  "data": {
+    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "direction": "inbound",
+    "from": { "number": "5511777777777" },
+    "to":   { "number": "5511999990001", "alias": "main" },
+    "content_type": "text",
+    "preview": "Olá, gostaria de saber...",
+    "delivered_at": "2026-04-28T10:00:30Z"
+  }
+}
+```
+
+`preview` fica vazio quando o corpo da mensagem original já foi purgado pelo retention (LGPD); `content_type` é preservado.
+
+### Exemplos por `content_type` (inbound)
+
+O envelope do webhook é idêntico em estrutura para todos os tipos
+inbound — apenas `data.content_type` e `data.preview` mudam. Os
+trechos abaixo mostram só o objeto `data` para reduzir ruído visual.
+
+Para obter o **body completo** (texto, vCard, coordenadas, descrição
+do evento, link da mídia, etc.), faça `GET /v1/messages/{message_id}`.
+Os exemplos de body abaixo refletem o `body` retornado por esse
+endpoint dentro da janela de retenção.
+
+#### `text` — texto simples
+
+```json title="data — message.received (text)"
+{
+  "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "from": { "number": "5511777777777", "name": "João Silva" },
+  "to":   { "number": "5511999990001", "alias": "main" },
+  "content_type": "text",
+  "preview": "Olá, gostaria de saber...",
+  "received_at": "2026-04-24T15:32:11Z"
+}
+```
+
+```json title="GET /v1/messages/{id} — body"
+{ "text": "Olá, gostaria de saber sobre meu pedido #1234." }
+```
+
+> **Importante (2026-04-28):** respostas (mensagens que citam outra)
+> são entregues como evento dedicado **`message.replied`** — nunca
+> mais como `message.received` com `content_type=reply`. Veja
+> [`message.replied`](#exemplo--messagereplied-inboundoutbound)
+> abaixo para o formato.
+
+#### `image`
+
+```json title="data — message.received (image)"
+{
+  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0010",
+  "from": { "number": "5511777777777", "name": "João Silva" },
+  "to":   { "number": "5511999990001", "alias": "main" },
+  "content_type": "image",
+  "preview": "Foto do produto",
+  "received_at": "2026-04-24T15:34:01Z"
+}
+```
+
+```json title="GET /v1/messages/{id} — body + media"
+{
+  "body": { "caption": "Foto do produto" },
+  "media": {
+    "storage": "tenant_storage",
+    "url": "https://<bucket>.s3.amazonaws.com/...?X-Amz-Signature=...",
+    "url_expires_at": "2026-04-24T16:34:01Z",
+    "mime_type": "image/jpeg",
+    "size_bytes": 184320,
+    "caption": "Foto do produto",
+    "media_expired": false
+  }
+}
+```
+
+`media.storage` pode ser `tenant_storage` (URL pré-assinada do seu
+bucket BYO), `whatsapp_direct` (URL direta da WhatsApp, válida ~24h),
+`pending_upload` (upload ainda em andamento) ou `upload_failed`. Veja
+[Armazenamento e mídia](#armazenamento-e-mídia).
+
+#### `video`
+
+```json title="data — message.received (video)"
+{
+  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0011",
+  "from": { "number": "5511777777777", "name": "João Silva" },
+  "to":   { "number": "5511999990001", "alias": "main" },
+  "content_type": "video",
+  "preview": "[Vídeo]",
+  "received_at": "2026-04-24T15:35:12Z"
+}
+```
+
+Body / media seguem o mesmo formato de `image` — apenas `mime_type`
+muda (`video/mp4`, `video/quicktime`, etc.).
+
+#### `audio` — voice note ou música
+
+```json title="data — message.received (audio)"
+{
+  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0012",
+  "from": { "number": "5511777777777", "name": "João Silva" },
+  "to":   { "number": "5511999990001", "alias": "main" },
+  "content_type": "audio",
+  "preview": "[Áudio]",
+  "received_at": "2026-04-24T15:36:08Z"
+}
+```
+
+`mime_type` típico: `audio/ogg` (voice note) ou `audio/mpeg` (música).
+`caption` é sempre vazio — WhatsApp não suporta legenda em áudio.
+
+#### `document`
+
+```json title="data — message.received (document)"
+{
+  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0013",
+  "from": { "number": "5511777777777", "name": "João Silva" },
+  "to":   { "number": "5511999990001", "alias": "main" },
+  "content_type": "document",
+  "preview": "fatura-abril.pdf",
+  "received_at": "2026-04-24T15:37:00Z"
+}
+```
+
+```json title="GET /v1/messages/{id} — body + media"
+{
+  "body": { "filename": "fatura-abril.pdf", "caption": "Fatura do mês" },
+  "media": {
+    "storage": "tenant_storage",
+    "url": "https://<bucket>.s3.amazonaws.com/...",
+    "mime_type": "application/pdf",
+    "size_bytes": 524288,
+    "caption": "Fatura do mês",
+    "media_expired": false
+  }
+}
+```
+
+#### `sticker`
+
+```json title="data — message.received (sticker)"
+{
+  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0014",
+  "from": { "number": "5511777777777", "name": "João Silva" },
+  "to":   { "number": "5511999990001", "alias": "main" },
+  "content_type": "sticker",
+  "preview": "[Sticker]",
+  "received_at": "2026-04-24T15:37:33Z"
+}
+```
+
+`mime_type` é sempre `image/webp`. Stickers não têm legenda.
+
+#### `location`
+
+```json title="data — message.received (location)"
+{
+  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0001",
+  "from": { "number": "5511777777777", "name": "João Silva" },
+  "to":   { "number": "5511999990001", "alias": "main" },
+  "content_type": "location",
+  "preview": "[Localização: Av. Paulista]",
+  "received_at": "2026-04-24T15:38:21Z"
+}
+```
+
+```json title="GET /v1/messages/{id} — body"
+{
+  "latitude": -23.561414,
+  "longitude": -46.655881,
+  "name": "Av. Paulista",
+  "address": "Avenida Paulista, 1578, Bela Vista, São Paulo - SP",
+  "url": "https://maps.google.com/?q=-23.561414,-46.655881",
+  "is_live": false,
+  "thumbnail_b64": "..."
+}
+```
+
+`is_live: true` indica live location. `thumbnail_b64` é uma miniatura
+JPEG capturada do WhatsApp (até 5 KB) — pode estar ausente.
+
+#### `contact`
+
+```json title="data — message.received (contact)"
+{
+  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0002",
+  "from": { "number": "5511777777777", "name": "João Silva" },
+  "to":   { "number": "5511999990001", "alias": "main" },
+  "content_type": "contact",
+  "preview": "[Contato: Maria Souza]",
+  "received_at": "2026-04-24T15:39:05Z"
+}
+```
+
+```json title="GET /v1/messages/{id} — body"
+{
+  "display_name": "Maria Souza",
+  "vcard": "BEGIN:VCARD\nVERSION:3.0\nFN:Maria Souza\nTEL;TYPE=CELL:+5511988887777\nEMAIL;TYPE=WORK:maria@acme.com\nORG:Acme Corp\nTITLE:CTO\nEND:VCARD",
+  "phones": [
+    { "label": "Mobile", "number": "+5511988887777" }
+  ],
+  "emails": [
+    { "label": "Work", "address": "maria@acme.com" }
+  ],
+  "organization": "Acme Corp",
+  "title": "CTO",
+  "is_self_contact": false
+}
+```
+
+O Turbo Notify parseia o vCard server-side e expõe os campos
+estruturados (`phones[]`, `emails[]`, `organization`, etc.) — você
+não precisa parsear o vCard manualmente, mas o campo `vcard` é
+preservado caso queira reusar/exportar.
+
+#### `calendar` — evento/calendário (WhatsApp `eventMessage`)
+
+```json title="data — message.received (calendar)"
+{
+  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0003",
+  "from": { "number": "5511777777777", "name": "João Silva" },
+  "to":   { "number": "5511999990001", "alias": "main" },
+  "content_type": "calendar",
+  "preview": "[Evento: Sprint Planning]",
+  "received_at": "2026-04-24T15:40:00Z"
+}
+```
+
+```json title="GET /v1/messages/{id} — body"
+{
+  "name": "Sprint Planning",
+  "description": "Planejamento da sprint 24.",
+  "start_at": "2026-05-01T14:00:00+00:00",
+  "end_at": "2026-05-01T15:00:00+00:00",
+  "join_link": "https://meet.example.com/sprint-planning",
+  "location": {
+    "latitude": -23.5505,
+    "longitude": -46.6333,
+    "name": "HQ - Sala Mestre"
+  },
+  "has_reminder": true,
+  "reminder_offset_sec": 600
+}
+```
+
+`location` é opcional e segue o mesmo schema de `content_type:
+"location"`. Veja a [decisão arquitetural](https://github.com/turbo-notify/turbo-notity/blob/main/docs/reference/decisions/2026-04-27-rich-content-rendering.md)
+sobre por que TN nomeia esse tipo `calendar` em vez de `event`.
+
+:::tip
+Quer ver o body renderizado de forma visual antes de plugar em
+produção? Abra o <ExternalLink href="https://webhook.turbonotify.com">Webhook Inspector</ExternalLink>
+e use **Send sample** → cada uma das 4 variantes de `message.received`
+(text/location/contact/calendar) vem com fixture body pré-bundled.
+:::
+
 ## Tipos de evento
 
-O catálogo público é fechado — seu endpoint só recebe os 22 eventos listados aqui.
+O catálogo público é fechado — seu endpoint só recebe os 24 eventos listados aqui.
 
 ### Mensagens — ciclo de envio
 
 | Tipo                      | Quando é emitido                                                   |
 | ------------------------- | ------------------------------------------------------------------ |
-| `message.sent`            | Mensagem enviada com sucesso ao WhatsApp.                          |
-| `message.send.failed`     | Falha no envio da mensagem.                                        |
-| `message.delivered`       | Mensagem entregue ao dispositivo do destinatário.                  |
-| `message.read`            | Mensagem lida pelo destinatário.                                   |
+| `message.sent`            | Mensagem enviada com sucesso ao WhatsApp (sem citação).            |
+| `message.send.failed`     | Falha no envio de uma mensagem regular (sem citação).              |
+| `message.delivered`       | Receipt inbound: peer entregou uma mensagem que você enviou.       |
+| `message.read`            | Receipt inbound: peer leu uma mensagem que você enviou.            |
+
+### Mensagens — replies (citações)
+
+| Tipo                      | Quando é emitido                                                   |
+| ------------------------- | ------------------------------------------------------------------ |
+| `message.replied`         | Reply enviado/recebido (qualquer `content_type`, ambas direções).  |
+| `message.reply.failed`    | Falha ao enviar um reply (mensagem com `reply_to_message_id`).     |
 
 ### Mensagens — recebimento e operações
 
 | Tipo                      | Quando é emitido                                                   |
 | ------------------------- | ------------------------------------------------------------------ |
-| `message.received`        | Mensagem recebida de um contato (texto, mídia, resposta).          |
+| `message.received`        | Mensagem recebida de um contato (texto, mídia — sem citação).      |
 | `message.edited`          | Mensagem foi editada (sua ou do contato).                          |
 | `message.edit.failed`     | Falha ao editar uma mensagem.                                      |
 | `message.deleted`         | Mensagem foi deletada/revogada (sua ou do contato).                |

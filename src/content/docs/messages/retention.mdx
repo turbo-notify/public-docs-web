@@ -38,7 +38,7 @@ A mensagem é completamente removida do sistema. A API retorna `404 Not Found`, 
 - Consulte o status da mensagem o mais cedo possível após o envio.
 - Configure um [webhook](/messages/webhook/) para receber atualizações em tempo real e não depender exclusivamente da consulta manual.
 - Armazene no seu sistema os dados que forem relevantes para o seu negócio, como o `message_id` e o status final.
-- Operações que dependem da mensagem original, como [responder](/messages/reply/), também estão sujeitas ao prazo de retenção.
+- Operações que dependem da mensagem original, como [responder](/messages/send/) (via campo `reply_to_message_id`), também estão sujeitas ao prazo de retenção.
 
 ## Consulta de status
 
