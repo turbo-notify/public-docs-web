@@ -19,7 +19,8 @@ Esta versão da API introduz mudanças incompatíveis com versões anteriores. S
 | `request_id` no corpo | Removido — use o header `X-Request-ID` | Breaking |
 | `GET /messages/{request_id}/status` | Removido — use `GET /messages/{message_id}/status` | Breaking |
 | Webhook `message.received` | Campo `content` removido; adicionados `preview` e `content_type` | Breaking |
-| Webhook `message.edited` | Campo `new_text` removido; adicionado `new_preview` | Breaking |
+| Webhook `message.edited` | Campo `new_text` removido; adicionado `new_preview` (depois renomeado para `preview` em 2026-05-06) | Breaking |
+| Webhook `message.edited` (2026-05-06) | Campo `new_preview` renomeado para `preview`; payloads legados continuam aceitos no read-side via migration shim | Breaking |
 | Typing indicator | Campo `value` renomeado para `is_typing` | Breaking |
 | `POST /numbers` | Campo `phone` renomeado para `phone_number` | Breaking |
 | `GET /numbers` | Shape da resposta mudou para Stripe-like | Breaking |
@@ -172,7 +173,7 @@ O campo `new_text` foi removido do payload do evento `message.edited`. Em seu lu
 }
 ```
 
-**Depois:**
+**Depois (até 2026-05-06):**
 
 ```json
 {
@@ -187,7 +188,31 @@ O campo `new_text` foi removido do payload do evento `message.edited`. Em seu lu
 }
 ```
 
-**O que fazer:** Substitua o uso de `data.new_text` por `data.new_preview`. O campo `new_preview` é um recorte permanente de até 50 grafemas do novo conteúdo. Para o corpo completo atualizado, chame `GET /v1/messages/{message_id}`.
+**Em 2026-05-06** o campo `new_preview` foi renomeado para `preview` para manter parity com `MessageSentData.preview` / `MessageReceivedData.preview`. O payload atual é:
+
+```json
+{
+  "id": "evt_abc124",
+  "type": "message.edited",
+  "timestamp": "2026-05-06T10:05:00Z",
+  "data": {
+    "message_id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
+    "direction": "outbound",
+    "from": { "number": "5571999258283", "alias": "main" },
+    "to": { "number": "5511988877766" },
+    "preview": "Texto corrigido da mensagem co",
+    "edited_at": "2026-05-06T10:05:00Z"
+  }
+}
+```
+
+Após a edição via `POST /messages/{id}/edit`, `GET /v1/messages/{message_id}` retorna o body já atualizado — não é mais necessário tratar o body antigo. Edits feitos diretamente no app do WhatsApp (channel-side) também passam a ser persistidos via decrypt nativo do `secretEncryptedMessage` (ver ADR `2026-05-05-message-contract-consistency` Refinement 11).
+
+**O que fazer:**
+
+1. Substitua o uso de `data.new_text` por `data.preview`.
+2. Se já tinha migrado para `new_preview`, faça a substituição final por `preview`. Migration shims do servidor continuam aceitando payloads legados no read-side, mas o write-side só emite `preview`.
+3. Para o corpo completo atualizado (qualquer edição, API ou channel-side), chame `GET /v1/messages/{message_id}`.
 
 ---
 
@@ -305,7 +330,7 @@ Consulte as páginas de cada recurso para detalhes de uso.
 - [ ] Substituir chamadas a `GET /messages/{request_id}/status` por `GET /messages/{message_id}/status`
 - [ ] Atualizar handlers de `message.received` para usar `preview` e `content_type` em vez de `content`
 - [ ] Atualizar referências a `from` e `to` de string para objeto `{number: string}`
-- [ ] Atualizar handlers de `message.edited` para usar `new_preview` em vez de `new_text`
+- [ ] Atualizar handlers de `message.edited` para usar `preview` (anteriormente `new_text` → `new_preview` → `preview`; o nome final `preview` é o canônico desde 2026-05-06)
 - [ ] Atualizar chamadas a `POST /v1/typing-indicator` para usar `is_typing`
 - [ ] Atualizar chamadas a `POST /v1/numbers` para usar `phone_number`
 - [ ] Atualizar código de listagem de números para usar `data[]` e `has_more`
