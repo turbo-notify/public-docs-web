@@ -53,8 +53,9 @@ Os resultados são ordenados por `created_at DESC` (mais recentes primeiro).
         created_at: '2026-04-21T10:00:00Z',
         data: {
           message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
-          from: '+5511999999999',
-          to: '+5511973117056',
+          direction: 'inbound',
+          from: { number: '+5511999999999', name: 'João' },
+          to: { number: '+5511973117056', alias: 'main' },
           content_type: 'text',
           preview: 'Olá, gostaria de saber sobre o pedido',
           received_at: '2026-04-21T10:00:00Z',
@@ -214,10 +215,12 @@ O objeto `data` de cada evento retornado pela API é **byte-a-byte idêntico** a
 | `id` | presente | presente |
 | `object` | ausente | `"event"` |
 | `type` | presente | presente |
-| `request_id` | omitido quando ausente | sempre presente (`null` quando ausente) |
+| `request_id` | sempre presente (`null` quando ausente) | sempre presente (`null` quando ausente) |
 | `timestamp` | presente | — |
 | `created_at` | — | presente (mesmo valor) |
 | `data` | **idêntico** | **idêntico** |
+
+A única diferença real entre os dois envelopes é o nome do campo de timestamp: o webhook usa `timestamp`, o polling usa `created_at`. Ambos carregam o mesmo instante UTC em ISO 8601 com sufixo `Z`. Essa divergência é mantida por compatibilidade com integrações pré-existentes; um cliente que valida ambos os canais deve aceitar qualquer um dos dois nomes.
 
 Isso permite:
 

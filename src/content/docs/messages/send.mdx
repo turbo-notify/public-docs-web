@@ -381,12 +381,11 @@ O status informa o andamento do processamento da mensagem. Para detalhes complet
   status={202}
   body={{
     message_id: 'msg_abc123',
-    operation_id: 'op_msg_001',
     status: { state: 'pending', at: '2025-07-16T10:00:00Z' },
   }}
 />
 
-O retorno final do processamento chega via webhook com os eventos `message.sent`, `message.delivered`, `message.read` ou `message.failed`.
+O retorno final do processamento chega via webhook com os eventos `message.sent`, `message.delivered`, `message.read` ou `message.send.failed`.
 
 ## Segurança e Privacidade
 

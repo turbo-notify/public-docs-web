@@ -80,13 +80,17 @@ function verificarAssinatura(payload, timestamp, assinatura, segredo) {
 
 Toda requisição de webhook segue a mesma estrutura base:
 
-| Propriedade  | Tipo      | Descrição                                                                 |
-| ------------ | --------- | ------------------------------------------------------------------------- |
-| `id`         | `string`  | Identificador único do evento (`evt_…`). Use como chave de idempotência.  |
-| `type`       | `string`  | Tipo do evento (ex.: `message.sent`).                                     |
-| `timestamp`  | `string`  | Data e hora do evento em ISO 8601 UTC, com sufixo `Z`.                    |
-| `request_id` | `string?` | ID de rastreamento da requisição que originou o evento. Omitido quando ausente. |
-| `data`       | `object`  | Dados específicos do evento (veja a tabela em [Tipos de evento](#tipos-de-evento)). |
+| Propriedade  | Tipo                | Descrição                                                                 |
+| ------------ | ------------------- | ------------------------------------------------------------------------- |
+| `id`         | `string`            | Identificador único do evento (`evt_…`). Use como chave de idempotência.  |
+| `type`       | `string`            | Tipo do evento (ex.: `message.sent`).                                     |
+| `timestamp`  | `string`            | Data e hora do evento em ISO 8601 UTC, com sufixo `Z`. O endpoint de polling expõe o mesmo instante sob o nome `created_at` — divergência mantida por compatibilidade. |
+| `request_id` | `string \| null`    | ID de rastreamento da requisição que originou o evento. **Sempre presente** — `null` para eventos operacionais sem requisição original (ex.: `number.connected`). |
+| `data`       | `object`            | Dados específicos do evento (veja a tabela em [Tipos de evento](#tipos-de-evento)). |
+
+:::note[Receipts e direção]
+Os eventos `message.delivered` e `message.read` representam **confirmações de leitura/entrega vindas do destinatário**. Por isso `direction` é sempre `"inbound"` (a confirmação chegou do peer), mas `from`/`to` carregam as partes da **mensagem outbound original** — `from` é o seu número (com `alias`), `to` é o número do destinatário. Não confunda com `message.received`, em que `direction="inbound"` reflete uma mensagem nova vinda do contato.
+:::
 
 ### Exemplo — `message.sent` (outbound)
 
@@ -579,6 +583,57 @@ Se os retries esgotarem ou a janela de 24 h do WhatsApp expirar, **o `message.re
 }
 ```
 
+## Eventos de falha
+
+Os eventos de falha compartilham um envelope comum (`error_code`, `error_message`, `failed_at`, `direction: "outbound"`, `origin`) e diferem entre si pelo conjunto de campos extras.
+
+### `message.send.failed` / `message.reply.failed`
+
+Falhas de envio podem ocorrer **antes** da mensagem ser persistida (validação, timeout do gateway), por isso `message_id` está intencionalmente ausente. Use `request_id` no envelope para correlacionar com a chamada original. `message.reply.failed` adiciona `quoted_message_id` para identificar a mensagem citada.
+
+```json title="message.send.failed"
+{
+  "id": "evt_send_fail_001",
+  "type": "message.send.failed",
+  "timestamp": "2026-05-05T10:00:00Z",
+  "request_id": "req_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "data": {
+    "direction": "outbound",
+    "origin": "api",
+    "error_code": "whatsapp_unavailable",
+    "error_message": "WhatsApp session is not connected",
+    "failed_at": "2026-05-05T10:00:00Z"
+  }
+}
+```
+
+### `message.edit.failed` / `message.delete.failed` / `message.react.failed`
+
+Diferentemente de `message.send.failed`, essas operações falham **sobre uma mensagem que já existe** no Turbo Notify. O payload carrega `message_id` da mensagem-alvo, dispensando a manutenção de um mapeamento privado `request_id → message_id` no seu lado.
+
+```json title="message.edit.failed"
+{
+  "id": "evt_edit_fail_001",
+  "type": "message.edit.failed",
+  "timestamp": "2026-05-05T10:05:00Z",
+  "request_id": "req_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
+  "data": {
+    "message_id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
+    "direction": "outbound",
+    "origin": "api",
+    "error_code": "edit_window_expired",
+    "error_message": "Cannot edit after 15 minutes",
+    "failed_at": "2026-05-05T10:05:00Z"
+  }
+}
+```
+
+`message.delete.failed` e `message.react.failed` seguem a mesma forma — apenas o valor de `type` muda.
+
+## Notificações inbound de edição/deleção
+
+Quando o **contato** edita ou apaga uma mensagem, o WhatsApp pode entregar a notificação com um identificador de protocolo diferente da mensagem original. Esse identificador aparece como `wa_notification_id` em `message.edited` / `message.deleted` (apenas inbound) — ele **não é** o id da mensagem editada/deletada, é o id da notificação de protocolo. Use `message_id` para identificar a mensagem que sofreu a alteração; `wa_notification_id` é puramente diagnóstico (debug de duplicidade).
+
 ## Mapeamento de operações assíncronas
 
 Operações da API que disparam processamento assíncrono retornam um `request_id`. O mesmo `request_id` aparece no webhook do evento resultante — use para correlacionar:
@@ -586,7 +641,7 @@ Operações da API que disparam processamento assíncrono retornam um `request_i
 | Operação                   | Evento de sucesso             | Evento de falha                   |
 | -------------------------- | ----------------------------- | --------------------------------- |
 | Enviar mensagem            | `message.sent`                | `message.send.failed`             |
-| Responder mensagem         | `message.sent`                | `message.send.failed`             |
+| Responder mensagem         | `message.replied`             | `message.reply.failed`            |
 | Editar mensagem            | `message.edited`              | `message.edit.failed`             |
 | Deletar mensagem           | `message.deleted`             | `message.delete.failed`           |
 | Reagir a uma mensagem      | `message.reacted`             | `message.react.failed`            |

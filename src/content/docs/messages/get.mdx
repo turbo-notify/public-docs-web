@@ -137,8 +137,8 @@ Recupere o conteúdo completo, o status de entrega e a referência de mídia de 
   body={{
     message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
     direction: 'outbound',
-    from: '+5511973117056',
-    to: '+5511999999999',
+    from: { number: '+5511973117056', alias: 'main' },
+    to: { number: '+5511999999999' },
     content_type: 'text',
     status: { state: 'delivered', at: '2026-04-21T10:01:00Z' },
     preview: 'Olá, seu pedido foi confirmado!',
@@ -147,21 +147,23 @@ Recupere o conteúdo completo, o status de entrega e a referência de mídia de 
     media: null,
     created_at: '2026-04-21T10:00:00Z',
     updated_at: '2026-04-21T10:01:00Z',
+    origin: 'api',
+    reply_to_message_id: null,
   }}
 />
 
-## Resposta — mensagem de mídia
+## Resposta — mensagem de mídia (inbound)
 
 <ApiResponse
   status={200}
   body={{
     message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f71',
     direction: 'inbound',
-    from: '+5511999999999',
-    to: '+5511973117056',
+    from: { number: '+5511999999999', name: 'João' },
+    to: { number: '+5511973117056', alias: 'main' },
     content_type: 'image',
     status: { state: 'read', at: '2026-04-21T10:05:00Z' },
-    preview: '[image]',
+    preview: '[Imagem]',
     body: null,
     body_expired: false,
     media: {
@@ -170,29 +172,39 @@ Recupere o conteúdo completo, o status de entrega e a referência de mídia de 
       url_expires_at: '2026-04-22T10:00:00Z',
       mime_type: 'image/jpeg',
       size_bytes: 123456,
+      caption: null,
       media_expired: false,
     },
     created_at: '2026-04-21T10:00:00Z',
     updated_at: '2026-04-21T10:05:00Z',
+    origin: null,
+    reply_to_message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f6f',
   }}
 />
 
 ## Campos da resposta
 
+`from` e `to` são objetos com forma direção-aware — o mesmo shape usado nos webhooks:
+
+- **Outbound:** `from = { number, alias }`, `to = { number }`.
+- **Inbound:** `from = { number, name? }`, `to = { number, alias }`.
+
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `message_id` | string | Identificador público da mensagem (`msg_` + 32 hex) |
 | `direction` | string | `outbound` (enviada) ou `inbound` (recebida) |
-| `from` | string | Número do remetente |
-| `to` | string | Número do destinatário |
-| `content_type` | string | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `contact` ou `reaction` |
+| `from` | object | Remetente — shape direção-aware (ver acima) |
+| `to` | object | Destinatário — shape direção-aware (ver acima) |
+| `content_type` | string | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `contact` ou `calendar` |
 | `status` | object | `{state, at}` — estado atual de entrega |
-| `preview` | string | Permanente — primeiros 50 caracteres do conteúdo, sempre presente |
+| `preview` | string | Permanente — recorte grapheme-aware de até 500 caracteres do conteúdo |
 | `body` | object\|null | Conteúdo estruturado completo; `null` quando expirado pela política de retenção |
 | `body_expired` | boolean | `true` quando o corpo foi removido pelo ciclo de retenção |
 | `media` | object\|null | Bloco de mídia; `null` para tipos não-mídia |
 | `created_at` | string | Timestamp ISO 8601 de criação |
 | `updated_at` | string | Timestamp ISO 8601 da última atualização de status |
+| `origin` | string\|null | `"api"` (envio via REST) ou `"channel"` (digitada no celular) para mensagens outbound; `null` para inbound |
+| `reply_to_message_id` | string\|null | `msg_{hex32}` da mensagem citada quando esta é uma resposta; `null` caso contrário. Persistido como coluna dedicada — sobrevive ao expurgo de `body`. |
 
 ### Bloco de mídia
 
