@@ -14,13 +14,13 @@ Liste todos os números extras vinculados à sua conta para consultar alias, nú
   <TabItem label="cURL">
     ```bash title="turbo-notify.sh"
     curl -X GET \
-      https://api.turbonotify.com/extra-numbers \
+      https://api.turbonotify.com/v1/numbers \
       -H "Authorization: Bearer SUA_CHAVE"
     ```
   </TabItem>
   <TabItem label="Node">
     ```js title="turbo-notify.js"
-    const response = await fetch('https://api.turbonotify.com/extra-numbers', {
+    const response = await fetch('https://api.turbonotify.com/v1/numbers', {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE'
@@ -35,7 +35,7 @@ Liste todos os números extras vinculados à sua conta para consultar alias, nú
     ```python title="turbo_notify.py"
     import requests
 
-    url = "https://api.turbonotify.com/extra-numbers"
+    url = "https://api.turbonotify.com/v1/numbers"
     headers = {
         "Authorization": "Bearer SUA_CHAVE"
     }
@@ -56,7 +56,7 @@ Liste todos os números extras vinculados à sua conta para consultar alias, nú
     )
 
     func main() {
-        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/extra-numbers", nil)
+        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/v1/numbers", nil)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         resp, _ := http.DefaultClient.Do(req)
         defer resp.Body.Close()
@@ -68,7 +68,7 @@ Liste todos os números extras vinculados à sua conta para consultar alias, nú
   <TabItem label="PHP">
     ```php title="turbo-notify.php"
     <?php
-    $url = 'https://api.turbonotify.com/extra-numbers';
+    $url = 'https://api.turbonotify.com/v1/numbers';
 
     $options = [
         'http' => [
@@ -92,7 +92,7 @@ Liste todos os números extras vinculados à sua conta para consultar alias, nú
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var response = await client.GetAsync(
-        "https://api.turbonotify.com/extra-numbers"
+        "https://api.turbonotify.com/v1/numbers"
     );
     var result = await response.Content.ReadAsStringAsync();
     Console.WriteLine(result);
@@ -108,7 +108,7 @@ Liste todos os números extras vinculados à sua conta para consultar alias, nú
             var client = HttpClient.newHttpClient();
 
             var request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.turbonotify.com/extra-numbers"))
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers"))
                 .header("Authorization", "Bearer SUA_CHAVE")
                 .GET()
                 .build();
@@ -124,24 +124,48 @@ Liste todos os números extras vinculados à sua conta para consultar alias, nú
 
 <ApiResponse
   status={200}
-  body={[
-    {
-      alias: 'condominio_1',
-      number: '+5511999999997',
-      status: { state: 'active', at: '2025-07-16T10:01:00Z' },
-    },
-    {
-      alias: 'condominio_2',
-      number: '+5511999999998',
-      status: { state: 'active', at: '2025-07-18T14:22:00Z' },
-    },
-    {
-      alias: 'condominio_3',
-      number: '+5511999999999',
-      status: { state: 'active', at: '2025-07-20T09:45:00Z' },
-    },
-  ]}
+  body={{
+    numbers: [
+      {
+        alias: 'condominio_1',
+        phone_number: '+5511999999997',
+        name: 'Condomínio Alpha',
+        description: 'Avisos do condomínio 1',
+        status: { status: 'active', at: '2025-07-16T10:01:00Z', reason: null },
+      },
+      {
+        alias: 'condominio_2',
+        phone_number: '+5511999999998',
+        name: null,
+        description: null,
+        status: { status: 'active', at: '2025-07-18T14:22:00Z', reason: null },
+      },
+      {
+        alias: 'condominio_3',
+        phone_number: '+5511999999999',
+        name: null,
+        description: null,
+        status: { status: 'pending', at: '2025-07-20T09:45:00Z', reason: null },
+      },
+    ],
+  }}
 />
+
+**Escopo obrigatório:** `numbers:read`
+
+## Campos da resposta
+
+| Campo | Tipo | Descrição |
+| ----- | ---- | --------- |
+| `numbers` | array | Lista de números extras cadastrados |
+| `numbers[].alias` | string | Identificador único do número extra na conta |
+| `numbers[].phone_number` | string | Número de telefone no formato E.164 |
+| `numbers[].name` | string\|null | Nome da conta WhatsApp do número (capturado na conexão); `null` enquanto não houver conexão estabelecida |
+| `numbers[].description` | string\|null | Descrição livre definida pelo usuário |
+| `numbers[].status` | object | `{status, at, reason?}` — estado atual do número |
+| `numbers[].status.status` | string | `active`, `inactive`, `pending`, `pairing`, `failed` ou `revoked` |
+| `numbers[].status.at` | string | Timestamp ISO 8601 da última mudança de status |
+| `numbers[].status.reason` | string\|null | Motivo de falha quando `status = "failed"`; `null` caso contrário |
 
 ## Erros possíveis
 

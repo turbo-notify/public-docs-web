@@ -21,13 +21,13 @@ Para verificar o status de um número extra específico, faça uma requisição 
   <TabItem label="cURL">
     ```bash title="turbo-notify.sh"
     curl -X GET \
-      https://api.turbonotify.com/extra-numbers/ALIAS_DO_NUMERO/status \
+      https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO \
       -H "Authorization: Bearer SUA_CHAVE"
     ```
   </TabItem>
   <TabItem label="Node">
     ```js title="turbo-notify.js"
-    const response = await fetch('https://api.turbonotify.com/extra-numbers/ALIAS_DO_NUMERO/status', {
+    const response = await fetch('https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO', {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE'
@@ -42,7 +42,7 @@ Para verificar o status de um número extra específico, faça uma requisição 
     ```python title="turbo_notify.py"
     import requests
 
-    url = "https://api.turbonotify.com/extra-numbers/ALIAS_DO_NUMERO/status"
+    url = "https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO"
     headers = {
         "Authorization": "Bearer SUA_CHAVE"
     }
@@ -63,7 +63,7 @@ Para verificar o status de um número extra específico, faça uma requisição 
     )
 
     func main() {
-        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/extra-numbers/ALIAS_DO_NUMERO/status", nil)
+        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO", nil)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         resp, _ := http.DefaultClient.Do(req)
         defer resp.Body.Close()
@@ -75,7 +75,7 @@ Para verificar o status de um número extra específico, faça uma requisição 
   <TabItem label="PHP">
     ```php title="turbo-notify.php"
     <?php
-    $url = 'https://api.turbonotify.com/extra-numbers/ALIAS_DO_NUMERO/status';
+    $url = 'https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO';
 
     $options = [
         'http' => [
@@ -99,7 +99,7 @@ Para verificar o status de um número extra específico, faça uma requisição 
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var response = await client.GetAsync(
-        "https://api.turbonotify.com/extra-numbers/ALIAS_DO_NUMERO/status"
+        "https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO"
     );
     var result = await response.Content.ReadAsStringAsync();
     Console.WriteLine(result);
@@ -115,7 +115,7 @@ Para verificar o status de um número extra específico, faça uma requisição 
             var client = HttpClient.newHttpClient();
 
             var request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.turbonotify.com/extra-numbers/ALIAS_DO_NUMERO/status"))
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO"))
                 .header("Authorization", "Bearer SUA_CHAVE")
                 .GET()
                 .build();
@@ -129,22 +129,59 @@ Para verificar o status de um número extra específico, faça uma requisição 
   </TabItem>
 </Tabs>
 
+**Escopo obrigatório:** `numbers:read`
+
 <ApiResponse
   status={200}
   body={{
-    state: 'active',
+    alias: 'condominio_1',
+    phone_number: '+5511999999997',
+    name: 'Condomínio Alpha',
+    number_type: 'extra',
+    status: 'active',
     at: '2025-07-16T10:01:00Z',
+    description: 'Avisos do condomínio 1',
+    scheduled_deletion_at: null,
+    reason: null,
+    pairing: null,
   }}
 />
+
+## Campos da resposta
+
+| Campo | Tipo | Descrição |
+| ----- | ---- | --------- |
+| `alias` | string | Identificador único do número extra na conta |
+| `phone_number` | string | Número de telefone no formato E.164 |
+| `name` | string\|null | Nome da conta WhatsApp do número (capturado na conexão); `null` enquanto não houver conexão estabelecida |
+| `number_type` | string | Sempre `"extra"` para números extras |
+| `status` | string | Estado atual — veja tabela abaixo |
+| `at` | string | Timestamp ISO 8601 da última mudança de status |
+| `description` | string\|null | Descrição livre definida pelo usuário |
+| `scheduled_deletion_at` | string\|null | Timestamp ISO 8601 da exclusão programada; `null` se não agendado |
+| `reason` | string\|null | Motivo de falha quando `status = "failed"`; `null` caso contrário |
+| `pairing` | object\|null | Informações de pareamento — presente apenas durante o processo de vinculação |
+
+### Bloco de pareamento (`pairing`)
+
+Presente quando `status` é `pairing` e o código ainda está válido:
+
+| Campo | Tipo | Descrição |
+| ----- | ---- | --------- |
+| `method` | string | Método de pareamento: `"pairing_code"` |
+| `data` | string | Código de 8 dígitos a ser inserido no WhatsApp |
+| `expires_at` | string | Timestamp ISO 8601 de expiração do código |
 
 ## Tabela de status
 
 | Status     | Descrição                                                        |
 | ---------- | ---------------------------------------------------------------- |
+| `pending`  | Número cadastrado; aguardando início do pareamento.              |
+| `pairing`  | Código de pareamento gerado; aguardando inserção no WhatsApp.    |
 | `active`   | O número está vinculado e pronto para envio de mensagens.        |
 | `inactive` | O número foi desativado manualmente e não pode enviar mensagens. |
-| `pending`  | A vinculação está em andamento, aguardando pareamento.           |
 | `failed`   | A vinculação falhou. Verifique o motivo abaixo.                  |
+| `revoked`  | O dispositivo foi desvinculado pelo WhatsApp.                    |
 
 ## Motivos de falha
 

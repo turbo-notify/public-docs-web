@@ -137,8 +137,8 @@ Recupere o conteúdo completo, o status de entrega e a referência de mídia de 
   body={{
     message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
     direction: 'outbound',
-    from: { number: '+5511973117056', alias: 'main' },
-    to: { number: '+5511999999999' },
+    from: { number: '+5511973117056', alias: 'main', name: 'Turbo Notify' },
+    to: { number: '+5511999999999', name: 'João' },
     content_type: 'text',
     status: { state: 'delivered', at: '2026-04-21T10:01:00Z' },
     preview: 'Olá, seu pedido foi confirmado!',
@@ -160,7 +160,7 @@ Recupere o conteúdo completo, o status de entrega e a referência de mídia de 
     message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f71',
     direction: 'inbound',
     from: { number: '+5511999999999', name: 'João' },
-    to: { number: '+5511973117056', alias: 'main' },
+    to: { number: '+5511973117056', alias: 'main', name: 'Turbo Notify' },
     content_type: 'image',
     status: { state: 'read', at: '2026-04-21T10:05:00Z' },
     preview: '[Imagem]',
@@ -186,8 +186,10 @@ Recupere o conteúdo completo, o status de entrega e a referência de mídia de 
 
 `from` e `to` são objetos com forma direção-aware — o mesmo shape usado nos webhooks:
 
-- **Outbound:** `from = { number, alias }`, `to = { number }`.
-- **Inbound:** `from = { number, name? }`, `to = { number, alias }`.
+- **Outbound:** `from = { number, alias, name? }`, `to = { number, name? }`.
+- **Inbound:** `from = { number, name? }`, `to = { number, alias, name? }`.
+
+Os campos `name` são opcionais: em outbound, `from.name` carrega o nome de exibição do número TN (capturado na conexão) e `to.name` traz o nome de contato em cache (warmed via mensagens inbound); em inbound, `from.name` é o `push_name` do contato e `to.name` é o nome do número TN que recebeu.
 
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |

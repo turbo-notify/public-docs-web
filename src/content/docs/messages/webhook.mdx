@@ -103,8 +103,8 @@ Os eventos `message.delivered` e `message.read` representam **confirmações de 
   "data": {
     "message_id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
     "direction": "outbound",
-    "from": { "number": "5511999990001", "alias": "main" },
-    "to":   { "number": "5511999990002" },
+    "from": { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
+    "to":   { "number": "5511999990002", "name": "João Silva" },
     "content_type": "text",
     "preview": "Sua mensagem...",
     "sent_at": "2026-04-22T10:00:05Z"
@@ -130,7 +130,7 @@ descrição do evento, etc.), faça `GET /v1/messages/{message_id}`.
     "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
     "direction": "inbound",
     "from": { "number": "5511777777777", "name": "João Silva" },
-    "to":   { "number": "5511999990001", "alias": "main" },
+    "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
     "content_type": "text",
     "preview": "Olá, gostaria de saber...",
     "received_at": "2026-04-24T15:32:11Z"
@@ -138,7 +138,7 @@ descrição do evento, etc.), faça `GET /v1/messages/{message_id}`.
 }
 ```
 
-`from.name` traz o nome de exibição que o contato configurou no WhatsApp (push name); o campo é omitido quando o contato não definiu nenhum. `to.alias` resolve para `"main"` quando a mensagem chegou no número principal ou para o alias do número extra que recebeu.
+`from.name` traz o nome de exibição que o contato configurou no WhatsApp (push name); o campo é omitido quando o contato não definiu nenhum. `to.alias` resolve para `"main"` quando a mensagem chegou no número principal ou para o alias do número extra que recebeu. `to.name` traz o nome de exibição do número Turbo Notify que recebeu a mensagem (capturado na conexão via WhatsApp); omitido se não disponível.
 
 ### Exemplo — `message.replied` (inbound/outbound)
 
@@ -153,7 +153,7 @@ Disponível desde 2026-04-28. Replies (mensagens que citam outra) são entregues
     "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
     "direction": "inbound",
     "from": { "number": "5511777777777", "name": "João Silva" },
-    "to":   { "number": "5511999990001", "alias": "main" },
+    "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
     "content_type": "text",
     "preview": "Sim, é esse pedido mesmo!",
     "replied_at": "2026-04-28T10:00:00Z",
@@ -171,8 +171,8 @@ Disponível desde 2026-04-28. Replies (mensagens que citam outra) são entregues
   "data": {
     "message_id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
     "direction": "outbound",
-    "from": { "number": "5511999990001", "alias": "main" },
-    "to":   { "number": "5511777777777" },
+    "from": { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
+    "to":   { "number": "5511777777777", "name": "João Silva" },
     "content_type": "text",
     "preview": "Sem problemas, vou conferir.",
     "replied_at": "2026-04-28T10:01:00Z",
@@ -197,11 +197,28 @@ Receipts são sempre **inbound** — o peer A confirma a entrega/leitura de uma 
   "data": {
     "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
     "direction": "inbound",
-    "from": { "number": "5511999990001", "alias": "main" },
-    "to":   { "number": "5511777777777" },
+    "from": { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
+    "to":   { "number": "5511777777777", "name": "João Silva" },
     "content_type": "text",
     "preview": "Olá, gostaria de saber...",
     "delivered_at": "2026-04-28T10:00:30Z"
+  }
+}
+```
+
+```json title="message.read"
+{
+  "id": "evt_read_001",
+  "type": "message.read",
+  "timestamp": "2026-04-28T10:01:15Z",
+  "data": {
+    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "direction": "inbound",
+    "from": { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
+    "to":   { "number": "5511777777777", "name": "João Silva" },
+    "content_type": "text",
+    "preview": "Olá, gostaria de saber...",
+    "read_at": "2026-04-28T10:01:15Z"
   }
 }
 ```
@@ -226,7 +243,7 @@ endpoint dentro da janela de retenção.
   "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "direction": "inbound",
   "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main" },
+  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
   "content_type": "text",
   "preview": "Olá, gostaria de saber...",
   "received_at": "2026-04-24T15:32:11Z"
@@ -250,7 +267,7 @@ endpoint dentro da janela de retenção.
   "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0010",
   "direction": "inbound",
   "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main" },
+  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
   "content_type": "image",
   "preview": "Foto do produto",
   "received_at": "2026-04-24T15:34:01Z"
@@ -284,7 +301,7 @@ bucket BYO), `whatsapp_direct` (URL direta da WhatsApp, válida ~24h),
   "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0011",
   "direction": "inbound",
   "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main" },
+  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
   "content_type": "video",
   "preview": "[Vídeo]",
   "received_at": "2026-04-24T15:35:12Z"
@@ -301,7 +318,7 @@ muda (`video/mp4`, `video/quicktime`, etc.).
   "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0012",
   "direction": "inbound",
   "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main" },
+  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
   "content_type": "audio",
   "preview": "[Áudio]",
   "received_at": "2026-04-24T15:36:08Z"
@@ -318,7 +335,7 @@ muda (`video/mp4`, `video/quicktime`, etc.).
   "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0013",
   "direction": "inbound",
   "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main" },
+  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
   "content_type": "document",
   "preview": "fatura-abril.pdf",
   "received_at": "2026-04-24T15:37:00Z"
@@ -346,7 +363,7 @@ muda (`video/mp4`, `video/quicktime`, etc.).
   "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0014",
   "direction": "inbound",
   "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main" },
+  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
   "content_type": "sticker",
   "preview": "[Sticker]",
   "received_at": "2026-04-24T15:37:33Z"
@@ -362,7 +379,7 @@ muda (`video/mp4`, `video/quicktime`, etc.).
   "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0001",
   "direction": "inbound",
   "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main" },
+  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
   "content_type": "location",
   "preview": "[Localização: Av. Paulista]",
   "received_at": "2026-04-24T15:38:21Z"
@@ -391,7 +408,7 @@ JPEG capturada do WhatsApp (até 5 KB) — pode estar ausente.
   "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0002",
   "direction": "inbound",
   "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main" },
+  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
   "content_type": "contact",
   "preview": "[Contato: Maria Souza]",
   "received_at": "2026-04-24T15:39:05Z"
@@ -424,8 +441,9 @@ preservado caso queira reusar/exportar.
 ```json title="data — message.received (calendar)"
 {
   "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0003",
+  "direction": "inbound",
   "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main" },
+  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
   "content_type": "calendar",
   "preview": "[Evento: Sprint Planning]",
   "received_at": "2026-04-24T15:40:00Z"
@@ -504,6 +522,22 @@ O catálogo público é fechado — seu endpoint só recebe os 24 eventos listad
 | `number.remove.scheduled`     | Exclusão de número extra agendada (período de carência).          |
 | `number.remove.canceled`      | Exclusão agendada foi cancelada.                                  |
 | `number.removed`              | Número extra foi removido.                                        |
+
+Todos os eventos `number.*` carregam os campos comuns `alias` e `number` (quando disponível). O campo `name` — nome de exibição WhatsApp do número, capturado na conexão — é **opcional** em todos os eventos e **omitido quando nulo**. O `alias` `"main"` identifica o número principal; qualquer outro valor identifica um número extra.
+
+```json title="number.connected (exemplo)"
+{
+  "id": "evt_num_conn_abc123",
+  "type": "number.connected",
+  "timestamp": "2026-05-08T10:00:00Z",
+  "data": {
+    "name": "Turbo Notify",
+    "alias": "main",
+    "number": "5511973117056",
+    "connected_at": "2026-05-08T10:00:00Z"
+  }
+}
+```
 
 ### Armazenamento e mídia
 
