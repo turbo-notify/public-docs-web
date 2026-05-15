@@ -181,7 +181,7 @@ Disponível desde 2026-04-28. Replies (mensagens que citam outra) são entregues
 }
 ```
 
-Para responder uma mensagem via API, envie `POST /v1/messages` com `reply_to_message_id` apontando para a mensagem citada (qualquer mensagem do chat, inbound ou outbound). Veja [/messages/send/](/messages/send/).
+Para responder uma mensagem via API, envie `POST /v1/messages` com `quoted_message_id` apontando para a mensagem citada (qualquer mensagem do chat, inbound ou outbound). Veja [/messages/send/](/messages/send/).
 
 `quoted_message_id` é sempre o id público (`msg_{hex32}`) da mensagem citada. Use `GET /v1/messages/{quoted_message_id}` para recuperar o conteúdo completo da mensagem original.
 
@@ -496,7 +496,7 @@ O catálogo público é fechado — seu endpoint só recebe os 24 eventos listad
 | Tipo                      | Quando é emitido                                                   |
 | ------------------------- | ------------------------------------------------------------------ |
 | `message.replied`         | Reply enviado/recebido (qualquer `content_type`, ambas direções).  |
-| `message.reply.failed`    | Falha ao enviar um reply (mensagem com `reply_to_message_id`).     |
+| `message.reply.failed`    | Falha ao enviar um reply (mensagem com `quoted_message_id`).     |
 
 ### Mensagens — recebimento e operações
 

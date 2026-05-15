@@ -14,7 +14,7 @@ O corpo de `POST /v1/messages` usa um campo `content` discriminado por
 mídia (`image`, `video`, `audio`, `document`, `sticker` — veja
 [Envio de Mídia](/messages/send-media/)).
 
-Para citar (responder) uma mensagem existente — qualquer `content_type` — adicione o campo opcional `reply_to_message_id` no body do request com o id público da mensagem citada (`msg_{hex32}`). O webhook resultante é `message.replied` (em vez de `message.sent`); veja [Webhooks](/messages/webhook/#exemplo--messagereplied-inboundoutbound).
+Para citar (responder) uma mensagem existente — qualquer `content_type` — adicione o campo opcional `quoted_message_id` no body do request com o id público da mensagem citada (`msg_{hex32}`). O webhook resultante é `message.replied` (em vez de `message.sent`); veja [Webhooks](/messages/webhook/#exemplo--messagereplied-inboundoutbound).
 
 ## Envio básico
 
