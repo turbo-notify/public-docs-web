@@ -6,6 +6,43 @@ description: Entenda os limites de envio e boas práticas para garantir estabili
 import ApiResponse from '@components/ApiResponse.astro';
 import ExternalLink from '@components/ExternalLink.astro';
 
+> **Nota (2026-05-15):** o limite por tier descrito nesta página agora é efetivamente aplicado. Versões anteriores documentavam o comportamento, mas a implementação ativa era um teto global de 50k/mês compartilhado. Esta entrega alinha código à documentação. Tenants impactados foram comunicados — veja [Per-Tier Message Quota Activation](/changelog/2026-05-15-message-quota-activation/).
+
+## Tier mensal (mensagens)
+
+Quota mensal de mensagens outbound — janela rolling 30 dias.
+
+| Tier | Mensagens/30d |
+| ---- | -------------:|
+| FREE     | 1.000     |
+| SOLO     | 10.000    |
+| BUSINESS | 50.000    |
+| CUSTOM   | 500.000+  |
+
+Estourar retorna 429 com payload estruturado. Veja [Quota e Uso](/usage/quota/) para o response shape.
+
+## Tier mensal (contatos distintos)
+
+Quota independente de contatos distintos contactados na janela rolling 30 dias.
+
+| Tier | Contatos/30d |
+| ---- | ------------:|
+| FREE     | 100      |
+| SOLO     | 1.000    |
+| BUSINESS | 5.000    |
+| CUSTOM   | 50.000+  |
+
+Estourar retorna 402 (`contact_quota_exceeded`). Diferentemente de 429, 402 não tem `Retry-After`.
+
+## Burst protection (operacional)
+
+Independente do tier, o Turbo Notify aplica burst protection:
+
+- `messages_per_minute=200` por replica.
+- `recipients_per_day` (fairness).
+
+## Visão geral
+
 O Turbo Notify aplica limites de uso para garantir estabilidade, segurança e qualidade do serviço para todos os clientes. Os limites variam de acordo com o plano contratado e o comportamento de envio.
 
 ## Tipos de limite

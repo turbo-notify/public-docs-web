@@ -1,0 +1,86 @@
+---
+title: Quota e Uso
+description: Endpoint GET /v1/usage — snapshot unificado de quota de mensagens e contatos. Tabelas por tier e shapes de erro.
+sidebar:
+  order: 1
+---
+
+import ApiResponse from '@components/ApiResponse.astro';
+
+Snapshot unificado de uso. Inclui **duas quotas independentes**: mensagens emitidas e contatos distintos contactados, ambas em janela rolling de 30 dias.
+
+## Endpoint
+
+```http
+GET /v1/usage
+```
+
+**Scope:** qualquer API key autenticada (sem scope específico).
+
+**Cache:** `Cache-Control: max-age=60` (Redis L1 com TTL 60s).
+
+## Tier table
+
+| Tier | Mensagens/30d | Contatos distintos/30d |
+| ---- | -------------:| ----------------------:|
+| FREE     | 1.000     | 100      |
+| SOLO     | 10.000    | 1.000    |
+| BUSINESS | 50.000    | 5.000    |
+| CUSTOM   | 500.000+  | 50.000+  |
+
+A razão 10:1 (mensagens/contato) reflete o uso médio. Tenants podem ter overrides via `plan_overrides.contacts_quota_override` ou `plan_overrides.messages_quota_override`.
+
+## Resposta (200)
+
+<ApiResponse status={200}>
+```json
+{
+  "messages": {"used": 12345, "quota": 50000, "resets_at": "2026-06-14T00:00:00Z", "tier": "BUSINESS"},
+  "contacts": {"used": 2100,  "quota": 5000,  "resets_at": "2026-06-14T00:00:00Z", "tier": "BUSINESS"}
+}
+```
+</ApiResponse>
+
+## Endpoints adicionais
+
+- `GET /v1/usage/messages` — somente mensagens.
+- `GET /v1/contacts/quota` — somente contatos.
+
+## Resposta 402 (contact quota)
+
+<ApiResponse status={402}>
+```json
+{
+  "error": "contact_quota_exceeded",
+  "details": {"quota": 100, "used": 100, "resets_at": "2026-06-14T...", "tier": "FREE"}
+}
+```
+</ApiResponse>
+
+## Resposta 429 (message quota)
+
+<ApiResponse status={429} headers={{ 'Retry-After': '120' }}>
+```json
+{
+  "error": "message_quota_exceeded",
+  "details": {"quota": 1000, "used": 1000, "resets_at": "2026-06-14T...", "tier": "FREE"}
+}
+```
+</ApiResponse>
+
+## 402 vs 429 — quando aparecem
+
+| | 402 (contact) | 429 (message) |
+| - | ------------- | ------------- |
+| Sinal | Upgrade plan | Retry após backoff |
+| Header `Retry-After` | Ausente | Presente |
+| Reset | Janela rolling 30d ou upgrade | Janela operacional (minutos) |
+
+## Webhooks de quota
+
+- `contact.quota.warning` em 80/90/95% (basis points).
+- `contact.quota.exceeded` no estouro.
+- `message.quota.warning` em 80/90/95%.
+- `message.quota.exceeded` no estouro.
+
+Veja [Eventos de Webhook](/webhooks/message-quota-events/) e [Limites de Mensagens](/messages/rate-limits/).

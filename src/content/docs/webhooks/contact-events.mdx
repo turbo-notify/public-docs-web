@@ -1,0 +1,105 @@
+---
+title: Eventos de Contato
+description: 8 webhooks customer-facing referentes a TN Contacts — created, name_changed, picture_changed, business_profile_changed, phone_added, first_messaged, quota.warning, quota.exceeded.
+sidebar:
+  order: 1
+---
+
+import ApiResponse from '@components/ApiResponse.astro';
+
+Lista de eventos webhook emitidos pelo Turbo Notify para mudanças relacionadas a TN Contacts. Você precisa configurar a URL e habilitar `contact.*` no dashboard.
+
+## Tabela
+
+| Evento | Quando |
+| ------ | ------ |
+| `contact.created` | Primeira observação do par `(tenant, telefone)` |
+| `contact.name_changed` | `push_name` divergiu do snapshot anterior |
+| `contact.picture_changed` | WhatsApp emitiu `PictureUpdate` ou refresh detectou hash novo |
+| `contact.business_profile_changed` | `BusinessAccountUpdate` no WhatsApp |
+| `contact.phone_added` | Rotação de JID associou novo número ao mesmo `contact_id` |
+| `contact.first_messaged` | Tenant enviou primeira mensagem outbound para este contato (slot consumido) |
+| `contact.quota.warning` | Cruzou threshold 80/90/95% da quota mensal |
+| `contact.quota.exceeded` | Tentativa rejeitada por estouro (HTTP 402) |
+
+## PII discipline
+
+Telefones aparecem sempre **mascarados** no payload (`+5571****4756`). O nome do contato (`push_name`) é PII e nunca é logado cru pelo TN — você recebe via webhook e é responsável pelo armazenamento subsequente.
+
+## Exemplo: `contact.created`
+
+```json
+{
+  "event_id": "evt_a1b2c3d4...",
+  "event_type": "contact.created",
+  "tenant_id": "tnt_...",
+  "occurred_at": "2026-05-15T12:00:00Z",
+  "data": {
+    "contact_id": "ct_a1b2...",
+    "phone_masked": "+5571****4756",
+    "source": "inbound",
+    "is_self": false
+  }
+}
+```
+
+## Exemplo: `contact.first_messaged`
+
+```json
+{
+  "event_id": "evt_...",
+  "event_type": "contact.first_messaged",
+  "tenant_id": "tnt_...",
+  "occurred_at": "...",
+  "data": {
+    "contact_id": "ct_...",
+    "phone_masked": "+5571****4756",
+    "message_id": "msg_...",
+    "tier": "FREE"
+  }
+}
+```
+
+## Exemplo: `contact.quota.warning`
+
+```json
+{
+  "event_id": "evt_...",
+  "event_type": "contact.quota.warning",
+  "tenant_id": "tnt_...",
+  "occurred_at": "...",
+  "data": {
+    "threshold_bps": 90,
+    "used": 90,
+    "quota": 100,
+    "resets_at": "2026-06-14T...",
+    "tier": "FREE"
+  }
+}
+```
+
+`threshold_bps` é integer em basis points: `80 | 90 | 95 | 100`.
+
+## Exemplo: `contact.quota.exceeded`
+
+```json
+{
+  "event_id": "evt_...",
+  "event_type": "contact.quota.exceeded",
+  "tenant_id": "tnt_...",
+  "occurred_at": "...",
+  "data": {
+    "quota": 100,
+    "used": 100,
+    "resets_at": "2026-06-14T...",
+    "tier": "FREE",
+    "request_id": "req_..."
+  }
+}
+```
+
+## Idempotency
+
+Cada evento carrega `event_id` único. Use `event_id` como chave de deduplicação no seu side.
+
+Internamente o publisher TN usa `Nats-Msg-Id` com formato `{tenant_id}:{contact_id}:{event_kind}` para idempotência no broker.

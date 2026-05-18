@@ -1,0 +1,65 @@
+---
+title: Visão Geral de Contatos
+description: Entenda o que é um TN Contact, como é criado automaticamente a partir do tráfego de mensagens e quais informações são enriquecidas.
+sidebar:
+  order: 1
+---
+
+import ExternalLink from '@components/ExternalLink.astro';
+
+Um **TN Contact** é um registro de observabilidade passiva que o Turbo Notify cria automaticamente a partir do tráfego de mensagens entre o número do tenant e contatos externos. Não é um CRM. Não há sincronização de agenda. Não há endpoints de criação ou exclusão manual.
+
+## Conceito
+
+| Aspecto | Comportamento |
+| ------- | ------------- |
+| Origem | Mensagens (`inbound` ou `outbound`) ou número próprio (`self`) |
+| Criação | Automática na primeira observação `(tenant, telefone)` |
+| Identificador | `ct_{hex32}` — public ID estável |
+| Escopo | Tenant-scoped (mesmo telefone em tenants distintos = contatos distintos) |
+| Endurance | Sem TTL; persiste após `deleted_at` (soft delete histórico) |
+
+## Ciclo de vida
+
+```
+[Inbound] message.received ────────┐
+                                   ▼
+[Outbound] POST /v1/messages ──► TN Contact created ──► Enrichment (push_name, business profile, picture)
+                                   ▲                                ▼
+[Self] session.connected ──────────┘                     Webhook: contact.created
+```
+
+1. **Discovery** — primeira mensagem `(tenant, phone)` cria o `Contact` com `source` apropriado.
+2. **Enrichment** — pipeline assíncrono enriquece com `push_name`, `business_profile`, `profile_picture`, `status_about`. Falhas são fail-open: o contato existe mesmo sem enriquecimento.
+3. **Quota** — primeira mensagem outbound consome um slot do quota mensal de contatos (sliding window 30 dias).
+
+## Tier de quota
+
+| Tier | Contatos distintos/30d | Mensagens/30d |
+| ---- | ----------------------:| -------------:|
+| FREE     | 100      | 1.000      |
+| SOLO     | 1.000    | 10.000     |
+| BUSINESS | 5.000    | 50.000     |
+| CUSTOM   | 50.000+  | 500.000+   |
+
+A razão 10:1 (mensagens/contato) reflete o uso médio em produção. Customizações por tenant via `plan_overrides`.
+
+## Origens (source)
+
+- `inbound` — primeira mensagem recebida desse telefone.
+- `outbound` — primeira mensagem enviada para esse telefone.
+- `self` — número controlado pelo tenant (primário ou extra). Flag `is_self=TRUE`.
+
+## Fora de escopo
+
+- Não há `POST /v1/contacts` — contatos são derivados de tráfego.
+- Não há `DELETE /v1/contacts/{id}` — use soft delete via dashboard.
+- Não há sincronização de agenda do WhatsApp.
+
+## Próximos passos
+
+- [Listar contatos](/contacts/list/)
+- [Detalhe de contato](/contacts/detail/)
+- [Foto de perfil](/contacts/profile-picture/)
+- [Eventos de webhook](/webhooks/contact-events/)
+- [Quota de uso](/usage/quota/)

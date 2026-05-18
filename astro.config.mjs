@@ -135,6 +135,40 @@ export default defineConfig({
             },
           ],
         },
+        {
+          label: 'Contatos',
+          translations: { en: 'Contacts', es: 'Contactos' },
+          items: [
+            { slug: 'contacts/overview', label: 'Visão Geral', translations: { en: 'Overview', es: 'Visión General' } },
+            { slug: 'contacts/list', label: 'Listar', translations: { en: 'List', es: 'Listar' } },
+            { slug: 'contacts/detail', label: 'Detalhe', translations: { en: 'Detail', es: 'Detalle' } },
+            { slug: 'contacts/refresh', label: 'Refresh', translations: { en: 'Refresh', es: 'Refresh' } },
+            { slug: 'contacts/profile-picture', label: 'Foto de Perfil', translations: { en: 'Profile Picture', es: 'Foto de Perfil' } },
+            { slug: 'contacts/errors', label: 'Erros', translations: { en: 'Errors', es: 'Errores' } },
+          ],
+        },
+        {
+          label: 'Uso',
+          translations: { en: 'Usage', es: 'Uso' },
+          items: [
+            { slug: 'usage/quota', label: 'Quota', translations: { en: 'Quota', es: 'Quota' } },
+          ],
+        },
+        {
+          label: 'Webhooks',
+          translations: { en: 'Webhooks', es: 'Webhooks' },
+          items: [
+            { slug: 'webhooks/contact-events', label: 'Eventos de Contato', translations: { en: 'Contact Events', es: 'Eventos de Contacto' } },
+            { slug: 'webhooks/message-quota-events', label: 'Eventos de Quota de Mensagem', translations: { en: 'Message Quota Events', es: 'Eventos de Quota de Mensaje' } },
+          ],
+        },
+        {
+          label: 'Changelog',
+          translations: { en: 'Changelog', es: 'Changelog' },
+          items: [
+            { slug: 'changelog/2026-05-15-message-quota-activation', label: 'Per-Tier Message Quota Activation' },
+          ],
+        },
       ],
       customCss: ['./src/styles/custom.css'],
     }),

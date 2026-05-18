@@ -1,0 +1,84 @@
+---
+title: Listar Contatos
+description: Endpoint GET /v1/contacts — paginação por cursor, filtros disponíveis e exemplos.
+sidebar:
+  order: 2
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+Liste os contatos do tenant autenticado. Suporta filtros, paginação por cursor e ordenação.
+
+## Endpoint
+
+```http
+GET /v1/contacts?limit=20&cursor=<opaque>
+```
+
+**Scope necessário:** `contacts:read`.
+
+## Parâmetros de query
+
+| Parâmetro | Tipo | Descrição |
+| --------- | ---- | --------- |
+| `limit` | int | Máx 100 (default 20) |
+| `cursor` | string | Token opaco retornado em `next_cursor` |
+| `phone` | string | Filtro exato por E.164 (`+5571999...`) |
+| `push_name` | string | Match parcial (trigram) sobre `push_name` |
+| `is_business` | bool | Filtra contatos com `business_profile` definido |
+| `source` | enum | `inbound \| outbound \| self` |
+| `has_messaged_in_window` | bool | Só contatos com `first_messaged_at` na janela atual |
+
+## Exemplo de request
+
+<Tabs>
+<TabItem label="cURL">
+```bash
+curl -X GET "https://api.turbonotify.com/v1/contacts?limit=20&is_business=true" \
+  -H "Authorization: Bearer $TURBO_API_KEY"
+```
+</TabItem>
+<TabItem label="Node">
+```ts
+const res = await fetch("https://api.turbonotify.com/v1/contacts?limit=20", {
+  headers: { Authorization: `Bearer ${process.env.TURBO_API_KEY}` },
+});
+const { items, next_cursor } = await res.json();
+```
+</TabItem>
+<TabItem label="Python">
+```python
+import httpx
+r = httpx.get(
+    "https://api.turbonotify.com/v1/contacts",
+    params={"limit": 20},
+    headers={"Authorization": f"Bearer {API_KEY}"},
+)
+data = r.json()
+```
+</TabItem>
+</Tabs>
+
+## Resposta (200)
+
+<ApiResponse status={200}>
+```json
+{
+  "items": [
+    {
+      "id": "ct_a1b2c3d4e5f6789012345678901234ab",
+      "primary_phone": "+5571999294756",
+      "push_name": "João Silva",
+      "is_business": false,
+      "source": "inbound",
+      "is_self": false,
+      "first_messaged_at": "2026-05-10T13:25:00Z"
+    }
+  ],
+  "next_cursor": "eyJpZCI6ImN0XzAxIn0="
+}
+```
+</ApiResponse>
+
+Veja também: [Detalhe](/contacts/detail/) · [Erros](/contacts/errors/).

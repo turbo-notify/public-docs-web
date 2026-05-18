@@ -1,0 +1,63 @@
+---
+title: Eventos de Quota de Mensagem
+description: Webhooks message.quota.warning e message.quota.exceeded — emitidos quando o quota mensal de mensagens por tier cruza thresholds.
+sidebar:
+  order: 2
+---
+
+Eventos relacionados ao **quota mensal de mensagens por tier** (FREE=1k, SOLO=10k, BUSINESS=50k, CUSTOM=500k+).
+
+> **Nota (2026-05-15):** o enforcement deste quota foi ativado em 2026-05-15. Os limites já estavam documentados — a partir desta data, o código aplica os limites efetivamente. Veja [Per-Tier Message Quota Activation](/changelog/2026-05-15-message-quota-activation/) e a [auditoria em rate-limits](/messages/rate-limits/).
+
+## Eventos
+
+| Evento | Quando |
+| ------ | ------ |
+| `message.quota.warning` | Cruzou threshold 80/90/95% da quota mensal de mensagens |
+| `message.quota.exceeded` | Tentativa rejeitada por estouro (HTTP 429) |
+
+## Exemplo: `message.quota.warning`
+
+```json
+{
+  "event_id": "evt_...",
+  "event_type": "message.quota.warning",
+  "tenant_id": "tnt_...",
+  "occurred_at": "...",
+  "data": {
+    "threshold_bps": 80,
+    "used": 800,
+    "quota": 1000,
+    "resets_at": "2026-06-14T...",
+    "tier": "FREE"
+  }
+}
+```
+
+## Exemplo: `message.quota.exceeded`
+
+```json
+{
+  "event_id": "evt_...",
+  "event_type": "message.quota.exceeded",
+  "tenant_id": "tnt_...",
+  "occurred_at": "...",
+  "data": {
+    "quota": 1000,
+    "used": 1000,
+    "resets_at": "2026-06-14T...",
+    "tier": "FREE",
+    "request_id": "req_..."
+  }
+}
+```
+
+## PII
+
+- Não há `phone` cru no payload. Se incluído, é mascarado (`+5571****4756`).
+- `request_id` correlaciona com o `SendMessageUseCase` que disparou o estouro.
+
+## Action recommended
+
+- Upgrade plan (veja tabela de tiers em [Quota e Uso](/usage/quota/)).
+- Verifique seu dashboard em **Uso** para histograma de consumo.
