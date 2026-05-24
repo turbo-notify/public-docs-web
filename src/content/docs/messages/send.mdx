@@ -694,6 +694,21 @@ com o termo "event" usado em webhooks. Detalhes em
 [ADR 2026-04-27](https://github.com/turbo-notify/turbo-notity/blob/main/docs/reference/decisions/2026-04-27-rich-content-rendering.md).
 :::
 
+:::caution[Limitação de propagação — contas pessoais WhatsApp]
+`content_type: "calendar"` é uma feature **WhatsApp Business** (`eventMessage`).
+Quando o destinatário é uma **conta pessoal** (não-Business), o servidor
+WhatsApp remove os timestamps (`startTime`/`endTime`) durante a entrega.
+O destinatário recebe a mensagem mas o card de evento aparece com data
+ausente — o webhook `message.received` correspondente exibe
+`content_type: "unsupported"` com `body.reason: "calendar_missing_start"`.
+
+O envio (`message.sent`) e o status de entrega (`message.delivered` /
+`message.read`) funcionam normalmente; apenas a renderização cliente
+do peer é afetada. Mitigação: garantir que a conta destinatária seja
+WhatsApp Business antes de enviar `calendar`, ou usar `text` com link
+ICS quando o destinatário for pessoal.
+:::
+
 ### Como aparece no destinatário
 
 Cada tipo aparece no WhatsApp do destinatário com a UI nativa:
