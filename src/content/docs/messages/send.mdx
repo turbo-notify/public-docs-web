@@ -698,15 +698,18 @@ com o termo "event" usado em webhooks. Detalhes em
 `content_type: "calendar"` é uma feature **WhatsApp Business** (`eventMessage`).
 Quando o destinatário é uma **conta pessoal** (não-Business), o servidor
 WhatsApp remove os timestamps (`startTime`/`endTime`) durante a entrega.
-O destinatário recebe a mensagem mas o card de evento aparece com data
-ausente — o webhook `message.received` correspondente exibe
-`content_type: "unsupported"` com `body.reason: "calendar_missing_start"`.
+O destinatário recebe a mensagem com todos os metadados úteis (`name`,
+`description`, `join_link`, `location`) mas **sem horário** — o webhook
+`message.received` correspondente preserva `content_type: "calendar"` e
+omite o campo `start_at` do body. Não há reclassificação como
+`unsupported`.
 
 O envio (`message.sent`) e o status de entrega (`message.delivered` /
-`message.read`) funcionam normalmente; apenas a renderização cliente
-do peer é afetada. Mitigação: garantir que a conta destinatária seja
-WhatsApp Business antes de enviar `calendar`, ou usar `text` com link
-ICS quando o destinatário for pessoal.
+`message.read`) funcionam normalmente; apenas o horário do card de
+evento fica ausente no cliente do peer. Mitigação: garantir que a
+conta destinatária seja WhatsApp Business antes de enviar `calendar`,
+ou usar `text` com link ICS quando o destinatário for pessoal e o
+horário for crítico.
 :::
 
 ### Como aparece no destinatário

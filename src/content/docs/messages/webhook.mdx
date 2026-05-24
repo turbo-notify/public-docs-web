@@ -471,6 +471,17 @@ preservado caso queira reusar/exportar.
 "location"`. Veja a [decisão arquitetural](https://github.com/turbo-notify/turbo-notity/blob/main/docs/reference/decisions/2026-04-27-rich-content-rendering.md)
 sobre por que TN nomeia esse tipo `calendar` em vez de `event`.
 
+:::note[Degradação graceful — peer não-WABA]
+Quando o remetente (peer inbound) é uma conta pessoal WhatsApp
+(não-Business), o servidor WhatsApp remove `startTime`/`endTime`
+durante a entrega. O webhook continua sendo `message.received` com
+`content_type: "calendar"` e o body preserva `name`, `description`,
+`join_link`, `location`, etc. — apenas o campo `start_at` (e
+opcionalmente `end_at`) **é omitido** do body. Não há reclassificação
+para `unsupported`. Detalhes: [ADR 2026-05-25 — Calendar Inbound
+Degradation](https://github.com/turbo-notify/turbo-notity/blob/main/docs/reference/decisions/2026-05-25-calendar-inbound-degradation.md).
+:::
+
 :::tip
 Quer ver o body renderizado de forma visual antes de plugar em
 produção? Abra o <ExternalLink href="https://webhook.turbonotify.com">Webhook Inspector</ExternalLink>
