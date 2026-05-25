@@ -1,9 +1,123 @@
 ---
-title: Guia de Migração — Abril 2026
-description: Guia de migração para as mudanças da versão de 21 de abril de 2026 da API Turbo Notify.
+title: Guia de Migração
+description: Guia de migração para mudanças incompatíveis da API Turbo Notify.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+---
+
+## Migração — Maio 2026 (2026-05-25): `to` polimórfico + campo `member` em grupos
+
+**Data de vigência:** 25 de maio de 2026
+
+Esta atualização afeta **exclusivamente mensagens de grupo** (inbound e
+outbound). Mensagens 1:1 permanecem byte-idênticas — não há ação
+necessária se você não usa grupos.
+
+### Resumo das mudanças
+
+| Área | Mudança | Tipo |
+|---|---|---|
+| Webhook/polling grupo inbound | `to` agora carrega `group_id` + `name` em vez de `number`/`alias` | Breaking |
+| Webhook/polling grupo outbound | `to` agora carrega `group_id` + `name` em vez de `number` | Breaking |
+| Campo `group` sibling | **Removido** — substituído por `to.group_id` | Breaking |
+| Campo `member` | **Adicionado** como sibling top-level em mensagens de grupo | Aditivo |
+| Request `POST /v1/messages` (grupo) | Sem mudança — já usava `to.group_id` | Sem ação |
+
+### 1. Remoção do campo `group` sibling
+
+O campo `group: {id, name}` que aparecia como sibling de `from`/`to` em
+payloads de grupo **foi removido**. O contexto do grupo agora está dentro
+do próprio campo `to`.
+
+**Antes:**
+
+```json
+{
+  "from": { "number": "5571999258283", "name": "Cleverson" },
+  "to":   { "number": "5511973117056", "alias": "main", "name": "Turbo Notify" },
+  "group": { "id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" }
+}
+```
+
+**Depois:**
+
+```json
+{
+  "from":   { "number": "5571999258283", "name": "Cleverson", "contact_id": "ct_..." },
+  "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
+  "member": { "number": "5511973117056", "alias": "main" }
+}
+```
+
+**O que fazer:**
+- Remova qualquer leitura de `data.group` ou `data.group.id` / `data.group.name`.
+- Substitua por `data.to.group_id` e `data.to.name`.
+- Atualize a detecção de grupo: `"group" in data` → `"group_id" in data.to`.
+
+### 2. Campo `to` polimórfico — shape de grupo
+
+Para mensagens de grupo, `to` não carrega mais `number`, `alias` nem `name`
+da linha Turbo Notify. Em vez disso, carrega o identificador e nome do grupo.
+
+**Inbound de grupo:**
+
+| Campo | Antes | Depois |
+|---|---|---|
+| `to.number` | telefone da linha TN | **removido** |
+| `to.alias` | alias da linha TN (`"main"`) | **removido** |
+| `to.name` | nome da linha TN | **removido** |
+| `to.contact_id` | contact_id da linha TN | **removido** |
+| `to.group_id` | ausente | `grp_{hex32}` do grupo |
+| `to.name` | ausente | nome snapshot do grupo |
+| `member.number` | ausente | telefone da linha TN |
+| `member.alias` | ausente | alias da linha TN |
+
+**O que fazer:**
+- Para obter qual linha Turbo Notify recebeu a mensagem, leia `data.member.alias` / `data.member.number`.
+- Para obter o grupo destinatário, leia `data.to.group_id`.
+
+### 3. Campo `member` — identificação da linha tenant
+
+O campo `member` é adicionado como sibling top-level em **todos** os
+payloads de grupo (inbound e outbound). Ele identifica a linha Turbo Notify
+participante do grupo — o telefone (`number`) e alias (`alias`).
+
+```json
+"member": { "number": "5511973117056", "alias": "main" }
+```
+
+Para tenants com múltiplos números extras, `member` é a referência
+autoritativa sobre qual linha está participando do grupo.
+
+### 4. Detecção de grupo — padrão canônico
+
+```js
+// Antes
+const isGroup = "group" in data;
+const groupId = data.group?.id;
+const groupName = data.group?.name;
+
+// Depois
+const isGroup = "group_id" in data.to;
+const groupId = data.to.group_id;
+const groupName = data.to.name;
+const memberAlias = data.member?.alias;
+```
+
+### Checklist de migração (grupos)
+
+- [ ] Remover leitura de `data.group` (campo removido)
+- [ ] Substituir `data.group.id` por `data.to.group_id`
+- [ ] Substituir `data.group.name` por `data.to.name`
+- [ ] Atualizar detecção: `"group" in data` → `"group_id" in data.to`
+- [ ] Para saber qual linha TN recebeu/enviou: usar `data.member.alias` / `data.member.number`
+- [ ] Atualizar schemas JSON com `additionalProperties: false` que incluíam `group` como campo permitido
+
+---
+
+## Migração — Abril 2026 (2026-04-21): formato de `message_id`, parties estruturados e outros
 
 Esta versão da API introduz mudanças incompatíveis com versões anteriores. Siga este guia para atualizar sua integração.
 
@@ -11,7 +125,7 @@ Esta versão da API introduz mudanças incompatíveis com versões anteriores. S
 
 ---
 
-## Resumo das mudanças
+## Resumo das mudanças (Abril 2026)
 
 | Área | Mudança | Tipo |
 | ---- | ------- | ---- |

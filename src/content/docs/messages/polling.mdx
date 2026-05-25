@@ -61,10 +61,29 @@ Os resultados são ordenados por `created_at DESC` (mais recentes primeiro).
           received_at: '2026-04-21T10:00:00Z',
         },
       },
+      {
+        id: 'evt_c00a44c3fc774698b0f130d40bb5f104',
+        object: 'event',
+        type: 'message.received',
+        request_id: 'req_54c00c2c3145407f82c53fdec56bc8b7',
+        created_at: '2026-05-25T22:55:14Z',
+        data: {
+          message_id: 'msg_e95500cc03c1492e81e46a77c1f0d420',
+          direction: 'inbound',
+          from: { number: '5571999258283', name: 'Cleverson', contact_id: 'ct_45f2ece8a66a4eeaa661aeb9b8e58c77' },
+          to: { group_id: 'grp_e442553a56b14e2695f6acfd7d651b1a', name: 'TNT' },
+          member: { number: '5511973117056', alias: 'main' },
+          content_type: 'text',
+          preview: 'Bom dia pessoal',
+          received_at: '2026-05-25T22:55:14Z',
+        },
+      },
     ],
     has_more: true,
   }}
 />
+
+> Eventos de grupo usam `to.group_id` (formato `grp_{hex32}`) em vez de `to.number`, e carregam um campo `member` top-level que identifica a linha Turbo Notify participante do grupo. Mensagens 1:1 omitem `to.group_id` e `member` — o shape pré-existente permanece byte-idêntico. Veja [Webhooks](/messages/webhook/#exemplo--messagereceived-grupo) para detalhes.
 
 ### Envelope da lista
 

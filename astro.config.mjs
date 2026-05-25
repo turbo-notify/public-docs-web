@@ -84,6 +84,27 @@ export default defineConfig({
           ],
         },
         {
+          label: 'Grupos',
+          translations: { en: 'Groups', es: 'Grupos' },
+          items: [
+            {
+              slug: 'groups/overview',
+              label: 'Visão Geral',
+              translations: { en: 'Overview', es: 'Visión general' },
+            },
+            {
+              slug: 'groups/lifecycle-events',
+              label: 'Eventos de lifecycle',
+              translations: { en: 'Lifecycle Events', es: 'Eventos de ciclo de vida' },
+            },
+            {
+              slug: 'groups/limitations',
+              label: 'Limitações',
+              translations: { en: 'Limitations', es: 'Limitaciones' },
+            },
+          ],
+        },
+        {
           label: 'Números Extras',
           translations: { en: 'Extra Numbers', es: 'Números Extra' },
           items: [

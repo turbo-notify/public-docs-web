@@ -1,0 +1,60 @@
+---
+title: Limitações
+description: Recursos de grupos WhatsApp que o Turbo Notify NÃO suporta.
+---
+
+# Limitações de grupos
+
+O Turbo Notify é uma plataforma de **mensageria transacional + observabilidade**.
+Suporte a grupos cobre o que a API precisa para enviar e ler mensagens, e
+para reagir a mudanças no grupo via webhooks. Operações administrativas
+de grupo (criação, gerenciamento de membros, alteração de configurações)
+**não** estão no escopo.
+
+## Não suportado
+
+| Recurso | Estado | Por quê |
+|---|---|---|
+| Criar grupo via API | ❌ | Operação administrativa; foge do escopo transacional |
+| Adicionar/remover participante via API | ❌ | Idem |
+| Promover/rebaixar admin via API | ❌ | Idem |
+| Listar grupos do tenant (`GET /v1/groups`) | ❌ (deferido) | Use os webhooks `group.joined`/`group.left` para manter o índice local |
+| Listar participantes de um grupo | ❌ | Privacidade; o webhook `group.participants_*` entrega quem foi alterado |
+| Editar nome/descrição/imagem do grupo | ❌ | Operação administrativa |
+| Gerar link de convite do grupo | ❌ | Operação administrativa |
+| Listas de transmissão (broadcast) | ❌ | Mecanismo distinto de grupo; fora do escopo |
+| Newsletters | ❌ | Idem |
+
+## Suportado
+
+| Recurso | Status |
+|---|---|
+| Receber mensagens de grupos | ✅ (webhook `message.received` com sibling `group`) |
+| Enviar mensagens para grupos | ✅ (`POST /v1/messages` com `to.group_id`) |
+| Reagir, editar, deletar mensagens em grupo | ✅ |
+| Receber notificação quando entra/sai de grupo | ✅ (`group.joined` / `group.left`) |
+| Receber notificação quando nome/descrição/imagem do grupo muda | ✅ |
+| Receber notificação quando membros são adicionados/removidos/promovidos/rebaixados | ✅ |
+
+## Identificador público
+
+`grp_{hex32}` (32 hex chars do UUID interno). O identificador bruto do
+WhatsApp (`120363...@g.us`) **nunca** é exposto via API ou webhook —
+apenas o formato TN.
+
+## Quota e rate-limit
+
+Mensagem para grupo = **1 destinatário** no rate-limit diário,
+independente do tamanho do grupo. Não conta na quota de contatos.
+
+## Recuperação
+
+Se você perder o nome de um grupo (ex: webhook caiu antes de
+ser entregue), aguarde a próxima mensagem inbound — o webhook
+`message.received` carrega o `group.name` resolvido.
+
+## Roadmap
+
+Listagem (`GET /v1/groups`) e endpoint dedicado de refresh
+(`GET /v1/groups/{id}`) podem ser adicionados em release futuro se
+houver demanda de cliente.

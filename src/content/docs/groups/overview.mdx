@@ -1,0 +1,154 @@
+---
+title: WhatsApp Groups
+description: Recebimento e envio de mensagens em grupos do WhatsApp via Turbo Notify.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+# WhatsApp Groups (visão geral)
+
+Disponível desde 2026-05-24 (inbound); envio disponível desde 2026-05-25.
+O Turbo Notify reconhece grupos do WhatsApp como entidades de primeira
+classe — mensagens recebidas em grupo trazem o contexto da conversa, e
+o envio para grupos usa o identificador público `grp_{hex32}`.
+
+## Conceitos
+
+### Identificador público `grp_`
+
+Toda referência pública a um grupo usa o formato `grp_` + 32 caracteres
+hexadecimais, derivado do UUID interno do registro em
+`tn_whatsapp.groups`. Mirror dos prefixos de outras entidades públicas
+(`msg_`, `ct_`, `req_`, `evt_`).
+
+> O identificador do WhatsApp (`120363xxxxx@g.us`) **nunca** é exposto
+> em respostas, webhooks ou polling — apenas o `grp_{hex32}` da TN.
+
+### Campo `to` polimórfico
+
+O campo `to` discrimina por presença de chave — sem campo `kind` ou `type`:
+
+- **1:1** → `to: { "number": "+55..." }` — destinatário pessoa.
+- **Grupo** → `to: { "group_id": "grp_..." }` — destinatário grupo.
+
+A mesma regra vale para os payloads de webhook e polling: quando
+`to.group_id` está presente, o destinatário lógico é o grupo.
+Mensagens 1:1 preservam o shape pré-existente byte-idêntico.
+
+### Campo `from` sempre é pessoa
+
+Grupos não falam — participantes falam dentro de grupos. Portanto:
+
+- Inbound: `from` é o participante que enviou a mensagem no grupo.
+- Outbound: `from` é o número Turbo Notify que enviou a mensagem.
+
+Em nenhum cenário `from` carrega um `group_id`.
+
+### Campo `member` (mensagens de grupo)
+
+O campo `member` é um sibling top-level, presente **apenas em mensagens
+de grupo** (inbound e outbound). Identifica o número Turbo Notify que
+participa do grupo — o telefone (`number`) e o alias (`alias`) da linha
+tenant-side.
+
+```jsonc
+// Inbound de grupo
+{
+  "from":   { "number": "5571999258283", "name": "Cleverson", "contact_id": "ct_..." },
+  "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
+  "member": { "number": "5511973117056", "alias": "main" }
+}
+
+// Outbound para grupo
+{
+  "from":   { "number": "5511973117056", "alias": "main", "name": "Turbo Notify" },
+  "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
+  "member": { "number": "5511973117056", "alias": "main" }
+}
+```
+
+Para detectar mensagens de grupo, verifique a presença de `to.group_id`:
+
+```js
+const isGroup = "group_id" in data.to;
+```
+
+## Recebendo mensagens de grupo
+
+Cada mensagem inbound proveniente de um grupo é entregue como
+[`message.received`](/messages/webhook/#exemplo--messagereceived-grupo)
+no webhook + polling. `from` é o participante que enviou; `to` traz o
+`group_id` e o snapshot do nome do grupo; `member` identifica a linha
+Turbo Notify que participa do grupo.
+
+## Enviando para grupo
+
+Use a forma polimórfica do campo `to` no `POST /v1/messages`: forneça
+`group_id` em vez de `number`. O restante do corpo (`content`,
+`quoted_message_id`, etc.) permanece igual ao 1:1.
+
+<Tabs>
+  <TabItem label="cURL">
+```bash
+curl -X POST "https://api.turbonotify.com/v1/messages" \
+  -H "Authorization: Bearer $TN_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a" },
+    "content": { "content_type": "text", "text": "Bom dia, equipe" }
+  }'
+```
+  </TabItem>
+  <TabItem label="Node">
+```javascript
+await fetch('https://api.turbonotify.com/v1/messages', {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${process.env.TN_API_KEY}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    to: { group_id: 'grp_e442553a56b14e2695f6acfd7d651b1a' },
+    content: { content_type: 'text', text: 'Bom dia, equipe' },
+  }),
+});
+```
+  </TabItem>
+  <TabItem label="Python">
+```python
+import httpx
+
+httpx.post(
+    "https://api.turbonotify.com/v1/messages",
+    headers={"Authorization": f"Bearer {os.environ['TN_API_KEY']}"},
+    json={
+        "to": {"group_id": "grp_e442553a56b14e2695f6acfd7d651b1a"},
+        "content": {"content_type": "text", "text": "Bom dia, equipe"},
+    },
+)
+```
+  </TabItem>
+</Tabs>
+
+O Turbo Notify resolve o `grp_{hex32}` para o JID interno do WhatsApp e
+roteia a mensagem para o grupo usando a linha principal (ou extra, se
+configurada). Para 1:1, continue usando `"to": {"number": "+55..."}`.
+
+## Quota e rate-limit
+
+Um envio para grupo conta como **1 destinatário** no rate-limit diário —
+independente de quantos participantes o grupo tenha. A quota de
+contatos (`contact.*`) **não** é afetada por envios para grupos: a
+ADR [2026-05-25](https://github.com/turbonotify/docs) fixa que grupos
+nunca materializam contatos.
+
+## Lifecycle de grupo
+
+O Turbo Notify emite 10 webhooks adicionais quando o estado do grupo
+muda. Consulte [Group lifecycle events](/groups/lifecycle-events/) para
+o catálogo completo.
+
+## Limitações
+
+Consulte [Limitações](/groups/limitations/) — recursos explicitamente
+fora do escopo (criação/admin/listagem de membros via API).

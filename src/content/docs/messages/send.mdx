@@ -721,3 +721,55 @@ salvável, **calendário** com botão "Adicionar ao calendário".
 Para visualizar exatamente como o evento `message.sent` correspondente
 chega no seu webhook, abra o [Webhook Inspector](https://webhook.turbonotify.com/)
 — o painel "Enriched" renderiza esses três tipos com cards dedicados.
+
+## Envio para Grupo
+
+Disponível desde 2026-05-25. Use a forma polimórfica do campo `to`:
+forneça `group_id` em vez de `number`. Veja
+[Visão geral de grupos](/groups/overview/) para detalhes do modelo.
+
+```json title="POST /v1/messages — grupo"
+{
+  "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a" },
+  "content": {
+    "content_type": "text",
+    "text": "Bom dia, equipe"
+  }
+}
+```
+
+O campo `to` é discriminado por presença de chave — sem `kind` nem `type`:
+
+| Campo em `to` | Destino |
+|---|---|
+| `number` | Mensagem 1:1 (pessoa) |
+| `group_id` | Mensagem para grupo |
+
+- `to.number` e `to.group_id` são **mutuamente exclusivos** — envie exatamente um.
+- `group_id` é o identificador público `grp_{hex32}` recebido em
+  webhooks/polling de `message.received` (`to.group_id`) ou nos
+  eventos de [lifecycle de grupo](/groups/lifecycle-events/).
+- O conteúdo (`content`) usa o mesmo schema discriminado de envios 1:1
+  (texto, imagem, vídeo, áudio, documento, sticker, location, contact,
+  calendar) — sem mudanças.
+- `quoted_message_id` para citar mensagens dentro do grupo continua
+  funcionando da mesma forma.
+
+A resposta tem o shape padrão (`message_id`, `status`). O webhook
+`message.sent` correspondente usa `to.group_id` (mesmo valor que você
+enviou no request) + campo `member` identificando a linha que enviou —
+útil para correlacionar entregas inbound e outbound no mesmo grupo.
+
+:::caution[Tenant precisa estar no grupo]
+A TN só envia para grupos onde sua linha (primary ou extra) é
+participante. Tentar enviar para um `group_id` em que você não está
+mais retorna 422 `not_group_member`. Re-entre no grupo via WhatsApp
+(o webhook `group.joined` confirma) e tente novamente.
+:::
+
+:::tip[Quota não é fan-out]
+Mensagem para grupo conta como **1 destinatário** no rate-limit diário,
+independente de quantos participantes o grupo tenha. Quota de contatos
+(`contact.quota.*`) não é afetada — grupos nunca materializam contatos
+(ADR 2026-05-25).
+:::

@@ -140,6 +140,48 @@ descrição do evento, etc.), faça `GET /v1/messages/{message_id}`.
 
 `from.name` traz o nome de exibição que o contato configurou no WhatsApp (push name); o campo é omitido quando o contato não definiu nenhum. `to.alias` resolve para `"main"` quando a mensagem chegou no número principal ou para o alias do número extra que recebeu. `to.name` traz o nome de exibição do número Turbo Notify que recebeu a mensagem (capturado na conexão via WhatsApp); omitido se não disponível.
 
+### Exemplo — `message.received` (grupo)
+
+Disponível desde 2026-05-24. Quando uma mensagem chega de um **grupo WhatsApp**,
+`to` carrega `group_id` + snapshot `name` em vez de `number`; e um campo
+`member` top-level identifica a linha Turbo Notify que participa do grupo.
+`from` continua sendo o participante que enviou — pessoas sempre falam, nunca grupos.
+Para mensagens 1:1 (não-grupo) `to.group_id` e `member` são omitidos — payloads
+pré-existentes permanecem byte-idênticos.
+
+```json title="message.received (grupo)"
+{
+  "id": "evt_c00a44c3fc774698b0f130d40bb5f104",
+  "type": "message.received",
+  "timestamp": "2026-05-25T22:55:14Z",
+  "data": {
+    "message_id": "msg_e95500cc03c1492e81e46a77c1f0d420",
+    "direction": "inbound",
+    "from": {
+      "number": "5571999258283",
+      "name": "Cleverson",
+      "contact_id": "ct_45f2ece8a66a4eeaa661aeb9b8e58c77"
+    },
+    "to": {
+      "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a",
+      "name": "TNT"
+    },
+    "member": {
+      "number": "5511973117056",
+      "alias": "main"
+    },
+    "content_type": "text",
+    "preview": "Bom dia pessoal",
+    "received_at": "2026-05-25T22:55:14Z"
+  }
+}
+```
+
+- `to.group_id` é o identificador público do grupo no formato `grp_{hex32}` — estável por tenant e referenciável em chamadas futuras. Nunca exponemos o JID bruto do WhatsApp.
+- `to.name` é o nome atual do grupo (snapshot no momento do evento). Pode ser `null` quando o nome ainda não foi hidratado — uma chamada `GET /v1/messages/{id}` após alguns segundos costuma trazer o nome resolvido.
+- `member` identifica a linha Turbo Notify que participa do grupo (`number` + `alias`). Essencial quando o tenant tem múltiplos números extras e precisa saber qual deles está no grupo.
+- Para detectar mensagens de grupo o cliente verifica `"group_id" in data.to` — 1:1 nunca carrega esse campo.
+
 ### Exemplo — `message.replied` (inbound/outbound)
 
 Disponível desde 2026-04-28. Replies (mensagens que citam outra) são entregues como evento dedicado em vez de `message.sent`/`message.received`. Carrega qualquer `content_type` (text/image/video/audio/document/sticker/location/contact/calendar) — o tipo real do conteúdo é preservado, e a discriminação como reply vem do campo `quoted_message_id` (sempre presente neste evento).
@@ -730,3 +772,38 @@ Em produção, persista o `id` em uma tabela ou cache com TTL de ~72 h.
 ## Alternativa: polling
 
 Se preferir consumir eventos sob demanda em vez de expor um endpoint público, utilize o [polling via `GET /events`](/messages/polling/). O objeto `data` é o mesmo do webhook.
+
+## Mensagens de grupo nos webhooks outbound
+
+Quando você envia uma mensagem para um grupo via
+`POST /v1/messages` com `to.group_id`, os webhooks subsequentes
+(`message.sent`, `message.delivered`, `message.read`,
+`message.send.failed`) usam o mesmo shape polimórfico — `to` carrega
+`group_id` + snapshot `name`, e `member` identifica a linha que enviou:
+
+```json title="message.sent (outbound para grupo)"
+{
+  "id": "evt_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "type": "message.sent",
+  "timestamp": "2026-05-25T10:00:05Z",
+  "request_id": "req_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
+  "data": {
+    "message_id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
+    "direction": "outbound",
+    "from":   { "number": "5511973117056", "alias": "main", "name": "Turbo Notify" },
+    "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
+    "member": { "number": "5511973117056", "alias": "main" },
+    "content_type": "text",
+    "preview": "Bom dia, equipe",
+    "sent_at": "2026-05-25T10:00:05Z"
+  }
+}
+```
+
+- `to.group_id` é o identificador público `grp_{hex32}` — mesmo valor que você forneceu no `POST /v1/messages`.
+- `member` identifica a linha Turbo Notify que enviou a mensagem ao grupo. Para tenants com múltiplos extras, permite correlacionar qual linha participou do envio.
+- Para detectar mensagens de grupo em qualquer webhook (inbound ou outbound), verifique `"group_id" in data.to`.
+
+A mesma regra vale para inbound: webhooks `message.received` de
+grupo trazem `from = participante`, `to.group_id = grupo`,
+`member = linha tenant que recebeu`.

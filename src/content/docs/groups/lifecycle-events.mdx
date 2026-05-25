@@ -1,0 +1,194 @@
+---
+title: Eventos de lifecycle de grupo
+description: 10 webhooks que o Turbo Notify emite quando o estado de um grupo WhatsApp muda.
+---
+
+# Eventos de lifecycle de grupo
+
+O Turbo Notify emite 10 webhooks adicionais quando seu número entra/sai
+de grupos ou quando o estado de um grupo muda. Todos seguem o
+naming `group.{ação}` com verbo no past-participle (consistente com
+`contact.name_changed`).
+
+| Tipo | Quando |
+|---|---|
+| `group.joined` | Seu número foi adicionado a um grupo (ou criou um) |
+| `group.left` | Seu número foi removido, saiu, ou o grupo foi dissolvido |
+| `group.name_changed` | O nome do grupo mudou |
+| `group.description_changed` | A descrição (topic) do grupo mudou |
+| `group.picture_changed` | A foto do grupo mudou |
+| `group.settings_changed` | Uma configuração mudou (announce-only, locked, ephemeral, parent) |
+| `group.participants_added` | Outros participantes foram adicionados ao grupo |
+| `group.participants_removed` | Outros participantes foram removidos |
+| `group.participants_promoted` | Participantes foram promovidos a admin |
+| `group.participants_demoted` | Admins foram rebaixados |
+
+Todos os payloads carregam o sibling `group: {id, name}` no formato
+`grp_{hex32}` + snapshot de nome.
+
+## Exemplos
+
+### `group.joined`
+
+```json
+{
+  "id": "evt_...",
+  "type": "group.joined",
+  "timestamp": "2026-05-25T10:00:00Z",
+  "data": {
+    "group": { "id": "grp_9f6f0b37c98043e5835822eeae550e77", "name": "Grupo A" },
+    "joined_by": "5511999999999",
+    "creation": false,
+    "initial_participants_count": 7,
+    "joined_at": "2026-05-25T10:00:00Z"
+  }
+}
+```
+
+- `joined_by` é o número (digits-only) do admin que adicionou seu número, ou `null` quando o evento foi originado por sua própria criação do grupo (`creation=true`).
+
+### `group.left`
+
+```json
+{
+  "type": "group.left",
+  "data": {
+    "group": { "id": "grp_...", "name": "Grupo A" },
+    "removed_by": "5511999999999",
+    "reason": "removed",
+    "left_at": "2026-05-25T10:01:00Z"
+  }
+}
+```
+
+`reason` é informacional: `removed` (admin kicked), `left` (você saiu),
+`deleted` (grupo dissolvido).
+
+### `group.name_changed`
+
+```json
+{
+  "type": "group.name_changed",
+  "data": {
+    "group": { "id": "grp_...", "name": "Grupo A 2.0" },
+    "old_name": "Grupo A",
+    "new_name": "Grupo A 2.0",
+    "changed_by": "5511999999999",
+    "changed_at": "2026-05-25T10:02:00Z"
+  }
+}
+```
+
+### `group.description_changed`
+
+```json
+{
+  "type": "group.description_changed",
+  "data": {
+    "group": { "id": "grp_...", "name": "Grupo A 2.0" },
+    "old_description": "...",
+    "new_description": "...",
+    "changed_by": "5511999999999",
+    "changed_at": "2026-05-25T10:03:00Z"
+  }
+}
+```
+
+### `group.picture_changed`
+
+```json
+{
+  "type": "group.picture_changed",
+  "data": {
+    "group": { "id": "grp_...", "name": "Grupo A 2.0" },
+    "new_picture_url": "https://pps.whatsapp.net/...",
+    "picture_hash": "abc123...",
+    "changed_by": "5511999999999",
+    "changed_at": "2026-05-25T10:04:00Z"
+  }
+}
+```
+
+URLs do WhatsApp para foto de grupo rotacionam — guarde o `picture_hash`
+para detectar mudanças efetivas. URL é sempre HTTPS.
+
+### `group.settings_changed`
+
+Um evento por setting que mudou (o WhatsApp pode emitir múltiplos
+changes simultâneos; cada um vira um evento).
+
+```json
+{
+  "type": "group.settings_changed",
+  "data": {
+    "group": { "id": "grp_...", "name": "Grupo A 2.0" },
+    "setting": "announce",
+    "old_value": false,
+    "new_value": true,
+    "changed_by": "5511999999999",
+    "changed_at": "2026-05-25T10:05:00Z"
+  }
+}
+```
+
+`setting`: `announce` (apenas admins postam) | `locked` (apenas admins
+editam info) | `ephemeral` (timer em segundos para disappearing messages)
+| `parent` (group community parent).
+
+### `group.participants_added`
+
+Um único webhook por operação batch — todos os adicionados juntos.
+
+```json
+{
+  "type": "group.participants_added",
+  "data": {
+    "group": { "id": "grp_...", "name": "Grupo A 2.0" },
+    "participants": [
+      { "number": "5511555555555", "name": null, "contact_id": "ct_..." },
+      { "number": "5511444444444", "name": "Carlos", "contact_id": null }
+    ],
+    "added_by": {
+      "number": "5511999999999",
+      "name": "Admin",
+      "contact_id": "ct_..."
+    },
+    "added_at": "2026-05-25T10:06:00Z"
+  }
+}
+```
+
+- `participants[]` lista quem foi adicionado.
+- `added_by` é o admin que executou a ação. Pode ser `null` se a
+  resolução do JID falhou.
+- `contact_id` é populado quando você já tinha o participante como
+  contato (TN não cria novos contatos para participantes vistos via
+  lifecycle event — proteção LGPD + quota).
+
+### `group.participants_removed`
+
+Mesma forma de `added`, com `removed_by` no lugar de `added_by`.
+
+### `group.participants_promoted`
+
+Mesma forma, `promoted_by` em vez de `added_by`. Não muda o
+participants_count do grupo.
+
+### `group.participants_demoted`
+
+Mesma forma, `demoted_by`. Não muda o participants_count.
+
+## Coalescência
+
+Quando o WhatsApp envia um payload "fat" com múltiplas mudanças
+simultâneas (ex: nome + descrição + 5 adições no mesmo update),
+o Turbo Notify emite **um webhook por mudança lógica** — permitindo
+que sua subscription filtre pelo tipo desejado sem precisar parsear
+um envelope polimórfico.
+
+## Idempotência
+
+Cada evento de lifecycle é entregue com um header `Nats-Msg-Id`
+derivado de `(tenant_id, group_id, concern, unix_ms)`. Replays do
+JetStream colapsam dentro de uma janela curta — se você processou
+o evento `id` uma vez, ignore qualquer reentrega do mesmo `id`.
