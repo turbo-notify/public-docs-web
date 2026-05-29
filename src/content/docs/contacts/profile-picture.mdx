@@ -22,9 +22,8 @@ GET /v1/contacts/{contact_id}/profile-picture
 | Estado | Resposta |
 | ------ | -------- |
 | `tenant_storage` | 302 com URL pré-assinada do BYO Storage (R2/S3/Supabase) |
-| `whatsapp_direct` | 302 com URL direta do WhatsApp (pode expirar em ~24h) |
-| `pending_upload` | 302 com URL do WhatsApp (fallback enquanto upload está em fila) |
-| `upload_failed` | 302 com URL do WhatsApp (fallback enquanto retry está em curso) |
+| `pending_upload` | 404 `contact_picture_unavailable` (upload ainda em andamento) |
+| `upload_failed` | 404 `contact_picture_unavailable` (a tentativa de upload deste ciclo falhou; **não há retry imediato**). Diferente da mídia de mensagem — que é terminal — a foto de um contato ativo é **re-resolvida pelo cron de refresh** (`profile_picture_fetched_at` > 7 dias), então uma falha pode se recuperar em ciclos futuros se o storage estiver saudável. |
 | `unavailable` | 404 `contact_picture_unavailable` |
 
 ## Modo proxy (opt-in)
@@ -50,10 +49,20 @@ Cache-Control: max-age=60
 ```json
 {
   "error": "contact_picture_unavailable",
-  "details": {"contact_id": "ct_..."}
+  "details": {
+    "contact_id": "ct_...",
+    "reason": "no_storage",
+    "setup_hint": {
+      "setup_url": "https://app.turbonotify.com/settings/integrations/storage",
+      "docs_url": "https://docs.turbonotify.com/general/byo-storage-setup/",
+      "message": "Configure object storage to serve contact pictures."
+    }
+  }
 }
 ```
 </ApiResponse>
+
+O campo `reason` discrimina a causa: `no_storage` (sem storage configurado), `storage_circuit_open` (circuit breaker aberto), `upload_failed` (falha de upload neste ciclo — pode se recuperar no refresh seguinte, ver tabela acima) ou `peer_has_none` (o contato/grupo não tem foto). O `setup_hint` acompanha apenas `no_storage` e `storage_circuit_open` — para `upload_failed` e `peer_has_none` ele é omitido.
 
 ## Cache
 

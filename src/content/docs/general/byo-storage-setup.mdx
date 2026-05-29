@@ -1,0 +1,141 @@
+---
+title: BYO Object Storage
+description: Configure seu próprio bucket (AWS S3, Cloudflare R2, Supabase Storage) para armazenar mídias recebidas e fotos de perfil de contatos de forma permanente.
+sidebar:
+  order: 5
+  badge: { text: 'Obrigatório para mídia', variant: 'caution' }
+---
+
+import DashboardLink from '@components/DashboardLink.astro';
+
+**BYO Object Storage** (Bring Your Own) permite que o Turbo Notify armazene mídias recebidas e fotos de perfil de contatos diretamente no seu próprio bucket, sob seu controle total. Sem essa configuração, mídias inbound não ficam disponíveis para download.
+
+## O que é BYO Object Storage
+
+Quando um contato envia uma imagem, vídeo, áudio, documento ou figurinha para o seu número WhatsApp, o Turbo Notify:
+
+1. Recebe a mídia da rede WhatsApp.
+2. Faz upload do arquivo para o seu bucket (via S3 API).
+3. Retorna uma URL pré-assinada no campo `media.url` ao consultar `GET /v1/messages/{id}`.
+4. Envia o webhook `message.received` com o bloco `media` disponível.
+
+Sem BYO Storage configurado, o campo `media.kind` retorna `"unavailable"` com `reason: "no_storage"` — os bytes da mídia não são persistidos.
+
+## Providers suportados
+
+O Turbo Notify usa a S3 HTTP API como protocolo de transporte — o mesmo protocolo suportado pelos três providers:
+
+| Provider | Free tier | Notas |
+|----------|:---------:|-------|
+| **Cloudflare R2** | Sim | Sem custo de egress; excelente para alta frequência de downloads. Consulte o site do provider para limites atuais. |
+| **Supabase Storage** | Sim | Ideal se você já usa Supabase na sua stack. Consulte o site do provider para limites atuais. |
+| **AWS S3** | Sim (Free Tier 12 meses) | Maior ecossistema de ferramentas; custo de egress applies. Consulte o site da AWS para detalhes. |
+
+:::note[Pricing]
+Não citamos valores específicos pois os planos dos providers mudam. Acesse o site de cada provider para verificar os limites e preços atuais antes de escolher.
+:::
+
+## Como configurar
+
+### 1. Crie um bucket no provider escolhido
+
+O bucket deve ser **privado** (sem acesso público). O Turbo Notify acessa o conteúdo via credenciais IAM/API, não por URLs públicas.
+
+### 2. Crie credenciais com permissões mínimas
+
+As permissões necessárias são:
+
+```
+s3:PutObject
+s3:GetObject
+s3:DeleteObject
+s3:ListBucket
+```
+
+Crie um usuário IAM (AWS), API token (Cloudflare R2) ou service role (Supabase) com escopo restrito ao bucket do Turbo Notify.
+
+### 3. Configure no Dashboard
+
+Acesse <DashboardLink path="/settings/integrations/storage">Configurações → Integrações → Object Storage</DashboardLink> e preencha:
+
+| Campo | Valor |
+|-------|-------|
+| **Provider** | AWS S3, Cloudflare R2 ou Supabase Storage |
+| **Bucket name** | Nome do bucket criado |
+| **Region** | Região do bucket (ex: `us-east-1`, `auto` para R2) |
+| **Access Key ID** | Chave de acesso IAM / R2 / Supabase |
+| **Secret Access Key** | Chave secreta correspondente |
+| **Endpoint** | Apenas para R2 e Supabase (URL S3-compatible do provider) |
+
+### 4. Valide a conexão
+
+Após salvar, clique em **Testar conexão**. O Turbo Notify realiza um `PutObject` temporário seguido de `DeleteObject` para verificar as permissões. O resultado aparece como:
+
+- **Conectado** — integração ativa, mídias passam a ser armazenadas imediatamente.
+- **Falha** — verifique credenciais, nome do bucket e permissões.
+
+## Comportamento após configuração
+
+### Mídias inbound
+
+Toda mídia recebida após a ativação é automaticamente copiada para o seu bucket. O campo `media` em `GET /v1/messages/{id}` passa a retornar:
+
+```json
+{
+  "kind": "available",
+  "storage": "tenant_storage",
+  "url": "https://<bucket>.r2.cloudflarestorage.com/...?X-Amz-...",
+  "url_expires_at": "2026-04-21T11:00:00Z",
+  "mime_type": "image/jpeg",
+  "size_bytes": 184320,
+  "hash": "sha256:a1b2c3..."
+}
+```
+
+A URL pré-assinada expira conforme o `url_expires_at`. Para obter uma nova URL, consulte a mensagem novamente.
+
+### Fotos de perfil de contatos
+
+Com BYO Storage ativo, fotos de perfil são armazenadas no bucket e retornadas via `GET /v1/contacts/{id}/profile-picture` como redirect 302 para a URL pré-assinada.
+
+### Mídias anteriores à configuração
+
+Mídias recebidas **antes** da ativação do BYO Storage permanecem com `media.kind = "unavailable"` — não há backfill retroativo. Apenas novas mídias são armazenadas.
+
+## Troubleshooting
+
+### `storage_required` (412)
+
+Ao enviar mídia com `s3_object_key` sem storage configurado, a API retorna `412 Precondition Failed`. Configure e ative o BYO Storage antes de usar esse campo.
+
+### `media.kind = "unavailable"` com `reason: "upload_failed"`
+
+O upload falhou após retentativas. Possíveis causas:
+
+- Credenciais expiradas ou com permissões insuficientes.
+- Bucket deletado ou com política de acesso alterada.
+- Quota do bucket atingida (verifique no console do provider).
+
+Acesse <DashboardLink path="/settings/integrations/storage">Configurações → Integrações → Object Storage</DashboardLink> e clique em **Testar conexão** para diagnosticar.
+
+### `media.kind = "unavailable"` com `reason: "storage_circuit_open"`
+
+O circuit breaker de storage foi ativado por falhas consecutivas. O Turbo Notify retentará automaticamente. Quando a conexão for restabelecida, você receberá o webhook `storage.recovered`.
+
+### `media.kind = "pending"`
+
+O upload está em andamento. Aguarde alguns segundos e consulte `GET /v1/messages/{id}` novamente. Esse estado só é visível durante o processamento — o webhook `message.received` só é emitido após resolução (disponível ou indisponível).
+
+## Segurança
+
+- Credenciais são armazenadas encriptadas (AES-256-GCM) — nunca em texto claro.
+- O Turbo Notify nunca expõe credenciais em logs ou responses.
+- URLs pré-assinadas têm validade configurável (padrão: 1 hora).
+- Recomendamos política de acesso **least-privilege** — escopo restrito ao bucket do Turbo Notify.
+
+## Relacionado
+
+- [Recuperar mensagem](/messages/get/) — campo `media` com discriminated union.
+- [Webhooks — Armazenamento e mídia](/messages/webhook/#armazenamento-e-mídia) — eventos `storage.degraded` e `storage.recovered`.
+- [Envio de mídia](/messages/send-media/) — campo `s3_object_key` para mídia outbound.
+- [Foto de perfil](/contacts/profile-picture/) — redirect para URL pré-assinada.

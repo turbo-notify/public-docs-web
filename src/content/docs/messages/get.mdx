@@ -145,6 +145,9 @@ Recupere o conteúdo completo, o status de entrega e a referência de mídia de 
     body: { text: 'Olá, seu pedido foi confirmado!' },
     body_expired: false,
     media: null,
+    sent_at: '2026-04-21T10:00:05Z',
+    delivered_at: '2026-04-21T10:01:00Z',
+    read_at: null,
     created_at: '2026-04-21T10:00:00Z',
     updated_at: '2026-04-21T10:01:00Z',
     origin: 'api',
@@ -167,14 +170,18 @@ Recupere o conteúdo completo, o status de entrega e a referência de mídia de 
     body: null,
     body_expired: false,
     media: {
-      storage: 'whatsapp_direct',
-      url: 'https://mmg.whatsapp.net/...',
-      url_expires_at: '2026-04-22T10:00:00Z',
+      kind: 'available',
+      storage: 'tenant_storage',
+      url: 'https://your-bucket.r2.cloudflarestorage.com/tenants/.../image.jpeg?X-Amz-...',
+      url_expires_at: '2026-04-21T10:15:00Z',
       mime_type: 'image/jpeg',
       size_bytes: 123456,
+      hash: 'sha256:a1b2c3...',
       caption: null,
-      media_expired: false,
     },
+    sent_at: null,
+    delivered_at: null,
+    read_at: null,
     created_at: '2026-04-21T10:00:00Z',
     updated_at: '2026-04-21T10:05:00Z',
     origin: null,
@@ -203,6 +210,9 @@ Os campos `name` são opcionais: em outbound, `from.name` carrega o nome de exib
 | `body` | object\|null | Conteúdo estruturado completo; `null` quando expirado pela política de retenção |
 | `body_expired` | boolean | `true` quando o corpo foi removido pelo ciclo de retenção |
 | `media` | object\|null | Bloco de mídia; `null` para tipos não-mídia |
+| `sent_at` | string\|null | Timestamp ISO 8601 UTC em que o WhatsApp confirmou o envio da mensagem outbound (apenas outbound; sempre `null` para inbound ou se ainda não confirmado). |
+| `delivered_at` | string\|null | Timestamp ISO 8601 UTC em que o dispositivo do destinatário confirmou a entrega (apenas outbound; sempre `null` para inbound). |
+| `read_at` | string\|null | Timestamp ISO 8601 UTC em que o destinatário confirmou a leitura (apenas outbound; sempre `null` para inbound). |
 | `created_at` | string | Timestamp ISO 8601 de criação |
 | `updated_at` | string | Timestamp ISO 8601 da última atualização de status |
 | `origin` | string\|null | `"api"` (envio via REST) ou `"channel"` (digitada no celular) para mensagens outbound; `null` para inbound |
@@ -210,24 +220,57 @@ Os campos `name` são opcionais: em outbound, `from.name` carrega o nome de exib
 
 ### Bloco de mídia
 
-Presente quando `content_type` é `image`, `audio`, `video`, `document` ou `sticker`:
+Presente quando `content_type` é `image`, `audio`, `video`, `document` ou `sticker`. O campo `media` é uma **união discriminada** pelo campo `kind`:
+
+#### `kind: "available"`
+
+Mídia disponível para download. Requer <DashboardLink path="/settings/integrations/storage">Object Storage configurado</DashboardLink>.
 
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
-| `storage` | string | `whatsapp_direct` (URL efêmera do WhatsApp) ou `tenant_storage` (URL pré-assinada do seu bucket) |
-| `url` | string\|null | URL de download; `null` quando `media_expired: true` |
-| `url_expires_at` | string | Timestamp de expiração da URL |
-| `mime_type` | string | Tipo MIME do arquivo (ex: `image/jpeg`, `application/pdf`) |
-| `size_bytes` | integer | Tamanho do arquivo em bytes |
-| `media_expired` | boolean | `true` quando o TTL de ~24h do WhatsApp expirou e a URL não está mais disponível |
+| `kind` | string | `"available"` |
+| `storage` | string | `"tenant_storage"` (URL pré-assinada do seu bucket) |
+| `url` | string | URL pré-assinada de download |
+| `url_expires_at` | string\|null | Timestamp de expiração da URL pré-assinada |
+| `mime_type` | string\|null | Tipo MIME do arquivo (ex: `image/jpeg`, `application/pdf`) |
+| `size_bytes` | integer\|null | Tamanho do arquivo em bytes |
+| `hash` | string\|null | Hash SHA-256 do arquivo (ex: `sha256:a1b2c3...`) |
+| `caption` | string\|null | Legenda da mídia, quando presente |
+
+#### `kind: "pending"`
+
+Upload da mídia para o seu bucket ainda está em andamento. Aguarde alguns segundos e consulte novamente.
+
+| Campo | Tipo | Descrição |
+| ----- | ---- | --------- |
+| `kind` | string | `"pending"` |
+| `mime_type` | string\|null | Tipo MIME detectado |
+| `size_bytes` | integer\|null | Tamanho do arquivo em bytes |
+| `hash` | string\|null | Hash SHA-256 |
+| `caption` | string\|null | Legenda da mídia |
+
+#### `kind: "unavailable"`
+
+Mídia não está disponível. O campo `reason` indica a causa.
+
+| Campo | Tipo | Descrição |
+| ----- | ---- | --------- |
+| `kind` | string | `"unavailable"` |
+| `reason` | string | `no_storage` — nenhum Object Storage configurado (envia `setup_hint`); `storage_circuit_open` — circuit breaker do storage aberto no recebimento (envia `setup_hint`); `upload_failed` — storage saudável, mas este item não pôde ser persistido (sem hint). O motivo é gravado no recebimento e lido literalmente; esta mensagem não é recuperada retroativamente — mensagens futuras voltam a ser armazenadas quando o circuito fecha. |
+| `mime_type` | string\|null | Tipo MIME detectado |
+| `size_bytes` | integer\|null | Tamanho do arquivo em bytes |
+| `hash` | string\|null | Hash SHA-256 |
+| `caption` | string\|null | Legenda da mídia |
 
 ### Sobre `body_expired`
 
 O campo `body` contém o conteúdo estruturado completo da mensagem. Após o período de retenção (padrão: 30 dias), o corpo é removido e `body_expired` passa a ser `true`. O campo `preview` — primeiros 50 caracteres — é permanente e sempre estará presente.
 
-### Sobre `media_expired`
+### Sobre `media.kind`
 
-URLs de mídia do WhatsApp expiram em aproximadamente 24 horas. Quando `media_expired: true`, a `url` retorna `null`. Se você precisar de acesso permanente à mídia recebida, configure a <DashboardLink path="/settings/integrations/storage">integração de Object Storage</DashboardLink> no Dashboard para que o Turbo Notify copie automaticamente a mídia para o seu bucket.
+Para receber mídia inbound com `kind: "available"`, configure a <DashboardLink path="/settings/integrations/storage">integração de Object Storage</DashboardLink> no Dashboard. Sem essa configuração, o Turbo Notify não tem onde armazenar a mídia e retorna `kind: "unavailable"` com `reason: "no_storage"`.
+
+Quando o Object Storage está configurado, o Turbo Notify copia automaticamente cada mídia recebida para o seu bucket e retorna uma URL pré-assinada com validade configurável. A URL pré-assinada expira conforme o `url_expires_at` — você pode gerar uma nova consultando a mensagem novamente.
 
 ## Erros possíveis
 

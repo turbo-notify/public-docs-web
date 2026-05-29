@@ -40,6 +40,15 @@ A mensagem é completamente removida do sistema. A API retorna `404 Not Found`, 
 - Armazene no seu sistema os dados que forem relevantes para o seu negócio, como o `message_id` e o status final.
 - Operações que dependem da mensagem original, como [responder](/messages/send/) (via campo `quoted_message_id`), também estão sujeitas ao prazo de retenção.
 
+## Durabilidade de mídia (BYO Storage)
+
+Para mensagens com mídia (imagem, vídeo, áudio, documento, sticker), a durabilidade dos **bytes** é independente da retenção dos metadados acima:
+
+- **Com [BYO Object Storage](/general/byo-storage-setup/) configurado**: os bytes são copiados para o seu bucket assim que a mensagem é recebida. Permanecem disponíveis enquanto o seu bucket retiver o objeto — sob seu controle total.
+- **Sem BYO Storage**: apenas os metadados (mime, tamanho, hash, legenda) são persistidos. Os bytes NÃO são proxyados nem armazenados pelo Turbo Notify. O campo `media.kind` retorna `"unavailable"` com um `setup_hint` envelope estimulando a configuração.
+
+Esse comportamento é canônico desde 2026-05-26 — não há mais janela de 24h via CDN do WhatsApp. Detalhes em [BYO Object Storage](/general/byo-storage-setup/).
+
 ## Consulta de status
 
 Para verificar o status de uma mensagem dentro do prazo de retenção, veja a documentação de [Status](/messages/status/).

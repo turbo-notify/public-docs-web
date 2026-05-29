@@ -363,12 +363,52 @@ use `audio/mpeg` ou `audio/mp4`.
 Stickers devem ser WebP animados (formato exigido pelo WhatsApp) e
 respeitar o limite de 500 KB.
 
+## Modalidade — objeto no seu bucket (BYO Storage)
+
+Se você já possui o arquivo no seu BYO Object Storage, informe `s3_object_key`
+em vez de `url`. O Turbo Notify acessa o arquivo diretamente usando as
+credenciais que você configurou no Dashboard.
+
+:::caution[BYO Storage obrigatório]
+O campo `s3_object_key` exige que o <DashboardLink path="/settings/integrations/storage">Object Storage</DashboardLink>
+esteja configurado e ativo. Sem integração ativa, a requisição retorna
+`412 Precondition Failed` com código `storage_required`.
+:::
+
+```json title="Exemplo — imagem por s3_object_key"
+{
+  "to": {"number": "+5511999999999"},
+  "content": {
+    "content_type": "image",
+    "s3_object_key": "media/fotos/produto-42.jpg",
+    "mime_type": "image/jpeg",
+    "caption": "Foto do produto"
+  }
+}
+```
+
+### Erro 412 — storage_required
+
+Quando `s3_object_key` é informado mas nenhum Object Storage está configurado:
+
+```json title="412 storage_required"
+{
+  "error": "storage_required",
+  "message": "BYO Object Storage is required to use s3_object_key. Configure it in the Dashboard.",
+  "hint": {
+    "setup_url": "https://app.turbonotify.com/settings/integrations/storage",
+    "docs_url": "https://docs.turbonotify.com/general/byo-storage-setup/"
+  }
+}
+```
+
 ## Esquema de campos (todos os tipos)
 
 | Campo | Tipo | Obrigatório | Notas |
 |---|---|---|---|
 | `content.content_type` | enum | sim | `image` / `video` / `audio` / `document` / `sticker` |
-| `content.url` | URL | sim | apenas `http://` / `https://` |
+| `content.url` | URL | condicional | URL pública HTTPS; exclusivo com `s3_object_key` |
+| `content.s3_object_key` | string | condicional | Chave do objeto no seu BYO Storage; exclusivo com `url`. Exige storage configurado. |
 | `content.mime_type` | string | não | recomendado; o worker pode inferir do `Content-Type` da resposta |
 | `content.caption` | string | parcial | aceito em `image`, `video`, `document`; **descartado** em `audio` e `sticker` |
 | `content.filename` | string | não | apenas em `document`; aparece como nome do anexo no chat |
@@ -414,7 +454,7 @@ carrega `content_type` e `preview` (mesmo shape de `message.received`):
 
 Para baixar o arquivo de uma mídia recebida, consulte
 [`GET /v1/messages/{id}`](/messages/get/) — o body inclui `media.url`
-com URL pré-assinada (BYO Object Storage) ou URL direta da WhatsApp.
+com URL pré-assinada do seu BYO Object Storage (quando configurado).
 
 ## Relacionado
 

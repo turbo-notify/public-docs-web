@@ -27,7 +27,7 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
   <TabItem label="cURL">
     ```bash title="turbo-notify.sh"
     curl -X GET \
-      https://api.turbonotify.com/messages/msg_abc123/status \
+      https://api.turbonotify.com/v1/messages/msg_abc123/status \
       -H "Authorization: Bearer SUA_CHAVE"
     ```
   </TabItem>
@@ -211,6 +211,20 @@ Quando o status é `failed`, o campo `reason` indica o motivo. Veja os valores p
 ## Retenção
 
 As mensagens ficam disponíveis para consulta por um período limitado. Após esse prazo, o status não poderá mais ser consultado. Para detalhes, veja a documentação de [Retenção](/messages/retention/).
+
+## Timestamps de transição de status
+
+Além do status atual, a API de mensagens expõe três timestamps precisos de quando cada transição ocorreu. Esses campos estão disponíveis no endpoint `GET /v1/messages/{id}`:
+
+| Campo | Quando é preenchido |
+| ----- | ------------------- |
+| `sent_at` | Quando o WhatsApp confirmou o envio da mensagem outbound (transição para `sent`). |
+| `delivered_at` | Quando o dispositivo do destinatário confirmou a entrega (transição para `delivered`). |
+| `read_at` | Quando o destinatário confirmou a leitura (transição para `read`). |
+
+Todos os campos são `null` até que a transição correspondente ocorra, e permanecem `null` para mensagens inbound (onde esses recibos não se aplicam ao remetente).
+
+Os mesmos timestamps também são entregues via webhook nos eventos `message.sent` (`sent_at`), `message.delivered` (`delivered_at`) e `message.read` (`read_at`), e estão disponíveis via polling em `GET /v1/events`.
 
 ## Atualizações em tempo real
 

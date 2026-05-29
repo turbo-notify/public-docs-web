@@ -50,6 +50,12 @@ export default defineConfig({
               label: 'Próximos Passos',
               translations: { en: 'Next Steps', es: 'Próximos Pasos' },
             },
+            {
+              slug: 'general/byo-storage-setup',
+              label: 'BYO Object Storage',
+              translations: { en: 'BYO Object Storage', es: 'BYO Object Storage' },
+              badge: { text: 'Obrigatório para mídia', variant: 'caution' },
+            },
           ],
         },
         {
