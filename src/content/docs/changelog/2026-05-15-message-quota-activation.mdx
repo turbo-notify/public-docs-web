@@ -15,17 +15,17 @@ import ExternalLink from '@components/ExternalLink.astro';
 Uma auditoria interna em abril/2026 revelou um gap entre documentação e implementação: o quota mensal de mensagens por tier (`messages_{TIER}`) estava definido em `rate-sync.toml` e havia um `tier_rate_limit.py` guard, **mas nenhuma rota wired** a esse guard. O pipeline real usava apenas um limiter global `messages_per_month` (50.000/mês compartilhado entre todos os tenants).
 
 Resultado:
-- Tenant **FREE** podia mandar até 50k/mês (10× o documentado).
-- Tenant **CUSTOM** estava capped em 50k/mês (100× abaixo do documentado).
+- Tenant **free** podia mandar até 50k/mês (10× o documentado).
+- Tenant **custom** estava capped em 50k/mês (100× abaixo do documentado).
 
 ## Tier table — valores existentes, agora enforced
 
 | Tier | Mensagens/30d (documentado desde 2025) | Enforcement antes | Enforcement agora |
 | ---- | --------------------------------------:| ----------------- | ----------------- |
-| FREE     | 1.000     | global 50k compartilhado | 1.000 por tenant |
-| SOLO     | 10.000    | global 50k compartilhado | 10.000 por tenant |
-| BUSINESS | 50.000    | global 50k compartilhado | 50.000 por tenant |
-| CUSTOM   | 500.000+  | global 50k compartilhado | 500.000+ por tenant |
+| free     | 1.000     | global 50k compartilhado | 1.000 por tenant |
+| solo     | 10.000    | global 50k compartilhado | 10.000 por tenant |
+| business | 50.000    | global 50k compartilhado | 50.000 por tenant |
+| custom   | 500.000+  | global 50k compartilhado | 500.000+ por tenant |
 
 **Sem mudança de valor:** os limites de cada tier não foram alterados. Apenas o enforcement passa a refletir a documentação.
 
@@ -52,7 +52,7 @@ Janela de notificação: **14 dias** entre comunicação inicial e enforcement f
 
 Tenants que precisam de mais volume podem:
 
-- Subir tier no dashboard (FREE → SOLO → BUSINESS).
+- Subir tier no dashboard (free → solo → business).
 - Para volumes acima de 500k/mês, falar com vendas via contato no dashboard.
 
 ## Referências

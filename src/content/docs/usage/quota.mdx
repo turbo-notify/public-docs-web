@@ -23,10 +23,10 @@ GET /v1/usage
 
 | Tier | Mensagens/30d | Contatos distintos/30d |
 | ---- | -------------:| ----------------------:|
-| FREE     | 1.000     | 100      |
-| SOLO     | 10.000    | 1.000    |
-| BUSINESS | 50.000    | 5.000    |
-| CUSTOM   | 500.000+  | 50.000+  |
+| free     | 1.000     | 100      |
+| solo     | 10.000    | 1.000    |
+| business | 50.000    | 5.000    |
+| custom   | 500.000+  | 50.000+  |
 
 A razão 10:1 (mensagens/contato) reflete o uso médio. Tenants podem ter overrides via `plan_overrides.contacts_quota_override` ou `plan_overrides.messages_quota_override`.
 
@@ -35,8 +35,8 @@ A razão 10:1 (mensagens/contato) reflete o uso médio. Tenants podem ter overri
 <ApiResponse status={200}>
 ```json
 {
-  "messages": {"used": 12345, "quota": 50000, "resets_at": "2026-06-14T00:00:00Z", "tier": "BUSINESS"},
-  "contacts": {"used": 2100,  "quota": 5000,  "resets_at": "2026-06-14T00:00:00Z", "tier": "BUSINESS"}
+  "messages": {"used": 12345, "quota": 50000, "resets_at": "2026-06-14T00:00:00Z", "tier": "business"},
+  "contacts": {"used": 2100,  "quota": 5000,  "resets_at": "2026-06-14T00:00:00Z", "tier": "business"}
 }
 ```
 </ApiResponse>
@@ -52,7 +52,7 @@ A razão 10:1 (mensagens/contato) reflete o uso médio. Tenants podem ter overri
 ```json
 {
   "error": "contact_quota_exceeded",
-  "details": {"quota": 100, "used": 100, "resets_at": "2026-06-14T...", "tier": "FREE"}
+  "details": {"quota": 100, "used": 100, "resets_at": "2026-06-14T...", "tier": "free"}
 }
 ```
 </ApiResponse>
@@ -63,7 +63,7 @@ A razão 10:1 (mensagens/contato) reflete o uso médio. Tenants podem ter overri
 ```json
 {
   "error": "message_quota_exceeded",
-  "details": {"quota": 1000, "used": 1000, "resets_at": "2026-06-14T...", "tier": "FREE"}
+  "details": {"quota": 1000, "used": 1000, "resets_at": "2026-06-14T...", "tier": "free"}
 }
 ```
 </ApiResponse>
