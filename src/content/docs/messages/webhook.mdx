@@ -89,7 +89,13 @@ Toda requisição de webhook segue a mesma estrutura base:
 | `data`       | `object`            | Dados específicos do evento (veja a tabela em [Tipos de evento](#tipos-de-evento)). |
 
 :::note[Receipts e direção]
-Os eventos `message.delivered` e `message.read` representam **confirmações de leitura/entrega vindas do destinatário**. Por isso `direction` é sempre `"inbound"` (a confirmação chegou do peer), mas `from`/`to` carregam as partes da **mensagem outbound original** — `from` é o seu número (com `alias`), `to` é o número do destinatário. Não confunda com `message.received`, em que `direction="inbound"` reflete uma mensagem nova vinda do contato.
+Os eventos `message.delivered` e `message.read` representam **confirmações de leitura/entrega**. `direction` é sempre `"inbound"` (a confirmação chega do destinatário). O recibo é modelado como um evento inbound:
+
+- **`from`** = quem **disparou o recibo** (o contato que entregou/leu). Formato de pessoa, **sem `alias`**.
+- **`to`** = o **destinatário do recibo**: em conversas diretas, o seu número (com `alias`); em grupos, o **grupo** (`group_id` + `name`).
+- **`member`** = presente **apenas em grupos** — o seu número (linked device) que observou o recibo, com `alias`.
+
+Em **grupos**, cada outro participante gera o seu próprio par `delivered`/`read`, sempre com `from` = aquele participante e `to` = o grupo. Não confunda com `message.received`, em que `direction="inbound"` reflete uma mensagem nova vinda do contato.
 :::
 
 ### Exemplo — `message.sent` (outbound)
@@ -340,9 +346,9 @@ Para responder uma mensagem via API, envie `POST /v1/messages` com `quoted_messa
 
 ### Exemplo — `message.delivered` / `message.read` (receipt inbound)
 
-Receipts são sempre **inbound** — o peer A confirma a entrega/leitura de uma mensagem que o seu número (B) enviou. O evento carrega `direction: "inbound"` (indicando que o recibo veio do peer) e as **parties da mensagem original** (seu número em `from`, o peer em `to`) com snapshot do conteúdo original (`content_type` + `preview`) para facilitar debug sem `GET /v1/messages/{id}` extra.
+Receipts são sempre **inbound**. `from` é quem **disparou o recibo** (o contato que entregou/leu — formato de pessoa, sem `alias`); `to` é o **destinatário do recibo** (o seu número em conversas diretas, com `alias`). O snapshot do conteúdo original (`content_type` + `preview`) é incluído para debug sem `GET /v1/messages/{id}` extra.
 
-```json title="message.delivered"
+```json title="message.delivered (1:1)"
 {
   "id": "evt_delivered_001",
   "type": "message.delivered",
@@ -350,8 +356,8 @@ Receipts são sempre **inbound** — o peer A confirma a entrega/leitura de uma 
   "data": {
     "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
     "direction": "inbound",
-    "from": { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "to":   { "number": "5511777777777", "name": "João Silva" },
+    "from": { "number": "5511777777777", "name": "João Silva" },
+    "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
     "content_type": "text",
     "preview": "Olá, gostaria de saber...",
     "delivered_at": "2026-04-28T10:00:30Z"
@@ -359,7 +365,7 @@ Receipts são sempre **inbound** — o peer A confirma a entrega/leitura de uma 
 }
 ```
 
-```json title="message.read"
+```json title="message.read (1:1)"
 {
   "id": "evt_read_001",
   "type": "message.read",
@@ -367,8 +373,8 @@ Receipts são sempre **inbound** — o peer A confirma a entrega/leitura de uma 
   "data": {
     "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
     "direction": "inbound",
-    "from": { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "to":   { "number": "5511777777777", "name": "João Silva" },
+    "from": { "number": "5511777777777", "name": "João Silva" },
+    "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
     "content_type": "text",
     "preview": "Olá, gostaria de saber...",
     "read_at": "2026-04-28T10:01:15Z"
@@ -377,6 +383,42 @@ Receipts são sempre **inbound** — o peer A confirma a entrega/leitura de uma 
 ```
 
 `preview` fica vazio quando o corpo da mensagem original já foi purgado pelo retention (LGPD); `content_type` é preservado.
+
+#### Receipts em grupo — um por participante
+
+Quando você envia uma mensagem a um **grupo**, **cada outro participante**
+gera o seu próprio `delivered` (ao receber) e `read` (ao ler). Em cada
+recibo: `from` = aquele participante, `to` = o grupo, e `member` = o seu
+número (linked device) que observou o recibo.
+
+Exemplo prático: você envia ao grupo **TNT** (membros: você, número A,
+número B). Os números A e B confirmam recebimento e, depois, leitura. Você
+recebe quatro eventos — `delivered`+`read` de A e `delivered`+`read` de B —
+cada um atribuído ao participante que disparou o recibo:
+
+```json title="message.read (grupo) — recibo do participante A"
+{
+  "id": "evt_read_grp_A",
+  "type": "message.read",
+  "timestamp": "2026-04-28T10:01:15Z",
+  "data": {
+    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "direction": "inbound",
+    "from":   { "number": "5511973117056", "name": "Número A" },
+    "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
+    "member": { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
+    "content_type": "text",
+    "preview": "Olá, time!",
+    "read_at": "2026-04-28T10:01:15Z"
+  }
+}
+```
+
+- `from.number` muda a cada participante que confirma; `to` (o grupo) e
+  `member` (o seu número) permanecem os mesmos para todos os recibos da
+  mesma mensagem.
+- Para detectar recibos de grupo o cliente verifica `"group_id" in data.to` —
+  conversas diretas nunca carregam esse campo nem `member`.
 
 ### Exemplos por `content_type` (inbound)
 
