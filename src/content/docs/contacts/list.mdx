@@ -23,7 +23,7 @@ GET /v1/contacts?limit=20&cursor=<opaque>
 | Parâmetro | Tipo | Descrição |
 | --------- | ---- | --------- |
 | `limit` | int | Máx 100 (default 20) |
-| `cursor` | string | Token opaco retornado em `next_cursor` |
+| `cursor` | string | Token opaco retornado em `cursor` |
 | `phone` | string | Filtro exato por E.164 (`+5571999...`) |
 | `push_name` | string | Match parcial (trigram) sobre `push_name` |
 | `is_business` | bool | Filtra contatos com `business_profile` definido |
@@ -44,7 +44,7 @@ curl -X GET "https://api.turbonotify.com/v1/contacts?limit=20&is_business=true" 
 const res = await fetch("https://api.turbonotify.com/v1/contacts?limit=20", {
   headers: { Authorization: `Bearer ${process.env.TURBO_API_KEY}` },
 });
-const { items, next_cursor } = await res.json();
+const { contacts, cursor, has_more } = await res.json();
 ```
 </TabItem>
 <TabItem label="Python">
@@ -65,20 +65,37 @@ data = r.json()
 <ApiResponse status={200}>
 ```json
 {
-  "items": [
+  "contacts": [
     {
       "id": "ct_a1b2c3d4e5f6789012345678901234ab",
-      "primary_phone": "+5571999294756",
+      "tenant_id": "tnt_...",
+      "phone_number": "+5571999294756",
       "push_name": "João Silva",
+      "status_about": "Disponível",
       "is_business": false,
-      "source": "inbound",
+      "business_profile": null,
       "is_self": false,
-      "first_messaged_at": "2026-05-10T13:25:00Z"
+      "source": "inbound",
+      "first_messaged_at": "2026-05-10T13:25:00Z",
+      "last_seen_at": "2026-05-10T13:40:00Z",
+      "last_interaction_at": "2026-05-10T13:42:00Z",
+      "verified_on_whatsapp_at": "2026-05-10T13:25:00Z",
+      "picture": null,
+      "profile_picture_fetched_at": null,
+      "created_at": "2026-05-10T13:25:00Z",
+      "updated_at": "2026-05-10T13:42:00Z"
     }
   ],
-  "next_cursor": "eyJpZCI6ImN0XzAxIn0="
+  "cursor": "eyJpZCI6ImN0XzAxIn0=",
+  "has_more": true
 }
 ```
 </ApiResponse>
+
+Cada item é o mesmo objeto retornado por [Detalhe](/contacts/detail/). O
+`phone_number` é o **E.164 completo** (sem máscara). A entidade de contato
+mantém seus timestamps de ciclo de vida distintos
+(`created_at`/`updated_at`/`first_messaged_at`/…) — não é o eco de um evento
+(ADR 2026-06-02 §D5).
 
 Veja também: [Detalhe](/contacts/detail/) · [Erros](/contacts/errors/).

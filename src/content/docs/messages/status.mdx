@@ -212,19 +212,13 @@ Quando o status é `failed`, o campo `reason` indica o motivo. Veja os valores p
 
 As mensagens ficam disponíveis para consulta por um período limitado. Após esse prazo, o status não poderá mais ser consultado. Para detalhes, veja a documentação de [Retenção](/messages/retention/).
 
-## Timestamps de transição de status
+## Timestamp da transição de status
 
-Além do status atual, a API de mensagens expõe três timestamps precisos de quando cada transição ocorreu. Esses campos estão disponíveis no endpoint `GET /v1/messages/{id}`:
+O momento de cada transição é exposto pelo campo unificado `at`, sempre relativo à última transição registrada:
 
-| Campo | Quando é preenchido |
-| ----- | ------------------- |
-| `sent_at` | Quando o WhatsApp confirmou o envio da mensagem outbound (transição para `sent`). |
-| `delivered_at` | Quando o dispositivo do destinatário confirmou a entrega (transição para `delivered`). |
-| `read_at` | Quando o destinatário confirmou a leitura (transição para `read`). |
-
-Todos os campos são `null` até que a transição correspondente ocorra, e permanecem `null` para mensagens inbound (onde esses recibos não se aplicam ao remetente).
-
-Os mesmos timestamps também são entregues via webhook nos eventos `message.sent` (`sent_at`), `message.delivered` (`delivered_at`) e `message.read` (`read_at`), e estão disponíveis via polling em `GET /v1/events`.
+- Em `GET /v1/messages/{id}` o campo `status.at` (e o `at` no nível raiz) marca quando o estado atual foi atingido.
+- Em `GET /v1/messages/{id}/status` o objeto `status` carrega `{state, at}`.
+- Nos eventos `message.sent`, `message.delivered` e `message.read` (webhook e polling via `GET /v1/events`) o instante da transição vem em `data.at` — o mesmo nome de campo em todos os eventos `message.*`.
 
 ## Atualizações em tempo real
 

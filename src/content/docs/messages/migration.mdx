@@ -35,8 +35,8 @@ do próprio campo `to`.
 
 ```json
 {
-  "from": { "number": "5571999258283", "name": "Cleverson" },
-  "to":   { "number": "5511973117056", "alias": "main", "name": "Turbo Notify" },
+  "from": { "name": "Cleverson", "number": "5571999258283" },
+  "to":   { "name": "Turbo Notify", "number": "5511973117056", "alias": "main" },
   "group": { "id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" }
 }
 ```
@@ -45,7 +45,7 @@ do próprio campo `to`.
 
 ```json
 {
-  "from":   { "number": "5571999258283", "name": "Cleverson", "contact_id": "ct_..." },
+  "from":   { "contact_id": "ct_...", "name": "Cleverson", "number": "5571999258283" },
   "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
   "member": { "number": "5511973117056", "alias": "main" }
 }
@@ -302,20 +302,25 @@ O campo `new_text` foi removido do payload do evento `message.edited`. Em seu lu
 }
 ```
 
-**Em 2026-05-06** o campo `new_preview` foi renomeado para `preview` para manter parity com `MessageSentData.preview` / `MessageReceivedData.preview`. O payload atual é:
+**Em 2026-05-06** o campo `new_preview` foi renomeado para `preview` para manter parity com `MessageSentData.preview` / `MessageReceivedData.preview`. A partir de **2026-06-01** o envelope passou a expor `organization_id` + `created_at` (em vez de `timestamp`), o `data` usa `id` (em vez de `message_id`), e o timestamp de ocorrência é o campo `at` (último, em vez de `edited_at`). O payload atual é:
 
 ```json
 {
   "id": "evt_abc124",
   "type": "message.edited",
-  "timestamp": "2026-05-06T10:05:00Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T10:05:00Z",
   "data": {
-    "message_id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
-    "direction": "outbound",
+    "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
+    "inbox": { "number": "5571999258283", "alias": "main" },
     "from": { "number": "5571999258283", "alias": "main" },
     "to": { "number": "5511988877766" },
     "preview": "Texto corrigido da mensagem co",
-    "edited_at": "2026-05-06T10:05:00Z"
+    "content_type": "text",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T10:05:00Z"
   }
 }
 ```

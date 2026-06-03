@@ -46,7 +46,7 @@ const res = await fetch(`https://api.turbonotify.com/v1/contacts/${id}/refresh`,
   method: "POST",
   headers: { Authorization: `Bearer ${process.env.TURBO_API_KEY}` },
 });
-const { request_id, accepted_at } = await res.json();
+const { accepted_at } = await res.json();
 ```
 </TabItem>
 <TabItem label="Python">
@@ -64,8 +64,7 @@ r = httpx.post(
 <ApiResponse status={202}>
 ```json
 {
-  "accepted_at": "2026-05-15T12:00:00Z",
-  "request_id": "req_a1b2c3d4..."
+  "accepted_at": "2026-05-15T12:00:00Z"
 }
 ```
 </ApiResponse>

@@ -54,14 +54,14 @@ tenant-side.
 ```jsonc
 // Inbound de grupo
 {
-  "from":   { "number": "5571999258283", "name": "Cleverson", "contact_id": "ct_..." },
+  "from":   { "contact_id": "ct_...", "name": "Cleverson", "number": "5571999258283" },
   "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
   "member": { "number": "5511973117056", "alias": "main" }
 }
 
 // Outbound para grupo
 {
-  "from":   { "number": "5511973117056", "alias": "main", "name": "Turbo Notify" },
+  "from":   { "name": "Turbo Notify", "number": "5511973117056", "alias": "main" },
   "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
   "member": { "number": "5511973117056", "alias": "main" }
 }
@@ -83,9 +83,9 @@ Turbo Notify que participa do grupo.
 
 ## Enviando para grupo
 
-Use a forma polimórfica do campo `to` no `POST /v1/messages`: forneça
-`group_id` em vez de `number`. O restante do corpo (`content`,
-`quoted_message_id`, etc.) permanece igual ao 1:1.
+Para enviar a um grupo no `POST /v1/messages`, o campo `to` assume a
+forma de objeto `{ "group_id": "grp_..." }`. O corpo é plano: os campos
+de conteúdo (`content_type` + payload) ficam no nível raiz, igual ao 1:1.
 
 <Tabs>
   <TabItem label="cURL">
@@ -95,7 +95,8 @@ curl -X POST "https://api.turbonotify.com/v1/messages" \
   -H "Content-Type: application/json" \
   -d '{
     "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a" },
-    "content": { "content_type": "text", "text": "Bom dia, equipe" }
+    "content_type": "text",
+    "text": "Bom dia, equipe"
   }'
 ```
   </TabItem>
@@ -109,7 +110,8 @@ await fetch('https://api.turbonotify.com/v1/messages', {
   },
   body: JSON.stringify({
     to: { group_id: 'grp_e442553a56b14e2695f6acfd7d651b1a' },
-    content: { content_type: 'text', text: 'Bom dia, equipe' },
+    content_type: 'text',
+    text: 'Bom dia, equipe',
   }),
 });
 ```
@@ -123,7 +125,8 @@ httpx.post(
     headers={"Authorization": f"Bearer {os.environ['TN_API_KEY']}"},
     json={
         "to": {"group_id": "grp_e442553a56b14e2695f6acfd7d651b1a"},
-        "content": {"content_type": "text", "text": "Bom dia, equipe"},
+        "content_type": "text",
+        "text": "Bom dia, equipe",
     },
 )
 ```
@@ -132,7 +135,8 @@ httpx.post(
 
 O Turbo Notify resolve o `grp_{hex32}` para o JID interno do WhatsApp e
 roteia a mensagem para o grupo usando a linha principal (ou extra, se
-configurada). Para 1:1, continue usando `"to": {"number": "+55..."}`.
+configurada). Para 1:1, o campo `to` é a string de telefone (ex.:
+`"to": "+5511999999999"`).
 
 ## Quota e rate-limit
 

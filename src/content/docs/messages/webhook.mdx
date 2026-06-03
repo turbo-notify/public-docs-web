@@ -6,7 +6,7 @@ description: Como receber eventos do Turbo Notify via webhook (HTTP push) — me
 import DashboardLink from '@components/DashboardLink.astro';
 import ExternalLink from '@components/ExternalLink.astro';
 
-O Turbo Notify notifica seu sistema sobre eventos — envio confirmado, entrega, leitura, mensagem recebida, reação, falha — via webhook (HTTP POST). O objeto `data` de cada evento é **idêntico** ao retornado pelo endpoint [`GET /events`](/messages/polling/); a diferença entre os dois canais está apenas no envelope (campos `timestamp` vs `created_at` e a presença do tag `object: "event"` no polling).
+O Turbo Notify notifica seu sistema sobre eventos — envio confirmado, entrega, leitura, mensagem recebida, reação, falha — via webhook (HTTP POST). O objeto `data` de cada evento é **idêntico** ao retornado pelo endpoint [`GET /events`](/messages/polling/).
 
 ## Recebimento dos eventos
 
@@ -80,23 +80,67 @@ function verificarAssinatura(payload, timestamp, assinatura, segredo) {
 
 Toda requisição de webhook segue a mesma estrutura base:
 
-| Propriedade  | Tipo                | Descrição                                                                 |
-| ------------ | ------------------- | ------------------------------------------------------------------------- |
-| `id`         | `string`            | Identificador único do evento (`evt_…`). Use como chave de idempotência.  |
-| `type`       | `string`            | Tipo do evento (ex.: `message.sent`).                                     |
-| `timestamp`  | `string`            | Data e hora do evento em ISO 8601 UTC, com sufixo `Z`. O endpoint de polling expõe o mesmo instante sob o nome `created_at` — divergência mantida por compatibilidade. |
-| `request_id` | `string \| null`    | ID de rastreamento da requisição que originou o evento. **Sempre presente** — `null` para eventos operacionais sem requisição original (ex.: `number.connected`). |
-| `data`       | `object`            | Dados específicos do evento (veja a tabela em [Tipos de evento](#tipos-de-evento)). |
+| Propriedade       | Tipo     | Descrição                                                                 |
+| ----------------- | -------- | ------------------------------------------------------------------------- |
+| `id`              | `string` | Identificador único do evento (`evt_…`). Use como chave de idempotência.  |
+| `type`            | `string` | Tipo do evento (ex.: `message.sent`).                                     |
+| `organization_id` | `string` | Identificador público da sua organização (`org_{hex32}`). Sempre presente.|
+| `created_at`      | `string` | Momento de **emissão** do evento pelo TN — distinto de `data.at` (momento da ação no WhatsApp). ISO 8601 com offset do timezone da conta (ex.: `2026-06-01T10:00:05-03:00`). Fallback para `+00:00` quando nenhum timezone está configurado. |
+| `data`            | `object` | Dados específicos do evento (veja [Campos da mensagem](#campos-da-mensagem)). |
 
 :::note[Receipts e direção]
 Os eventos `message.delivered` e `message.read` representam **confirmações de leitura/entrega**. `direction` é sempre `"inbound"` (a confirmação chega do destinatário). O recibo é modelado como um evento inbound:
 
 - **`from`** = quem **disparou o recibo** (o contato que entregou/leu). Formato de pessoa, **sem `alias`**.
 - **`to`** = o **destinatário do recibo**: em conversas diretas, o seu número (com `alias`); em grupos, o **grupo** (`group_id` + `name`).
-- **`member`** = presente **apenas em grupos** — o seu número (linked device) que observou o recibo, com `alias`.
+- **`inbox`** = o seu número (linked device) — presente **sempre**, tanto em conversas diretas quanto em grupos.
 
 Em **grupos**, cada outro participante gera o seu próprio par `delivered`/`read`, sempre com `from` = aquele participante e `to` = o grupo. Não confunda com `message.received`, em que `direction="inbound"` reflete uma mensagem nova vinda do contato.
 :::
+
+## Campos da mensagem
+
+Todos os eventos `message.*` compartilham os campos abaixo em `data`:
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `id` | `string \| null` | Identificador público da mensagem (`msg_{hex32}`). `null` apenas em `message.send.failed` (row não criada). |
+| `inbox` | `object` | Linha Turbo Notify participante do evento. Sempre presente — `{contact_id?, name?, number, alias}`. Em grupos, identifica a linha do tenant no grupo. |
+| `from` | `object` | Quem originou o evento. Pessoa (inbound): `{contact_id?, name?, number}`. Outbound: `{contact_id?, name?, number, alias}`. |
+| `to` | `object` | Destinatário. 1:1: `{contact_id?, name?, number}`. Grupo: `{group_id, name?}`. |
+| `preview` | `string` | Recorte do conteúdo (até 50 chars). Veja [Preview por tipo](#preview-por-tipo). |
+| `content_type` | `string` | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`. |
+| `direction` | `string` | `"outbound"` (ação do tenant/API) ou `"inbound"` (ação do peer/WhatsApp). |
+| `channel` | `string` | Sempre `"whatsapp"`. |
+| `origin` | `string \| null` | `"tn"` (enviado via API do Turbo Notify) ou `"native"` (digitado diretamente no app WhatsApp). `null` para inbound. |
+| `at` | `string` | ISO 8601 com offset — momento WhatsApp do evento (envio, entrega, leitura, edição, etc.). |
+
+> **Ordem dos campos do objeto party** (`inbox`/`from`/`to`/`member`): sempre
+> `contact_id, name, number, alias` (alias onde existir; campos opcionais
+> omitidos quando `null`). `GroupToParty` é a exceção — mantém `{group_id, name?}`.
+> `created_at` (envelope) é o momento de **emissão** do evento; `at` (em `data`)
+> é o momento da **ação no WhatsApp** — valores distintos.
+
+Eventos `message.*.failed` adicionam:
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `error_code` | `string` | Código de falha legível por máquina. |
+| `error_message` | `string` | Descrição legível da falha. |
+| `hint` | `string \| null` | Orientação adicional opcional. |
+
+### Preview por tipo
+
+| `content_type` | Preview |
+|---|---|
+| `text` | Texto truncado |
+| `image` | Legenda ou `[Image]` |
+| `sticker` | `[Sticker]` |
+| `video` | Legenda ou `[Video]` |
+| `audio` | Transcrição Whisper (se configurada) ou `[Audio]` |
+| `document` | Legenda → nome do arquivo → `[Document]` |
+| `location` | Texto humanizado sem colchetes, ex: `Av. Paulista, Sao Paulo, SP` |
+| `calendar` | Sem colchetes, ex: `Reuniao — seg, 2 jun 2026 14:00` |
 
 ### Exemplo — `message.sent` (outbound)
 
@@ -104,26 +148,34 @@ Em **grupos**, cada outro participante gera o seu próprio par `delivered`/`read
 {
   "id": "evt_abc123def456789012345678",
   "type": "message.sent",
-  "timestamp": "2026-04-22T10:00:05Z",
-  "request_id": "req_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T10:00:06-03:00",
   "data": {
-    "message_id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
-    "direction": "outbound",
-    "from": { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "to":   { "number": "5511999990002", "name": "João Silva" },
-    "content_type": "text",
+    "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
+    "inbox": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "to": { "name": "João Silva", "number": "5511999990002" },
     "preview": "Sua mensagem...",
-    "sent_at": "2026-04-22T10:00:05Z"
+    "content_type": "text",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T10:00:05-03:00"
   }
 }
 ```
 
-`from.alias` é sempre preenchido. Use `"main"` para identificar o número principal ou o alias do número extra (ex.: `"vendas-sp"`).
+`created_at` (`10:00:06`, emissão pelo TN) é **distinto** de `data.at`
+(`10:00:05`, confirmação de envio no WhatsApp) — o evento foi emitido 1 s após
+a ação.
 
-`content_type` e `preview` espelham `message.received` — `text`,
-`image`, `audio`, `video`, `document`, `sticker`, `location`,
-`contact` ou `calendar`. Para o body completo (vCard, coordenadas,
-descrição do evento, etc.), faça `GET /v1/messages/{message_id}`.
+`inbox` é sempre preenchido e identifica o número Turbo Notify participante. Em conversas 1:1 outbound `inbox` e `from` apontam para o mesmo número.
+
+`origin` discrimina a fonte do envio outbound:
+- `"tn"` — enviado via API do Turbo Notify.
+- `"native"` — detectado diretamente do app WhatsApp (quando o tenant digita pelo celular).
+
+`content_type` e `preview` espelham `message.received` — `text`, `image`, `audio`, `video`, `document`, `sticker`, `location` ou `calendar`. Para o body completo, faça `GET /v1/messages/{id}`.
 
 ### Exemplo — `message.received` (inbound)
 
@@ -131,62 +183,62 @@ descrição do evento, etc.), faça `GET /v1/messages/{message_id}`.
 {
   "id": "evt_def789abc234567890123456",
   "type": "message.received",
-  "timestamp": "2026-04-24T15:32:11Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T15:32:11-03:00",
   "data": {
-    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-    "direction": "inbound",
-    "from": { "number": "5511777777777", "name": "João Silva" },
-    "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "content_type": "text",
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "inbox": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "João Silva", "number": "5511777777777" },
+    "to": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
     "preview": "Olá, gostaria de saber...",
-    "received_at": "2026-04-24T15:32:11Z"
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "at": "2026-06-01T15:32:11-03:00"
   }
 }
 ```
 
-`from.name` traz o nome de exibição que o contato configurou no WhatsApp (push name); o campo é omitido quando o contato não definiu nenhum. `to.alias` resolve para `"main"` quando a mensagem chegou no número principal ou para o alias do número extra que recebeu. `to.name` traz o nome de exibição do número Turbo Notify que recebeu a mensagem (capturado na conexão via WhatsApp); omitido se não disponível.
+`from.name` traz o nome de exibição configurado no WhatsApp (push name); omitido quando não definido. `inbox.alias` resolve para `"main"` ou o alias do número extra que recebeu.
 
 ### Exemplo — `message.received` (grupo)
 
 Disponível desde 2026-05-24. Quando uma mensagem chega de um **grupo WhatsApp**,
-`to` carrega `group_id` + snapshot `name` em vez de `number`; e um campo
-`member` top-level identifica a linha Turbo Notify que participa do grupo.
+`to` carrega `group_id` + snapshot `name` em vez de `number`; e `inbox`
+identifica a linha Turbo Notify que participa do grupo.
 `from` continua sendo o participante que enviou — pessoas sempre falam, nunca grupos.
-Para mensagens 1:1 (não-grupo) `to.group_id` e `member` são omitidos — payloads
-pré-existentes permanecem byte-idênticos.
+Para mensagens 1:1 `to.group_id` é omitido — payloads pré-existentes permanecem byte-idênticos.
 
 ```json title="message.received (grupo)"
 {
   "id": "evt_c00a44c3fc774698b0f130d40bb5f104",
   "type": "message.received",
-  "timestamp": "2026-05-25T22:55:14Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T22:55:14-03:00",
   "data": {
-    "message_id": "msg_e95500cc03c1492e81e46a77c1f0d420",
-    "direction": "inbound",
+    "id": "msg_e95500cc03c1492e81e46a77c1f0d420",
+    "inbox": { "number": "5511973117056", "alias": "main" },
     "from": {
-      "number": "5571999258283",
+      "contact_id": "ct_45f2ece8a66a4eeaa661aeb9b8e58c77",
       "name": "Cleverson",
-      "contact_id": "ct_45f2ece8a66a4eeaa661aeb9b8e58c77"
+      "number": "5571999258283"
     },
     "to": {
       "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a",
       "name": "TNT"
     },
-    "member": {
-      "number": "5511973117056",
-      "alias": "main"
-    },
-    "content_type": "text",
     "preview": "Bom dia pessoal",
-    "received_at": "2026-05-25T22:55:14Z"
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "at": "2026-06-01T22:55:14-03:00"
   }
 }
 ```
 
-- `to.group_id` é o identificador público do grupo no formato `grp_{hex32}` — estável por tenant e referenciável em chamadas futuras. Nunca exponemos o JID bruto do WhatsApp.
-- `to.name` é o nome atual do grupo (snapshot no momento do evento). Pode ser `null` quando o nome ainda não foi hidratado — uma chamada `GET /v1/messages/{id}` após alguns segundos costuma trazer o nome resolvido.
-- `member` identifica a linha Turbo Notify que participa do grupo (`number` + `alias`). Essencial quando o tenant tem múltiplos números extras e precisa saber qual deles está no grupo.
-- Para detectar mensagens de grupo o cliente verifica `"group_id" in data.to` — 1:1 nunca carrega esse campo.
+- `to.group_id` é o identificador público do grupo (`grp_{hex32}`) — estável por tenant. Nunca expostos JIDs brutos do WhatsApp.
+- `inbox` identifica a linha Turbo Notify que participa do grupo (`number` + `alias`). Essencial quando o tenant tem múltiplos números extras.
+- Para detectar mensagens de grupo: verifique `"group_id" in data.to` — conversas 1:1 nunca carregam esse campo.
 
 ### Exemplo — `message.edited`
 
@@ -194,15 +246,18 @@ pré-existentes permanecem byte-idênticos.
 {
   "id": "evt_edited_inbound_001",
   "type": "message.edited",
-  "timestamp": "2026-04-29T11:00:00Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T11:00:00-03:00",
   "data": {
-    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-    "direction": "inbound",
-    "from": { "number": "5511777777777", "name": "João Silva" },
-    "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "content_type": "text",
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "inbox": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "João Silva", "number": "5511777777777" },
+    "to": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
     "preview": "Texto corrigido da mensagem",
-    "edited_at": "2026-04-29T11:00:00Z"
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "at": "2026-06-01T11:00:00-03:00"
   }
 }
 ```
@@ -211,16 +266,19 @@ pré-existentes permanecem byte-idênticos.
 {
   "id": "evt_edited_outbound_001",
   "type": "message.edited",
-  "timestamp": "2026-04-29T11:05:00Z",
-  "request_id": "req_c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T11:05:00-03:00",
   "data": {
-    "message_id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
-    "direction": "outbound",
-    "from": { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "to":   { "number": "5511777777777", "name": "João Silva" },
-    "content_type": "text",
+    "id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
+    "inbox": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "to": { "name": "João Silva", "number": "5511777777777" },
     "preview": "Texto atualizado da mensagem",
-    "edited_at": "2026-04-29T11:05:00Z"
+    "content_type": "text",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T11:05:00-03:00"
   }
 }
 ```
@@ -231,15 +289,18 @@ pré-existentes permanecem byte-idênticos.
 {
   "id": "evt_deleted_inbound_001",
   "type": "message.deleted",
-  "timestamp": "2026-04-29T12:00:00Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T12:00:00-03:00",
   "data": {
-    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-    "direction": "inbound",
-    "from": { "number": "5511777777777", "name": "João Silva" },
-    "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "content_type": "text",
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "inbox": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "João Silva", "number": "5511777777777" },
+    "to": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
     "preview": "",
-    "deleted_at": "2026-04-29T12:00:00Z"
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "at": "2026-06-01T12:00:00-03:00"
   }
 }
 ```
@@ -248,34 +309,43 @@ pré-existentes permanecem byte-idênticos.
 {
   "id": "evt_deleted_outbound_001",
   "type": "message.deleted",
-  "timestamp": "2026-04-29T12:05:00Z",
-  "request_id": "req_d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T12:05:00-03:00",
   "data": {
-    "message_id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
-    "direction": "outbound",
-    "from": { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "to":   { "number": "5511777777777", "name": "João Silva" },
-    "content_type": "text",
+    "id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
+    "inbox": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "to": { "name": "João Silva", "number": "5511777777777" },
     "preview": "",
-    "deleted_at": "2026-04-29T12:05:00Z"
+    "content_type": "text",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T12:05:00-03:00"
   }
 }
 ```
 
 ### Exemplo — `message.reacted`
 
+Para `message.reacted`: `content_type` é sempre `"text"` e `preview` contém o emoji (ou `""` para remoção). Os campos `emoji`, `action` e `reaction_event_id` foram removidos dos eventos — use `GET /v1/messages/{id}` para o detalhe completo da reação.
+
 ```json title="message.reacted (inbound — contato reagiu a uma mensagem sua)"
 {
   "id": "evt_reacted_inbound_001",
   "type": "message.reacted",
-  "timestamp": "2026-04-29T13:00:00Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T13:00:00-03:00",
   "data": {
-    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "inbox": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "João Silva", "number": "5511777777777" },
+    "to": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "preview": "👍",
+    "content_type": "text",
     "direction": "inbound",
-    "from": { "number": "5511777777777", "name": "João Silva" },
-    "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "emoji": "👍",
-    "reacted_at": "2026-04-29T13:00:00Z"
+    "channel": "whatsapp",
+    "at": "2026-06-01T13:00:00-03:00"
   }
 }
 ```
@@ -284,39 +354,45 @@ pré-existentes permanecem byte-idênticos.
 {
   "id": "evt_reacted_outbound_001",
   "type": "message.reacted",
-  "timestamp": "2026-04-29T13:05:00Z",
-  "request_id": "req_e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T13:05:00-03:00",
   "data": {
-    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "inbox": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "to": { "name": "João Silva", "number": "5511777777777" },
+    "preview": "❤️",
+    "content_type": "text",
     "direction": "outbound",
-    "from": { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "to":   { "number": "5511777777777", "name": "João Silva" },
-    "emoji": "❤️",
-    "reacted_at": "2026-04-29T13:05:00Z"
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T13:05:00-03:00"
   }
 }
 ```
 
-Para remover uma reação, envie `POST /v1/messages/{id}/react` com `emoji: ""` (string vazia). O evento `message.reacted` é emitido da mesma forma, com `emoji: ""` indicando remoção.
+Para remover uma reação, envie `POST /v1/messages/{id}/react` com `emoji: ""` (string vazia). O evento `message.reacted` é emitido com `preview: ""`.
 
 ### Exemplo — `message.replied` (inbound/outbound)
 
-Disponível desde 2026-04-28. Replies (mensagens que citam outra) são entregues como evento dedicado em vez de `message.sent`/`message.received`. Carrega qualquer `content_type` (text/image/video/audio/document/sticker/location/contact/calendar) — o tipo real do conteúdo é preservado, e a discriminação como reply vem do campo `quoted_message_id` (sempre presente neste evento).
+Disponível desde 2026-04-28. Replies são entregues como evento dedicado. `preview` contém o preview da **nova mensagem** (o reply, não a mensagem citada). O `quoted_message_id` foi removido dos eventos — faça `GET /v1/messages/{id}` para acessar `replied.message_id` e `replied.preview`.
 
 ```json title="message.replied (inbound)"
 {
   "id": "evt_replied_inbound",
   "type": "message.replied",
-  "timestamp": "2026-04-28T10:00:00Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T10:00:00-03:00",
   "data": {
-    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-    "direction": "inbound",
-    "from": { "number": "5511777777777", "name": "João Silva" },
-    "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "content_type": "text",
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "inbox": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "João Silva", "number": "5511777777777" },
+    "to": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
     "preview": "Sim, é esse pedido mesmo!",
-    "replied_at": "2026-04-28T10:00:00Z",
-    "quoted_message_id": "msg_99887766554433221100ffeeddccbbaa"
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "at": "2026-06-01T10:00:00-03:00"
   }
 }
 ```
@@ -325,42 +401,45 @@ Disponível desde 2026-04-28. Replies (mensagens que citam outra) são entregues
 {
   "id": "evt_replied_outbound",
   "type": "message.replied",
-  "timestamp": "2026-04-28T10:01:00Z",
-  "request_id": "req_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T10:01:00-03:00",
   "data": {
-    "message_id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
-    "direction": "outbound",
-    "from": { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "to":   { "number": "5511777777777", "name": "João Silva" },
-    "content_type": "text",
+    "id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
+    "inbox": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "to": { "name": "João Silva", "number": "5511777777777" },
     "preview": "Sem problemas, vou conferir.",
-    "replied_at": "2026-04-28T10:01:00Z",
-    "quoted_message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
+    "content_type": "text",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T10:01:00-03:00"
   }
 }
 ```
 
-Para responder uma mensagem via API, envie `POST /v1/messages` com `quoted_message_id` apontando para a mensagem citada (qualquer mensagem do chat, inbound ou outbound). Veja [/messages/send/](/messages/send/).
-
-`quoted_message_id` é sempre o id público (`msg_{hex32}`) da mensagem citada. Use `GET /v1/messages/{quoted_message_id}` para recuperar o conteúdo completo da mensagem original.
+Para responder uma mensagem via API, use o endpoint dedicado `POST /v1/messages/{message_id}/reply` (body plano). Veja [/messages/send/](/messages/send/).
 
 ### Exemplo — `message.delivered` / `message.read` (receipt inbound)
 
-Receipts são sempre **inbound**. `from` é quem **disparou o recibo** (o contato que entregou/leu — formato de pessoa, sem `alias`); `to` é o **destinatário do recibo** (o seu número em conversas diretas, com `alias`). O snapshot do conteúdo original (`content_type` + `preview`) é incluído para debug sem `GET /v1/messages/{id}` extra.
+Receipts são sempre **inbound**. `from` é quem disparou o recibo; `inbox` e `to` identificam o lado tenant (1:1: mesmo número; grupo: linha do tenant em `inbox`, grupo em `to`).
 
 ```json title="message.delivered (1:1)"
 {
   "id": "evt_delivered_001",
   "type": "message.delivered",
-  "timestamp": "2026-04-28T10:00:30Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T10:00:30-03:00",
   "data": {
-    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-    "direction": "inbound",
-    "from": { "number": "5511777777777", "name": "João Silva" },
-    "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "content_type": "text",
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "inbox": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "João Silva", "number": "5511777777777" },
+    "to": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
     "preview": "Olá, gostaria de saber...",
-    "delivered_at": "2026-04-28T10:00:30Z"
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "at": "2026-06-01T10:00:30-03:00"
   }
 }
 ```
@@ -369,15 +448,18 @@ Receipts são sempre **inbound**. `from` é quem **disparou o recibo** (o contat
 {
   "id": "evt_read_001",
   "type": "message.read",
-  "timestamp": "2026-04-28T10:01:15Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T10:01:15-03:00",
   "data": {
-    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-    "direction": "inbound",
-    "from": { "number": "5511777777777", "name": "João Silva" },
-    "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "content_type": "text",
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "inbox": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "João Silva", "number": "5511777777777" },
+    "to": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
     "preview": "Olá, gostaria de saber...",
-    "read_at": "2026-04-28T10:01:15Z"
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "at": "2026-06-01T10:01:15-03:00"
   }
 }
 ```
@@ -388,37 +470,31 @@ Receipts são sempre **inbound**. `from` é quem **disparou o recibo** (o contat
 
 Quando você envia uma mensagem a um **grupo**, **cada outro participante**
 gera o seu próprio `delivered` (ao receber) e `read` (ao ler). Em cada
-recibo: `from` = aquele participante, `to` = o grupo, e `member` = o seu
+recibo: `from` = aquele participante, `to` = o grupo, `inbox` = o seu
 número (linked device) que observou o recibo.
-
-Exemplo prático: você envia ao grupo **TNT** (membros: você, número A,
-número B). Os números A e B confirmam recebimento e, depois, leitura. Você
-recebe quatro eventos — `delivered`+`read` de A e `delivered`+`read` de B —
-cada um atribuído ao participante que disparou o recibo:
 
 ```json title="message.read (grupo) — recibo do participante A"
 {
   "id": "evt_read_grp_A",
   "type": "message.read",
-  "timestamp": "2026-04-28T10:01:15Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T10:01:15-03:00",
   "data": {
-    "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-    "direction": "inbound",
-    "from":   { "number": "5511973117056", "name": "Número A" },
-    "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
-    "member": { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-    "content_type": "text",
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "inbox": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "Número A", "number": "5511973117056" },
+    "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
     "preview": "Olá, time!",
-    "read_at": "2026-04-28T10:01:15Z"
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "at": "2026-06-01T10:01:15-03:00"
   }
 }
 ```
 
-- `from.number` muda a cada participante que confirma; `to` (o grupo) e
-  `member` (o seu número) permanecem os mesmos para todos os recibos da
-  mesma mensagem.
-- Para detectar recibos de grupo o cliente verifica `"group_id" in data.to` —
-  conversas diretas nunca carregam esse campo nem `member`.
+- `from.number` muda a cada participante que confirma; `to` (o grupo) e `inbox` (o seu número) permanecem os mesmos para todos os recibos da mesma mensagem.
+- Para detectar recibos de grupo: verifique `"group_id" in data.to`.
 
 ### Exemplos por `content_type` (inbound)
 
@@ -427,152 +503,93 @@ inbound — apenas `data.content_type` e `data.preview` mudam. Os
 trechos abaixo mostram só o objeto `data` para reduzir ruído visual.
 
 Para obter o **body completo** (texto, vCard, coordenadas, descrição
-do evento, link da mídia, etc.), faça `GET /v1/messages/{message_id}`.
-Os exemplos de body abaixo refletem o `body` retornado por esse
-endpoint dentro da janela de retenção.
+do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
 
 #### `text` — texto simples
 
 ```json title="data — message.received (text)"
 {
-  "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-  "direction": "inbound",
-  "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-  "content_type": "text",
+  "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "inbox": { "number": "5511999990001", "alias": "main" },
+  "from": { "name": "João Silva", "number": "5511777777777" },
+  "to": { "number": "5511999990001", "alias": "main" },
   "preview": "Olá, gostaria de saber...",
-  "received_at": "2026-04-24T15:32:11Z"
+  "content_type": "text",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "at": "2026-06-01T15:32:11-03:00"
 }
-```
-
-```json title="GET /v1/messages/{id} — body"
-{ "text": "Olá, gostaria de saber sobre meu pedido #1234." }
 ```
 
 > **Importante (2026-04-28):** respostas (mensagens que citam outra)
 > são entregues como evento dedicado **`message.replied`** — nunca
-> mais como `message.received` com `content_type=reply`. Veja
-> [`message.replied`](#exemplo--messagereplied-inboundoutbound)
-> abaixo para o formato.
+> mais como `message.received` com `content_type=reply`.
 
 #### `image`
 
 ```json title="data — message.received (image)"
 {
-  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0010",
-  "direction": "inbound",
-  "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-  "content_type": "image",
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0010",
+  "inbox": { "number": "5511999990001", "alias": "main" },
+  "from": { "name": "João Silva", "number": "5511777777777" },
+  "to": { "number": "5511999990001", "alias": "main" },
   "preview": "Foto do produto",
-  "received_at": "2026-04-24T15:34:01Z"
+  "content_type": "image",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "at": "2026-06-01T15:34:01-03:00"
 }
 ```
 
-```json title="GET /v1/messages/{id} — body + media (tenant com BYO Storage)"
-{
-  "body": { "caption": "Foto do produto" },
-  "media": {
-    "kind": "available",
-    "storage": "tenant_storage",
-    "url": "https://<bucket>.s3.amazonaws.com/...?X-Amz-Signature=...",
-    "url_expires_at": "2026-04-24T16:34:01Z",
-    "mime_type": "image/jpeg",
-    "size_bytes": 184320,
-    "hash": "sha256:a1b2c3...",
-    "caption": "Foto do produto"
-  }
-}
-```
-
-```json title="GET /v1/messages/{id} — body + media (tenant sem BYO Storage)"
-{
-  "body": { "caption": "Foto do produto" },
-  "media": {
-    "kind": "unavailable",
-    "reason": "no_storage",
-    "mime_type": "image/jpeg",
-    "size_bytes": 184320,
-    "hash": "sha256:a1b2c3...",
-    "caption": "Foto do produto",
-    "setup_hint": {
-      "setup_url": "https://app.turbonotify.com/settings/integrations/storage",
-      "docs_url": "https://docs.turbonotify.com/general/byo-storage-setup/",
-      "message": "Configure BYO Object Storage to receive media."
-    }
-  }
-}
-```
-
-`media.kind` pode ser `"available"` (URL pré-assinada no seu bucket BYO),
-`"pending"` (upload em andamento — consulte novamente em instantes) ou
-`"unavailable"` (`reason` indica a causa: `no_storage`, `storage_circuit_open`
-ou `upload_failed`). Quando `reason in {"no_storage",
-"storage_circuit_open"}`, a payload carrega `setup_hint` apontando para
-o wizard de configuração no Dashboard. Veja
-[Armazenamento e mídia](#armazenamento-e-mídia) e o guia
-[BYO Object Storage](/general/byo-storage-setup/).
+`media` foi removido dos eventos — faça `GET /v1/messages/{id}` para obter o bloco `image` com a URL de download.
 
 #### `video`
 
 ```json title="data — message.received (video)"
 {
-  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0011",
-  "direction": "inbound",
-  "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0011",
+  "inbox": { "number": "5511999990001", "alias": "main" },
+  "from": { "name": "João Silva", "number": "5511777777777" },
+  "to": { "number": "5511999990001", "alias": "main" },
+  "preview": "[Video]",
   "content_type": "video",
-  "preview": "[Vídeo]",
-  "received_at": "2026-04-24T15:35:12Z"
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "at": "2026-06-01T15:35:12-03:00"
 }
 ```
-
-Body / media seguem o mesmo formato de `image` — apenas `mime_type`
-muda (`video/mp4`, `video/quicktime`, etc.).
 
 #### `audio` — voice note ou música
 
 ```json title="data — message.received (audio)"
 {
-  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0012",
-  "direction": "inbound",
-  "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0012",
+  "inbox": { "number": "5511999990001", "alias": "main" },
+  "from": { "name": "João Silva", "number": "5511777777777" },
+  "to": { "number": "5511999990001", "alias": "main" },
+  "preview": "[Audio]",
   "content_type": "audio",
-  "preview": "[Áudio]",
-  "received_at": "2026-04-24T15:36:08Z"
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "at": "2026-06-01T15:36:08-03:00"
 }
 ```
 
-`mime_type` típico: `audio/ogg` (voice note) ou `audio/mpeg` (música).
-`caption` é sempre vazio — WhatsApp não suporta legenda em áudio.
+`mime_type` típico: `audio/ogg` (voice note) ou `audio/mpeg` (música). Se transcrição Whisper estiver configurada, `preview` exibe o texto transcrito.
 
 #### `document`
 
 ```json title="data — message.received (document)"
 {
-  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0013",
-  "direction": "inbound",
-  "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-  "content_type": "document",
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0013",
+  "inbox": { "number": "5511999990001", "alias": "main" },
+  "from": { "name": "João Silva", "number": "5511777777777" },
+  "to": { "number": "5511999990001", "alias": "main" },
   "preview": "fatura-abril.pdf",
-  "received_at": "2026-04-24T15:37:00Z"
-}
-```
-
-```json title="GET /v1/messages/{id} — body + media"
-{
-  "body": { "filename": "fatura-abril.pdf", "caption": "Fatura do mês" },
-  "media": {
-    "kind": "available",
-    "storage": "tenant_storage",
-    "url": "https://<bucket>.s3.amazonaws.com/...",
-    "mime_type": "application/pdf",
-    "size_bytes": 524288,
-    "hash": "sha256:d4e5f6...",
-    "caption": "Fatura do mês"
-  }
+  "content_type": "document",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "at": "2026-06-01T15:37:00-03:00"
 }
 ```
 
@@ -580,133 +597,58 @@ muda (`video/mp4`, `video/quicktime`, etc.).
 
 ```json title="data — message.received (sticker)"
 {
-  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0014",
-  "direction": "inbound",
-  "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-  "content_type": "sticker",
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0014",
+  "inbox": { "number": "5511999990001", "alias": "main" },
+  "from": { "name": "João Silva", "number": "5511777777777" },
+  "to": { "number": "5511999990001", "alias": "main" },
   "preview": "[Sticker]",
-  "received_at": "2026-04-24T15:37:33Z"
+  "content_type": "sticker",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "at": "2026-06-01T15:37:33-03:00"
 }
 ```
-
-`mime_type` é sempre `image/webp`. Stickers não têm legenda.
 
 #### `location`
 
 ```json title="data — message.received (location)"
 {
-  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0001",
-  "direction": "inbound",
-  "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0001",
+  "inbox": { "number": "5511999990001", "alias": "main" },
+  "from": { "name": "João Silva", "number": "5511777777777" },
+  "to": { "number": "5511999990001", "alias": "main" },
+  "preview": "Av. Paulista, Sao Paulo, SP",
   "content_type": "location",
-  "preview": "[Localização: Av. Paulista]",
-  "received_at": "2026-04-24T15:38:21Z"
-}
-```
-
-```json title="GET /v1/messages/{id} — body"
-{
-  "latitude": -23.561414,
-  "longitude": -46.655881,
-  "name": "Av. Paulista",
-  "address": "Avenida Paulista, 1578, Bela Vista, São Paulo - SP",
-  "url": "https://maps.google.com/?q=-23.561414,-46.655881",
-  "is_live": false,
-  "thumbnail_b64": "..."
-}
-```
-
-`is_live: true` indica live location. `thumbnail_b64` é uma miniatura
-JPEG capturada do WhatsApp (até 5 KB) — pode estar ausente.
-
-#### `contact`
-
-```json title="data — message.received (contact)"
-{
-  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0002",
   "direction": "inbound",
-  "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
-  "content_type": "contact",
-  "preview": "[Contato: Maria Souza]",
-  "received_at": "2026-04-24T15:39:05Z"
+  "channel": "whatsapp",
+  "at": "2026-06-01T15:38:21-03:00"
 }
 ```
 
-```json title="GET /v1/messages/{id} — body"
-{
-  "display_name": "Maria Souza",
-  "vcard": "BEGIN:VCARD\nVERSION:3.0\nFN:Maria Souza\nTEL;TYPE=CELL:+5511988887777\nEMAIL;TYPE=WORK:maria@acme.com\nORG:Acme Corp\nTITLE:CTO\nEND:VCARD",
-  "phones": [
-    { "label": "Mobile", "number": "+5511988887777" }
-  ],
-  "emails": [
-    { "label": "Work", "address": "maria@acme.com" }
-  ],
-  "organization": "Acme Corp",
-  "title": "CTO",
-  "is_self_contact": false
-}
-```
-
-O Turbo Notify parseia o vCard server-side e expõe os campos
-estruturados (`phones[]`, `emails[]`, `organization`, etc.) — você
-não precisa parsear o vCard manualmente, mas o campo `vcard` é
-preservado caso queira reusar/exportar.
+`preview` é o texto humanizado sem colchetes. Body completo via `GET /v1/messages/{id}` no campo `location` com `latitude`, `longitude`, `name`, `address`, etc.
 
 #### `calendar` — evento/calendário (WhatsApp `eventMessage`)
 
 ```json title="data — message.received (calendar)"
 {
-  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0003",
-  "direction": "inbound",
-  "from": { "number": "5511777777777", "name": "João Silva" },
-  "to":   { "number": "5511999990001", "alias": "main", "name": "Turbo Notify" },
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0003",
+  "inbox": { "number": "5511999990001", "alias": "main" },
+  "from": { "name": "João Silva", "number": "5511777777777" },
+  "to": { "number": "5511999990001", "alias": "main" },
+  "preview": "Sprint Planning — qui, 1 jun 2026 14:00",
   "content_type": "calendar",
-  "preview": "[Evento: Sprint Planning]",
-  "received_at": "2026-04-24T15:40:00Z"
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "at": "2026-06-01T15:40:00-03:00"
 }
 ```
 
-```json title="GET /v1/messages/{id} — body"
-{
-  "name": "Sprint Planning",
-  "description": "Planejamento da sprint 24.",
-  "start_at": "2026-05-01T14:00:00+00:00",
-  "end_at": "2026-05-01T15:00:00+00:00",
-  "join_link": "https://meet.example.com/sprint-planning",
-  "location": {
-    "latitude": -23.5505,
-    "longitude": -46.6333,
-    "name": "HQ - Sala Mestre"
-  },
-  "has_reminder": true,
-  "reminder_offset_sec": 600
-}
-```
-
-`location` é opcional e segue o mesmo schema de `content_type:
-"location"`. Veja a [decisão arquitetural](https://github.com/turbo-notify/turbo-notity/blob/main/docs/reference/decisions/2026-04-27-rich-content-rendering.md)
-sobre por que TN nomeia esse tipo `calendar` em vez de `event`.
-
-:::note[Degradação graceful — peer não-WABA]
-Quando o remetente (peer inbound) é uma conta pessoal WhatsApp
-(não-Business), o servidor WhatsApp remove `startTime`/`endTime`
-durante a entrega. O webhook continua sendo `message.received` com
-`content_type: "calendar"` e o body preserva `name`, `description`,
-`join_link`, `location`, etc. — apenas o campo `start_at` (e
-opcionalmente `end_at`) **é omitido** do body. Não há reclassificação
-para `unsupported`. Detalhes: [ADR 2026-05-25 — Calendar Inbound
-Degradation](https://github.com/turbo-notify/turbo-notity/blob/main/docs/reference/decisions/2026-05-25-calendar-inbound-degradation.md).
-:::
+Body completo via `GET /v1/messages/{id}` no campo `calendar` com `name`, `description`, `start_at`, `end_at`, etc.
 
 :::tip
 Quer ver o body renderizado de forma visual antes de plugar em
 produção? Abra o <ExternalLink href="https://webhook.turbonotify.com">Webhook Inspector</ExternalLink>
-e use **Send sample** → cada uma das 4 variantes de `message.received`
-(text/location/contact/calendar) vem com fixture body pré-bundled.
+e use **Send sample**.
 :::
 
 ## Tipos de evento
@@ -727,7 +669,7 @@ O catálogo público é fechado — seu endpoint só recebe os 24 eventos listad
 | Tipo                      | Quando é emitido                                                   |
 | ------------------------- | ------------------------------------------------------------------ |
 | `message.replied`         | Reply enviado/recebido (qualquer `content_type`, ambas direções).  |
-| `message.reply.failed`    | Falha ao enviar um reply (mensagem com `quoted_message_id`).     |
+| `message.reply.failed`    | Falha ao enviar um reply (via `POST /v1/messages/{message_id}/reply`). |
 
 ### Mensagens — recebimento e operações
 
@@ -738,7 +680,7 @@ O catálogo público é fechado — seu endpoint só recebe os 24 eventos listad
 | `message.edit.failed`     | Falha ao editar uma mensagem.                                      |
 | `message.deleted`         | Mensagem foi deletada/revogada (sua ou do contato).                |
 | `message.delete.failed`   | Falha ao deletar uma mensagem.                                     |
-| `message.reacted`         | Uma reação foi adicionada ou removida.                             |
+| `message.reacted`         | Uma reação foi adicionada ou removida (`preview` = emoji ou `""`). |
 | `message.react.failed`    | Falha ao reagir a uma mensagem.                                    |
 
 ### Números — ciclo de vida
@@ -756,16 +698,19 @@ O catálogo público é fechado — seu endpoint só recebe os 24 eventos listad
 
 Todos os eventos `number.*` carregam os campos comuns `alias` e `number` (quando disponível). O campo `name` — nome de exibição WhatsApp do número, capturado na conexão — é **opcional** em todos os eventos e **omitido quando nulo**. O `alias` `"main"` identifica o número principal; qualquer outro valor identifica um número extra.
 
+O campo `at` (em `data`) segue a classificação de 2026-06-02 (momento da ação real no WhatsApp): os eventos de ação real **`number.connected`**, **`number.disconnected`**, **`number.revoked`** e **`number.connect.failed`** carregam `at`; os eventos sintéticos do TN — **`number.created`**, **`number.remove.scheduled`**, **`number.remove.canceled`** e **`number.removed`** — **não** carregam `at`, apenas o `created_at` do envelope (`number.remove.scheduled` mantém `scheduled_at` como timestamp de valor de negócio, com seu nome semântico).
+
 ```json title="number.connected (exemplo)"
 {
   "id": "evt_num_conn_abc123",
   "type": "number.connected",
-  "timestamp": "2026-05-08T10:00:00Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T10:00:00-03:00",
   "data": {
     "name": "Turbo Notify",
     "alias": "main",
     "number": "5511973117056",
-    "connected_at": "2026-05-08T10:00:00Z"
+    "at": "2026-06-01T10:00:00-03:00"
   }
 }
 ```
@@ -775,18 +720,16 @@ Todos os eventos `number.*` carregam os campos comuns `alias` e `number` (quando
 Eventos relacionados à integração BYO Object Storage (AWS S3, Cloudflare R2, Supabase Storage) e à disponibilidade de mídia recebida.
 
 :::note
-Estes eventos são **provider-agnostic**: o payload é o mesmo independentemente do vendor configurado (AWS S3, Cloudflare R2 ou Supabase Storage). O protocolo de transporte é sempre a S3 HTTP API.
+Estes eventos são **provider-agnostic**: o payload é o mesmo independentemente do vendor configurado.
 :::
 
 :::caution[Mensagens recebidas com mídia — entrega só após resolução]
 Para mensagens **inbound com mídia** (imagem, vídeo, áudio, documento, sticker), o webhook `message.received` só é enviado depois que o estado de mídia chega a um *terminal* para o seu tenant:
 
-- **Com [BYO Storage](/general/byo-storage-setup/) ativo**: bytes salvos no seu bucket (`media.kind = "available"`), ou falha permanente sinalizada por `media.unavailable`.
-- **Sem BYO Storage**: payload sai com `media.kind = "unavailable"` e `reason = "no_storage"` + `setup_hint` envelope. O Turbo Notify **não baixa nem proxia** os bytes da CDN do WhatsApp — apenas os metadados (mime, tamanho, hash, legenda) são persistidos.
+- **Com [BYO Storage](/general/byo-storage-setup/) ativo**: bytes salvos no seu bucket, ou falha permanente sinalizada por `media.unavailable`.
+- **Sem BYO Storage**: payload sai com `media` indisponível e `reason = "no_storage"`. O Turbo Notify **não baixa nem proxia** os bytes da CDN do WhatsApp.
 
-Em caso de falha transitória de upload (rede, 5xx do storage, etc.), Turbo Notify aguarda o circuit breaker fechar; quando aberto, novas mensagens saem como `media.kind = "unavailable"` com `reason = "storage_circuit_open"`. Mensagens recebidas durante a janela degradada **não são** recuperadas retroativamente.
-
-Use o evento `media.unavailable` como sinal definitivo de que aquela mídia não pôde ser persistida no seu bucket.
+Use `GET /v1/messages/{id}` para acessar o bloco `image`/`video`/`audio`/`document`/`sticker` com a URL de download (quando disponível).
 :::
 
 #### Saúde do storage
@@ -794,13 +737,13 @@ Use o evento `media.unavailable` como sinal definitivo de que aquela mídia não
 | Tipo                          | Quando é emitido                                                  |
 | ----------------------------- | ----------------------------------------------------------------- |
 | `storage.degraded`            | Falhas consecutivas na integração BYO Object Storage abriram o circuito. |
-| `storage.recovered`           | Primeira operação bem-sucedida após o circuito ter sido aberto — operação normal restabelecida. |
+| `storage.recovered`           | Primeira operação bem-sucedida após o circuito ter sido aberto.  |
 
 #### Disponibilidade de mídia
 
 | Tipo                          | Quando é emitido                                                  |
 | ----------------------------- | ----------------------------------------------------------------- |
-| `media.unavailable`           | Mídia de mensagem recebida não pôde ser persistida no seu bucket BYO (`reason`: `no_storage` — sem storage configurado; `storage_circuit_open` — circuit breaker aberto; `upload_failed` — falha permanente de upload). Decidido no recebimento — sem retry. |
+| `media.unavailable`           | Mídia não pôde ser persistida no bucket BYO (`reason`: `no_storage`, `storage_circuit_open`, `upload_failed`). |
 
 #### Exemplo — `storage.degraded`
 
@@ -808,11 +751,11 @@ Use o evento `media.unavailable` como sinal definitivo de que aquela mídia não
 {
   "id": "evt_storage_deg_abc123def4567890",
   "type": "storage.degraded",
-  "timestamp": "2026-04-25T10:00:00Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T10:00:00-03:00",
   "data": {
     "reason": "upload_failed",
     "consecutive_failures": 5,
-    "since": "2026-04-25T10:00:00Z",
     "error_code": "access_denied",
     "affected_messages_count": 3
   }
@@ -825,10 +768,10 @@ Use o evento `media.unavailable` como sinal definitivo de que aquela mídia não
 {
   "id": "evt_storage_rec_def789abc2345678",
   "type": "storage.recovered",
-  "timestamp": "2026-04-25T10:08:00Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T10:08:00-03:00",
   "data": {
-    "recovered_at": "2026-04-25T10:08:00Z",
-    "degraded_since": "2026-04-25T10:00:00Z",
+    "degraded_since": "2026-06-01T10:00:00-03:00",
     "duration_seconds": 480
   }
 }
@@ -840,71 +783,110 @@ Use o evento `media.unavailable` como sinal definitivo de que aquela mídia não
 {
   "id": "evt_media_unav_ghi456jkl7890123",
   "type": "media.unavailable",
-  "timestamp": "2026-04-25T11:15:30Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T11:15:30-03:00",
   "data": {
     "message_id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
     "content_type": "image",
     "direction": "inbound",
-    "reason": "no_storage",
-    "preview": "Foto"
+    "preview": "Foto",
+    "reason": "no_storage"
   }
 }
 ```
 
 ## Eventos de falha
 
-Os eventos de falha compartilham um envelope comum (`error_code`, `error_message`, `failed_at`, `direction: "outbound"`, `origin`) e diferem entre si pelo conjunto de campos extras.
+Os eventos de falha compartilham um envelope comum e diferem entre si pelo conjunto de campos extras. `id` pode ser `null` **apenas** em `message.send.failed` (quando a row não foi criada).
 
 ### `message.send.failed` / `message.reply.failed`
-
-Falhas de envio podem ocorrer **antes** da mensagem ser persistida (validação, timeout do gateway), por isso `message_id` está intencionalmente ausente. Use `request_id` no envelope para correlacionar com a chamada original. `message.reply.failed` adiciona `quoted_message_id` para identificar a mensagem citada.
 
 ```json title="message.send.failed"
 {
   "id": "evt_send_fail_001",
   "type": "message.send.failed",
-  "timestamp": "2026-05-05T10:00:00Z",
-  "request_id": "req_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T10:00:00-03:00",
   "data": {
+    "id": null,
+    "inbox": { "number": "5511999990001", "alias": "main" },
+    "preview": "Mensagem que falhou",
+    "content_type": "text",
     "direction": "outbound",
-    "origin": "api",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T10:00:00-03:00",
     "error_code": "whatsapp_unavailable",
     "error_message": "WhatsApp session is not connected",
-    "failed_at": "2026-05-05T10:00:00Z"
+    "hint": null
   }
 }
 ```
 
 ### `message.edit.failed` / `message.delete.failed` / `message.react.failed`
 
-Diferentemente de `message.send.failed`, essas operações falham **sobre uma mensagem que já existe** no Turbo Notify. O payload carrega `message_id` da mensagem-alvo, dispensando a manutenção de um mapeamento privado `request_id → message_id` no seu lado.
+Diferentemente de `message.send.failed`, essas operações falham **sobre uma mensagem que já existe** — `id` está sempre presente.
 
 ```json title="message.edit.failed"
 {
   "id": "evt_edit_fail_001",
   "type": "message.edit.failed",
-  "timestamp": "2026-05-05T10:05:00Z",
-  "request_id": "req_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T10:05:00-03:00",
   "data": {
-    "message_id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
+    "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
+    "inbox": { "number": "5511999990001", "alias": "main" },
+    "preview": "Texto que tentou editar",
+    "content_type": "text",
     "direction": "outbound",
-    "origin": "api",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T10:05:00-03:00",
     "error_code": "edit_window_expired",
     "error_message": "Cannot edit after 15 minutes",
-    "failed_at": "2026-05-05T10:05:00Z"
+    "hint": null
   }
 }
 ```
 
 `message.delete.failed` e `message.react.failed` seguem a mesma forma — apenas o valor de `type` muda.
 
-## Notificações inbound de edição/deleção
+## Mensagens de grupo nos webhooks outbound
 
-Quando o **contato** edita ou apaga uma mensagem, o WhatsApp pode entregar a notificação com um identificador de protocolo diferente da mensagem original. Esse identificador aparece como `wa_notification_id` em `message.edited` / `message.deleted` (apenas inbound) — ele **não é** o id da mensagem editada/deletada, é o id da notificação de protocolo. Use `message_id` para identificar a mensagem que sofreu a alteração; `wa_notification_id` é puramente diagnóstico (debug de duplicidade).
+Quando você envia uma mensagem para um grupo via
+`POST /v1/messages` com `to.group_id`, os webhooks subsequentes
+(`message.sent`, `message.delivered`, `message.read`,
+`message.send.failed`) usam o mesmo shape polimórfico — `to` carrega
+`group_id` + snapshot `name`, e `inbox` identifica a linha que enviou:
+
+```json title="message.sent (outbound para grupo)"
+{
+  "id": "evt_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "type": "message.sent",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T10:00:05-03:00",
+  "data": {
+    "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
+    "inbox": { "number": "5511973117056", "alias": "main" },
+    "from": { "name": "Turbo Notify", "number": "5511973117056", "alias": "main" },
+    "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
+    "preview": "Bom dia, equipe",
+    "content_type": "text",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T10:00:05-03:00"
+  }
+}
+```
+
+- `to.group_id` é o identificador público `grp_{hex32}` — mesmo valor fornecido no `POST /v1/messages`.
+- `inbox` identifica a linha Turbo Notify que enviou a mensagem ao grupo.
+- Para detectar mensagens de grupo: verifique `"group_id" in data.to`.
 
 ## Mapeamento de operações assíncronas
 
-Operações da API que disparam processamento assíncrono retornam um `request_id`. O mesmo `request_id` aparece no webhook do evento resultante — use para correlacionar:
+Operações da API que disparam processamento assíncrono expõem o `X-Request-ID` no header da resposta. Use `GET /v1/events?request_id=req_...` para consultar os eventos da operação e identificar o resultado pelo `id` da mensagem (`data.id`):
 
 | Operação                   | Evento de sucesso             | Evento de falha                   |
 | -------------------------- | ----------------------------- | --------------------------------- |
@@ -958,48 +940,13 @@ Em produção, persista o `id` em uma tabela ou cache com TTL de ~72 h.
 
 ### Timestamps em reentregas
 
-O campo `timestamp` sempre reflete a hora em que o **evento ocorreu** (protocolo WhatsApp ou ação na API), nunca a hora em que o webhook foi enviado ao seu endpoint. Em reentrgas, o `timestamp` permanece **inalterado** — é o mesmo valor da tentativa original. O mesmo vale para os campos `*_at` no objeto `data` (`sent_at`, `received_at`, `delivered_at`, `read_at`, etc.).
+O campo `created_at` (envelope) reflete o **momento de emissão do evento pelo Turbo Notify** — quando o registro do evento é criado e publicado, nunca a hora em que o webhook foi enviado ao seu endpoint. Quando presente, `at` (em `data`) reflete o **momento da ação real no WhatsApp**. Desde 2026-06-02 estes são **valores distintos**: um evento pode ser emitido algum tempo depois da ação que descreve (eventos sintéticos do TN não têm `at`). Em reentregas, tanto `created_at` quanto `at` permanecem **inalterados** — são os mesmos valores da tentativa original.
 
 Isso significa que, ao receber uma reentrega:
-- `timestamp` e `*_at` refletem a hora do evento original.
+- `created_at` é o momento de emissão; `at` (quando presente) é o momento da ação no WhatsApp — ambos fixos entre tentativas.
 - `X-Webhook-Attempt` é incrementado a cada tentativa — use-o para diagnóstico, não para lógica de negócio.
 - `X-Webhook-Timestamp` reflete a hora do **envio HTTP atual** e é usado para validação de assinatura e proteção anti-replay; **não** é o timestamp do evento.
 
 ## Alternativa: polling
 
 Se preferir consumir eventos sob demanda em vez de expor um endpoint público, utilize o [polling via `GET /events`](/messages/polling/). O objeto `data` é o mesmo do webhook.
-
-## Mensagens de grupo nos webhooks outbound
-
-Quando você envia uma mensagem para um grupo via
-`POST /v1/messages` com `to.group_id`, os webhooks subsequentes
-(`message.sent`, `message.delivered`, `message.read`,
-`message.send.failed`) usam o mesmo shape polimórfico — `to` carrega
-`group_id` + snapshot `name`, e `member` identifica a linha que enviou:
-
-```json title="message.sent (outbound para grupo)"
-{
-  "id": "evt_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-  "type": "message.sent",
-  "timestamp": "2026-05-25T10:00:05Z",
-  "request_id": "req_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
-  "data": {
-    "message_id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
-    "direction": "outbound",
-    "from":   { "number": "5511973117056", "alias": "main", "name": "Turbo Notify" },
-    "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
-    "member": { "number": "5511973117056", "alias": "main" },
-    "content_type": "text",
-    "preview": "Bom dia, equipe",
-    "sent_at": "2026-05-25T10:00:05Z"
-  }
-}
-```
-
-- `to.group_id` é o identificador público `grp_{hex32}` — mesmo valor que você forneceu no `POST /v1/messages`.
-- `member` identifica a linha Turbo Notify que enviou a mensagem ao grupo. Para tenants com múltiplos extras, permite correlacionar qual linha participou do envio.
-- Para detectar mensagens de grupo em qualquer webhook (inbound ou outbound), verifique `"group_id" in data.to`.
-
-A mesma regra vale para inbound: webhooks `message.received` de
-grupo trazem `from = participante`, `to.group_id = grupo`,
-`member = linha tenant que recebeu`.

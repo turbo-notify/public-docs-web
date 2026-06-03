@@ -34,13 +34,14 @@ Todos os payloads carregam o sibling `group: {id, name}` no formato
 {
   "id": "evt_...",
   "type": "group.joined",
-  "timestamp": "2026-05-25T10:00:00Z",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-05-25T10:00:00Z",
   "data": {
     "group": { "id": "grp_9f6f0b37c98043e5835822eeae550e77", "name": "Grupo A" },
     "joined_by": "5511999999999",
     "creation": false,
     "initial_participants_count": 7,
-    "joined_at": "2026-05-25T10:00:00Z"
+    "at": "2026-05-25T10:00:00Z"
   }
 }
 ```
@@ -56,7 +57,7 @@ Todos os payloads carregam o sibling `group: {id, name}` no formato
     "group": { "id": "grp_...", "name": "Grupo A" },
     "removed_by": "5511999999999",
     "reason": "removed",
-    "left_at": "2026-05-25T10:01:00Z"
+    "at": "2026-05-25T10:01:00Z"
   }
 }
 ```
@@ -74,7 +75,7 @@ Todos os payloads carregam o sibling `group: {id, name}` no formato
     "old_name": "Grupo A",
     "new_name": "Grupo A 2.0",
     "changed_by": "5511999999999",
-    "changed_at": "2026-05-25T10:02:00Z"
+    "at": "2026-05-25T10:02:00Z"
   }
 }
 ```
@@ -89,7 +90,7 @@ Todos os payloads carregam o sibling `group: {id, name}` no formato
     "old_description": "...",
     "new_description": "...",
     "changed_by": "5511999999999",
-    "changed_at": "2026-05-25T10:03:00Z"
+    "at": "2026-05-25T10:03:00Z"
   }
 }
 ```
@@ -104,7 +105,7 @@ Todos os payloads carregam o sibling `group: {id, name}` no formato
     "new_picture_url": "https://pps.whatsapp.net/...",
     "picture_hash": "abc123...",
     "changed_by": "5511999999999",
-    "changed_at": "2026-05-25T10:04:00Z"
+    "at": "2026-05-25T10:04:00Z"
   }
 }
 ```
@@ -126,7 +127,7 @@ changes simultâneos; cada um vira um evento).
     "old_value": false,
     "new_value": true,
     "changed_by": "5511999999999",
-    "changed_at": "2026-05-25T10:05:00Z"
+    "at": "2026-05-25T10:05:00Z"
   }
 }
 ```
@@ -145,15 +146,15 @@ Um único webhook por operação batch — todos os adicionados juntos.
   "data": {
     "group": { "id": "grp_...", "name": "Grupo A 2.0" },
     "participants": [
-      { "number": "5511555555555", "name": null, "contact_id": "ct_..." },
-      { "number": "5511444444444", "name": "Carlos", "contact_id": null }
+      { "contact_id": "ct_...", "name": null, "number": "5511555555555" },
+      { "contact_id": null, "name": "Carlos", "number": "5511444444444" }
     ],
     "added_by": {
-      "number": "5511999999999",
+      "contact_id": "ct_...",
       "name": "Admin",
-      "contact_id": "ct_..."
+      "number": "5511999999999"
     },
-    "added_at": "2026-05-25T10:06:00Z"
+    "at": "2026-05-25T10:06:00Z"
   }
 }
 ```

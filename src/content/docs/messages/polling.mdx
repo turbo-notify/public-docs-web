@@ -34,7 +34,6 @@ GET /v1/events
 | `limit` | integer | Número de eventos por página. Intervalo: 1–100. Padrão: 25. |
 | `created[gte]` | ISO-8601 | Retornar eventos criados a partir deste timestamp. |
 | `created[lte]` | ISO-8601 | Retornar eventos criados até este timestamp. |
-| `request_id` | string | Filtrar eventos vinculados a uma requisição de API específica. |
 
 ## Formato de resposta
 
@@ -47,38 +46,36 @@ Os resultados são ordenados por `created_at DESC` (mais recentes primeiro).
     data: [
       {
         id: 'evt_01993c5a1b24d3e9f01a2b3c',
-        object: 'event',
         type: 'message.received',
-        request_id: 'req_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
-        created_at: '2026-04-21T10:00:00Z',
+        organization_id: 'org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+        created_at: '2026-06-01T10:00:00-03:00',
         data: {
-          message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
-          direction: 'inbound',
-          from: { number: '+5511999999999', name: 'João' },
-          to: { number: '+5511973117056', alias: 'main' },
-          content_type: 'text',
+          id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
+          inbox: { number: '5511973117056', alias: 'main' },
+          from: { name: 'João', number: '5511999999999' },
+          to: { number: '5511973117056', alias: 'main' },
           preview: 'Olá, gostaria de saber sobre o pedido',
-          received_at: '2026-04-21T10:00:00Z',
-          sent_at: null,
-          delivered_at: null,
-          read_at: null,
+          content_type: 'text',
+          direction: 'inbound',
+          channel: 'whatsapp',
+          at: '2026-06-01T10:00:00-03:00',
         },
       },
       {
         id: 'evt_c00a44c3fc774698b0f130d40bb5f104',
-        object: 'event',
         type: 'message.received',
-        request_id: 'req_54c00c2c3145407f82c53fdec56bc8b7',
-        created_at: '2026-05-25T22:55:14Z',
+        organization_id: 'org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+        created_at: '2026-06-01T22:55:14-03:00',
         data: {
-          message_id: 'msg_e95500cc03c1492e81e46a77c1f0d420',
-          direction: 'inbound',
-          from: { number: '5571999258283', name: 'Cleverson', contact_id: 'ct_45f2ece8a66a4eeaa661aeb9b8e58c77' },
+          id: 'msg_e95500cc03c1492e81e46a77c1f0d420',
+          inbox: { number: '5511973117056', alias: 'main' },
+          from: { contact_id: 'ct_45f2ece8a66a4eeaa661aeb9b8e58c77', name: 'Cleverson', number: '5571999258283' },
           to: { group_id: 'grp_e442553a56b14e2695f6acfd7d651b1a', name: 'TNT' },
-          member: { number: '5511973117056', alias: 'main' },
-          content_type: 'text',
           preview: 'Bom dia pessoal',
-          received_at: '2026-05-25T22:55:14Z',
+          content_type: 'text',
+          direction: 'inbound',
+          channel: 'whatsapp',
+          at: '2026-06-01T22:55:14-03:00',
         },
       },
     ],
@@ -86,7 +83,7 @@ Os resultados são ordenados por `created_at DESC` (mais recentes primeiro).
   }}
 />
 
-> Eventos de grupo usam `to.group_id` (formato `grp_{hex32}`) em vez de `to.number`, e carregam um campo `member` top-level que identifica a linha Turbo Notify participante do grupo. Mensagens 1:1 omitem `to.group_id` e `member` — o shape pré-existente permanece byte-idêntico. Veja [Webhooks](/messages/webhook/#exemplo--messagereceived-grupo) para detalhes.
+> Eventos de grupo usam `to.group_id` (formato `grp_{hex32}`) em vez de `to.number`, e carregam `inbox` que identifica a linha Turbo Notify participante do grupo. Mensagens 1:1 omitem `to.group_id` — o shape pré-existente permanece byte-idêntico. Veja [Webhooks](/messages/webhook/#exemplo--messagereceived-grupo) para detalhes.
 
 ### Envelope da lista
 
@@ -101,11 +98,10 @@ Os resultados são ordenados por `created_at DESC` (mais recentes primeiro).
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `id` | string | Identificador único (`evt_…`). Use como chave de idempotência. |
-| `object` | string | Sempre `"event"`. |
 | `type` | string | Tipo do evento (ex.: `message.received`). |
-| `request_id` | `string \| null` | ID de rastreamento da requisição que originou o evento. `null` para eventos operacionais (sem requisição original). |
-| `created_at` | string | ISO 8601 UTC, com sufixo `Z`. |
-| `data` | object | Payload específico do evento — **idêntico** ao entregue via webhook. |
+| `organization_id` | string | Identificador público da sua organização (`org_{hex32}`). |
+| `created_at` | string | Momento de **emissão do evento pelo TN** (quando o registro foi criado/publicado). ISO 8601 com offset do timezone da conta. Distinto de `data.at` (o momento da ação no WhatsApp), quando presente. |
+| `data` | object | Payload específico do evento — **idêntico** ao entregue via webhook. Quando há uma ação real no WhatsApp, `data.at` traz esse momento (valor distinto de `created_at`). Eventos sintéticos não têm `at`. |
 
 ## Paginação por cursor
 
@@ -230,26 +226,22 @@ Para sistemas de alta demanda, prefira o uso de webhooks para receber eventos em
 
 ## Paridade com webhooks
 
-O objeto `data` de cada evento retornado pela API é **byte-a-byte idêntico** ao `data` entregue via webhook para o mesmo evento. Apenas o envelope ao redor difere:
+O objeto `data` de cada evento retornado pela API é **byte-a-byte idêntico** ao `data` entregue via webhook para o mesmo evento. O envelope é o mesmo em ambos os canais:
 
 | Campo | Webhook | Polling |
 | ----- | ------- | ------- |
 | `id` | presente | presente |
-| `object` | ausente | `"event"` |
 | `type` | presente | presente |
-| `request_id` | sempre presente (`null` quando ausente) | sempre presente (`null` quando ausente) |
-| `timestamp` | presente | — |
-| `created_at` | — | presente (mesmo valor) |
+| `organization_id` | presente | presente |
+| `created_at` | presente | presente (mesmo valor) |
 | `data` | **idêntico** | **idêntico** |
-
-A única diferença real entre os dois envelopes é o nome do campo de timestamp: o webhook usa `timestamp`, o polling usa `created_at`. Ambos carregam o mesmo instante UTC em ISO 8601 com sufixo `Z`. Essa divergência é mantida por compatibilidade com integrações pré-existentes; um cliente que valida ambos os canais deve aceitar qualquer um dos dois nomes.
 
 Isso permite:
 
 - Sistemas que usam **apenas polling** processam os mesmos dados que sistemas baseados em webhook.
 - Sistemas **híbridos** podem usar a API para reconciliar eventos perdidos reaproveitando o mesmo código de processamento.
 - Catálogo completo de `type` e `data`: consulte a [referência de eventos no documento de webhook](/messages/webhook/#tipos-de-evento).
-- Exemplos de payload por `content_type` (texto, mídia, localização, contato, calendário): [Exemplos por content_type](/messages/webhook/#exemplos-por-content_type-inbound).
+- Exemplos de payload por `content_type` (texto, mídia, localização, calendário): [Exemplos por content_type](/messages/webhook/#exemplos-por-content_type-inbound).
 
 ## Recuperação após falha de webhook
 
@@ -262,14 +254,14 @@ Para recuperar eventos perdidos durante uma indisponibilidade do seu endpoint:
 <Tabs>
   <TabItem label="cURL">
     ```bash title="recuperacao.sh"
-    curl "https://api.turbonotify.com/v1/events?created[gte]=2026-04-21T08:00:00Z" \
+    curl "https://api.turbonotify.com/v1/events?created[gte]=2026-06-01T08:00:00-03:00" \
       -H "Authorization: Bearer SUA_CHAVE"
     ```
   </TabItem>
   <TabItem label="Node">
     ```js title="recuperacao.js"
     const params = new URLSearchParams({
-      'created[gte]': '2026-04-21T08:00:00Z',
+      'created[gte]': '2026-06-01T08:00:00-03:00',
       limit: '100'
     });
 
@@ -288,7 +280,7 @@ Para recuperar eventos perdidos durante uma indisponibilidade do seu endpoint:
     url = "https://api.turbonotify.com/v1/events"
     headers = {"Authorization": "Bearer SUA_CHAVE"}
     params = {
-        "created[gte]": "2026-04-21T08:00:00Z",
+        "created[gte]": "2026-06-01T08:00:00-03:00",
         "limit": 100
     }
 

@@ -1,6 +1,6 @@
 ---
 title: Eventos de Contato
-description: 8 webhooks customer-facing referentes a TN Contacts — created, name_changed, picture_changed, business_profile_changed, phone_added, first_messaged, quota.warning, quota.exceeded.
+description: 7 webhooks customer-facing referentes a TN Contacts — created, name_changed, picture_changed, business_profile_changed, first_messaged, quota.warning, quota.exceeded.
 sidebar:
   order: 1
 ---
@@ -17,28 +17,122 @@ Lista de eventos webhook emitidos pelo Turbo Notify para mudanças relacionadas 
 | `contact.name_changed` | `push_name` divergiu do snapshot anterior |
 | `contact.picture_changed` | WhatsApp emitiu `PictureUpdate` ou refresh detectou hash novo |
 | `contact.business_profile_changed` | `BusinessAccountUpdate` no WhatsApp |
-| `contact.phone_added` | Rotação de JID associou novo número ao mesmo `contact_id` |
 | `contact.first_messaged` | Tenant enviou primeira mensagem outbound para este contato (slot consumido) |
 | `contact.quota.warning` | Cruzou threshold 80/90/95% da quota mensal |
 | `contact.quota.exceeded` | Tentativa rejeitada por estouro (HTTP 402) |
 
-## PII discipline
+## O contato é o mesmo objeto do `from` da mensagem
 
-Telefones aparecem sempre **mascarados** no payload (`+5571****4756`). O nome do contato (`push_name`) é PII e nunca é logado cru pelo TN — você recebe via webhook e é responsável pelo armazenamento subsequente.
+Desde 2026-06-02 o contato em um evento `contact.*` é o **mesmo objeto
+`ContactRef`** usado no campo `from` de uma mensagem — o trio
+`{contact_id, name, number}`, na ordem canônica de campos
+(`contact_id, name, number`):
+
+```json
+{ "contact_id": "ct_a1b2c3d4...", "name": "João Silva", "number": "+5571999294756" }
+```
+
+- `contact_id` — id público do contato (`ct_{hex32}`).
+- `name` — push name do contato no WhatsApp (antes `push_name`).
+- `number` — **E.164 completo** (antes `phone_masked`; a máscara foi removida).
+
+O número completo já é exposto no `from`/`to` de toda mensagem, então mascarar
+nos eventos de contato só gerava inconsistência. O `name` (push name) continua
+sendo PII que o TN nunca loga cru — você recebe via webhook e é responsável pelo
+armazenamento subsequente.
+
+## `created_at` vs `at`
+
+- `created_at` (envelope) — momento de **emissão do evento pelo TN**.
+- `at` (em `data`) — momento da **ação real no WhatsApp**.
+
+São **valores distintos**. Eventos sintéticos do TN (`contact.created`,
+`contact.quota.warning`, `contact.quota.exceeded`) **não** têm `at` — só o
+`created_at` do envelope. Eventos de ação real (`name_changed`,
+`picture_changed`, `business_profile_changed`, `first_messaged`) têm `at`.
 
 ## Exemplo: `contact.created`
 
+Sintético — sem `at`, sem `source`, sem `is_business`.
+
 ```json
 {
-  "event_id": "evt_a1b2c3d4...",
-  "event_type": "contact.created",
-  "tenant_id": "tnt_...",
-  "occurred_at": "2026-05-15T12:00:00Z",
+  "id": "evt_a1b2c3d4...",
+  "type": "contact.created",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-05-15T12:00:00Z",
   "data": {
     "contact_id": "ct_a1b2...",
-    "phone_masked": "+5571****4756",
-    "source": "inbound",
-    "is_self": false
+    "name": "João Silva",
+    "number": "+5571999294756"
+  }
+}
+```
+
+## Exemplo: `contact.name_changed`
+
+`name` é o novo push name; `old_name` é o anterior.
+
+```json
+{
+  "id": "evt_...",
+  "type": "contact.name_changed",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-05-15T12:00:03Z",
+  "data": {
+    "contact_id": "ct_a1b2...",
+    "name": "João S.",
+    "number": "+5571999294756",
+    "old_name": "João Silva",
+    "at": "2026-05-15T12:00:00Z"
+  }
+}
+```
+
+`created_at` (emissão pelo TN) é **distinto** de `data.at` (momento da ação no
+WhatsApp): aqui o TN emitiu o evento 3 s após a alteração do nome.
+
+## Exemplo: `contact.picture_changed`
+
+```json
+{
+  "id": "evt_...",
+  "type": "contact.picture_changed",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-05-15T12:00:02Z",
+  "data": {
+    "contact_id": "ct_a1b2...",
+    "name": "João Silva",
+    "number": "+5571999294756",
+    "picture": {
+      "kind": "available",
+      "url": "https://cdn.example.com/contacts/ct_a1b2.jpg",
+      "url_expires_at": "2026-05-15T13:00:00Z",
+      "hash": "sha256:..."
+    },
+    "at": "2026-05-15T12:00:00Z"
+  }
+}
+```
+
+## Exemplo: `contact.business_profile_changed`
+
+```json
+{
+  "id": "evt_...",
+  "type": "contact.business_profile_changed",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-05-15T12:00:02Z",
+  "data": {
+    "contact_id": "ct_a1b2...",
+    "name": "Loja Exemplo",
+    "number": "+5571999294756",
+    "business_profile": {
+      "email": "contato@loja.example",
+      "description": "Loja oficial",
+      "category": "retail"
+    },
+    "at": "2026-05-15T12:00:00Z"
   }
 }
 ```
@@ -47,15 +141,16 @@ Telefones aparecem sempre **mascarados** no payload (`+5571****4756`). O nome do
 
 ```json
 {
-  "event_id": "evt_...",
-  "event_type": "contact.first_messaged",
-  "tenant_id": "tnt_...",
-  "occurred_at": "...",
+  "id": "evt_...",
+  "type": "contact.first_messaged",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-05-15T12:00:01Z",
   "data": {
     "contact_id": "ct_...",
-    "phone_masked": "+5571****4756",
-    "message_id": "msg_...",
-    "tier": "free"
+    "name": "João Silva",
+    "number": "+5571999294756",
+    "tier": "free",
+    "at": "2026-05-15T12:00:00Z"
   }
 }
 ```
@@ -64,10 +159,10 @@ Telefones aparecem sempre **mascarados** no payload (`+5571****4756`). O nome do
 
 ```json
 {
-  "event_id": "evt_...",
-  "event_type": "contact.quota.warning",
-  "tenant_id": "tnt_...",
-  "occurred_at": "...",
+  "id": "evt_...",
+  "type": "contact.quota.warning",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-05-15T12:00:00Z",
   "data": {
     "threshold_bps": 90,
     "used": 90,
@@ -78,28 +173,31 @@ Telefones aparecem sempre **mascarados** no payload (`+5571****4756`). O nome do
 }
 ```
 
-`threshold_bps` é integer em basis points: `80 | 90 | 95 | 100`.
+`threshold_bps` é integer em basis points: `80 | 90 | 95 | 100`. Evento
+sintético — **sem `at`**; `resets_at` é timestamp de valor de negócio (quando a
+janela de quota reinicia), não o momento da ação.
 
 ## Exemplo: `contact.quota.exceeded`
 
 ```json
 {
-  "event_id": "evt_...",
-  "event_type": "contact.quota.exceeded",
-  "tenant_id": "tnt_...",
-  "occurred_at": "...",
+  "id": "evt_...",
+  "type": "contact.quota.exceeded",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-05-15T12:00:00Z",
   "data": {
     "quota": 100,
     "used": 100,
     "resets_at": "2026-06-14T...",
-    "tier": "free",
-    "request_id": "req_..."
+    "tier": "free"
   }
 }
 ```
 
+Sintético — **sem `at`** e **sem `request_id`** em `data`; `resets_at` é mantido.
+
 ## Idempotency
 
-Cada evento carrega `event_id` único. Use `event_id` como chave de deduplicação no seu side.
+Cada evento carrega `id` único (`evt_…`). Use `id` como chave de deduplicação no seu side.
 
 Internamente o publisher TN usa `Nats-Msg-Id` com formato `{tenant_id}:{contact_id}:{event_kind}` para idempotência no broker.
