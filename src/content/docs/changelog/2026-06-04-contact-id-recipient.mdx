@@ -1,0 +1,51 @@
+---
+title: "contact_id como destinatário em POST /v1/messages"
+description: "O campo `to` agora aceita uma terceira variante `{\"contact_id\": \"ct_...\"}` para enviar mensagens resolvendo o telefone a partir do registro TN Contact."
+sidebar:
+  order: 2
+---
+
+**Data:** 2026-06-04
+**Status:** Aplicado
+
+## O que mudou
+
+O campo `to` em `POST /v1/messages` agora aceita três formas mutuamente exclusivas:
+
+| Forma | Exemplo | Quando usar |
+| ----- | ------- | ----------- |
+| `number` | `{"number": "+5511999999999"}` | Você tem o telefone E.164 |
+| `group_id` | `{"group_id": "grp_..."}` | Destinatário é um grupo WhatsApp |
+| `contact_id` | `{"contact_id": "ct_..."}` | Você tem o ID TN Contact |
+
+Nenhuma das formas anteriores foi alterada — a mudança é **aditiva**.
+
+## Novo formato do campo `to`
+
+```json
+{
+  "to": { "contact_id": "ct_a1b2c3d4e5f6789012345678901234ab" },
+  "content": {
+    "text": "Olá, sua solicitação foi processada."
+  }
+}
+```
+
+O Turbo Notify resolve o telefone a partir do registro `TN Contact` no momento do envio. O contato deve pertencer ao mesmo tenant da chave de API usada.
+
+## Novos códigos de erro
+
+| Código | HTTP | Significado |
+| ------ | ---- | ----------- |
+| `contact_not_found` | 422 | O `contact_id` informado não existe para este tenant |
+| `contacts_not_enabled` | 422 | O recurso Contatos não está provisionado para este tenant |
+
+## Por que usar `contact_id`
+
+Se o seu sistema já armazena o `ct_` dos TN Contacts (por exemplo, a partir de webhooks `contact.created`), não é necessário manter um mapeamento separado de telefone. Você passa o `contact_id` diretamente e o Turbo Notify faz a resolução internamente.
+
+## Referências
+
+- [Enviar mensagem](/messages/send/#envio-por-contact_id) — seção de envio por `contact_id` com exemplos em 7 linguagens.
+- [Visão geral de contatos](/contacts/overview/) — como os TN Contacts são criados e enriquecidos.
+- [Listar contatos](/contacts/list/) — recuperar `contact_id` via API.

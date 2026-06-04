@@ -193,6 +193,7 @@ export default defineConfig({
           label: 'Changelog',
           translations: { en: 'Changelog', es: 'Changelog' },
           items: [
+            { slug: 'changelog/2026-06-04-contact-id-recipient', label: 'contact_id como destinatário', translations: { en: 'contact_id as recipient', es: 'contact_id como destinatario' } },
             { slug: 'changelog/2026-05-15-message-quota-activation', label: 'Per-Tier Message Quota Activation' },
           ],
         },
