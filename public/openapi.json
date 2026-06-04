@@ -883,8 +883,31 @@
       "SendMessageRequest": {
         "properties": {
           "to": {
-            "type": "string",
-            "title": "To"
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": { "number": { "type": "string" } },
+                "required": ["number"],
+                "title": "PhoneRecipient",
+                "description": "1:1 recipient — E.164 phone number"
+              },
+              {
+                "type": "object",
+                "properties": { "group_id": { "type": "string", "pattern": "^grp_[0-9a-f]{32}$" } },
+                "required": ["group_id"],
+                "title": "GroupRecipient",
+                "description": "WhatsApp group — public grp_{hex32} identifier"
+              },
+              {
+                "type": "object",
+                "properties": { "contact_id": { "type": "string", "pattern": "^ct_[0-9a-f]{32}$" } },
+                "required": ["contact_id"],
+                "title": "ContactRecipient",
+                "description": "TN Contact — phone resolved from the contact registry at send time"
+              }
+            ],
+            "title": "To",
+            "description": "Recipient — exactly one of number (E.164), group_id (grp_{hex32}), or contact_id (ct_{hex32})"
           },
           "text": {
             "type": "string",
