@@ -1,0 +1,26 @@
+---
+title: "2026-06-04 — to.contact_id as recipient"
+description: "POST /v1/messages now accepts contact_id as recipient. Doc bug fix for the to field."
+---
+
+> This page is being translated. See the PT-BR (canonical) version: [/changelog/2026-06-04-contact-id-recipient/](/changelog/2026-06-04-contact-id-recipient/).
+
+## What's New
+
+### `to.contact_id` as recipient
+
+`POST /v1/messages` now accepts `{"contact_id": "ct_…"}` as a third mutually exclusive form for the `to` field, alongside `{"number": "…"}` and `{"group_id": "…"}`.
+
+The phone number is resolved automatically from the TN Contacts catalog.
+
+**New error codes:**
+- `contact_not_found` (HTTP 422) — the supplied `contact_id` does not belong to this tenant.
+- `contacts_not_enabled` (HTTP 422) — feature not configured on this deployment.
+
+## Doc Fix
+
+Code examples incorrectly showed `"to": "+5511999999999"` (bare string). The correct format has always been `"to": {"number": "+5511999999999"}`.
+
+## Breaking Change
+
+The `to` field validation error messages have changed to reflect the third option. Clients parsing the raw error string should update.
