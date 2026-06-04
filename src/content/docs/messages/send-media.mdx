@@ -8,9 +8,10 @@ import ApiResponse from '@components/ApiResponse.astro';
 import DashboardLink from '@components/DashboardLink.astro';
 
 Mídia (imagens, áudios, vídeos, documentos e figurinhas) é enviada
-pelo mesmo endpoint `POST /v1/messages` usado para texto. O corpo é
-**plano**: os campos de mídia ficam no nível raiz junto de
-`content_type` — não há objeto `content` aninhado.
+pelo mesmo endpoint `POST /v1/messages` usado para texto. Os campos de
+mídia ficam dentro do objeto **aninhado `content`** — o tipo é inferido
+automaticamente pelo campo âncora presente (`image_url`, `video_url`,
+`audio_url`, `document_url` ou `sticker_url`).
 
 :::caution[Implementação em progresso]
 O contrato HTTP é final, mas o upload outbound de mídia para o
@@ -23,16 +24,16 @@ até o release que completa o gateway. Acompanhe o webhook
 
 ## Tipos de mídia suportados
 
-| `content_type` | Formatos comuns | Tamanho máximo | `caption`? | `filename`? |
-| -------------- | --------------- | :------------: | :--------: | :---------: |
-| `image` | JPEG, PNG, WebP | 16 MB | ✓ | — |
-| `video` | MP4 | 100 MB | ✓ | — |
-| `audio` | MP3, OGG, M4A | 16 MB | — | — |
-| `document` | PDF, DOCX, XLSX, etc. | 100 MB | ✓ | ✓ |
-| `sticker` | WebP animado | 500 KB | — | — |
+| Variante | Campo âncora | Formatos comuns | Tamanho máximo | `caption`? | `filename`? |
+| -------- | ------------ | --------------- | :------------: | :--------: | :---------: |
+| `image` | `image_url` | JPEG, PNG, WebP | 16 MB | ✓ | — |
+| `video` | `video_url` | MP4 | 100 MB | ✓ | — |
+| `audio` | `audio_url` | MP3, OGG, M4A | 16 MB | — | — |
+| `document` | `document_url` | PDF, DOCX, XLSX, etc. | 100 MB | ✓ | ✓ |
+| `sticker` | `sticker_url` | WebP animado | 500 KB | — | — |
 
-`caption` é descartado server-side em `audio` e `sticker` — o WhatsApp
-ignora o campo nesses tipos.
+`caption` **não é aceito** em `audio` e `sticker` — a API retorna
+`422` se o campo for enviado nesses tipos.
 
 ## Modalidade — URL pública
 
@@ -50,10 +51,11 @@ arquivo antes de entregar ao WhatsApp.
       -H "Content-Type: application/json" \
       -d '{
         "to": "+5511999999999",
-        "content_type": "image",
-        "url": "https://cdn.exemplo.com/foto-produto.jpg",
-        "mime_type": "image/jpeg",
-        "caption": "Foto do produto"
+        "content": {
+          "image_url": "https://cdn.exemplo.com/foto-produto.jpg",
+          "mime_type": "image/jpeg",
+          "caption": "Foto do produto"
+        }
       }'
     ```
   </TabItem>
@@ -67,10 +69,11 @@ arquivo antes de entregar ao WhatsApp.
       },
       body: JSON.stringify({
         to: '+5511999999999',
-        content_type: 'image',
-        url: 'https://cdn.exemplo.com/foto-produto.jpg',
-        mime_type: 'image/jpeg',
-        caption: 'Foto do produto'
+        content: {
+          image_url: 'https://cdn.exemplo.com/foto-produto.jpg',
+          mime_type: 'image/jpeg',
+          caption: 'Foto do produto'
+        }
       })
     });
     ```
@@ -87,10 +90,11 @@ arquivo antes de entregar ao WhatsApp.
         },
         json={
             "to": "+5511999999999",
-            "content_type": "image",
-            "url": "https://cdn.exemplo.com/foto-produto.jpg",
-            "mime_type": "image/jpeg",
-            "caption": "Foto do produto",
+            "content": {
+                "image_url": "https://cdn.exemplo.com/foto-produto.jpg",
+                "mime_type": "image/jpeg",
+                "caption": "Foto do produto",
+            },
         },
     )
     ```
@@ -108,10 +112,11 @@ arquivo antes de entregar ao WhatsApp.
       -H "Content-Type: application/json" \
       -d '{
         "to": "+5511999999999",
-        "content_type": "video",
-        "url": "https://cdn.exemplo.com/clip-produto.mp4",
-        "mime_type": "video/mp4",
-        "caption": "Veja o vídeo"
+        "content": {
+          "video_url": "https://cdn.exemplo.com/clip-produto.mp4",
+          "mime_type": "video/mp4",
+          "caption": "Veja o vídeo"
+        }
       }'
     ```
   </TabItem>
@@ -125,10 +130,11 @@ arquivo antes de entregar ao WhatsApp.
       },
       body: JSON.stringify({
         to: '+5511999999999',
-        content_type: 'video',
-        url: 'https://cdn.exemplo.com/clip-produto.mp4',
-        mime_type: 'video/mp4',
-        caption: 'Veja o vídeo'
+        content: {
+          video_url: 'https://cdn.exemplo.com/clip-produto.mp4',
+          mime_type: 'video/mp4',
+          caption: 'Veja o vídeo'
+        }
       })
     });
     ```
@@ -145,10 +151,11 @@ arquivo antes de entregar ao WhatsApp.
         },
         json={
             "to": "+5511999999999",
-            "content_type": "video",
-            "url": "https://cdn.exemplo.com/clip-produto.mp4",
-            "mime_type": "video/mp4",
-            "caption": "Veja o vídeo",
+            "content": {
+                "video_url": "https://cdn.exemplo.com/clip-produto.mp4",
+                "mime_type": "video/mp4",
+                "caption": "Veja o vídeo",
+            },
         },
     )
     ```
@@ -166,9 +173,10 @@ arquivo antes de entregar ao WhatsApp.
       -H "Content-Type: application/json" \
       -d '{
         "to": "+5511999999999",
-        "content_type": "audio",
-        "url": "https://cdn.exemplo.com/voice-note.ogg",
-        "mime_type": "audio/ogg"
+        "content": {
+          "audio_url": "https://cdn.exemplo.com/voice-note.ogg",
+          "mime_type": "audio/ogg"
+        }
       }'
     ```
   </TabItem>
@@ -182,9 +190,10 @@ arquivo antes de entregar ao WhatsApp.
       },
       body: JSON.stringify({
         to: '+5511999999999',
-        content_type: 'audio',
-        url: 'https://cdn.exemplo.com/voice-note.ogg',
-        mime_type: 'audio/ogg'
+        content: {
+          audio_url: 'https://cdn.exemplo.com/voice-note.ogg',
+          mime_type: 'audio/ogg'
+        }
       })
     });
     ```
@@ -201,9 +210,10 @@ arquivo antes de entregar ao WhatsApp.
         },
         json={
             "to": "+5511999999999",
-            "content_type": "audio",
-            "url": "https://cdn.exemplo.com/voice-note.ogg",
-            "mime_type": "audio/ogg",
+            "content": {
+                "audio_url": "https://cdn.exemplo.com/voice-note.ogg",
+                "mime_type": "audio/ogg",
+            },
         },
     )
     ```
@@ -224,11 +234,12 @@ use `audio/mpeg` ou `audio/mp4`.
       -H "Content-Type: application/json" \
       -d '{
         "to": "+5511999999999",
-        "content_type": "document",
-        "url": "https://cdn.exemplo.com/fatura.pdf",
-        "mime_type": "application/pdf",
-        "filename": "Fatura-Abril.pdf",
-        "caption": "Sua fatura do mês de abril"
+        "content": {
+          "document_url": "https://cdn.exemplo.com/fatura.pdf",
+          "mime_type": "application/pdf",
+          "filename": "Fatura-Abril.pdf",
+          "caption": "Sua fatura do mês de abril"
+        }
       }'
     ```
   </TabItem>
@@ -242,11 +253,12 @@ use `audio/mpeg` ou `audio/mp4`.
       },
       body: JSON.stringify({
         to: '+5511999999999',
-        content_type: 'document',
-        url: 'https://cdn.exemplo.com/fatura.pdf',
-        mime_type: 'application/pdf',
-        filename: 'Fatura-Abril.pdf',
-        caption: 'Sua fatura do mês de abril'
+        content: {
+          document_url: 'https://cdn.exemplo.com/fatura.pdf',
+          mime_type: 'application/pdf',
+          filename: 'Fatura-Abril.pdf',
+          caption: 'Sua fatura do mês de abril'
+        }
       })
     });
     ```
@@ -263,11 +275,12 @@ use `audio/mpeg` ou `audio/mp4`.
         },
         json={
             "to": "+5511999999999",
-            "content_type": "document",
-            "url": "https://cdn.exemplo.com/fatura.pdf",
-            "mime_type": "application/pdf",
-            "filename": "Fatura-Abril.pdf",
-            "caption": "Sua fatura do mês de abril",
+            "content": {
+                "document_url": "https://cdn.exemplo.com/fatura.pdf",
+                "mime_type": "application/pdf",
+                "filename": "Fatura-Abril.pdf",
+                "caption": "Sua fatura do mês de abril",
+            },
         },
     )
     ```
@@ -287,9 +300,10 @@ use `audio/mpeg` ou `audio/mp4`.
       -H "Content-Type: application/json" \
       -d '{
         "to": "+5511999999999",
-        "content_type": "sticker",
-        "url": "https://cdn.exemplo.com/sticker-animado.webp",
-        "mime_type": "image/webp"
+        "content": {
+          "sticker_url": "https://cdn.exemplo.com/sticker-animado.webp",
+          "mime_type": "image/webp"
+        }
       }'
     ```
   </TabItem>
@@ -303,9 +317,10 @@ use `audio/mpeg` ou `audio/mp4`.
       },
       body: JSON.stringify({
         to: '+5511999999999',
-        content_type: 'sticker',
-        url: 'https://cdn.exemplo.com/sticker-animado.webp',
-        mime_type: 'image/webp'
+        content: {
+          sticker_url: 'https://cdn.exemplo.com/sticker-animado.webp',
+          mime_type: 'image/webp'
+        }
       })
     });
     ```
@@ -322,9 +337,10 @@ use `audio/mpeg` ou `audio/mp4`.
         },
         json={
             "to": "+5511999999999",
-            "content_type": "sticker",
-            "url": "https://cdn.exemplo.com/sticker-animado.webp",
-            "mime_type": "image/webp",
+            "content": {
+                "sticker_url": "https://cdn.exemplo.com/sticker-animado.webp",
+                "mime_type": "image/webp",
+            },
         },
     )
     ```
@@ -349,12 +365,17 @@ esteja configurado e ativo. Sem integração ativa, a requisição retorna
 ```json title="Exemplo — imagem por s3_object_key"
 {
   "to": "+5511999999999",
-  "content_type": "image",
-  "s3_object_key": "media/fotos/produto-42.jpg",
-  "mime_type": "image/jpeg",
-  "caption": "Foto do produto"
+  "content": {
+    "s3_object_key": "media/fotos/produto-42.jpg",
+    "mime_type": "image/jpeg",
+    "caption": "Foto do produto"
+  }
 }
 ```
+
+:::note
+Quando `s3_object_key` é usado sem `image_url` (ou equivalente de outro tipo), o Turbo Notify infere a variante de mídia a partir do `mime_type`. Forneça sempre `mime_type` nesse cenário.
+:::
 
 ### Erro 412 — storage_required
 
@@ -373,13 +394,18 @@ Quando `s3_object_key` é informado mas nenhum Object Storage está configurado:
 
 ## Esquema de campos (todos os tipos)
 
-| Campo | Tipo | Obrigatório | Notas |
+Os campos de mídia ficam dentro do objeto `content`. O campo âncora (ex.: `image_url`) determina a variante.
+
+| Campo em `content` | Tipo | Obrigatório | Notas |
 |---|---|---|---|
-| `content_type` | enum | sim | `image` / `video` / `audio` / `document` / `sticker` |
-| `url` | URL | condicional | URL pública HTTPS; exclusivo com `s3_object_key` |
-| `s3_object_key` | string | condicional | Chave do objeto no seu BYO Storage; exclusivo com `url`. Exige storage configurado. |
+| `image_url` | URL | condicional | Campo âncora para imagens; URL pública HTTPS; exclusivo com `s3_object_key` |
+| `video_url` | URL | condicional | Campo âncora para vídeos; URL pública HTTPS; exclusivo com `s3_object_key` |
+| `audio_url` | URL | condicional | Campo âncora para áudios; URL pública HTTPS; exclusivo com `s3_object_key` |
+| `document_url` | URL | condicional | Campo âncora para documentos; URL pública HTTPS; exclusivo com `s3_object_key` |
+| `sticker_url` | URL | condicional | Campo âncora para figurinhas; URL pública HTTPS; exclusivo com `s3_object_key` |
+| `s3_object_key` | string | condicional | Chave do objeto no seu BYO Storage; exclusivo com os campos `*_url`. Exige storage configurado. |
 | `mime_type` | string | não | recomendado; o worker pode inferir do `Content-Type` da resposta |
-| `caption` | string | parcial | aceito em `image`, `video`, `document`; **descartado** em `audio` e `sticker` |
+| `caption` | string | parcial | aceito em `image`, `video`, `document`; **não aceito** em `audio` e `sticker` (retorna `422`) |
 | `filename` | string | não | apenas em `document`; aparece como nome do anexo no chat |
 
 ## Resposta

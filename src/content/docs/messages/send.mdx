@@ -9,13 +9,14 @@ import ExternalLink from '@components/ExternalLink.astro';
 
 Envie mensagens pelo Turbo Notify de forma simples, segura e em conformidade com as <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">políticas do WhatsApp</ExternalLink>.
 
-O corpo de `POST /v1/messages` é **plano** (`flat`): os campos de
-conteúdo ficam no nível raiz junto de `content_type` — não há objeto
-`content` aninhado. Suporta texto, localização, contato, calendário e
+O corpo de `POST /v1/messages` usa um objeto **aninhado `content`**
+para transportar o payload da mensagem. O tipo é inferido
+automaticamente pelo campo âncora presente em `content` — não há campo
+`content_type` obrigatório. Suporta texto, localização, contato, calendário e
 mídia (`image`, `video`, `audio`, `document`, `sticker` — veja
 [Envio de Mídia](/messages/send-media/)).
 
-Para citar (responder) uma mensagem existente — qualquer `content_type` — use o endpoint dedicado `POST /v1/messages/{message_id}/reply`, onde `{message_id}` é o id público da mensagem citada (`msg_{hex32}`). O body do reply também é plano. O webhook resultante é `message.replied` (em vez de `message.sent`); veja [Webhooks](/messages/webhook/#exemplo--messagereplied-inboundoutbound).
+Para citar (responder) uma mensagem existente — qualquer variante de conteúdo — use o endpoint dedicado `POST /v1/messages/{message_id}/reply`, onde `{message_id}` é o id público da mensagem citada (`msg_{hex32}`). O body do reply contém `from` (opcional) e `content`. O webhook resultante é `message.replied` (em vez de `message.sent`); veja [Webhooks](/messages/webhook/#exemplo--messagereplied-inboundoutbound).
 
 ## Envio básico
 
@@ -30,8 +31,9 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
       -H "Content-Type: application/json" \
       -d '{
         "to": "+5511999999999",
-        "content_type": "text",
-        "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+        "content": {
+          "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+        }
       }'
     ```
   </TabItem>
@@ -45,8 +47,9 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
       },
       body: JSON.stringify({
         to: '+5511999999999',
-        content_type: 'text',
-        text: 'Ola, esta e uma mensagem enviada pelo Turbo Notify!'
+        content: {
+          text: 'Ola, esta e uma mensagem enviada pelo Turbo Notify!'
+        }
       })
     });
 
@@ -65,8 +68,9 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     }
     data = {
         "to": "+5511999999999",
-        "content_type": "text",
-        "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+        "content": {
+            "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+        }
     }
 
     response = requests.post(url, json=data, headers=headers)
@@ -86,7 +90,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     )
 
     func main() {
-        payload := strings.NewReader(`{"to": "+5511999999999", "content_type": "text", "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"}`)
+        payload := strings.NewReader(`{"to": "+5511999999999", "content": {"text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"}}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/messages", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -103,8 +107,9 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     $url = 'https://api.turbonotify.com/v1/messages';
     $data = [
         'to' => '+5511999999999',
-        'content_type' => 'text',
-        'text' => 'Ola, esta e uma mensagem enviada pelo Turbo Notify!'
+        'content' => [
+            'text' => 'Ola, esta e uma mensagem enviada pelo Turbo Notify!'
+        ]
     ];
 
     $options = [
@@ -135,8 +140,9 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
 
     var data = new {
         to = "+5511999999999",
-        content_type = "text",
-        text = "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+        content = new {
+            text = "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+        }
     };
 
     var json = JsonSerializer.Serialize(data);
@@ -162,8 +168,9 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
             var json = """
                 {
                     "to": "+5511999999999",
-                    "content_type": "text",
-                    "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+                    "content": {
+                        "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+                    }
                 }
                 """;
 
@@ -196,9 +203,10 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
       -H "Content-Type: application/json" \
       -d '{
         "to": "+5511999999999",
-        "content_type": "text",
-        "text": "Mensagem enviada a partir de um numero extra.",
-        "from": "vendas-sp"
+        "from": "vendas-sp",
+        "content": {
+          "text": "Mensagem enviada a partir de um numero extra."
+        }
       }'
     ```
   </TabItem>
@@ -212,9 +220,10 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
       },
       body: JSON.stringify({
         to: '+5511999999999',
-        content_type: 'text',
-        text: 'Mensagem enviada a partir de um numero extra.',
-        from: 'vendas-sp'
+        from: 'vendas-sp',
+        content: {
+          text: 'Mensagem enviada a partir de um numero extra.'
+        }
       })
     });
 
@@ -233,9 +242,10 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
     }
     data = {
         "to": "+5511999999999",
-        "content_type": "text",
-        "text": "Mensagem enviada a partir de um numero extra.",
-        "from": "vendas-sp"
+        "from": "vendas-sp",
+        "content": {
+            "text": "Mensagem enviada a partir de um numero extra."
+        }
     }
 
     response = requests.post(url, json=data, headers=headers)
@@ -255,7 +265,7 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
     )
 
     func main() {
-        payload := strings.NewReader(`{"to": "+5511999999999", "content_type": "text", "text": "Mensagem enviada a partir de um numero extra.", "from": "vendas-sp"}`)
+        payload := strings.NewReader(`{"to": "+5511999999999", "from": "vendas-sp", "content": {"text": "Mensagem enviada a partir de um numero extra."}}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/messages", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -272,9 +282,10 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
     $url = 'https://api.turbonotify.com/v1/messages';
     $data = [
         'to' => '+5511999999999',
-        'content_type' => 'text',
-        'text' => 'Mensagem enviada a partir de um numero extra.',
-        'from' => 'vendas-sp'
+        'from' => 'vendas-sp',
+        'content' => [
+            'text' => 'Mensagem enviada a partir de um numero extra.'
+        ]
     ];
 
     $options = [
@@ -305,9 +316,10 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
 
     var data = new {
         to = "+5511999999999",
-        content_type = "text",
-        text = "Mensagem enviada a partir de um numero extra.",
-        from = "vendas-sp"
+        from = "vendas-sp",
+        content = new {
+            text = "Mensagem enviada a partir de um numero extra."
+        }
     };
 
     var json = JsonSerializer.Serialize(data);
@@ -333,9 +345,10 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
             var json = """
                 {
                     "to": "+5511999999999",
-                    "content_type": "text",
-                    "text": "Mensagem enviada a partir de um numero extra.",
-                    "from": "vendas-sp"
+                    "from": "vendas-sp",
+                    "content": {
+                        "text": "Mensagem enviada a partir de um numero extra."
+                    }
                 }
                 """;
 
@@ -398,10 +411,10 @@ Para saber por quanto tempo as mensagens ficam disponíveis para consulta e oper
 
 ## Conteúdo rico — Localização, Contato e Calendário
 
-A partir de 2026-04-27 o `POST /v1/messages` aceita três novos
-`content_type` além de `text`. Cada variante tem um esquema próprio
-e é despachada para o WhatsApp como o tipo nativo correspondente
-(`locationMessage`, `contactMessage`, `eventMessage`).
+A partir de 2026-04-27 o `POST /v1/messages` aceita três variantes de
+conteúdo rico além de `text`. Cada variante tem um campo âncora próprio
+dentro do objeto `content` e é despachada para o WhatsApp como o tipo
+nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
 
 ### Enviar Localização
 
@@ -414,12 +427,13 @@ e é despachada para o WhatsApp como o tipo nativo correspondente
       -H "Content-Type: application/json" \
       -d '{
         "to": "+5511999999999",
-        "content_type": "location",
-        "latitude": -23.5505,
-        "longitude": -46.6333,
-        "name": "Avenida Paulista",
-        "address": "São Paulo, SP",
-        "url": "https://maps.google.com/?q=-23.5505,-46.6333"
+        "content": {
+          "latitude": -23.5505,
+          "longitude": -46.6333,
+          "name": "Avenida Paulista",
+          "address": "São Paulo, SP",
+          "url": "https://maps.google.com/?q=-23.5505,-46.6333"
+        }
       }'
     ```
   </TabItem>
@@ -433,12 +447,13 @@ e é despachada para o WhatsApp como o tipo nativo correspondente
       },
       body: JSON.stringify({
         to: '+5511999999999',
-        content_type: 'location',
-        latitude: -23.5505,
-        longitude: -46.6333,
-        name: 'Avenida Paulista',
-        address: 'São Paulo, SP',
-        url: 'https://maps.google.com/?q=-23.5505,-46.6333'
+        content: {
+          latitude: -23.5505,
+          longitude: -46.6333,
+          name: 'Avenida Paulista',
+          address: 'São Paulo, SP',
+          url: 'https://maps.google.com/?q=-23.5505,-46.6333'
+        }
       })
     });
     ```
@@ -455,12 +470,13 @@ e é despachada para o WhatsApp como o tipo nativo correspondente
         },
         json={
             "to": "+5511999999999",
-            "content_type": "location",
-            "latitude": -23.5505,
-            "longitude": -46.6333,
-            "name": "Avenida Paulista",
-            "address": "São Paulo, SP",
-            "url": "https://maps.google.com/?q=-23.5505,-46.6333",
+            "content": {
+                "latitude": -23.5505,
+                "longitude": -46.6333,
+                "name": "Avenida Paulista",
+                "address": "São Paulo, SP",
+                "url": "https://maps.google.com/?q=-23.5505,-46.6333",
+            },
         },
     )
     ```
@@ -469,11 +485,11 @@ e é despachada para o WhatsApp como o tipo nativo correspondente
 
 | Campo | Tipo | Obrigatório | Validação |
 |---|---|---|---|
-| `latitude` | number | sim | `-90 ≤ x ≤ 90` |
-| `longitude` | number | sim | `-180 ≤ x ≤ 180` |
-| `name` | string | não | máx. 200 chars |
-| `address` | string | não | máx. 500 chars |
-| `url` | string | não | apenas `http://`/`https://` |
+| `content.latitude` | number | sim | `-90 ≤ x ≤ 90` |
+| `content.longitude` | number | sim | `-180 ≤ x ≤ 180` |
+| `content.name` | string | não | máx. 200 chars |
+| `content.address` | string | não | máx. 500 chars |
+| `content.url` | string | não | apenas `http://`/`https://` |
 
 ### Enviar Contato
 
@@ -486,18 +502,19 @@ e é despachada para o WhatsApp como o tipo nativo correspondente
       -H "Content-Type: application/json" \
       -d '{
         "to": "+5511999999999",
-        "content_type": "contact",
-        "display_name": "João Silva",
-        "phones": [
-          { "label": "Mobile", "number": "+5511988887777" },
-          { "label": "Work",   "number": "+551133334444" }
-        ],
-        "emails": [
-          { "label": "Work", "address": "joao@acme.com" }
-        ],
-        "organization": "Acme Corp",
-        "title": "CTO",
-        "address": "Av. Paulista 1578, São Paulo - SP"
+        "content": {
+          "display_name": "João Silva",
+          "phones": [
+            { "label": "Mobile", "number": "+5511988887777" },
+            { "label": "Work",   "number": "+551133334444" }
+          ],
+          "emails": [
+            { "label": "Work", "address": "joao@acme.com" }
+          ],
+          "organization": "Acme Corp",
+          "title": "CTO",
+          "address": "Av. Paulista 1578, São Paulo - SP"
+        }
       }'
     ```
   </TabItem>
@@ -511,18 +528,19 @@ e é despachada para o WhatsApp como o tipo nativo correspondente
       },
       body: JSON.stringify({
         to: '+5511999999999',
-        content_type: 'contact',
-        display_name: 'João Silva',
-        phones: [
-          { label: 'Mobile', number: '+5511988887777' },
-          { label: 'Work',   number: '+551133334444' }
-        ],
-        emails: [
-          { label: 'Work', address: 'joao@acme.com' }
-        ],
-        organization: 'Acme Corp',
-        title: 'CTO',
-        address: 'Av. Paulista 1578, São Paulo - SP'
+        content: {
+          display_name: 'João Silva',
+          phones: [
+            { label: 'Mobile', number: '+5511988887777' },
+            { label: 'Work',   number: '+551133334444' }
+          ],
+          emails: [
+            { label: 'Work', address: 'joao@acme.com' }
+          ],
+          organization: 'Acme Corp',
+          title: 'CTO',
+          address: 'Av. Paulista 1578, São Paulo - SP'
+        }
       })
     });
     ```
@@ -539,18 +557,19 @@ e é despachada para o WhatsApp como o tipo nativo correspondente
         },
         json={
             "to": "+5511999999999",
-            "content_type": "contact",
-            "display_name": "João Silva",
-            "phones": [
-                {"label": "Mobile", "number": "+5511988887777"},
-                {"label": "Work",   "number": "+551133334444"},
-            ],
-            "emails": [
-                {"label": "Work", "address": "joao@acme.com"},
-            ],
-            "organization": "Acme Corp",
-            "title": "CTO",
-            "address": "Av. Paulista 1578, São Paulo - SP",
+            "content": {
+                "display_name": "João Silva",
+                "phones": [
+                    {"label": "Mobile", "number": "+5511988887777"},
+                    {"label": "Work",   "number": "+551133334444"},
+                ],
+                "emails": [
+                    {"label": "Work", "address": "joao@acme.com"},
+                ],
+                "organization": "Acme Corp",
+                "title": "CTO",
+                "address": "Av. Paulista 1578, São Paulo - SP",
+            },
         },
     )
     ```
@@ -559,13 +578,13 @@ e é despachada para o WhatsApp como o tipo nativo correspondente
 
 | Campo | Tipo | Obrigatório | Notas |
 |---|---|---|---|
-| `display_name` | string | sim | 1–200 chars |
-| `phones[]` | array | sim | 1–10 itens; `number` em E.164 |
-| `phones[].label` | string | não | default `"Mobile"` (Mobile/Home/Work/...) |
-| `emails[]` | array | não | 0–10; `address` validado como email |
-| `organization` | string | não | máx. 200 chars |
-| `title` | string | não | máx. 100 chars |
-| `address` | string | não | máx. 500 chars |
+| `content.display_name` | string | sim | 1–200 chars |
+| `content.phones[]` | array | sim | 1–10 itens; `number` em E.164 |
+| `content.phones[].label` | string | não | default `"Mobile"` (Mobile/Home/Work/...) |
+| `content.emails[]` | array | não | 0–10; `address` validado como email |
+| `content.organization` | string | não | máx. 200 chars |
+| `content.title` | string | não | máx. 100 chars |
+| `content.address` | string | não | máx. 500 chars |
 
 O Turbo Notify gera o vCard server-side a partir desses campos —
 você nunca precisa lidar com escaping vCard manualmente.
@@ -581,18 +600,19 @@ você nunca precisa lidar com escaping vCard manualmente.
       -H "Content-Type: application/json" \
       -d '{
         "to": "+5511999999999",
-        "content_type": "calendar",
-        "name": "Sprint Planning",
-        "description": "Planejamento da sprint 24.",
-        "start_at": "2026-05-01T14:00:00Z",
-        "end_at": "2026-05-01T15:00:00Z",
-        "join_link": "https://meet.example.com/abc",
-        "has_reminder": true,
-        "reminder_offset_sec": 600,
-        "location": {
-          "latitude": -23.5505,
-          "longitude": -46.6333,
-          "name": "HQ - Sala Mestre"
+        "content": {
+          "name": "Sprint Planning",
+          "description": "Planejamento da sprint 24.",
+          "start_at": "2026-05-01T14:00:00Z",
+          "end_at": "2026-05-01T15:00:00Z",
+          "join_link": "https://meet.example.com/abc",
+          "has_reminder": true,
+          "reminder_offset_sec": 600,
+          "location": {
+            "latitude": -23.5505,
+            "longitude": -46.6333,
+            "name": "HQ - Sala Mestre"
+          }
         }
       }'
     ```
@@ -607,18 +627,19 @@ você nunca precisa lidar com escaping vCard manualmente.
       },
       body: JSON.stringify({
         to: '+5511999999999',
-        content_type: 'calendar',
-        name: 'Sprint Planning',
-        description: 'Planejamento da sprint 24.',
-        start_at: '2026-05-01T14:00:00Z',
-        end_at: '2026-05-01T15:00:00Z',
-        join_link: 'https://meet.example.com/abc',
-        has_reminder: true,
-        reminder_offset_sec: 600,
-        location: {
-          latitude: -23.5505,
-          longitude: -46.6333,
-          name: 'HQ - Sala Mestre'
+        content: {
+          name: 'Sprint Planning',
+          description: 'Planejamento da sprint 24.',
+          start_at: '2026-05-01T14:00:00Z',
+          end_at: '2026-05-01T15:00:00Z',
+          join_link: 'https://meet.example.com/abc',
+          has_reminder: true,
+          reminder_offset_sec: 600,
+          location: {
+            latitude: -23.5505,
+            longitude: -46.6333,
+            name: 'HQ - Sala Mestre'
+          }
         }
       })
     });
@@ -636,18 +657,19 @@ você nunca precisa lidar com escaping vCard manualmente.
         },
         json={
             "to": "+5511999999999",
-            "content_type": "calendar",
-            "name": "Sprint Planning",
-            "description": "Planejamento da sprint 24.",
-            "start_at": "2026-05-01T14:00:00Z",
-            "end_at": "2026-05-01T15:00:00Z",
-            "join_link": "https://meet.example.com/abc",
-            "has_reminder": True,
-            "reminder_offset_sec": 600,
-            "location": {
-                "latitude": -23.5505,
-                "longitude": -46.6333,
-                "name": "HQ - Sala Mestre",
+            "content": {
+                "name": "Sprint Planning",
+                "description": "Planejamento da sprint 24.",
+                "start_at": "2026-05-01T14:00:00Z",
+                "end_at": "2026-05-01T15:00:00Z",
+                "join_link": "https://meet.example.com/abc",
+                "has_reminder": True,
+                "reminder_offset_sec": 600,
+                "location": {
+                    "latitude": -23.5505,
+                    "longitude": -46.6333,
+                    "name": "HQ - Sala Mestre",
+                },
             },
         },
     )
@@ -657,30 +679,30 @@ você nunca precisa lidar com escaping vCard manualmente.
 
 | Campo | Tipo | Obrigatório | Notas |
 |---|---|---|---|
-| `name` | string | sim | título do evento; máx. 200 chars |
-| `description` | string | não | máx. 2000 chars |
-| `start_at` | datetime | sim | ISO-8601 com timezone |
-| `end_at` | datetime | não | ISO-8601 com timezone; deve ser > `start_at` |
-| `join_link` | string | não | apenas `http://`/`https://` |
-| `location` | object | não | esquema `location` aninhado |
-| `has_reminder` | bool | não | default `false` |
-| `reminder_offset_sec` | int | não | segundos antes do evento; precisa `has_reminder=true` |
-| `extra_guests_allowed` | bool | não | default `false` |
+| `content.name` | string | sim | título do evento; máx. 200 chars |
+| `content.description` | string | não | máx. 2000 chars |
+| `content.start_at` | datetime | sim | ISO-8601 com timezone (campo âncora da variante `calendar`) |
+| `content.end_at` | datetime | não | ISO-8601 com timezone; deve ser > `start_at` |
+| `content.join_link` | string | não | apenas `http://`/`https://` |
+| `content.location` | object | não | esquema `location` aninhado |
+| `content.has_reminder` | bool | não | default `false` |
+| `content.reminder_offset_sec` | int | não | segundos antes do evento; precisa `has_reminder=true` |
+| `content.extra_guests_allowed` | bool | não | default `false` |
 
 :::tip
 A nomenclatura interna do WhatsApp é "evento"; usamos
-`content_type: "calendar"` no Turbo Notify para evitar ambiguidade
-com o termo "event" usado em webhooks. Detalhes em
+`calendar` como variante de conteúdo no Turbo Notify para evitar
+ambiguidade com o termo "event" usado em webhooks. Detalhes em
 [ADR 2026-04-27](https://github.com/turbo-notify/turbo-notity/blob/main/docs/reference/decisions/2026-04-27-rich-content-rendering.md).
 :::
 
 :::caution[Limitação de propagação — contas pessoais WhatsApp]
-`content_type: "calendar"` é uma feature **WhatsApp Business** (`eventMessage`).
+A variante `calendar` (campo âncora `start_at`) é uma feature **WhatsApp Business** (`eventMessage`).
 Quando o destinatário é uma **conta pessoal** (não-Business), o servidor
 WhatsApp remove os timestamps (`startTime`/`endTime`) durante a entrega.
 O destinatário recebe a mensagem com todos os metadados úteis (`name`,
 `description`, `join_link`, `location`) mas **sem horário** — o webhook
-`message.received` correspondente preserva `content_type: "calendar"` e
+`message.received` correspondente preserva a variante `calendar` e
 omite o campo `start_at` do body. Não há reclassificação como
 `unsupported`.
 
@@ -688,8 +710,8 @@ O envio (`message.sent`) e o status de entrega (`message.delivered` /
 `message.read`) funcionam normalmente; apenas o horário do card de
 evento fica ausente no cliente do peer. Mitigação: garantir que a
 conta destinatária seja WhatsApp Business antes de enviar `calendar`,
-ou usar `text` com link ICS quando o destinatário for pessoal e o
-horário for crítico.
+ou usar a variante `text` com link ICS quando o destinatário for
+pessoal e o horário for crítico.
 :::
 
 ### Como aparece no destinatário
@@ -712,8 +734,9 @@ de telefone usada em 1:1. Veja
 ```json title="POST /v1/messages — grupo"
 {
   "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a" },
-  "content_type": "text",
-  "text": "Bom dia, equipe"
+  "content": {
+    "text": "Bom dia, equipe"
+  }
 }
 ```
 
@@ -728,9 +751,9 @@ O campo `to` é polimórfico — sem `kind` nem `type`:
 - `group_id` é o identificador público `grp_{hex32}` recebido em
   webhooks/polling de `message.received` (`to.group_id`) ou nos
   eventos de [lifecycle de grupo](/groups/lifecycle-events/).
-- Os campos de conteúdo (`content_type` + payload) usam o mesmo schema
-  plano de envios 1:1 (texto, imagem, vídeo, áudio, documento, sticker,
-  location, contact, calendar) — sem mudanças.
+- O objeto `content` usa o mesmo schema de envios 1:1 (texto, imagem,
+  vídeo, áudio, documento, sticker, location, contact, calendar) —
+  sem mudanças.
 - Para citar uma mensagem dentro do grupo, use o endpoint dedicado
   `POST /v1/messages/{message_id}/reply`.
 
