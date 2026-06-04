@@ -30,7 +30,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "content": {
           "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
         }
@@ -46,7 +46,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
+        to: { number: '+5511999999999' },
         content: {
           text: 'Ola, esta e uma mensagem enviada pelo Turbo Notify!'
         }
@@ -67,7 +67,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
         "Content-Type": "application/json"
     }
     data = {
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "content": {
             "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
         }
@@ -90,7 +90,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     )
 
     func main() {
-        payload := strings.NewReader(`{"to": "+5511999999999", "content": {"text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"}}`)
+        payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "content": {"text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"}}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/messages", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -106,7 +106,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     <?php
     $url = 'https://api.turbonotify.com/v1/messages';
     $data = [
-        'to' => '+5511999999999',
+        'to' => ['number' => '+5511999999999'],
         'content' => [
             'text' => 'Ola, esta e uma mensagem enviada pelo Turbo Notify!'
         ]
@@ -139,7 +139,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var data = new {
-        to = "+5511999999999",
+        to = new { number = "+5511999999999" },
         content = new {
             text = "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
         }
@@ -167,7 +167,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
 
             var json = """
                 {
-                    "to": "+5511999999999",
+                    "to": {"number": "+5511999999999"},
                     "content": {
                         "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
                     }
@@ -202,8 +202,8 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
-        "from": "vendas-sp",
+        "to": {"number": "+5511999999999"},
+        "from": {"alias": "vendas-sp"},
         "content": {
           "text": "Mensagem enviada a partir de um numero extra."
         }
@@ -219,8 +219,8 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
-        from: 'vendas-sp',
+        to: { number: '+5511999999999' },
+        from: { alias: 'vendas-sp' },
         content: {
           text: 'Mensagem enviada a partir de um numero extra.'
         }
@@ -241,8 +241,8 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
         "Content-Type": "application/json"
     }
     data = {
-        "to": "+5511999999999",
-        "from": "vendas-sp",
+        "to": {"number": "+5511999999999"},
+        "from": {"alias": "vendas-sp"},
         "content": {
             "text": "Mensagem enviada a partir de um numero extra."
         }
@@ -265,7 +265,7 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
     )
 
     func main() {
-        payload := strings.NewReader(`{"to": "+5511999999999", "from": "vendas-sp", "content": {"text": "Mensagem enviada a partir de um numero extra."}}`)
+        payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "from": {"alias": "vendas-sp"}, "content": {"text": "Mensagem enviada a partir de um numero extra."}}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/messages", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -281,8 +281,8 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
     <?php
     $url = 'https://api.turbonotify.com/v1/messages';
     $data = [
-        'to' => '+5511999999999',
-        'from' => 'vendas-sp',
+        'to' => ['number' => '+5511999999999'],
+        'from' => ['alias' => 'vendas-sp'],
         'content' => [
             'text' => 'Mensagem enviada a partir de um numero extra.'
         ]
@@ -315,8 +315,8 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var data = new {
-        to = "+5511999999999",
-        from = "vendas-sp",
+        to = new { number = "+5511999999999" },
+        from = new { alias = "vendas-sp" },
         content = new {
             text = "Mensagem enviada a partir de um numero extra."
         }
@@ -344,8 +344,8 @@ Se você quiser escolher o remetente, basta informar o campo `from` com um [núm
 
             var json = """
                 {
-                    "to": "+5511999999999",
-                    "from": "vendas-sp",
+                    "to": {"number": "+5511999999999"},
+                    "from": {"alias": "vendas-sp"},
                     "content": {
                         "text": "Mensagem enviada a partir de um numero extra."
                     }
@@ -384,6 +384,8 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.       |
 | `422`  | `sender_not_authorized` | O campo `from` não está ativo na conta.           |
 | `429`  | `rate_limit_exceeded`   | Limite de envio do plano ultrapassado.            |
+| `422`  | `contact_not_found`     | O `contact_id` informado não pertence ao tenant.  |
+| `422`  | `contacts_not_enabled`  | Envio por `contact_id` não configurado.           |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.              |
 | `503`  | `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.       |
 
@@ -426,7 +428,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "content": {
           "latitude": -23.5505,
           "longitude": -46.6333,
@@ -446,7 +448,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
+        to: { number: '+5511999999999' },
         content: {
           latitude: -23.5505,
           longitude: -46.6333,
@@ -469,7 +471,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
             "Content-Type": "application/json",
         },
         json={
-            "to": "+5511999999999",
+            "to": {"number": "+5511999999999"},
             "content": {
                 "latitude": -23.5505,
                 "longitude": -46.6333,
@@ -501,7 +503,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "content": {
           "display_name": "João Silva",
           "phones": [
@@ -527,7 +529,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
+        to: { number: '+5511999999999' },
         content: {
           display_name: 'João Silva',
           phones: [
@@ -556,7 +558,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
             "Content-Type": "application/json",
         },
         json={
-            "to": "+5511999999999",
+            "to": {"number": "+5511999999999"},
             "content": {
                 "display_name": "João Silva",
                 "phones": [
@@ -599,7 +601,7 @@ você nunca precisa lidar com escaping vCard manualmente.
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "content": {
           "name": "Sprint Planning",
           "description": "Planejamento da sprint 24.",
@@ -626,7 +628,7 @@ você nunca precisa lidar com escaping vCard manualmente.
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
+        to: { number: '+5511999999999' },
         content: {
           name: 'Sprint Planning',
           description: 'Planejamento da sprint 24.',
@@ -656,7 +658,7 @@ você nunca precisa lidar com escaping vCard manualmente.
             "Content-Type": "application/json",
         },
         json={
-            "to": "+5511999999999",
+            "to": {"number": "+5511999999999"},
             "content": {
                 "name": "Sprint Planning",
                 "description": "Planejamento da sprint 24.",
@@ -740,12 +742,13 @@ de telefone usada em 1:1. Veja
 }
 ```
 
-O campo `to` é polimórfico — sem `kind` nem `type`:
+O campo `to` é polimórfico — aceita exatamente uma das três formas (sem `kind` nem `type`):
 
 | Forma de `to` | Destino |
 |---|---|
-| string de telefone (ex.: `"+5511999999999"`) | Mensagem 1:1 (pessoa) |
+| `{ "number": "+5511999999999" }` | Mensagem 1:1 (pessoa) |
 | `{ "group_id": "grp_..." }` | Mensagem para grupo |
+| `{ "contact_id": "ct_..." }` | Mensagem 1:1 via ID de contato TN |
 
 - As duas formas são **mutuamente exclusivas** — envie exatamente uma.
 - `group_id` é o identificador público `grp_{hex32}` recebido em
@@ -774,4 +777,21 @@ Mensagem para grupo conta como **1 destinatário** no rate-limit diário,
 independente de quantos participantes o grupo tenha. Quota de contatos
 (`contact.quota.*`) não é afetada — grupos nunca materializam contatos
 (ADR 2026-05-25).
+:::
+
+## Envio por contact_id
+
+Use `to.contact_id` para enviar a um contato do catálogo TN sem informar o telefone.
+O número é resolvido automaticamente pelo servidor a partir da tabela de contatos.
+
+```json
+{
+  "to": { "contact_id": "ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4" },
+  "content": { "text": "Olá, tudo bem?" }
+}
+```
+
+:::tip[Obtendo o contact_id]
+O `contact_id` (formato `ct_{hex32}`) é retornado em webhooks de contato
+(`contact.created`, `contact.updated`) e no endpoint `GET /v1/contacts`.
 :::
