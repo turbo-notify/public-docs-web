@@ -32,9 +32,8 @@ Não se esqueça de substituir o valor da `SUA_CHAVE`. Para detalhes sobre auten
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
-        "content_type": "text",
-        "text": "Seu pedido foi confirmado!"
+        "to": {"number": "+5511999999999"},
+        "content": {"text": "Seu pedido foi confirmado!"}
       }'
     ```
   </TabItem>
@@ -47,9 +46,8 @@ Não se esqueça de substituir o valor da `SUA_CHAVE`. Para detalhes sobre auten
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
-        content_type: 'text',
-        text: 'Seu pedido foi confirmado!'
+        to: { number: '+5511999999999' },
+        content: { text: 'Seu pedido foi confirmado!' }
       })
     });
 
@@ -67,9 +65,8 @@ Não se esqueça de substituir o valor da `SUA_CHAVE`. Para detalhes sobre auten
         "Content-Type": "application/json"
     }
     data = {
-        "to": "+5511999999999",
-        "content_type": "text",
-        "text": "Seu pedido foi confirmado!"
+        "to": {"number": "+5511999999999"},
+        "content": {"text": "Seu pedido foi confirmado!"}
     }
 
     response = requests.post(url, json=data, headers=headers)
@@ -89,7 +86,7 @@ Não se esqueça de substituir o valor da `SUA_CHAVE`. Para detalhes sobre auten
     )
 
     func main() {
-        payload := strings.NewReader(`{"to": "+5511999999999", "content_type": "text", "text": "Seu pedido foi confirmado!"}`)
+        payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "content": {"text": "Seu pedido foi confirmado!"}}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/messages", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -105,9 +102,8 @@ Não se esqueça de substituir o valor da `SUA_CHAVE`. Para detalhes sobre auten
     <?php
     $url = 'https://api.turbonotify.com/v1/messages';
     $data = [
-        'to' => '+5511999999999',
-        'content_type' => 'text',
-        'text' => 'Seu pedido foi confirmado!'
+        'to' => ['number' => '+5511999999999'],
+        'content' => ['text' => 'Seu pedido foi confirmado!']
     ];
 
     $options = [
@@ -137,9 +133,8 @@ Não se esqueça de substituir o valor da `SUA_CHAVE`. Para detalhes sobre auten
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var data = new {
-        to = "+5511999999999",
-        content_type = "text",
-        text = "Seu pedido foi confirmado!"
+        to = new { number = "+5511999999999" },
+        content = new { text = "Seu pedido foi confirmado!" }
     };
 
     var json = JsonSerializer.Serialize(data);
@@ -164,9 +159,8 @@ Não se esqueça de substituir o valor da `SUA_CHAVE`. Para detalhes sobre auten
 
             var json = """
                 {
-                    "to": "+5511999999999",
-                    "content_type": "text",
-                    "text": "Seu pedido foi confirmado!"
+                    "to": {"number": "+5511999999999"},
+                    "content": {"text": "Seu pedido foi confirmado!"}
                 }
                 """;
 

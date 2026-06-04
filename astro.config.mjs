@@ -194,6 +194,7 @@ export default defineConfig({
           translations: { en: 'Changelog', es: 'Changelog' },
           items: [
             { slug: 'changelog/2026-06-04-contact-id-recipient', label: 'contact_id como destinatário', translations: { en: 'contact_id as recipient', es: 'contact_id como destinatario' } },
+            { slug: 'changelog/2026-06-04-typing-indicator-groups', label: 'Typing indicator em grupos', translations: { en: 'Group typing indicator', es: 'Indicador de escritura en grupos' } },
             { slug: 'changelog/2026-05-15-message-quota-activation', label: 'Per-Tier Message Quota Activation' },
           ],
         },

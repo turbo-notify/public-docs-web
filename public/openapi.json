@@ -886,22 +886,42 @@
             "oneOf": [
               {
                 "type": "object",
-                "properties": { "number": { "type": "string" } },
-                "required": ["number"],
+                "properties": {
+                  "number": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "number"
+                ],
                 "title": "PhoneRecipient",
                 "description": "1:1 recipient — E.164 phone number"
               },
               {
                 "type": "object",
-                "properties": { "group_id": { "type": "string", "pattern": "^grp_[0-9a-f]{32}$" } },
-                "required": ["group_id"],
+                "properties": {
+                  "group_id": {
+                    "type": "string",
+                    "pattern": "^grp_[0-9a-f]{32}$"
+                  }
+                },
+                "required": [
+                  "group_id"
+                ],
                 "title": "GroupRecipient",
                 "description": "WhatsApp group — public grp_{hex32} identifier"
               },
               {
                 "type": "object",
-                "properties": { "contact_id": { "type": "string", "pattern": "^ct_[0-9a-f]{32}$" } },
-                "required": ["contact_id"],
+                "properties": {
+                  "contact_id": {
+                    "type": "string",
+                    "pattern": "^ct_[0-9a-f]{32}$"
+                  }
+                },
+                "required": [
+                  "contact_id"
+                ],
                 "title": "ContactRecipient",
                 "description": "TN Contact — phone resolved from the contact registry at send time"
               }
@@ -1018,17 +1038,57 @@
       "SendTypingRequest": {
         "properties": {
           "to": {
-            "type": "string",
-            "title": "To"
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "number"
+                ],
+                "title": "PhoneRecipient",
+                "description": "1:1 recipient — E.164 phone number"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "group_id": {
+                    "type": "string",
+                    "pattern": "^grp_[0-9a-f]{32}$"
+                  }
+                },
+                "required": [
+                  "group_id"
+                ],
+                "title": "GroupRecipient",
+                "description": "WhatsApp group — public grp_{hex32} identifier"
+              }
+            ],
+            "title": "To",
+            "description": "Recipient — exactly one of number (E.164) or group_id (grp_{hex32}). contact_id is not supported for typing indicators."
           },
-          "value": {
+          "is_typing": {
             "type": "boolean",
-            "title": "Value"
+            "title": "Is Typing",
+            "description": "true to start the typing indicator, false to stop it"
           },
           "from": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "object",
+                "properties": {
+                  "alias": {
+                    "type": "string"
+                  },
+                  "number": {
+                    "type": "string"
+                  }
+                },
+                "title": "SenderInput",
+                "description": "Sender — alias OR number (not both). Omit to use the account primary number."
               },
               {
                 "type": "null"
@@ -1040,7 +1100,7 @@
         "type": "object",
         "required": [
           "to",
-          "value"
+          "is_typing"
         ],
         "title": "SendTypingRequest"
       },

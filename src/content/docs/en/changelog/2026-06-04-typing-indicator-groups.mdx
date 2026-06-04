@@ -1,0 +1,16 @@
+---
+title: "2026-06-04 — Group support for typing indicator"
+description: "POST /v1/typing-indicator now accepts to.group_id for WhatsApp group chats."
+---
+
+> This page is being translated. See the PT-BR (canonical) version: [/changelog/2026-06-04-typing-indicator-groups/](/changelog/2026-06-04-typing-indicator-groups/).
+
+## What's New
+
+### Group support in typing indicator
+
+`POST /v1/typing-indicator` now accepts `{"group_id": "grp_…"}` as a recipient, in addition to the existing `{"number": "…"}`. `contact_id` is not supported for typing indicators.
+
+**New error codes:**
+- `group_not_found` (HTTP 422) — the supplied `group_id` does not belong to this tenant.
+- `groups_not_enabled` (HTTP 422) — the Groups feature is not enabled on this deployment.

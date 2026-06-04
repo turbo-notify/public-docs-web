@@ -1,0 +1,42 @@
+---
+title: "Aviso de digitação em grupos do WhatsApp"
+description: "POST /v1/typing-indicator agora suporta grupos via to.group_id, além do envio individual já existente."
+sidebar:
+  order: 3
+---
+
+**Data:** 2026-06-04
+**Status:** Aplicado
+
+## O que mudou
+
+### Suporte a grupos no indicador de digitação
+
+`POST /v1/typing-indicator` agora aceita `to.group_id` além de `to.number`, permitindo exibir e ocultar o indicador de digitação em grupos do WhatsApp.
+
+| Campo `to` | Exemplo | Quando usar |
+| ---------- | ------- | ----------- |
+| `number`   | `{"number": "+5511999999999"}` | Conversa 1:1 |
+| `group_id` | `{"group_id": "grp_…"}` | Grupo do WhatsApp |
+
+O campo `contact_id` **não** é suportado no endpoint de typing indicator.
+
+### Exemplo — grupo
+
+```json
+{
+  "to": {"group_id": "grp_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"},
+  "is_typing": true
+}
+```
+
+## Novos códigos de erro
+
+| Código | HTTP | Significado |
+| ------ | ---- | ----------- |
+| `group_not_found` | 422 | O `group_id` informado não existe para este tenant |
+| `groups_not_enabled` | 422 | O recurso Grupos não está habilitado nesta instância |
+
+## Referências
+
+- [Aviso de Digitação](/other-features/typing-indicator/) — documentação atualizada com exemplos para grupo e para número individual.

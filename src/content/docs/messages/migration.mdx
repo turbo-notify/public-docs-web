@@ -352,12 +352,12 @@ O campo `value` no payload do typing indicator foi renomeado para `is_typing`.
 
 ```json
 {
-  "to": "+5511999999999",
+  "to": {"number": "+5511999999999"},
   "is_typing": true
 }
 ```
 
-**O que fazer:** Atualize as chamadas a `POST /v1/typing-indicator` para usar `is_typing` no lugar de `value`.
+**O que fazer:** Atualize as chamadas a `POST /v1/typing-indicator` para usar `is_typing` no lugar de `value` e o campo `to` no formato estruturado `{"number": "..."}` (ver seção "Parties Estruturados" acima).
 
 ---
 
