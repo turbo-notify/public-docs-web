@@ -336,6 +336,16 @@ Após enviar, o Turbo Notify retorna aceite assíncrono:
   }}
 />
 
+## Destinatários disponíveis
+
+O campo `to` aceita exatamente uma das três formas abaixo, igualmente à rota de [envio de mensagens](/messages/send/):
+
+| Forma | Exemplo | Quando usar |
+| ----- | ------- | ----------- |
+| `number` | `{"number": "+5511999999999"}` | Número E.164 conhecido |
+| `group_id` | `{"group_id": "grp_…"}` | Grupo do WhatsApp |
+| `contact_id` | `{"contact_id": "ct_…"}` | ID do TN Contact (telefone resolvido internamente) |
+
 ## Aviso em Grupos
 
 Para enviar o indicador de digitação em um grupo do WhatsApp, use `to.group_id` com o identificador do grupo no lugar de `to.number`.
@@ -352,6 +362,21 @@ curl -X POST \
 ```
 
 O `group_id` é o identificador do grupo no formato `grp_{hex32}`, retornado pelo endpoint de [listagem de grupos](/groups/list/).
+
+## Aviso por contact_id
+
+Use `to.contact_id` para indicar digitação a um contato do catálogo TN sem informar o telefone diretamente. O telefone é resolvido internamente a partir do registro do contato.
+
+```bash title="typing-contact.sh"
+curl -X POST \
+  https://api.turbonotify.com/v1/typing-indicator \
+  -H "Authorization: Bearer SUA_CHAVE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": {"contact_id": "ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"},
+    "is_typing": true
+  }'
+```
 
 ## Aviso com número extra
 
@@ -392,8 +417,10 @@ A conclusão da operação chega via webhook com os seguintes eventos:
 | `400`  | `invalid_json`          | O JSON da requisição está malformado ou inválido.  |
 | `402`  | `not_available_in_plan` | O recurso não está disponível no plano contratado. |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
-| `422`  | `contact_not_found`     | O número informado em `to` não foi encontrado.     |
-| `422`  | `group_not_found`       | O grupo informado em `to.group_id` não foi encontrado. |
+| `422`  | `contact_not_found`     | O `contact_id` informado em `to` não pertence ao tenant.  |
+| `422`  | `contacts_not_enabled`  | Envio por `contact_id` não está configurado nesta instância. |
+| `422`  | `group_not_found`       | O `group_id` informado em `to` não foi encontrado. |
+| `422`  | `groups_not_enabled`    | Suporte a grupos não está habilitado nesta instância. |
 | `422`  | `sender_not_authorized` | O campo `from` não está ativo na conta.            |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.               |
 | `503`  | `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.        |
