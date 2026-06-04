@@ -50,7 +50,7 @@ arquivo antes de entregar ao WhatsApp.
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "content": {
           "image_url": "https://cdn.exemplo.com/foto-produto.jpg",
           "mime_type": "image/jpeg",
@@ -68,7 +68,7 @@ arquivo antes de entregar ao WhatsApp.
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
+        to: { number: '+5511999999999' },
         content: {
           image_url: 'https://cdn.exemplo.com/foto-produto.jpg',
           mime_type: 'image/jpeg',
@@ -89,7 +89,7 @@ arquivo antes de entregar ao WhatsApp.
             "Content-Type": "application/json",
         },
         json={
-            "to": "+5511999999999",
+            "to": {"number": "+5511999999999"},
             "content": {
                 "image_url": "https://cdn.exemplo.com/foto-produto.jpg",
                 "mime_type": "image/jpeg",
@@ -111,7 +111,7 @@ arquivo antes de entregar ao WhatsApp.
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "content": {
           "video_url": "https://cdn.exemplo.com/clip-produto.mp4",
           "mime_type": "video/mp4",
@@ -129,7 +129,7 @@ arquivo antes de entregar ao WhatsApp.
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
+        to: { number: '+5511999999999' },
         content: {
           video_url: 'https://cdn.exemplo.com/clip-produto.mp4',
           mime_type: 'video/mp4',
@@ -150,7 +150,7 @@ arquivo antes de entregar ao WhatsApp.
             "Content-Type": "application/json",
         },
         json={
-            "to": "+5511999999999",
+            "to": {"number": "+5511999999999"},
             "content": {
                 "video_url": "https://cdn.exemplo.com/clip-produto.mp4",
                 "mime_type": "video/mp4",
@@ -172,7 +172,7 @@ arquivo antes de entregar ao WhatsApp.
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "content": {
           "audio_url": "https://cdn.exemplo.com/voice-note.ogg",
           "mime_type": "audio/ogg"
@@ -189,7 +189,7 @@ arquivo antes de entregar ao WhatsApp.
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
+        to: { number: '+5511999999999' },
         content: {
           audio_url: 'https://cdn.exemplo.com/voice-note.ogg',
           mime_type: 'audio/ogg'
@@ -209,7 +209,7 @@ arquivo antes de entregar ao WhatsApp.
             "Content-Type": "application/json",
         },
         json={
-            "to": "+5511999999999",
+            "to": {"number": "+5511999999999"},
             "content": {
                 "audio_url": "https://cdn.exemplo.com/voice-note.ogg",
                 "mime_type": "audio/ogg",
@@ -233,7 +233,7 @@ use `audio/mpeg` ou `audio/mp4`.
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "content": {
           "document_url": "https://cdn.exemplo.com/fatura.pdf",
           "mime_type": "application/pdf",
@@ -252,7 +252,7 @@ use `audio/mpeg` ou `audio/mp4`.
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
+        to: { number: '+5511999999999' },
         content: {
           document_url: 'https://cdn.exemplo.com/fatura.pdf',
           mime_type: 'application/pdf',
@@ -274,7 +274,7 @@ use `audio/mpeg` ou `audio/mp4`.
             "Content-Type": "application/json",
         },
         json={
-            "to": "+5511999999999",
+            "to": {"number": "+5511999999999"},
             "content": {
                 "document_url": "https://cdn.exemplo.com/fatura.pdf",
                 "mime_type": "application/pdf",
@@ -299,7 +299,7 @@ use `audio/mpeg` ou `audio/mp4`.
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": "+5511999999999",
+        "to": {"number": "+5511999999999"},
         "content": {
           "sticker_url": "https://cdn.exemplo.com/sticker-animado.webp",
           "mime_type": "image/webp"
@@ -316,7 +316,7 @@ use `audio/mpeg` ou `audio/mp4`.
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: '+5511999999999',
+        to: { number: '+5511999999999' },
         content: {
           sticker_url: 'https://cdn.exemplo.com/sticker-animado.webp',
           mime_type: 'image/webp'
@@ -336,7 +336,7 @@ use `audio/mpeg` ou `audio/mp4`.
             "Content-Type": "application/json",
         },
         json={
-            "to": "+5511999999999",
+            "to": {"number": "+5511999999999"},
             "content": {
                 "sticker_url": "https://cdn.exemplo.com/sticker-animado.webp",
                 "mime_type": "image/webp",
@@ -364,7 +364,7 @@ esteja configurado e ativo. Sem integração ativa, a requisição retorna
 
 ```json title="Exemplo — imagem por s3_object_key"
 {
-  "to": "+5511999999999",
+  "to": {"number": "+5511999999999"},
   "content": {
     "s3_object_key": "media/fotos/produto-42.jpg",
     "mime_type": "image/jpeg",

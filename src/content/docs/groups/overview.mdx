@@ -30,6 +30,7 @@ O campo `to` discrimina por presença de chave — sem campo `kind` ou `type`:
 
 - **1:1** → `to: { "number": "+55..." }` — destinatário pessoa.
 - **Grupo** → `to: { "group_id": "grp_..." }` — destinatário grupo.
+- **Por contact** → `to: { "contact_id": "ct_..." }` — resolve o telefone a partir do registro TN Contact.
 
 A mesma regra vale para os payloads de webhook e polling: quando
 `to.group_id` está presente, o destinatário lógico é o grupo.
@@ -135,8 +136,7 @@ httpx.post(
 
 O Turbo Notify resolve o `grp_{hex32}` para o JID interno do WhatsApp e
 roteia a mensagem para o grupo usando a linha principal (ou extra, se
-configurada). Para 1:1, o campo `to` é a string de telefone (ex.:
-`"to": "+5511999999999"`).
+configurada). Para 1:1, o campo `to` é um objeto `{ "number": "+5511999999999" }`.
 
 ## Quota e rate-limit
 
