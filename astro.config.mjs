@@ -73,6 +73,16 @@ export default defineConfig({
               translations: { en: 'Status', es: 'Estado' },
             },
             {
+              slug: 'messages/receipts',
+              label: 'Recibos',
+              translations: { en: 'Receipts', es: 'Recibos' },
+            },
+            {
+              slug: 'messages/reactions',
+              label: 'Reações',
+              translations: { en: 'Reactions', es: 'Reacciones' },
+            },
+            {
               slug: 'messages/webhook',
               label: 'Webhook',
               translations: { en: 'Webhook', es: 'Webhook' },
