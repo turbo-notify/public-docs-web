@@ -162,15 +162,11 @@ Recupere o conteúdo completo, o status de entrega e a referência de mídia de 
     preview: 'Foto do produto',
     image: {
       caption: 'Foto do produto',
-      media: {
-        kind: 'available',
-        storage: 'tenant_storage',
-        url: 'https://your-bucket.r2.cloudflarestorage.com/tenants/.../image.jpeg?X-Amz-...',
-        url_expires_at: '2026-06-01T11:00:00-03:00',
-        mime_type: 'image/jpeg',
-        size_bytes: 123456,
-        hash: 'sha256:a1b2c3...',
-      },
+      kind: 'available',
+      url: 'https://your-bucket.r2.cloudflarestorage.com/tenants/.../image.jpeg?X-Amz-...',
+      expires_at: '2026-06-01T11:00:00-03:00',
+      mime_type: 'image/jpeg',
+      size_bytes: 123456,
     },
     content_type: 'image',
     direction: 'inbound',
@@ -207,11 +203,11 @@ Além dos campos comuns acima, cada `content_type` expõe um campo específico c
 | `content_type` | Campo específico | Descrição |
 |---|---|---|
 | `text` | `text` | Texto completo da mensagem |
-| `image` | `image` | Objeto com `caption?` e `media` (bloco de mídia) |
-| `video` | `video` | Objeto com `caption?` e `media` |
-| `audio` | `audio` | Objeto com `media` e `transcription?` (Whisper, se configurado) |
-| `document` | `document` | Objeto com `filename?`, `caption?` e `media` |
-| `sticker` | `sticker` | Objeto com `media` |
+| `image` | `image` | Objeto com `caption?` e campos de mídia (`kind`, `url?`, `expires_at?`, …) diretamente |
+| `video` | `video` | Objeto com `caption?` e campos de mídia |
+| `audio` | `audio` | Objeto com campos de mídia e `transcription?` (Whisper, se configurado) |
+| `document` | `document` | Objeto com `filename?`, `caption?` e campos de mídia |
+| `sticker` | `sticker` | Objeto com campos de mídia |
 | `location` | `location` | Objeto com `latitude`, `longitude`, `name?`, `address?`, `url?`, `is_live`, `thumbnail_b64?` |
 | `calendar` | `calendar` | Objeto com `name`, `description?`, `start_at?`, `end_at?`, `join_link?`, `location?`, `has_reminder`, `reminder_offset_sec?` |
 
@@ -257,15 +253,11 @@ Para mensagens `reacted`:
   "preview": "Foto do produto",
   "image": {
     "caption": "Foto do produto",
-    "media": {
-      "kind": "available",
-      "storage": "tenant_storage",
-      "url": "https://<bucket>.s3.amazonaws.com/...?X-Amz-Signature=...",
-      "url_expires_at": "2026-06-01T11:00:00-03:00",
-      "mime_type": "image/jpeg",
-      "size_bytes": 184320,
-      "hash": "sha256:a1b2c3..."
-    }
+    "kind": "available",
+    "url": "https://<bucket>.s3.amazonaws.com/...?X-Amz-Signature=...",
+    "expires_at": "2026-06-01T11:00:00-03:00",
+    "mime_type": "image/jpeg",
+    "size_bytes": 184320
   },
   "content_type": "image",
   "direction": "inbound",
@@ -286,18 +278,14 @@ Para mensagens `reacted`:
   "to": { "number": "5511973117056", "alias": "main" },
   "preview": "[Image]",
   "image": {
-    "caption": null,
-    "media": {
-      "kind": "unavailable",
-      "reason": "no_storage",
-      "mime_type": "image/jpeg",
-      "size_bytes": 184320,
-      "hash": "sha256:a1b2c3...",
-      "setup_hint": {
-        "setup_url": "https://app.turbonotify.com/settings/integrations/storage",
-        "docs_url": "https://docs.turbonotify.com/general/byo-storage-setup/",
-        "message": "Configure BYO Object Storage to receive media."
-      }
+    "kind": "unavailable",
+    "reason": "no_storage",
+    "mime_type": "image/jpeg",
+    "size_bytes": 184320,
+    "setup_hint": {
+      "setup_url": "https://app.turbonotify.com/settings/integrations/storage",
+      "docs_url": "https://docs.turbonotify.com/general/byo-storage-setup/",
+      "message": "Configure BYO Object Storage to receive media."
     }
   },
   "content_type": "image",
@@ -406,9 +394,9 @@ Para mensagens `reacted`:
 }
 ```
 
-## Bloco de mídia (`media`)
+## Campos de mídia
 
-O bloco `media` está presente dentro dos campos específicos (`image.media`, `video.media`, `audio.media`, `document.media`, `sticker.media`). É uma **união discriminada** pelo campo `kind`:
+Os campos de mídia aparecem **diretamente** no objeto específico (`image`, `video`, `audio`, `document`, `sticker`) — sem sub-objeto `media`. É uma **união discriminada** pelo campo `kind`:
 
 ### `kind: "available"`
 
@@ -417,12 +405,10 @@ Mídia disponível para download. Requer <DashboardLink path="/settings/integrat
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `kind` | string | `"available"` |
-| `storage` | string | `"tenant_storage"` (URL pré-assinada do seu bucket) |
 | `url` | string | URL pré-assinada de download |
-| `url_expires_at` | `string \| null` | Timestamp de expiração da URL pré-assinada |
+| `expires_at` | `string \| null` | Timestamp de expiração do acesso à mídia. Consulte a mensagem novamente para obter uma nova URL após a expiração. |
 | `mime_type` | `string \| null` | Tipo MIME do arquivo (ex: `image/jpeg`, `application/pdf`) |
 | `size_bytes` | `integer \| null` | Tamanho do arquivo em bytes |
-| `hash` | `string \| null` | Hash SHA-256 do arquivo (ex: `sha256:a1b2c3...`) |
 
 ### `kind: "pending"`
 
@@ -433,7 +419,6 @@ Upload da mídia para o seu bucket ainda está em andamento. Aguarde alguns segu
 | `kind` | string | `"pending"` |
 | `mime_type` | `string \| null` | Tipo MIME detectado |
 | `size_bytes` | `integer \| null` | Tamanho do arquivo em bytes |
-| `hash` | `string \| null` | Hash SHA-256 |
 
 ### `kind: "unavailable"`
 
@@ -445,7 +430,6 @@ Mídia não está disponível. O campo `reason` indica a causa.
 | `reason` | string | `no_storage` — nenhum Object Storage configurado; `storage_circuit_open` — circuit breaker aberto no recebimento; `upload_failed` — storage saudável, mas este item não pôde ser persistido. O motivo é gravado no recebimento e lido literalmente. |
 | `mime_type` | `string \| null` | Tipo MIME detectado |
 | `size_bytes` | `integer \| null` | Tamanho do arquivo em bytes |
-| `hash` | `string \| null` | Hash SHA-256 |
 | `setup_hint` | `object \| null` | Presente quando `reason` é `no_storage` ou `storage_circuit_open`. Contém `setup_url`, `docs_url` e `message`. |
 
 ## Status da mensagem
@@ -469,11 +453,11 @@ O campo `preview` é **permanente** — nunca é removido pelo ciclo de retenç�
 
 O campo do conteúdo completo (`text`, `image`, `location`, etc.) pode ser `null` após o período de retenção — `preview` é o único campo que garante acesso ao conteúdo em qualquer momento.
 
-## Sobre `media.kind`
+## Sobre `kind`
 
 Para receber mídia inbound com `kind: "available"`, configure a <DashboardLink path="/settings/integrations/storage">integração de Object Storage</DashboardLink> no Dashboard. Sem essa configuração, o Turbo Notify não tem onde armazenar a mídia e retorna `kind: "unavailable"` com `reason: "no_storage"`.
 
-Quando o Object Storage está configurado, o Turbo Notify copia automaticamente cada mídia recebida para o seu bucket e retorna uma URL pré-assinada com validade configurável. A URL pré-assinada expira conforme o `url_expires_at` — você pode gerar uma nova consultando a mensagem novamente.
+Quando o Object Storage está configurado, o Turbo Notify copia automaticamente cada mídia recebida para o seu bucket e retorna uma URL pré-assinada com validade configurável. O acesso à mídia expira conforme o `expires_at` — você pode obter uma nova URL consultando a mensagem novamente.
 
 ## Erros possíveis
 
