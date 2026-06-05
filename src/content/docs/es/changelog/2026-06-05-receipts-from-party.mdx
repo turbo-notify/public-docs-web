@@ -1,0 +1,57 @@
+---
+title: "Identidad del confirmador en GET /v1/messages/{id}/receipts"
+description: "El campo `from` ahora retorna la identidad de la parte que emitió cada recibo de entrega/lectura — número, contact_id y nombre de visualización."
+sidebar:
+  order: 4
+---
+
+**Fecha:** 2026-06-05
+**Estado:** Aplicado
+
+## Qué cambió
+
+Cada elemento en `receipts[]` ahora incluye un objeto `from` con la identidad de la parte que confirmó la entrega o lectura — alineando el endpoint con el patrón ya existente en `GET /v1/messages/{id}/reactions`.
+
+| Campo | Tipo | Descripción |
+| ----- | ---- | ----------- |
+| `from.number` | string | Número E.164 sin `+`. Omitido para recibos de dispositivo vinculado (LID). |
+| `from.contact_id` | string | Identificador público del contacto TN (`ct_{hex32}`). Omitido cuando no disponible. |
+| `from.name` | string | Nombre de visualización de WhatsApp (PII — propiedad del tenant). Omitido cuando no disponible. |
+
+El objeto `from` completo se omite en recibos legados (pre-2026-06) y cuando no hay información de identidad disponible.
+
+## Ejemplo de respuesta
+
+```json
+{
+  "message_id": "msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7",
+  "receipts": [
+    {
+      "from": {
+        "contact_id": "ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+        "name": "João Silva",
+        "number": "5511999990000"
+      },
+      "status": "delivered",
+      "at": "2025-07-16T10:00:05Z"
+    },
+    {
+      "from": {
+        "contact_id": "ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+        "name": "João Silva",
+        "number": "5511999990000"
+      },
+      "status": "read",
+      "at": "2025-07-16T10:01:12Z"
+    }
+  ]
+}
+```
+
+## Compatibilidad
+
+El cambio es **aditivo** — las respuestas anteriores sin el campo `from` siguen siendo válidas. Los clientes que ya ignoran campos desconocidos no requieren cambios.
+
+## Referencias
+
+- [Historial de Recibos](/es/messages/receipts/) — documentación actualizada con la estructura completa del campo `from`.

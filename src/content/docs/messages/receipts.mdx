@@ -140,27 +140,31 @@ Para listar o histórico de recibos de uma mensagem, faça uma requisição `GET
 
 ## Exemplos de resposta
 
-### Com histórico completo
+### Com histórico completo (mensagem direta)
 
 <ApiResponse
   status={200}
   body={{
     message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
     receipts: [
-      { status: 'delivered', at: '2025-07-16T10:00:05Z' },
-      { status: 'read',      at: '2025-07-16T10:01:12Z' }
+      { from: { contact_id: 'ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4', name: 'João Silva', number: '5511999990000' }, status: 'delivered', at: '2025-07-16T10:00:05Z' },
+      { from: { contact_id: 'ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4', name: 'João Silva', number: '5511999990000' }, status: 'read',      at: '2025-07-16T10:01:12Z' }
     ]
   }}
 />
 
-### Apenas entregue (ainda não lida)
+### Em grupo (múltiplos destinatários)
+
+O campo `contact_id` aparece apenas para participantes cujo contato já esteja registrado no Turbo Notify. O campo `name` (push_name do WhatsApp) é independente: pode aparecer mesmo sem `contact_id`. No exemplo abaixo, Ana Costa tem contato resolvido; Carlos Lima tem push_name mas ainda sem registro de contato.
 
 <ApiResponse
   status={200}
   body={{
     message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
     receipts: [
-      { status: 'delivered', at: '2025-07-16T10:00:05Z' }
+      { from: { contact_id: 'ct_b1c2d3e4f5a6b1c2d3e4f5a6b1c2d3e4', name: 'Ana Costa',   number: '5511999990001' }, status: 'delivered', at: '2025-07-16T10:00:05Z' },
+      { from: { name: 'Carlos Lima', number: '5511999990002' }, status: 'delivered', at: '2025-07-16T10:00:08Z' },
+      { from: { contact_id: 'ct_b1c2d3e4f5a6b1c2d3e4f5a6b1c2d3e4', name: 'Ana Costa',   number: '5511999990001' }, status: 'read',      at: '2025-07-16T10:01:12Z' }
     ]
   }}
 />
@@ -177,12 +181,16 @@ Para listar o histórico de recibos de uma mensagem, faça uma requisição `GET
 
 ## Estrutura da resposta
 
-| Campo              | Tipo   | Descrição                                                        |
-| ------------------ | ------ | ---------------------------------------------------------------- |
-| `message_id`       | string | Identificador público da mensagem.                               |
-| `receipts`         | array  | Lista de transições de status, em ordem cronológica crescente.   |
-| `receipts[].status`| string | Status atingido nesta transição (`delivered` ou `read`).         |
-| `receipts[].at`    | string | Timestamp ISO 8601 de quando o status foi registrado.            |
+| Campo                    | Tipo    | Descrição                                                          |
+| ------------------------ | ------- | ------------------------------------------------------------------ |
+| `message_id`             | string  | Identificador público da mensagem.                                 |
+| `receipts`               | array   | Lista de transições de status, em ordem cronológica crescente.     |
+| `receipts[].from`            | object  | Parte que emitiu o recibo. Omitido em recibos legados (pré-2026-06) e quando nenhuma informação de identidade está disponível (e.g. recibos de dispositivo vinculado). |
+| `receipts[].from.contact_id` | string  | Identificador público do contato (`ct_{hex32}`). Omitido quando não disponível. |
+| `receipts[].from.name`       | string  | Nome de exibição do WhatsApp (PII — propriedade do tenant). Omitido quando não disponível. |
+| `receipts[].from.number`     | string  | Número E.164 sem `+` de quem confirmou o recibo. Omitido para recibos de dispositivo vinculado (LID) onde o número do confirmador não está disponível. |
+| `receipts[].status`      | string  | Status atingido nesta transição (`delivered` ou `read`).           |
+| `receipts[].at`          | string  | Timestamp ISO 8601 de quando o status foi registrado.              |
 
 ## Tabela de status
 

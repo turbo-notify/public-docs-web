@@ -1,0 +1,57 @@
+---
+title: "Party identity on GET /v1/messages/{id}/receipts"
+description: "The `from` field now returns the identity of the party who emitted each delivery/read receipt — number, contact_id, and display name."
+sidebar:
+  order: 4
+---
+
+**Date:** 2026-06-05
+**Status:** Applied
+
+## What changed
+
+Each item in `receipts[]` now includes a `from` object with the identity of the party who acknowledged the delivery or read — aligning the endpoint with the existing pattern in `GET /v1/messages/{id}/reactions`.
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `from.number` | string | E.164 number without `+`. Omitted for linked-device (LID) receipts. |
+| `from.contact_id` | string | TN Contact public identifier (`ct_{hex32}`). Omitted when unavailable. |
+| `from.name` | string | WhatsApp display name (PII — tenant-owned). Omitted when unavailable. |
+
+The entire `from` object is omitted for legacy receipts (pre-2026-06) and when no identity information is available.
+
+## Response example
+
+```json
+{
+  "message_id": "msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7",
+  "receipts": [
+    {
+      "from": {
+        "contact_id": "ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+        "name": "João Silva",
+        "number": "5511999990000"
+      },
+      "status": "delivered",
+      "at": "2025-07-16T10:00:05Z"
+    },
+    {
+      "from": {
+        "contact_id": "ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+        "name": "João Silva",
+        "number": "5511999990000"
+      },
+      "status": "read",
+      "at": "2025-07-16T10:01:12Z"
+    }
+  ]
+}
+```
+
+## Compatibility
+
+This change is **additive** — existing responses without the `from` field remain valid. Clients that already ignore unknown fields require no changes.
+
+## References
+
+- [Receipt History](/en/messages/receipts/) — updated documentation with the full `from` field structure.
