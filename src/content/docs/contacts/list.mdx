@@ -22,7 +22,7 @@ GET /v1/contacts?limit=20&cursor=<opaque>
 
 | Parâmetro | Tipo | Descrição |
 | --------- | ---- | --------- |
-| `limit` | int | Máx 100 (default 20) |
+| `limit` | int | 1–200 (default 50) |
 | `cursor` | string | Token opaco retornado em `cursor` |
 | `phone` | string | Filtro exato por E.164 (`+5571999...`) |
 | `push_name` | string | Match parcial (trigram) sobre `push_name` |
