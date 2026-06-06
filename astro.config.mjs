@@ -109,6 +109,11 @@ export default defineConfig({
               translations: { en: 'Overview', es: 'Visión general' },
             },
             {
+              slug: 'groups/picture',
+              label: 'Foto do Grupo',
+              translations: { en: 'Group Picture', es: 'Foto del Grupo' },
+            },
+            {
               slug: 'groups/lifecycle-events',
               label: 'Eventos de lifecycle',
               translations: { en: 'Lifecycle Events', es: 'Eventos de ciclo de vida' },

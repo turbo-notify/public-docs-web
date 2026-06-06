@@ -1,0 +1,71 @@
+---
+title: Foto do Grupo
+description: Endpoint GET /v1/groups/{group_id}/picture — 302 redirect para URL pré-assinada quando disponível; caso contrário 200 com a união picture e reason/setup_hint.
+sidebar:
+  order: 4
+---
+
+import ApiResponse from '@components/ApiResponse.astro';
+
+Retorna a foto de um grupo do WhatsApp. Espelha o endpoint de [foto de perfil de contato](/contacts/profile-picture/): redireciona (302) para uma URL **pré-assinada** quando a foto está no seu BYO Storage; caso contrário responde 200 com a união `picture` (estado + reason).
+
+## Endpoint
+
+```http
+GET /v1/groups/{group_id}/picture
+```
+
+**Scope:** `groups:read`. `group_id` é o id público (`grp_{hex32}`).
+
+## Comportamento por `picture_storage`
+
+| Estado | Resposta |
+| ------ | -------- |
+| `tenant_storage` | 302 com URL **pré-assinada** do BYO Storage (R2/S3/Supabase) — nunca a object key crua |
+| `pending_upload` | 200 com `picture.kind = "pending"` (upload em andamento) |
+| `upload_failed` | 200 com `picture.kind = "unavailable"`, `reason = "upload_failed"` |
+| `unavailable` | 200 com `picture.kind = "unavailable"` + `reason` + `setup_hint` (quando aplicável) |
+
+A foto do grupo é re-resolvida pelo pipeline de metadados do grupo: uma foto marcada como `unavailable` enquanto o storage estava ausente é **reavaliada** e enviada assim que você habilita o BYO Storage — sem necessidade de nova ação (ver [a foto fica disponível depois](/groups/lifecycle-events/#groups-picture-becomes-available)).
+
+## Exemplo — foto disponível
+
+```bash
+curl -I "https://api.turbonotify.com/v1/groups/grp_.../picture" \
+  -H "Authorization: Bearer $TURBO_API_KEY"
+
+HTTP/1.1 302 Found
+Location: https://<bucket>.r2.cloudflarestorage.com/groups/.../picture.jpg?...
+Cache-Control: private, max-age=300
+```
+
+A URL pré-assinada tem validade limitada (R2: 1h por padrão).
+
+## Exemplo — foto indisponível (sem storage)
+
+<ApiResponse status={200}>
+```json
+{
+  "picture": {
+    "kind": "unavailable",
+    "reason": "no_storage",
+    "setup_hint": {
+      "setup_url": "https://app.turbonotify.com/settings/integrations/storage",
+      "docs_url": "https://docs.turbonotify.com/general/byo-storage-setup/",
+      "message": "Configure object storage to serve group pictures."
+    }
+  }
+}
+```
+</ApiResponse>
+
+O campo `reason` discrimina a causa: `no_storage` (sem storage configurado), `storage_circuit_open` (circuit breaker aberto), `upload_failed` (falha de upload neste ciclo) ou `peer_has_none` (o grupo não tem foto). O `setup_hint` acompanha apenas `no_storage` e `storage_circuit_open` — para `upload_failed` e `peer_has_none` ele é omitido. É o mesmo envelope usado por mídia e pela foto de contato.
+
+## Campo `picture` inline em `GET /v1/groups/{group_id}`
+
+O campo `picture` no payload completo do grupo reflete o mesmo estado: presigna a URL quando `tenant_storage` e emite o `reason` + `setup_hint` corretos quando `unavailable`.
+
+## Cache
+
+- Redirects são cacheados por `300s` (HTTP `Cache-Control: private, max-age=300`).
+- URLs do BYO Storage têm a validade interna do seu provider (R2: 1h por padrão).

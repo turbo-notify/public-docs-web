@@ -9,6 +9,8 @@ import ApiResponse from '@components/ApiResponse.astro';
 
 Retorna a foto de perfil do contato via 302 redirect. O destino do redirect depende do estado de armazenamento (`picture_storage`).
 
+> O 302 para `tenant_storage` aponta para uma URL **pré-assinada** do seu BYO Storage (nunca a object key crua). Uma foto marcada como `unavailable` enquanto o storage estava ausente é **reavaliada** e enviada assim que você habilita o BYO Storage — o webhook [`contact.picture_changed`](/webhooks/contact-events/#exemplo-contactpicture_changed) é então emitido.
+
 ## Endpoint
 
 ```http
@@ -40,7 +42,7 @@ curl -I "https://api.turbonotify.com/v1/contacts/ct_.../profile-picture" \
 
 HTTP/1.1 302 Found
 Location: https://<bucket>.r2.cloudflarestorage.com/...
-Cache-Control: max-age=60
+Cache-Control: private, max-age=300
 ```
 
 ## Resposta de erro
@@ -66,5 +68,5 @@ O campo `reason` discrimina a causa: `no_storage` (sem storage configurado), `st
 
 ## Cache
 
-- Redirects são cacheados por `60s` (HTTP `Cache-Control: max-age=60`).
+- Redirects são cacheados por `300s` (HTTP `Cache-Control: private, max-age=300`).
 - URLs do BYO Storage têm validade interna do seu provider (R2: 1h por padrão).

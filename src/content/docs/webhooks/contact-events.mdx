@@ -21,20 +21,37 @@ Lista de eventos webhook emitidos pelo Turbo Notify para mudanças relacionadas 
 | `contact.quota.warning` | Cruzou threshold 80/90/95% da quota mensal |
 | `contact.quota.exceeded` | Tentativa rejeitada por estouro (HTTP 402) |
 
-## O contato é o mesmo objeto do `from` da mensagem
+## A estrutura do `data`: trio do contato + tail de coerência
 
-Desde 2026-06-02 o contato em um evento `contact.*` é o **mesmo objeto
-`ContactRef`** usado no campo `from` de uma mensagem — o trio
-`{contact_id, name, number}`, na ordem canônica de campos
-(`contact_id, name, number`):
+Desde 2026-06-06 o `data` de um evento `contact.*` espelha o `data` de
+`message.*`: o **trio do contato** `{id, name, number}` mais o tail de coerência
+(`direction`, `channel`, `origin`). O `id` é o id público do próprio contato —
+o campo antes chamado `contact_id` no topo do `data` foi **renomeado para `id`**
+(o valor continua `ct_{hex32}`), igual ao `data.id` de `message.*`.
 
 ```json
-{ "contact_id": "ct_a1b2c3d4...", "name": "João Silva", "number": "+5571999294756" }
+{
+  "id": "ct_a1b2c3d4...",
+  "name": "João Silva",
+  "number": "5571999294756",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "tn"
+}
 ```
 
-- `contact_id` — id público do contato (`ct_{hex32}`).
+- `id` — id público do contato (`ct_{hex32}`), o sujeito do evento (antes
+  `contact_id`).
 - `name` — push name do contato no WhatsApp (antes `push_name`).
 - `number` — **E.164 completo** (antes `phone_masked`; a máscara foi removida).
+- `direction` — sempre `"inbound"` (o contato é observado/descoberto pelo canal
+  do WhatsApp). Ausente nos eventos sintéticos de quota.
+- `channel` — sempre `"whatsapp"`.
+- `origin` — sempre `"tn"` (a plataforma TN processou a descoberta).
+
+> O `id` aqui é o **sujeito do evento**. O `contact_id` que aparece no objeto
+> `from`/`to` de uma **mensagem** é diferente — referencia o contato da
+> contraparte e mantém a chave `contact_id`.
 
 O número completo já é exposto no `from`/`to` de toda mensagem, então mascarar
 nos eventos de contato só gerava inconsistência. O `name` (push name) continua
@@ -51,6 +68,10 @@ São **valores distintos**. Eventos sintéticos do TN (`contact.created`,
 `created_at` do envelope. Eventos de ação real (`name_changed`,
 `picture_changed`, `business_profile_changed`, `first_messaged`) têm `at`.
 
+Todo evento `contact.*` carrega `channel: "whatsapp"` e `origin: "tn"`. Os
+eventos de ciclo de vida do contato carregam `direction: "inbound"`; os eventos
+sintéticos de quota **não** carregam `direction`.
+
 ## Exemplo: `contact.created`
 
 Sintético — sem `at`, sem `source`, sem `is_business`.
@@ -62,9 +83,12 @@ Sintético — sem `at`, sem `source`, sem `is_business`.
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "created_at": "2026-05-15T12:00:00Z",
   "data": {
-    "contact_id": "ct_a1b2...",
+    "id": "ct_a1b2...",
     "name": "João Silva",
-    "number": "+5571999294756"
+    "number": "5571999294756",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn"
   }
 }
 ```
@@ -80,10 +104,13 @@ Sintético — sem `at`, sem `source`, sem `is_business`.
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "created_at": "2026-05-15T12:00:03Z",
   "data": {
-    "contact_id": "ct_a1b2...",
+    "id": "ct_a1b2...",
     "name": "João S.",
-    "number": "+5571999294756",
+    "number": "5571999294756",
     "old_name": "João Silva",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
     "at": "2026-05-15T12:00:00Z"
   }
 }
@@ -101,19 +128,32 @@ WhatsApp): aqui o TN emitiu o evento 3 s após a alteração do nome.
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "created_at": "2026-05-15T12:00:02Z",
   "data": {
-    "contact_id": "ct_a1b2...",
+    "id": "ct_a1b2...",
     "name": "João Silva",
-    "number": "+5571999294756",
+    "number": "5571999294756",
     "picture": {
       "kind": "available",
-      "url": "https://cdn.example.com/contacts/ct_a1b2.jpg",
-      "url_expires_at": "2026-05-15T13:00:00Z",
-      "hash": "sha256:..."
+      "url": "https://<bucket>.r2.cloudflarestorage.com/contacts/.../picture.jpg?...",
+      "url_expires_at": "2026-05-15T12:15:00Z",
+      "hash": "abc123...",
+      "fetched_at": "2026-05-15T12:00:00Z"
     },
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
     "at": "2026-05-15T12:00:00Z"
   }
 }
 ```
+
+O bloco `picture` segue o mesmo ciclo de vida da mídia de mensagem: quando a
+foto está no seu bucket (`tenant_storage`) ela vem como `kind: "available"` com
+uma URL **pré-assinada e com validade limitada** (`url_expires_at`, ~15 min) —
+nunca uma URL do WhatsApp. Re-baixe a foto via o endpoint GET quando a URL
+expirar. O evento dispara **apenas** quando a foto chega ao seu bucket, inclusive
+quando o contato foi observado sem foto e ela fica disponível depois (basta
+habilitar o BYO Storage). Para ler a foto sob demanda use
+[`GET /v1/contacts/{contact_id}/profile-picture`](/contacts/profile-picture/).
 
 ## Exemplo: `contact.business_profile_changed`
 
@@ -124,14 +164,17 @@ WhatsApp): aqui o TN emitiu o evento 3 s após a alteração do nome.
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "created_at": "2026-05-15T12:00:02Z",
   "data": {
-    "contact_id": "ct_a1b2...",
+    "id": "ct_a1b2...",
     "name": "Loja Exemplo",
-    "number": "+5571999294756",
+    "number": "5571999294756",
     "business_profile": {
       "email": "contato@loja.example",
       "description": "Loja oficial",
       "category": "retail"
     },
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
     "at": "2026-05-15T12:00:00Z"
   }
 }
@@ -146,10 +189,13 @@ WhatsApp): aqui o TN emitiu o evento 3 s após a alteração do nome.
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "created_at": "2026-05-15T12:00:01Z",
   "data": {
-    "contact_id": "ct_...",
+    "id": "ct_...",
     "name": "João Silva",
-    "number": "+5571999294756",
+    "number": "5571999294756",
     "tier": "free",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
     "at": "2026-05-15T12:00:00Z"
   }
 }
@@ -167,14 +213,18 @@ WhatsApp): aqui o TN emitiu o evento 3 s após a alteração do nome.
     "threshold_bps": 90,
     "used": 90,
     "quota": 100,
+    "window_days": 30,
     "resets_at": "2026-06-14T...",
-    "tier": "free"
+    "tier": "free",
+    "channel": "whatsapp",
+    "origin": "tn"
   }
 }
 ```
 
 `threshold_bps` é integer em basis points: `80 | 90 | 95 | 100`. Evento
-sintético — **sem `at`**; `resets_at` é timestamp de valor de negócio (quando a
+sintético — carrega `channel`/`origin` mas **sem `direction`** (não é um fluxo de
+mensagem) e **sem `at`**; `resets_at` é timestamp de valor de negócio (quando a
 janela de quota reinicia), não o momento da ação.
 
 ## Exemplo: `contact.quota.exceeded`
@@ -186,15 +236,18 @@ janela de quota reinicia), não o momento da ação.
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "created_at": "2026-05-15T12:00:00Z",
   "data": {
-    "quota": 100,
     "used": 100,
+    "quota": 100,
     "resets_at": "2026-06-14T...",
-    "tier": "free"
+    "tier": "free",
+    "channel": "whatsapp",
+    "origin": "tn"
   }
 }
 ```
 
-Sintético — **sem `at`** e **sem `request_id`** em `data`; `resets_at` é mantido.
+Sintético — carrega `channel`/`origin` mas **sem `direction`**, **sem `at`** e
+**sem `request_id`** em `data`; `resets_at` é mantido.
 
 ## Idempotency
 

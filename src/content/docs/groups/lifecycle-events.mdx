@@ -23,8 +23,15 @@ naming `group.{ação}` com verbo no past-participle (consistente com
 | `group.participants_promoted` | Participantes foram promovidos a admin |
 | `group.participants_demoted` | Admins foram rebaixados |
 
-Todos os payloads carregam o sibling `group: {id, name}` no formato
-`grp_{hex32}` + snapshot de nome.
+Desde 2026-06-06 o `data` de cada evento `group.*` espelha o `data` de
+`message.*`: o id público do grupo vem **plano no topo** como `id`
+(`grp_{hex32}`) + `name` (antes era o sibling aninhado `group: {id, name}`), mais
+o tail de coerência `direction: "inbound"` (grupos são observados pelo canal do
+WhatsApp), `channel: "whatsapp"` e `origin: "tn"`.
+
+> Os objetos `participants[]` e `*_by` continuam sendo **parties**
+> (`{contact_id, name, number}`) — referenciam contatos da contraparte, não o
+> sujeito do evento, então mantêm a chave `contact_id`.
 
 ## Exemplos
 
@@ -37,15 +44,20 @@ Todos os payloads carregam o sibling `group: {id, name}` no formato
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "created_at": "2026-05-25T10:00:00Z",
   "data": {
-    "group": { "id": "grp_9f6f0b37c98043e5835822eeae550e77", "name": "Grupo A" },
+    "id": "grp_9f6f0b37c98043e5835822eeae550e77",
+    "name": "Grupo A",
     "joined_by": "5511999999999",
     "creation": false,
     "initial_participants_count": 7,
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
     "at": "2026-05-25T10:00:00Z"
   }
 }
 ```
 
+- `id`/`name` são o id público (`grp_{hex32}`) e o snapshot de nome do grupo (o sujeito do evento).
 - `joined_by` é o número (digits-only) do admin que adicionou seu número, ou `null` quando o evento foi originado por sua própria criação do grupo (`creation=true`).
 
 ### `group.left`
@@ -54,9 +66,13 @@ Todos os payloads carregam o sibling `group: {id, name}` no formato
 {
   "type": "group.left",
   "data": {
-    "group": { "id": "grp_...", "name": "Grupo A" },
+    "id": "grp_...",
+    "name": "Grupo A",
     "removed_by": "5511999999999",
     "reason": "removed",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
     "at": "2026-05-25T10:01:00Z"
   }
 }
@@ -71,10 +87,14 @@ Todos os payloads carregam o sibling `group: {id, name}` no formato
 {
   "type": "group.name_changed",
   "data": {
-    "group": { "id": "grp_...", "name": "Grupo A 2.0" },
+    "id": "grp_...",
+    "name": "Grupo A 2.0",
     "old_name": "Grupo A",
     "new_name": "Grupo A 2.0",
     "changed_by": "5511999999999",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
     "at": "2026-05-25T10:02:00Z"
   }
 }
@@ -86,10 +106,14 @@ Todos os payloads carregam o sibling `group: {id, name}` no formato
 {
   "type": "group.description_changed",
   "data": {
-    "group": { "id": "grp_...", "name": "Grupo A 2.0" },
+    "id": "grp_...",
+    "name": "Grupo A 2.0",
     "old_description": "...",
     "new_description": "...",
     "changed_by": "5511999999999",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
     "at": "2026-05-25T10:03:00Z"
   }
 }
@@ -97,21 +121,51 @@ Todos os payloads carregam o sibling `group: {id, name}` no formato
 
 ### `group.picture_changed`
 
+Emitido **apenas** quando uma foto de grupo real chega ao seu BYO Storage
+(estado `tenant_storage`). O bloco `picture` segue o mesmo ciclo de vida da mídia
+de mensagem: `kind: "available"` com uma URL **pré-assinada e com validade
+limitada** (`url_expires_at`, ~15 min) do seu bucket — nunca uma URL do WhatsApp.
+Re-baixe a foto via o endpoint GET quando a URL expirar.
+
 ```json
 {
   "type": "group.picture_changed",
   "data": {
-    "group": { "id": "grp_...", "name": "Grupo A 2.0" },
-    "new_picture_url": "https://pps.whatsapp.net/...",
-    "picture_hash": "abc123...",
+    "id": "grp_...",
+    "name": "Grupo A 2.0",
+    "picture": {
+      "kind": "available",
+      "url": "https://<bucket>.r2.cloudflarestorage.com/groups/.../picture.jpg?...",
+      "url_expires_at": "2026-05-25T10:19:00Z",
+      "hash": "abc123...",
+      "fetched_at": "2026-05-25T10:04:00Z"
+    },
     "changed_by": "5511999999999",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
     "at": "2026-05-25T10:04:00Z"
   }
 }
 ```
 
-URLs do WhatsApp para foto de grupo rotacionam — guarde o `picture_hash`
-para detectar mudanças efetivas. URL é sempre HTTPS.
+Guarde o `picture.hash` para detectar mudanças efetivas e re-baixar a foto
+antes que a URL pré-assinada expire (`url_expires_at`). Para ler a foto sob
+demanda use [`GET /v1/groups/{group_id}/picture`](/groups/picture/).
+
+> **Pré-requisito: BYO Storage.** Este evento só dispara quando você tem uma
+> integração de Object Storage habilitada — o Turbo Notify não serve a CDN do
+> WhatsApp diretamente. Sem storage, a foto fica `unavailable` e nenhum
+> `group.picture_changed` é emitido. Configure em
+> [BYO Storage Setup](/general/byo-storage-setup/).
+
+<a id="groups-picture-becomes-available"></a>
+
+> **A foto fica disponível depois.** Se um grupo foi observado enquanto o
+> storage estava ausente (ou o grupo ainda não tinha foto) e uma foto chega
+> ao BYO Storage mais tarde, o Turbo Notify emite o `group.picture_changed`
+> automaticamente assim que a foto é enviada ao seu bucket — você não precisa
+> re-sincronizar nada.
 
 ### `group.settings_changed`
 
@@ -122,11 +176,15 @@ changes simultâneos; cada um vira um evento).
 {
   "type": "group.settings_changed",
   "data": {
-    "group": { "id": "grp_...", "name": "Grupo A 2.0" },
+    "id": "grp_...",
+    "name": "Grupo A 2.0",
     "setting": "announce",
     "old_value": false,
     "new_value": true,
     "changed_by": "5511999999999",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
     "at": "2026-05-25T10:05:00Z"
   }
 }
@@ -144,7 +202,8 @@ Um único webhook por operação batch — todos os adicionados juntos.
 {
   "type": "group.participants_added",
   "data": {
-    "group": { "id": "grp_...", "name": "Grupo A 2.0" },
+    "id": "grp_...",
+    "name": "Grupo A 2.0",
     "participants": [
       { "contact_id": "ct_...", "name": null, "number": "5511555555555" },
       { "contact_id": null, "name": "Carlos", "number": "5511444444444" }
@@ -154,6 +213,9 @@ Um único webhook por operação batch — todos os adicionados juntos.
       "name": "Admin",
       "number": "5511999999999"
     },
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
     "at": "2026-05-25T10:06:00Z"
   }
 }
