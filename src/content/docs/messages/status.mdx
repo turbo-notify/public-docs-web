@@ -17,7 +17,7 @@ Após enviar uma mensagem, você pode consultar o status dela a qualquer momento
 | `sent`      | A mensagem foi enviada ao WhatsApp com sucesso.                           |
 | `delivered` | A mensagem foi entregue ao dispositivo do destinatário.                   |
 | `read`      | A mensagem foi lida pelo destinatário.                                    |
-| `failed`    | O envio falhou. Consulte o campo `reason` para detalhes sobre a falha.    |
+| `failed`    | O envio falhou. Consulte o objeto `error` (`{code, message, hint}`) para detalhes. |
 
 ## Consultar status
 
@@ -186,18 +186,31 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
   status={200}
   body={{
     message_id: 'msg_abc123',
-    status: { state: 'failed', at: '2025-07-16T10:00:03Z', reason: 'whatsapp_unavailable' },
+    status: {
+      state: 'failed',
+      at: '2025-07-16T10:00:03Z',
+      error: {
+        code: 'whatsapp_unavailable',
+        message: 'WhatsApp session is not connected',
+        hint: null,
+      },
+    },
   }}
 />
 
-## Motivos de falha
+## Detalhes da falha
 
-Quando o status é `failed`, o campo `reason` indica o motivo. Veja os valores possíveis:
+Quando o status é `failed`, o objeto `error` carrega os detalhes. É **o mesmo
+shape** do `data.error` dos webhooks `*.failed` (consistência evento ↔ recurso —
+veja [Webhooks](/messages/webhook/) e [Recuperar mensagem](/messages/get/)):
 
-| Motivo                  | Descrição                                                        |
-| ----------------------- | ---------------------------------------------------------------- |
-| `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar ou indisponível.      |
-| `blocked`               | O destinatário bloqueou o remetente ou o número foi bloqueado.   |
+| Campo          | Descrição                                                                 |
+| -------------- | ------------------------------------------------------------------------- |
+| `error.code`   | Código estável legível por máquina — faça branch neste valor (ex.: `whatsapp_unavailable`, `media_fetch_failed`, `blocked`). |
+| `error.message`| Descrição legível da falha.                                               |
+| `error.hint`   | `string \| null` — orientação acionável para corrigir, derivada do `code`. |
+
+Status não-`failed` (`pending`/`sent`/`delivered`/`read`) não trazem o campo `error`.
 
 ## Erros possíveis
 

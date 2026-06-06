@@ -440,7 +440,10 @@ O campo `status` contém o estado atual de entrega:
 | ----- | ---- | --------- |
 | `state` | string | Estado atual: `sent`, `delivered`, `read`, `received`, `failed` |
 | `at` | string | ISO 8601 — timestamp do estado atual |
-| `reason` | `string \| null` | Motivo de falha (apenas quando `state: "failed"`) |
+| `error` | `object \| null` | Erro estruturado da falha — presente apenas quando `state: "failed"`, `null` caso contrário. **Mesmo shape** do `data.error` dos webhooks `*.failed`. |
+| `error.code` | `string` | Código estável legível por máquina — faça branch neste valor. |
+| `error.message` | `string` | Descrição legível da falha. |
+| `error.hint` | `string \| null` | Orientação acionável, derivada do `code`. |
 
 ## Sobre `preview`
 

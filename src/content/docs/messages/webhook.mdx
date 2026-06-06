@@ -121,13 +121,16 @@ Todos os eventos `message.*` compartilham os campos abaixo em `data`:
 > `created_at` (envelope) é o momento de **emissão** do evento; `at` (em `data`)
 > é o momento da **ação no WhatsApp** — valores distintos.
 
-Eventos `message.*.failed` adicionam:
+Eventos `message.*.failed` adicionam um objeto `error` estruturado — **o mesmo
+shape** do `status.error` retornado por `GET /v1/messages/{id}` e
+`GET /v1/messages/{id}/status` (coerência evento ↔ recurso):
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
-| `error_code` | `string` | Código de falha legível por máquina. |
-| `error_message` | `string` | Descrição legível da falha. |
-| `hint` | `string \| null` | Orientação adicional opcional. |
+| `error` | `object` | Erro da falha. Presente em todos os eventos `*.failed`. |
+| `error.code` | `string` | Código estável legível por máquina — faça branch neste valor (ex.: `media_fetch_failed`, `unsupported_media_format`). |
+| `error.message` | `string` | Descrição legível da falha. |
+| `error.hint` | `string \| null` | Orientação acionável para corrigir, derivada do `code`. `null` quando não há orientação. |
 
 ### Preview por tipo
 
@@ -816,9 +819,11 @@ Os eventos de falha compartilham um envelope comum e diferem entre si pelo conju
     "channel": "whatsapp",
     "origin": "tn",
     "at": "2026-06-01T10:00:00-03:00",
-    "error_code": "whatsapp_unavailable",
-    "error_message": "WhatsApp session is not connected",
-    "hint": null
+    "error": {
+      "code": "whatsapp_unavailable",
+      "message": "WhatsApp session is not connected",
+      "hint": null
+    }
   }
 }
 ```
@@ -842,9 +847,11 @@ Diferentemente de `message.send.failed`, essas operações falham **sobre uma me
     "channel": "whatsapp",
     "origin": "tn",
     "at": "2026-06-01T10:05:00-03:00",
-    "error_code": "edit_window_expired",
-    "error_message": "Cannot edit after 15 minutes",
-    "hint": null
+    "error": {
+      "code": "edit_window_expired",
+      "message": "Cannot edit after 15 minutes",
+      "hint": null
+    }
   }
 }
 ```

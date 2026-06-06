@@ -415,15 +415,14 @@ Os campos de mídia ficam dentro do objeto `content`. O campo âncora (ex.: `ima
   "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e8f90",
   "status": {
     "state": "pending",
-    "at": "2026-04-27T10:00:05.123456+00:00",
-    "reason": null
+    "at": "2026-04-27T10:00:05.123456+00:00"
   }
 }
 ```
 
 A confirmação real chega via webhook `message.sent`. Em caso de falha
 (URL inacessível, formato não suportado, tamanho excedido) você recebe
-`message.send.failed` com `error_code` específico.
+`message.send.failed` com um objeto `error` (`{ code, message, hint }`) específico.
 
 ## Webhook outbound
 
