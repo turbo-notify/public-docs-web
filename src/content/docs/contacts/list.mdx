@@ -26,7 +26,6 @@ GET /v1/contacts?limit=20&cursor=<opaque>
 | `cursor` | string | Token opaco retornado em `cursor` |
 | `phone` | string | Filtro exato por E.164 (`+5571999...`) |
 | `name` | string | Match parcial (trigram) sobre o nome do contato |
-| `is_business` | bool | Filtra contatos com `business_profile` definido |
 | `source` | enum | `inbound \| outbound \| self` |
 | `has_messaged_in_window` | bool | Só contatos com `first_messaged_at` na janela atual |
 
@@ -35,7 +34,7 @@ GET /v1/contacts?limit=20&cursor=<opaque>
 <Tabs>
 <TabItem label="cURL">
 ```bash
-curl -X GET "https://api.turbonotify.com/v1/contacts?limit=20&is_business=true" \
+curl -X GET "https://api.turbonotify.com/v1/contacts?limit=20" \
   -H "Authorization: Bearer $TURBO_API_KEY"
 ```
 </TabItem>
@@ -70,12 +69,8 @@ data = r.json()
       "id": "ct_a1b2c3d4e5f6789012345678901234ab",
       "phone_number": "+5571999294756",
       "name": "João Silva",
-      "status_about": "Disponível",
-      "is_business": false,
-      "business_profile": null,
       "is_self": false,
       "first_messaged_at": "2026-05-10T13:25:00Z",
-      "last_seen_at": "2026-05-10T13:40:00Z",
       "last_interaction_at": "2026-05-10T13:42:00Z",
       "verified_on_whatsapp_at": "2026-05-10T13:25:00Z",
       "picture": null,

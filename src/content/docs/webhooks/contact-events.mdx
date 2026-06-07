@@ -1,6 +1,6 @@
 ---
 title: Eventos de Contato
-description: 7 webhooks customer-facing referentes a TN Contacts — created, name_changed, picture_changed, business_profile_changed, first_messaged, quota.warning, quota.exceeded.
+description: 6 webhooks customer-facing referentes a TN Contacts — created, name_changed, picture_changed, first_messaged, quota.warning, quota.exceeded.
 sidebar:
   order: 1
 ---
@@ -16,7 +16,6 @@ Lista de eventos webhook emitidos pelo Turbo Notify para mudanças relacionadas 
 | `contact.created` | Primeira observação do par `(tenant, telefone)` |
 | `contact.name_changed` | `name` divergiu do snapshot anterior |
 | `contact.picture_changed` | WhatsApp emitiu `PictureUpdate` ou refresh detectou hash novo |
-| `contact.business_profile_changed` | `BusinessAccountUpdate` no WhatsApp |
 | `contact.first_messaged` | Tenant enviou primeira mensagem outbound para este contato (slot consumido) |
 | `contact.quota.warning` | Cruzou threshold 80/90/95% da quota mensal |
 | `contact.quota.exceeded` | Tentativa rejeitada por estouro (HTTP 402) |
@@ -66,7 +65,7 @@ armazenamento subsequente.
 São **valores distintos**. Eventos sintéticos do TN (`contact.created`,
 `contact.quota.warning`, `contact.quota.exceeded`) **não** têm `at` — só o
 `created_at` do envelope. Eventos de ação real (`name_changed`,
-`picture_changed`, `business_profile_changed`, `first_messaged`) têm `at`.
+`picture_changed`, `first_messaged`) têm `at`.
 
 Todo evento `contact.*` carrega `channel: "whatsapp"` e `origin: "tn"`. Os
 eventos de ciclo de vida do contato carregam `direction: "inbound"`; os eventos
@@ -74,7 +73,7 @@ sintéticos de quota **não** carregam `direction`.
 
 ## Exemplo: `contact.created`
 
-Sintético — sem `at`, sem `source`, sem `is_business`.
+Sintético — sem `at`, sem `source`.
 
 ```json
 {
@@ -154,31 +153,6 @@ expirar. O evento dispara **apenas** quando a foto chega ao seu bucket, inclusiv
 quando o contato foi observado sem foto e ela fica disponível depois (basta
 habilitar o BYO Storage). Para ler a foto sob demanda use
 [`GET /v1/contacts/{contact_id}/profile-picture`](/contacts/profile-picture/).
-
-## Exemplo: `contact.business_profile_changed`
-
-```json
-{
-  "id": "evt_...",
-  "type": "contact.business_profile_changed",
-  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-  "created_at": "2026-05-15T12:00:02Z",
-  "data": {
-    "id": "ct_a1b2...",
-    "name": "Loja Exemplo",
-    "number": "5571999294756",
-    "business_profile": {
-      "email": "contato@loja.example",
-      "description": "Loja oficial",
-      "category": "retail"
-    },
-    "direction": "inbound",
-    "channel": "whatsapp",
-    "origin": "tn",
-    "at": "2026-05-15T12:00:00Z"
-  }
-}
-```
 
 ## Exemplo: `contact.first_messaged`
 
