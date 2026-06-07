@@ -25,7 +25,7 @@ GET /v1/contacts?limit=20&cursor=<opaque>
 | `limit` | int | 1–200 (default 50) |
 | `cursor` | string | Token opaco retornado em `cursor` |
 | `phone` | string | Filtro exato por E.164 (`+5571999...`) |
-| `push_name` | string | Match parcial (trigram) sobre `push_name` |
+| `name` | string | Match parcial (trigram) sobre o nome do contato |
 | `is_business` | bool | Filtra contatos com `business_profile` definido |
 | `source` | enum | `inbound \| outbound \| self` |
 | `has_messaged_in_window` | bool | Só contatos com `first_messaged_at` na janela atual |

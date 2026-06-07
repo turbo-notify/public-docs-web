@@ -24,13 +24,13 @@ Um **TN Contact** é um registro de observabilidade passiva que o Turbo Notify c
 ```
 [Inbound] message.received ────────┐
                                    ▼
-[Outbound] POST /v1/messages ──► TN Contact created ──► Enrichment (push_name, business profile, picture)
+[Outbound] POST /v1/messages ──► TN Contact created ──► Enrichment (name, business profile, picture)
                                    ▲                                ▼
 [Self] session.connected ──────────┘                     Webhook: contact.created
 ```
 
 1. **Discovery** — primeira mensagem `(tenant, phone)` cria o `Contact` com `source` apropriado.
-2. **Enrichment** — pipeline assíncrono enriquece com `push_name`, `business_profile`, `profile_picture`, `status_about`. Falhas são fail-open: o contato existe mesmo sem enriquecimento.
+2. **Enrichment** — pipeline assíncrono enriquece com `name`, `business_profile`, `profile_picture`, `status_about`. Falhas são fail-open: o contato existe mesmo sem enriquecimento.
 3. **Quota** — primeira mensagem outbound consome um slot do quota mensal de contatos (sliding window 30 dias).
 
 ## Tier de quota
