@@ -1,11 +1,9 @@
 ---
-title: WhatsApp Groups
+title: Visão geral de grupos
 description: Recebimento e envio de mensagens em grupos do WhatsApp via Turbo Notify.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
-
-# WhatsApp Groups (visão geral)
 
 Disponível desde 2026-05-24 (inbound); envio disponível desde 2026-05-25.
 O Turbo Notify reconhece grupos do WhatsApp como entidades de primeira
@@ -143,13 +141,12 @@ configurada). Para 1:1, o campo `to` é um objeto `{ "number": "+5511999999999" 
 Um envio para grupo conta como **1 destinatário** no rate-limit diário —
 independente de quantos participantes o grupo tenha. A quota de
 contatos (`contact.*`) **não** é afetada por envios para grupos: a
-ADR [2026-05-25](https://github.com/turbonotify/docs) fixa que grupos
-nunca materializam contatos.
+ADR 2026-05-25 fixa que grupos nunca materializam contatos.
 
-## Lifecycle de grupo
+## Ciclo de vida de grupo
 
 O Turbo Notify emite 10 webhooks adicionais quando o estado do grupo
-muda. Consulte [Group lifecycle events](/groups/lifecycle-events/) para
+muda. Consulte [eventos de ciclo de vida de grupo](/groups/lifecycle-events/) para
 o catálogo completo.
 
 ## Limitações

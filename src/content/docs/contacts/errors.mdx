@@ -1,5 +1,5 @@
 ---
-title: Erros de Contato
+title: Erros de contato
 description: Códigos de erro retornados pelos endpoints /v1/contacts/* e ações recomendadas.
 sidebar:
   order: 6
@@ -19,7 +19,7 @@ import ApiResponse from '@components/ApiResponse.astro';
 | 404  | `contact_picture_unavailable` | Sem foto disponível para este contato |
 | 429  | `rate_limit_exceeded` | Limite de refresh por minuto |
 
-## Exemplo: 402 Payment Required
+## Exemplo de resposta 402
 
 Retornado pelo `SendMessageUseCase` quando o tenant tenta mandar a primeira mensagem para um novo contato e a quota de contatos distintos está esgotada.
 

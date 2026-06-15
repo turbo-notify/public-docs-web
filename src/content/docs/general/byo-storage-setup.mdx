@@ -1,5 +1,5 @@
 ---
-title: BYO Object Storage
+title: Armazenamento próprio (BYO Storage)
 description: Configure seu próprio bucket (AWS S3, Cloudflare R2, Supabase Storage) para armazenar mídias recebidas e fotos de perfil de contatos de forma permanente.
 sidebar:
   order: 5
@@ -21,7 +21,7 @@ Quando um contato envia uma imagem, vídeo, áudio, documento ou figurinha para 
 
 Sem BYO Storage configurado, o campo `kind` retorna `"unavailable"` com `reason: "no_storage"` — os bytes da mídia não são persistidos.
 
-## Providers suportados
+## Provedores suportados
 
 O Turbo Notify usa a S3 HTTP API como protocolo de transporte — o mesmo protocolo suportado pelos três providers:
 
@@ -54,7 +54,7 @@ s3:ListBucket
 
 Crie um usuário IAM (AWS), API token (Cloudflare R2) ou service role (Supabase) com escopo restrito ao bucket do Turbo Notify.
 
-### 3. Configure no Dashboard
+### 3. Configure no dashboard
 
 Acesse <DashboardLink path="/settings/integrations/storage">Configurações → Integrações → Object Storage</DashboardLink> e preencha:
 
@@ -76,7 +76,7 @@ Após salvar, clique em **Testar conexão**. O Turbo Notify realiza um `PutObjec
 
 ## Comportamento após configuração
 
-### Mídias inbound
+### Mídias recebidas
 
 Toda mídia recebida após a ativação é automaticamente copiada para o seu bucket. Os campos de mídia em `GET /v1/messages/{id}` passam a retornar `kind: "available"`, por exemplo:
 
@@ -100,7 +100,7 @@ Com BYO Storage ativo, fotos de perfil são armazenadas no bucket e retornadas v
 
 Mídias recebidas **antes** da ativação do BYO Storage permanecem com `kind: "unavailable"` — não há backfill retroativo. Apenas novas mídias são armazenadas.
 
-## Troubleshooting
+## Solução de problemas
 
 ### `storage_required` (412)
 

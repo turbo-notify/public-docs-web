@@ -7,6 +7,15 @@ export default defineConfig({
     starlight({
       title: 'Turbo Notify',
       favicon: '/favicon.svg',
+      // Dark is the default color scheme across all Turbo Notify web surfaces.
+      // Seed the stored preference for first-time visitors; the theme toggle still wins.
+      head: [
+        {
+          tag: 'script',
+          content:
+            "try{if(!localStorage.getItem('starlight-theme'))localStorage.setItem('starlight-theme','dark')}catch(e){}",
+        },
+      ],
       logo: {
         light: './src/assets/logo-light.svg',
         dark: './src/assets/logo-dark.svg',
@@ -37,7 +46,7 @@ export default defineConfig({
             },
             {
               slug: 'general/access-key',
-              label: 'Chave de Acesso',
+              label: 'Chave de acesso',
               translations: { en: 'Access Key', es: 'Clave de Acceso' },
             },
             {
@@ -47,7 +56,7 @@ export default defineConfig({
             },
             {
               slug: 'general/next-steps',
-              label: 'Próximos Passos',
+              label: 'Próximos passos',
               translations: { en: 'Next Steps', es: 'Próximos Pasos' },
             },
             {
@@ -105,17 +114,17 @@ export default defineConfig({
           items: [
             {
               slug: 'groups/overview',
-              label: 'Visão Geral',
+              label: 'Visão geral',
               translations: { en: 'Overview', es: 'Visión general' },
             },
             {
               slug: 'groups/picture',
-              label: 'Foto do Grupo',
+              label: 'Foto do grupo',
               translations: { en: 'Group Picture', es: 'Foto del Grupo' },
             },
             {
               slug: 'groups/lifecycle-events',
-              label: 'Eventos de lifecycle',
+              label: 'Eventos de ciclo de vida',
               translations: { en: 'Lifecycle Events', es: 'Eventos de ciclo de vida' },
             },
             {
@@ -126,7 +135,7 @@ export default defineConfig({
           ],
         },
         {
-          label: 'Números Extras',
+          label: 'Números extras',
           translations: { en: 'Extra Numbers', es: 'Números Extra' },
           items: [
             {
@@ -162,7 +171,7 @@ export default defineConfig({
           ],
         },
         {
-          label: 'Mais Recursos',
+          label: 'Mais recursos',
           translations: { en: 'More Features', es: 'Más Recursos' },
           items: [
             {
@@ -181,11 +190,11 @@ export default defineConfig({
           label: 'Contatos',
           translations: { en: 'Contacts', es: 'Contactos' },
           items: [
-            { slug: 'contacts/overview', label: 'Visão Geral', translations: { en: 'Overview', es: 'Visión General' } },
+            { slug: 'contacts/overview', label: 'Visão geral', translations: { en: 'Overview', es: 'Visión General' } },
             { slug: 'contacts/list', label: 'Listar', translations: { en: 'List', es: 'Listar' } },
             { slug: 'contacts/detail', label: 'Detalhe', translations: { en: 'Detail', es: 'Detalle' } },
             { slug: 'contacts/refresh', label: 'Refresh', translations: { en: 'Refresh', es: 'Refresh' } },
-            { slug: 'contacts/profile-picture', label: 'Foto de Perfil', translations: { en: 'Profile Picture', es: 'Foto de Perfil' } },
+            { slug: 'contacts/profile-picture', label: 'Foto de perfil', translations: { en: 'Profile Picture', es: 'Foto de Perfil' } },
             { slug: 'contacts/errors', label: 'Erros', translations: { en: 'Errors', es: 'Errores' } },
           ],
         },
@@ -200,8 +209,8 @@ export default defineConfig({
           label: 'Webhooks',
           translations: { en: 'Webhooks', es: 'Webhooks' },
           items: [
-            { slug: 'webhooks/contact-events', label: 'Eventos de Contato', translations: { en: 'Contact Events', es: 'Eventos de Contacto' } },
-            { slug: 'webhooks/message-quota-events', label: 'Eventos de Quota de Mensagem', translations: { en: 'Message Quota Events', es: 'Eventos de Quota de Mensaje' } },
+            { slug: 'webhooks/contact-events', label: 'Eventos de contato', translations: { en: 'Contact Events', es: 'Eventos de Contacto' } },
+            { slug: 'webhooks/message-quota-events', label: 'Eventos de quota de mensagem', translations: { en: 'Message Quota Events', es: 'Eventos de Quota de Mensaje' } },
           ],
         },
         {
@@ -209,8 +218,8 @@ export default defineConfig({
           translations: { en: 'Changelog', es: 'Changelog' },
           items: [
             { slug: 'changelog/2026-06-04-contact-id-recipient', label: 'contact_id como destinatário', translations: { en: 'contact_id as recipient', es: 'contact_id como destinatario' } },
-            { slug: 'changelog/2026-06-04-typing-indicator-groups', label: 'Typing indicator em grupos', translations: { en: 'Group typing indicator', es: 'Indicador de escritura en grupos' } },
-            { slug: 'changelog/2026-05-15-message-quota-activation', label: 'Per-Tier Message Quota Activation' },
+            { slug: 'changelog/2026-06-04-typing-indicator-groups', label: 'Aviso de digitação em grupos', translations: { en: 'Group typing indicator', es: 'Indicador de escritura en grupos' } },
+            { slug: 'changelog/2026-05-15-message-quota-activation', label: 'Ativação de quota de mensagem por tier' },
           ],
         },
       ],

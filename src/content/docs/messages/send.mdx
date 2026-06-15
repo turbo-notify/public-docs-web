@@ -1,5 +1,5 @@
 ---
-title: Envio de Mensagens
+title: Envio de mensagens
 description: Como enviar mensagens pelo Turbo Notify de forma simples e segura via WhatsApp.
 ---
 
@@ -372,7 +372,7 @@ Também é possível usar o alias definido no cadastro do número extra para ide
 
 Caso o número ou alias informado no campo `from` não estiver cadastrado como número extra ou não estiver ativo, o envio será rejeitado.
 
-Saiba mais sobre os números extra em [Números Extra](/extra-numbers/add/).
+Saiba mais sobre os números extra em [Números Extras](/extra-numbers/add/).
 
 ## Erros possíveis
 
@@ -403,7 +403,7 @@ O status informa o andamento do processamento da mensagem. Para detalhes complet
 
 O retorno final do processamento chega via webhook com os eventos `message.sent`, `message.delivered`, `message.read` ou `message.send.failed`.
 
-## Segurança e Privacidade
+## Segurança e privacidade
 
 Toda comunicação entre seu sistema e a API do Turbo Notify ocorre exclusivamente por HTTPS, assegurando que os dados estejam sempre criptografados durante o tráfego.
 
@@ -411,14 +411,14 @@ Para saber por quanto tempo as mensagens ficam disponíveis para consulta e oper
 
 ---
 
-## Conteúdo rico — Localização, Contato e Calendário
+## Conteúdo rico — localização, contato e calendário
 
 A partir de 2026-04-27 o `POST /v1/messages` aceita três variantes de
 conteúdo rico além de `text`. Cada variante tem um campo âncora próprio
 dentro do objeto `content` e é despachada para o WhatsApp como o tipo
 nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
 
-### Enviar Localização
+### Enviar localização
 
 <Tabs>
   <TabItem label="cURL">
@@ -493,7 +493,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
 | `content.address` | string | não | máx. 500 chars |
 | `content.url` | string | não | apenas `http://`/`https://` |
 
-### Enviar Contato
+### Enviar contato
 
 <Tabs>
   <TabItem label="cURL">
@@ -591,7 +591,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
 O Turbo Notify gera o vCard server-side a partir desses campos —
 você nunca precisa lidar com escaping vCard manualmente.
 
-### Enviar Evento de Calendário
+### Enviar evento de calendário
 
 <Tabs>
   <TabItem label="cURL">
@@ -694,8 +694,7 @@ você nunca precisa lidar com escaping vCard manualmente.
 :::tip
 A nomenclatura interna do WhatsApp é "evento"; usamos
 `calendar` como variante de conteúdo no Turbo Notify para evitar
-ambiguidade com o termo "event" usado em webhooks. Detalhes em
-[ADR 2026-04-27](https://github.com/turbo-notify/turbo-notity/blob/main/docs/reference/decisions/2026-04-27-rich-content-rendering.md).
+ambiguidade com o termo "event" usado em webhooks (ADR 2026-04-27 — rich content rendering).
 :::
 
 :::caution[Limitação de propagação — contas pessoais WhatsApp]
@@ -726,7 +725,7 @@ Para visualizar exatamente como o evento `message.sent` correspondente
 chega no seu webhook, abra o [Webhook Inspector](https://webhook.turbonotify.com/)
 — o painel "Enriched" renderiza esses três tipos com cards dedicados.
 
-## Envio para Grupo
+## Envio para grupo
 
 Disponível desde 2026-05-25. Para enviar a um grupo, o campo `to`
 assume a forma de objeto `{ "group_id": "grp_..." }` em vez da string
@@ -753,7 +752,7 @@ O campo `to` é polimórfico — aceita exatamente uma das três formas (sem `ki
 - As duas formas são **mutuamente exclusivas** — envie exatamente uma.
 - `group_id` é o identificador público `grp_{hex32}` recebido em
   webhooks/polling de `message.received` (`to.group_id`) ou nos
-  eventos de [lifecycle de grupo](/groups/lifecycle-events/).
+  eventos de [ciclo de vida de grupo](/groups/lifecycle-events/).
 - O objeto `content` usa o mesmo schema de envios 1:1 (texto, imagem,
   vídeo, áudio, documento, sticker, location, contact, calendar) —
   sem mudanças.

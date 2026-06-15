@@ -1,5 +1,5 @@
 ---
-title: Respostas e Webhook
+title: Eventos via webhook
 description: Como receber eventos do Turbo Notify via webhook (HTTP push) — mesmos dados do endpoint GET /events.
 ---
 
@@ -471,7 +471,7 @@ Receipts são sempre **inbound**. `from` é quem disparou o recibo; `inbox` e `t
 
 `preview` fica vazio quando o corpo da mensagem original já foi purgado pelo retention (LGPD); `content_type` é preservado.
 
-#### Receipts em grupo — um por participante
+#### Recibos em grupo — um por participante
 
 Quando você envia uma mensagem a um **grupo**, **cada outro participante**
 gera o seu próprio `delivered` (ao receber) e `read` (ao ler). Em cada

@@ -1,5 +1,5 @@
 ---
-title: Eventos de Quota de Mensagem
+title: Eventos de quota de mensagem
 description: Webhooks message.quota.warning e message.quota.exceeded — emitidos quando o quota mensal de mensagens por tier cruza thresholds.
 sidebar:
   order: 2
@@ -57,7 +57,7 @@ Eventos relacionados ao **quota mensal de mensagens por tier** (free=1k, solo=10
 - `resets_at` é um timestamp de **valor de negócio** (quando a janela de quota reinicia), mantido com seu nome semântico — não é o momento de ocorrência.
 - Não há `phone` no payload destes eventos. Para correlacionar com a requisição que disparou o estouro, use `GET /v1/events?request_id=req_...`.
 
-## Action recommended
+## Ação recomendada
 
-- Upgrade plan (veja tabela de tiers em [Quota e Uso](/usage/quota/)).
+- Faça upgrade do plano (veja tabela de tiers em [Quota e Uso](/usage/quota/)).
 - Verifique seu dashboard em **Uso** para histograma de consumo.

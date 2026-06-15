@@ -15,10 +15,13 @@
   --sl-sidebar-width: 16rem;
   --sl-content-width: 48rem;
 
+  /* Foundation radius — shared across web modules (cards, buttons, code frames) */
+  --radius: 0.75rem;
+
   /* Dark theme accent palette */
   --sl-color-accent-low: #123328;
-  --sl-color-accent: #77d1b7;
-  --sl-color-accent-high: #d5f3ea;
+  --sl-color-accent: #30b58d;
+  --sl-color-accent-high: #a8e6d3;
 
   /* Dark theme grays */
   --sl-color-white: #f8fafb;
@@ -202,8 +205,8 @@ starlight-lang-select {
 }
 
 :root[data-theme='dark'] .sidebar-content a[aria-current='page'] {
-  background: rgba(119, 209, 183, 0.1);
-  color: #d5f3ea;
+  background: rgba(48, 181, 141, 0.12);
+  color: #a8e6d3;
 }
 
 /* ------------------------------------------------------------
@@ -325,7 +328,7 @@ starlight-lang-select {
 
 /* Hero action buttons */
 .sl-link-button {
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   font-weight: 700;
   padding-inline: 0.95rem;
   min-height: 2.6rem;
@@ -338,8 +341,8 @@ starlight-lang-select {
 }
 
 :root[data-theme='dark'] .sl-link-button.primary {
-  background: #77d1b7;
-  border-color: #77d1b7;
+  background: #30b58d;
+  border-color: #30b58d;
   color: #0f1720;
 }
 
@@ -348,7 +351,7 @@ starlight-lang-select {
 }
 
 :root[data-theme='dark'] .sl-link-button.minimal {
-  color: #d5f3ea;
+  color: #a8e6d3;
 }
 
 /* ------------------------------------------------------------
@@ -358,14 +361,14 @@ starlight-lang-select {
 :root[data-theme='light'] .card-grid .card {
   background: #ffffff;
   border: 1px solid #eef1f4;
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   box-shadow: none;
 }
 
 :root[data-theme='dark'] .card-grid .card {
   background: rgba(22, 32, 43, 0.7);
   border: 1px solid rgba(201, 210, 220, 0.08);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   box-shadow: none;
 }
 
@@ -408,8 +411,8 @@ starlight-lang-select {
 }
 
 :root[data-theme='dark'] .tab > [role='tab'][aria-selected='true'] {
-  background: rgba(119, 209, 183, 0.1);
-  color: #d5f3ea;
+  background: rgba(48, 181, 141, 0.12);
+  color: #a8e6d3;
 }
 
 .tablist-wrapper ~ [role='tabpanel'] {
@@ -425,7 +428,7 @@ starlight-lang-select {
 .expressive-code .frame {
   overflow: hidden;
   border: 0 !important;
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
 }
 
 :root[data-theme='light'] .expressive-code .frame {
@@ -464,7 +467,7 @@ starlight-lang-select {
 .api-response {
   overflow: hidden;
   border: 0;
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   padding: 1rem 1.5rem;
   margin: 1.5rem 0;
   font-family: var(--sl-font-mono);
@@ -497,19 +500,35 @@ starlight-lang-select {
   font-size: var(--sl-text-xs);
 }
 
-.api-response-status[data-status^="2"] {
-  background: #166534;
-  color: #bbf7d0;
+/* Status badges — Turbo Notify semantic tokens (success/warning/destructive) */
+:root[data-theme='dark'] .api-response-status[data-status^="2"] {
+  background: rgba(63, 193, 106, 0.16);
+  color: #6fd693;
 }
 
-.api-response-status[data-status^="4"] {
-  background: #7c2d12;
-  color: #fed7aa;
+:root[data-theme='dark'] .api-response-status[data-status^="4"] {
+  background: rgba(240, 169, 43, 0.16);
+  color: #f5bd5c;
 }
 
-.api-response-status[data-status^="5"] {
-  background: #7f1d1d;
-  color: #fecaca;
+:root[data-theme='dark'] .api-response-status[data-status^="5"] {
+  background: rgba(224, 86, 79, 0.16);
+  color: #ec8780;
+}
+
+:root[data-theme='light'] .api-response-status[data-status^="2"] {
+  background: #e1f5e9;
+  color: #0f6e30;
+}
+
+:root[data-theme='light'] .api-response-status[data-status^="4"] {
+  background: #fcf0db;
+  color: #8a5510;
+}
+
+:root[data-theme='light'] .api-response-status[data-status^="5"] {
+  background: #fbe4e3;
+  color: #b3322b;
 }
 
 .api-response-divider {
@@ -523,9 +542,13 @@ starlight-lang-select {
   background: transparent;
   border: 0;
   box-shadow: none;
-  color: #4ade80;
+  color: #3fc16a;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+:root[data-theme='light'] .api-response-body {
+  color: #15803d;
 }
 
 .api-response-headers {
@@ -544,7 +567,11 @@ starlight-lang-select {
 }
 
 .api-response-headers .header-value {
-  color: #4ade80;
+  color: #3fc16a;
+}
+
+:root[data-theme='light'] .api-response-headers .header-value {
+  color: #15803d;
 }
 
 /* ------------------------------------------------------------

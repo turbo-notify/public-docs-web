@@ -1,5 +1,5 @@
 ---
-title: Inclusão de Números Extra
+title: Inclusão de números extras
 description: Como adicionar números extras de WhatsApp à sua conta no Turbo Notify para envio de mensagens com múltiplos remetentes.
 ---
 
@@ -10,9 +10,9 @@ import ExternalLink from '@components/ExternalLink.astro';
 
 Números extras permitem que você envie mensagens a partir de múltiplos números de WhatsApp, além do número principal da sua conta. Cada número extra é vinculado via código de pareamento.
 
-## Cadastro pelo Painel
+## Cadastro pelo dashboard
 
-A forma mais simples de adicionar um número extra é pelo painel do Turbo Notify. Acesse a página de <DashboardLink path="/extra-numbers">Números Extra</DashboardLink> e clique em **Adicionar número**.
+A forma mais simples de adicionar um número extra é pelo dashboard do Turbo Notify. Acesse a página de <DashboardLink path="/extra-numbers">Números Extras</DashboardLink> e clique em **Adicionar número**.
 
 Você deverá informar o número de telefone com código do país e aguardar o código de pareamento que será exibido na tela. Insira esse código no WhatsApp do aparelho correspondente para concluir a vinculação.
 
@@ -24,7 +24,7 @@ Também é possível cadastrar números extras de forma programática pela API.
   <TabItem label="cURL">
     ```bash title="turbo-notify.sh"
     curl -X POST \
-      https://api.turbonotify.com/extra-numbers \
+      https://api.turbonotify.com/v1/numbers \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -34,7 +34,7 @@ Também é possível cadastrar números extras de forma programática pela API.
   </TabItem>
   <TabItem label="Node">
     ```js title="turbo-notify.js"
-    const response = await fetch('https://api.turbonotify.com/extra-numbers', {
+    const response = await fetch('https://api.turbonotify.com/v1/numbers', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE',
@@ -53,7 +53,7 @@ Também é possível cadastrar números extras de forma programática pela API.
     ```python title="turbo_notify.py"
     import requests
 
-    url = "https://api.turbonotify.com/extra-numbers"
+    url = "https://api.turbonotify.com/v1/numbers"
     headers = {
         "Authorization": "Bearer SUA_CHAVE",
         "Content-Type": "application/json"
@@ -80,7 +80,7 @@ Também é possível cadastrar números extras de forma programática pela API.
 
     func main() {
         payload := strings.NewReader(`{"phone": "+5511988888888"}`)
-        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/extra-numbers", payload)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/numbers", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
         resp, _ := http.DefaultClient.Do(req)
@@ -93,7 +93,7 @@ Também é possível cadastrar números extras de forma programática pela API.
   <TabItem label="PHP">
     ```php title="turbo-notify.php"
     <?php
-    $url = 'https://api.turbonotify.com/extra-numbers';
+    $url = 'https://api.turbonotify.com/v1/numbers';
     $data = [
         'phone' => '+5511988888888'
     ];
@@ -132,7 +132,7 @@ Também é possível cadastrar números extras de forma programática pela API.
     var content = new StringContent(json, Encoding.UTF8, "application/json");
 
     var response = await client.PostAsync(
-        "https://api.turbonotify.com/extra-numbers",
+        "https://api.turbonotify.com/v1/numbers",
         content
     );
     var result = await response.Content.ReadAsStringAsync();
@@ -155,7 +155,7 @@ Também é possível cadastrar números extras de forma programática pela API.
                 """;
 
             var request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.turbonotify.com/extra-numbers"))
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers"))
                 .header("Authorization", "Bearer SUA_CHAVE")
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
@@ -188,7 +188,7 @@ A resposta conterá o código de pareamento que deve ser inserido no WhatsApp do
 
 ## Status
 
-Após cadastrar o número extra, acompanhe o andamento da vinculação consultando o [Status dos Números Extra](/extra-numbers/status/).
+Após cadastrar o número extra, acompanhe o andamento da vinculação consultando o [Status dos Números Extras](/extra-numbers/status/).
 
 ## Erros possíveis
 

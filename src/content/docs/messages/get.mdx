@@ -1,5 +1,5 @@
 ---
-title: Consultar Mensagem
+title: Consultar mensagem
 description: Como recuperar o conteúdo completo, status e referência de mídia de uma mensagem pelo seu identificador.
 ---
 
@@ -283,7 +283,7 @@ Para mensagens `reacted`:
     "mime_type": "image/jpeg",
     "size_bytes": 184320,
     "setup_hint": {
-      "setup_url": "https://app.turbonotify.com/settings/integrations/storage",
+      "setup_url": "https://dashboard.turbonotify.com/settings/integrations/storage",
       "docs_url": "https://docs.turbonotify.com/general/byo-storage-setup/",
       "message": "Configure BYO Object Storage to receive media."
     }
@@ -458,7 +458,7 @@ O campo do conteúdo completo (`text`, `image`, `location`, etc.) pode ser `null
 
 ## Sobre `kind`
 
-Para receber mídia inbound com `kind: "available"`, configure a <DashboardLink path="/settings/integrations/storage">integração de Object Storage</DashboardLink> no Dashboard. Sem essa configuração, o Turbo Notify não tem onde armazenar a mídia e retorna `kind: "unavailable"` com `reason: "no_storage"`.
+Para receber mídia inbound com `kind: "available"`, configure a <DashboardLink path="/settings/integrations/storage">integração de Object Storage</DashboardLink> no dashboard. Sem essa configuração, o Turbo Notify não tem onde armazenar a mídia e retorna `kind: "unavailable"` com `reason: "no_storage"`.
 
 Quando o Object Storage está configurado, o Turbo Notify copia automaticamente cada mídia recebida para o seu bucket e retorna uma URL pré-assinada com validade configurável. O acesso à mídia expira conforme o `expires_at` — você pode obter uma nova URL consultando a mensagem novamente.
 

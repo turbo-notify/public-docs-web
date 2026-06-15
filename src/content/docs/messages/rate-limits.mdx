@@ -1,5 +1,5 @@
 ---
-title: Limites de Uso
+title: Limites de uso
 description: Entenda os limites de envio e boas práticas para garantir estabilidade e segurança no Turbo Notify.
 ---
 
@@ -7,6 +7,21 @@ import ApiResponse from '@components/ApiResponse.astro';
 import ExternalLink from '@components/ExternalLink.astro';
 
 > **Nota (2026-05-15):** o limite por tier descrito nesta página agora é efetivamente aplicado. Versões anteriores documentavam o comportamento, mas a implementação ativa era um teto global de 50k/mês compartilhado. Esta entrega alinha código à documentação. Tenants impactados foram comunicados — veja [Per-Tier Message Quota Activation](/changelog/2026-05-15-message-quota-activation/).
+
+## Visão geral
+
+O Turbo Notify aplica limites de uso para garantir estabilidade, segurança e qualidade do serviço para todos os clientes. Os limites variam de acordo com o plano contratado e o comportamento de envio.
+
+## Tipos de limite
+
+| Limite              | Descrição                                                                     |
+| ------------------- | ----------------------------------------------------------------------------- |
+| Mensagens por minuto | Quantidade máxima de mensagens que podem ser enviadas por minuto.             |
+| Mensagens por hora   | Quantidade máxima de mensagens que podem ser enviadas por hora.               |
+| Mensagens por dia    | Quantidade máxima de mensagens que podem ser enviadas em um período de 24h.   |
+| Requisições por minuto | Quantidade máxima de chamadas à API por minuto, independente do endpoint.  |
+
+Os valores exatos de cada limite dependem do plano contratado. Consulte os detalhes do seu plano no dashboard ou entre em contato com o suporte.
 
 ## Tier mensal (mensagens)
 
@@ -40,21 +55,6 @@ Independente do tier, o Turbo Notify aplica burst protection:
 
 - `messages_per_minute=200` por replica.
 - `recipients_per_day` (fairness).
-
-## Visão geral
-
-O Turbo Notify aplica limites de uso para garantir estabilidade, segurança e qualidade do serviço para todos os clientes. Os limites variam de acordo com o plano contratado e o comportamento de envio.
-
-## Tipos de limite
-
-| Limite              | Descrição                                                                     |
-| ------------------- | ----------------------------------------------------------------------------- |
-| Mensagens por minuto | Quantidade máxima de mensagens que podem ser enviadas por minuto.             |
-| Mensagens por hora   | Quantidade máxima de mensagens que podem ser enviadas por hora.               |
-| Mensagens por dia    | Quantidade máxima de mensagens que podem ser enviadas em um período de 24h.   |
-| Requisições por minuto | Quantidade máxima de chamadas à API por minuto, independente do endpoint.  |
-
-Os valores exatos de cada limite dependem do plano contratado. Consulte os detalhes do seu plano no dashboard ou entre em contato com o suporte.
 
 ## Números extra
 

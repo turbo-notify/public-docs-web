@@ -1,5 +1,5 @@
 ---
-title: Eventos de Contato
+title: Eventos de contato
 description: 6 webhooks customer-facing referentes a TN Contacts — created, name_changed, picture_changed, first_messaged, quota.warning, quota.exceeded.
 sidebar:
   order: 1
@@ -223,7 +223,7 @@ janela de quota reinicia), não o momento da ação.
 Sintético — carrega `channel`/`origin` mas **sem `direction`**, **sem `at`** e
 **sem `request_id`** em `data`; `resets_at` é mantido.
 
-## Idempotency
+## Idempotência
 
 Cada evento carrega `id` único (`evt_…`). Use `id` como chave de deduplicação no seu side.
 

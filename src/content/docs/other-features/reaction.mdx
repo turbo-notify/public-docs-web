@@ -1,5 +1,5 @@
 ---
-title: Reações nas Mensagens
+title: Reações nas mensagens
 description: Adicione ou remova reações em mensagens específicas para interações mais expressivas no WhatsApp.
 ---
 
@@ -10,7 +10,7 @@ O recurso de reação permite que sua aplicação envie ou remova reações em m
 
 O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há campo `to` no corpo, pois o destinatário é inferido da mensagem original.
 
-## Adicionar uma Reação
+## Adicionar uma reação
 
 `POST /v1/messages/{message_id}/react` — adiciona uma reação à mensagem identificada por `{message_id}` (formato `msg_{hex32}`).
 
@@ -162,7 +162,7 @@ Após enviar, o Turbo Notify retorna aceite assíncrono:
   }}
 />
 
-## Remover uma Reação
+## Remover uma reação
 
 Para remover uma reação previamente enviada, envie a propriedade `reaction` como `null` (ou string vazia) no mesmo endpoint.
 
@@ -333,7 +333,7 @@ Também é possível usar o alias definido no cadastro do número extra para ide
 
 Caso o número ou alias informado no campo `from` não estiver cadastrado como número extra ou não estiver ativo, a operação será rejeitada.
 
-Saiba mais sobre os números extra em [Números Extra](/extra-numbers/add/).
+Saiba mais sobre os números extra em [Números Extras](/extra-numbers/add/).
 
 ## Erros possíveis
 

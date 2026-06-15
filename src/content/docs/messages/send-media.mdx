@@ -1,5 +1,5 @@
 ---
-title: Envio de Mídia
+title: Envio de mídia
 description: Como enviar imagens, áudios, vídeos, documentos e figurinhas pelo Turbo Notify.
 ---
 
@@ -354,7 +354,7 @@ respeitar o limite de 500 KB.
 
 Se você já possui o arquivo no seu BYO Object Storage, informe `s3_object_key`
 em vez de `url`. O Turbo Notify acessa o arquivo diretamente usando as
-credenciais que você configurou no Dashboard.
+credenciais que você configurou no dashboard.
 
 :::caution[BYO Storage obrigatório]
 O campo `s3_object_key` exige que o <DashboardLink path="/settings/integrations/storage">Object Storage</DashboardLink>
@@ -386,7 +386,7 @@ Quando `s3_object_key` é informado mas nenhum Object Storage está configurado:
   "error": "storage_required",
   "message": "BYO Object Storage is required to use s3_object_key. Configure it in the Dashboard.",
   "hint": {
-    "setup_url": "https://app.turbonotify.com/settings/integrations/storage",
+    "setup_url": "https://dashboard.turbonotify.com/settings/integrations/storage",
     "docs_url": "https://docs.turbonotify.com/general/byo-storage-setup/"
   }
 }

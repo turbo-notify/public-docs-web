@@ -1,5 +1,5 @@
 ---
-title: "Per-Tier Message Quota Activation"
+title: "Ativação de quota de mensagem por tier"
 description: "Audit revelou que o quota mensal por tier estava documentado mas não enforced; este release ativa o enforcement com janela de 14 dias de comms."
 sidebar:
   order: 1
@@ -10,7 +10,7 @@ import ExternalLink from '@components/ExternalLink.astro';
 **Data:** 2026-05-15
 **Status:** Aplicado
 
-## Audit finding
+## Constatação da auditoria
 
 Uma auditoria interna em abril/2026 revelou um gap entre documentação e implementação: o quota mensal de mensagens por tier (`messages_{TIER}`) estava definido em `rate-sync.toml` e havia um `tier_rate_limit.py` guard, **mas nenhuma rota wired** a esse guard. O pipeline real usava apenas um limiter global `messages_per_month` (50.000/mês compartilhado entre todos os tenants).
 
@@ -18,7 +18,7 @@ Resultado:
 - Tenant **free** podia mandar até 50k/mês (10× o documentado).
 - Tenant **custom** estava capped em 50k/mês (100× abaixo do documentado).
 
-## Tier table — valores existentes, agora enforced
+## Tabela de tiers — valores existentes, agora aplicados
 
 | Tier | Mensagens/30d (documentado desde 2025) | Enforcement antes | Enforcement agora |
 | ---- | --------------------------------------:| ----------------- | ----------------- |
@@ -29,7 +29,7 @@ Resultado:
 
 **Sem mudança de valor:** os limites de cada tier não foram alterados. Apenas o enforcement passa a refletir a documentação.
 
-## Affected tenants notification
+## Notificação aos clientes afetados
 
 Tenants que excederam o limite do seu tier no período de auditoria (abril-maio 2026) receberam comunicações por três canais:
 
@@ -39,7 +39,7 @@ Tenants que excederam o limite do seu tier no período de auditoria (abril-maio 
 
 Janela de notificação: **14 dias** entre comunicação inicial e enforcement final.
 
-## Timeline
+## Linha do tempo
 
 | Fase | Período | Comportamento |
 | ---- | ------- | ------------- |
@@ -48,7 +48,7 @@ Janela de notificação: **14 dias** entre comunicação inicial e enforcement f
 | Phase 2 — Comms (≥14d) | 2026-05-XX | Emails + banner + status page para tenants impactados |
 | Phase 3 — Enforce | 2026-05-15 | `OUTBOUND_PIPELINE_MESSAGE_QUOTA_ENFORCEMENT=enforce` — 429 nos estouros |
 
-## Upgrade path
+## Caminho de upgrade
 
 Tenants que precisam de mais volume podem:
 

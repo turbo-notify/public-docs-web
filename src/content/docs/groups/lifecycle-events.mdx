@@ -1,9 +1,7 @@
 ---
-title: Eventos de lifecycle de grupo
+title: Eventos de ciclo de vida de grupo
 description: 10 webhooks que o Turbo Notify emite quando o estado de um grupo WhatsApp muda.
 ---
-
-# Eventos de lifecycle de grupo
 
 O Turbo Notify emite 10 webhooks adicionais quando seu número entra/sai
 de grupos ou quando o estado de um grupo muda. Todos seguem o
@@ -226,7 +224,7 @@ Um único webhook por operação batch — todos os adicionados juntos.
   resolução do JID falhou.
 - `contact_id` é populado quando você já tinha o participante como
   contato (TN não cria novos contatos para participantes vistos via
-  lifecycle event — proteção LGPD + quota).
+  ciclo de vida — proteção LGPD + quota).
 
 ### `group.participants_removed`
 
@@ -251,7 +249,7 @@ um envelope polimórfico.
 
 ## Idempotência
 
-Cada evento de lifecycle é entregue com um header `Nats-Msg-Id`
+Cada evento de ciclo de vida é entregue com um header `Nats-Msg-Id`
 derivado de `(tenant_id, group_id, concern, unix_ms)`. Replays do
 JetStream colapsam dentro de uma janela curta — se você processou
 o evento `id` uma vez, ignore qualquer reentrega do mesmo `id`.
