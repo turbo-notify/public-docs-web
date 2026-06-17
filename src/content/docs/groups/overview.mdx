@@ -43,26 +43,26 @@ Grupos não falam — participantes falam dentro de grupos. Portanto:
 
 Em nenhum cenário `from` carrega um `group_id`.
 
-### Campo `member` (mensagens de grupo)
+### Campo `inbox` (mensagens de grupo)
 
-O campo `member` é um sibling top-level, presente **apenas em mensagens
-de grupo** (inbound e outbound). Identifica o número Turbo Notify que
-participa do grupo — o telefone (`number`) e o alias (`alias`) da linha
-tenant-side.
+O campo `inbox` é um sibling top-level, presente **sempre** (em todas as
+mensagens — 1:1 e grupo, inbound e outbound). Em mensagens de grupo ele
+identifica o número Turbo Notify que participa do grupo — o telefone
+(`number`) e o alias (`alias`) da linha tenant-side.
 
 ```jsonc
 // Inbound de grupo
 {
+  "inbox":  { "number": "5511973117056", "alias": "main" },
   "from":   { "contact_id": "ct_...", "name": "Cleverson", "number": "5571999258283" },
-  "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
-  "member": { "number": "5511973117056", "alias": "main" }
+  "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" }
 }
 
 // Outbound para grupo
 {
+  "inbox":  { "number": "5511973117056", "alias": "main" },
   "from":   { "name": "Turbo Notify", "number": "5511973117056", "alias": "main" },
-  "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
-  "member": { "number": "5511973117056", "alias": "main" }
+  "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" }
 }
 ```
 
@@ -77,7 +77,7 @@ const isGroup = "group_id" in data.to;
 Cada mensagem inbound proveniente de um grupo é entregue como
 [`message.received`](/messages/webhook/#exemplo--messagereceived-grupo)
 no webhook + polling. `from` é o participante que enviou; `to` traz o
-`group_id` e o snapshot do nome do grupo; `member` identifica a linha
+`group_id` e o snapshot do nome do grupo; `inbox` identifica a linha
 Turbo Notify que participa do grupo.
 
 ## Enviando para grupo

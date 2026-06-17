@@ -75,7 +75,7 @@ da linha Turbo Notify. Em vez disso, carrega o identificador e nome do grupo.
 | `member.alias` | ausente | alias da linha TN |
 
 **O que fazer:**
-- Para obter qual linha Turbo Notify recebeu a mensagem, leia `data.member.alias` / `data.member.number`.
+- Para obter qual linha Turbo Notify recebeu a mensagem, leia `data.inbox.alias` / `data.inbox.number`. (Este campo foi introduzido como `member` nesta migração e renomeado para `inbox` em 2026-06-01; `member` permanece apenas como alias legado.)
 - Para obter o grupo destinatário, leia `data.to.group_id`.
 
 ### 3. Campo `member` — identificação da linha tenant
@@ -103,7 +103,7 @@ const groupName = data.group?.name;
 const isGroup = "group_id" in data.to;
 const groupId = data.to.group_id;
 const groupName = data.to.name;
-const memberAlias = data.member?.alias;
+const inboxAlias = data.inbox?.alias; // renomeado de `member` em 2026-06-01
 ```
 
 ### Checklist de migração (grupos)
@@ -112,7 +112,7 @@ const memberAlias = data.member?.alias;
 - [ ] Substituir `data.group.id` por `data.to.group_id`
 - [ ] Substituir `data.group.name` por `data.to.name`
 - [ ] Atualizar detecção: `"group" in data` → `"group_id" in data.to`
-- [ ] Para saber qual linha TN recebeu/enviou: usar `data.member.alias` / `data.member.number`
+- [ ] Para saber qual linha TN recebeu/enviou: usar `data.inbox.alias` / `data.inbox.number` (renomeado de `member` em 2026-06-01)
 - [ ] Atualizar schemas JSON com `additionalProperties: false` que incluíam `group` como campo permitido
 
 ---
@@ -234,8 +234,8 @@ O campo `content` foi removido do payload do evento `message.received`. Em seu l
   "timestamp": "2026-04-21T10:00:00Z",
   "data": {
     "message_id": "01993c5a1b24d3e9f01a2b3c4d5e6f70",
-    "from": "+5511999999999",
-    "to": "+5511973117056",
+    "from": "5511999999999",
+    "to": "5511973117056",
     "content": "Olá, gostaria de saber sobre o pedido",
     "received_at": "2026-04-21T10:00:00Z"
   }
@@ -251,8 +251,8 @@ O campo `content` foi removido do payload do evento `message.received`. Em seu l
   "timestamp": "2026-04-21T10:00:00Z",
   "data": {
     "message_id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
-    "from": { "number": "+5511999999999" },
-    "to": { "number": "+5511973117056" },
+    "from": { "number": "5511999999999" },
+    "to": { "number": "5511973117056" },
     "content_type": "text",
     "preview": "Olá, gostaria de saber sobre o pedido",
     "received_at": "2026-04-21T10:00:00Z"

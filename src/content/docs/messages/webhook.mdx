@@ -112,10 +112,10 @@ Todos os eventos `message.*` compartilham os campos abaixo em `data`:
 | `content_type` | `string` | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, `poll`. Mensagens de tipo desconhecido chegam como `unsupported`. |
 | `direction` | `string` | `"outbound"` (ação do tenant/API) ou `"inbound"` (ação do peer/WhatsApp). |
 | `channel` | `string` | Sempre `"whatsapp"`. |
-| `origin` | `string \| null` | `"tn"` (enviado via API do Turbo Notify) ou `"native"` (digitado diretamente no app WhatsApp). `null` para inbound. |
+| `origin` | `string` | `"tn"` (ação originada via API do Turbo Notify) ou `"native"` (originada no canal WhatsApp). Eventos inbound (`message.received`/`delivered`/`read`) são sempre `"native"`. Sempre presente. |
 | `at` | `string` | ISO 8601 com offset — momento WhatsApp do evento (envio, entrega, leitura, edição, etc.). |
 
-> **Ordem dos campos do objeto party** (`inbox`/`from`/`to`/`member`): sempre
+> **Ordem dos campos do objeto party** (`inbox`/`from`/`to`): sempre
 > `contact_id, name, number, alias` (alias onde existir; campos opcionais
 > omitidos quando `null`). `GroupToParty` é a exceção — mantém `{group_id, name?}`.
 > `created_at` (envelope) é o momento de **emissão** do evento; `at` (em `data`)
@@ -199,6 +199,7 @@ a ação.
     "content_type": "text",
     "direction": "inbound",
     "channel": "whatsapp",
+    "origin": "native",
     "at": "2026-06-01T15:32:11-03:00"
   }
 }
@@ -236,6 +237,7 @@ Para mensagens 1:1 `to.group_id` é omitido — payloads pré-existentes permane
     "content_type": "text",
     "direction": "inbound",
     "channel": "whatsapp",
+    "origin": "native",
     "at": "2026-06-01T22:55:14-03:00"
   }
 }
@@ -262,6 +264,7 @@ Para mensagens 1:1 `to.group_id` é omitido — payloads pré-existentes permane
     "content_type": "text",
     "direction": "inbound",
     "channel": "whatsapp",
+    "origin": "native",
     "at": "2026-06-01T11:00:00-03:00"
   }
 }
@@ -305,6 +308,7 @@ Para mensagens 1:1 `to.group_id` é omitido — payloads pré-existentes permane
     "content_type": "text",
     "direction": "inbound",
     "channel": "whatsapp",
+    "origin": "native",
     "at": "2026-06-01T12:00:00-03:00"
   }
 }
@@ -350,6 +354,7 @@ Para `message.reacted`: `content_type` é sempre `"text"` e `preview` contém o 
     "content_type": "text",
     "direction": "inbound",
     "channel": "whatsapp",
+    "origin": "native",
     "at": "2026-06-01T13:00:00-03:00"
   }
 }
@@ -397,6 +402,7 @@ Disponível desde 2026-04-28. Replies são entregues como evento dedicado. `prev
     "content_type": "text",
     "direction": "inbound",
     "channel": "whatsapp",
+    "origin": "native",
     "at": "2026-06-01T10:00:00-03:00"
   }
 }
@@ -444,6 +450,7 @@ Receipts são sempre **inbound**. `from` é quem disparou o recibo; `inbox` e `t
     "content_type": "text",
     "direction": "inbound",
     "channel": "whatsapp",
+    "origin": "native",
     "at": "2026-06-01T10:00:30-03:00"
   }
 }
@@ -464,6 +471,7 @@ Receipts são sempre **inbound**. `from` é quem disparou o recibo; `inbox` e `t
     "content_type": "text",
     "direction": "inbound",
     "channel": "whatsapp",
+    "origin": "native",
     "at": "2026-06-01T10:01:15-03:00"
   }
 }
@@ -493,6 +501,7 @@ número (linked device) que observou o recibo.
     "content_type": "text",
     "direction": "inbound",
     "channel": "whatsapp",
+    "origin": "native",
     "at": "2026-06-01T10:01:15-03:00"
   }
 }
@@ -522,6 +531,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
   "content_type": "text",
   "direction": "inbound",
   "channel": "whatsapp",
+  "origin": "native",
   "at": "2026-06-01T15:32:11-03:00"
 }
 ```
@@ -542,6 +552,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
   "content_type": "image",
   "direction": "inbound",
   "channel": "whatsapp",
+  "origin": "native",
   "at": "2026-06-01T15:34:01-03:00"
 }
 ```
@@ -560,6 +571,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
   "content_type": "video",
   "direction": "inbound",
   "channel": "whatsapp",
+  "origin": "native",
   "at": "2026-06-01T15:35:12-03:00"
 }
 ```
@@ -576,6 +588,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
   "content_type": "audio",
   "direction": "inbound",
   "channel": "whatsapp",
+  "origin": "native",
   "at": "2026-06-01T15:36:08-03:00"
 }
 ```
@@ -594,6 +607,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
   "content_type": "document",
   "direction": "inbound",
   "channel": "whatsapp",
+  "origin": "native",
   "at": "2026-06-01T15:37:00-03:00"
 }
 ```
@@ -610,6 +624,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
   "content_type": "sticker",
   "direction": "inbound",
   "channel": "whatsapp",
+  "origin": "native",
   "at": "2026-06-01T15:37:33-03:00"
 }
 ```
@@ -626,6 +641,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
   "content_type": "location",
   "direction": "inbound",
   "channel": "whatsapp",
+  "origin": "native",
   "at": "2026-06-01T15:38:21-03:00"
 }
 ```
@@ -644,6 +660,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
   "content_type": "calendar",
   "direction": "inbound",
   "channel": "whatsapp",
+  "origin": "native",
   "at": "2026-06-01T15:40:00-03:00"
 }
 ```
@@ -703,6 +720,8 @@ O catálogo público é fechado — seu endpoint só recebe os 24 eventos listad
 
 Todos os eventos `number.*` carregam os campos comuns `alias` e `number` (quando disponível). O campo `name` — nome de exibição WhatsApp do número, capturado na conexão — é **opcional** em todos os eventos e **omitido quando nulo**. O `alias` `"main"` identifica o número principal; qualquer outro valor identifica um número extra.
 
+Todos os eventos `number.*` também carregam o par de coerência `channel` (sempre `"whatsapp"`) e `origin` (sempre `"tn"` — o ciclo de vida do dispositivo é produzido pela plataforma Turbo Notify). Eventos `number.*` **não** carregam `direction` — o ciclo de vida do link (conexão, desconexão, revogação, remoção, criação) não é um fluxo de mensagem WhatsApp.
+
 O campo `at` (em `data`) segue a classificação de 2026-06-02 (momento da ação real no WhatsApp): os eventos de ação real **`number.connected`**, **`number.disconnected`**, **`number.revoked`** e **`number.connect.failed`** carregam `at`; os eventos sintéticos do TN — **`number.created`**, **`number.remove.scheduled`**, **`number.remove.canceled`** e **`number.removed`** — **não** carregam `at`, apenas o `created_at` do envelope (`number.remove.scheduled` mantém `scheduled_at` como timestamp de valor de negócio, com seu nome semântico).
 
 ```json title="number.connected (exemplo)"
@@ -715,6 +734,8 @@ O campo `at` (em `data`) segue a classificação de 2026-06-02 (momento da açã
     "name": "Turbo Notify",
     "alias": "main",
     "number": "5511973117056",
+    "channel": "whatsapp",
+    "origin": "tn",
     "at": "2026-06-01T10:00:00-03:00"
   }
 }
@@ -762,7 +783,9 @@ Use `GET /v1/messages/{id}` para acessar o bloco `image`/`video`/`audio`/`docume
     "reason": "upload_failed",
     "consecutive_failures": 5,
     "error_code": "access_denied",
-    "affected_messages_count": 3
+    "affected_messages_count": 3,
+    "channel": "whatsapp",
+    "origin": "tn"
   }
 }
 ```
@@ -777,7 +800,9 @@ Use `GET /v1/messages/{id}` para acessar o bloco `image`/`video`/`audio`/`docume
   "created_at": "2026-06-01T10:08:00-03:00",
   "data": {
     "degraded_since": "2026-06-01T10:00:00-03:00",
-    "duration_seconds": 480
+    "duration_seconds": 480,
+    "channel": "whatsapp",
+    "origin": "tn"
   }
 }
 ```
@@ -795,7 +820,9 @@ Use `GET /v1/messages/{id}` para acessar o bloco `image`/`video`/`audio`/`docume
     "content_type": "image",
     "direction": "inbound",
     "preview": "Foto",
-    "reason": "no_storage"
+    "reason": "no_storage",
+    "channel": "whatsapp",
+    "origin": "tn"
   }
 }
 ```
