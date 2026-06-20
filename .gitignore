@@ -3,6 +3,7 @@
 # =============================================================================
 # Este repo e entregavel - .claude/ e IDE configs devem ser ignorados
 .claude/
+.private/
 .codex/
 .cursor/
 .gemini/
