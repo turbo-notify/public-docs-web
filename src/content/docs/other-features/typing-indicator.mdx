@@ -417,7 +417,7 @@ A conclusão da operação chega via webhook com os seguintes eventos:
 | `400`  | `invalid_json`          | O JSON da requisição está malformado ou inválido.  |
 | `402`  | `not_available_in_plan` | O recurso não está disponível no plano contratado. |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
-| `422`  | `contact_not_found`     | O `contact_id` informado em `to` não pertence ao tenant.  |
+| `422`  | `contact_not_found`     | O `contact_id` informado em `to` não pertence ao organization.  |
 | `422`  | `contacts_not_enabled`  | Envio por `contact_id` não está configurado nesta instância. |
 | `422`  | `group_not_found`       | O `group_id` informado em `to` não foi encontrado. |
 | `422`  | `groups_not_enabled`    | Suporte a grupos não está habilitado nesta instância. |

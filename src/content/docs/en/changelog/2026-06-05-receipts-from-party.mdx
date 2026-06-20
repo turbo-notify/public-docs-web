@@ -16,7 +16,7 @@ Each item in `receipts[]` now includes a `from` object with the identity of the 
 | ----- | ---- | ----------- |
 | `from.number` | string | E.164 number without `+`. Omitted for linked-device (LID) receipts. |
 | `from.contact_id` | string | TN Contact public identifier (`ct_{hex32}`). Omitted when unavailable. |
-| `from.name` | string | WhatsApp display name (PII — tenant-owned). Omitted when unavailable. |
+| `from.name` | string | WhatsApp display name (PII — organization-owned). Omitted when unavailable. |
 
 The entire `from` object is omitted for legacy receipts (pre-2026-06) and when no identity information is available.
 

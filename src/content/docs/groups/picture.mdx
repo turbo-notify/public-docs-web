@@ -21,7 +21,7 @@ GET /v1/groups/{group_id}/picture
 
 | Estado | Resposta |
 | ------ | -------- |
-| `tenant_storage` | 302 com URL **pré-assinada** do BYO Storage (R2/S3/Supabase) — nunca a object key crua |
+| `organization_storage` | 302 com URL **pré-assinada** do BYO Storage (R2/S3/Supabase) — nunca a object key crua |
 | `pending_upload` | 200 com `picture.kind = "pending"` (upload em andamento) |
 | `upload_failed` | 200 com `picture.kind = "unavailable"`, `reason = "upload_failed"` |
 | `unavailable` | 200 com `picture.kind = "unavailable"` + `reason` + `setup_hint` (quando aplicável) |
@@ -63,7 +63,7 @@ O campo `reason` discrimina a causa: `no_storage` (sem storage configurado), `st
 
 ## Campo `picture` inline em `GET /v1/groups/{group_id}`
 
-O campo `picture` no payload completo do grupo reflete o mesmo estado: presigna a URL quando `tenant_storage` e emite o `reason` + `setup_hint` corretos quando `unavailable`.
+O campo `picture` no payload completo do grupo reflete o mesmo estado: presigna a URL quando `organization_storage` e emite o `reason` + `setup_hint` corretos quando `unavailable`.
 
 ## Cache
 

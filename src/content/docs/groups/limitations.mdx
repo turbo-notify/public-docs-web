@@ -16,7 +16,7 @@ de grupo (criação, gerenciamento de membros, alteração de configurações)
 | Criar grupo via API | ❌ | Operação administrativa; foge do escopo transacional |
 | Adicionar/remover participante via API | ❌ | Idem |
 | Promover/rebaixar admin via API | ❌ | Idem |
-| Listar grupos do tenant (`GET /v1/groups`) | ❌ (deferido) | Use os webhooks `group.joined`/`group.left` para manter o índice local |
+| Listar grupos do organization (`GET /v1/groups`) | ❌ (deferido) | Use os webhooks `group.joined`/`group.left` para manter o índice local |
 | Listar participantes de um grupo | ❌ | Privacidade; o webhook `group.participants_*` entrega quem foi alterado |
 | Editar nome/descrição/imagem do grupo | ❌ | Operação administrativa |
 | Gerar link de convite do grupo | ❌ | Operação administrativa |

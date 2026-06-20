@@ -12,29 +12,29 @@ import ExternalLink from '@components/ExternalLink.astro';
 
 ## Constatação da auditoria
 
-Uma auditoria interna em abril/2026 revelou um gap entre documentação e implementação: o quota mensal de mensagens por tier (`messages_{TIER}`) estava definido em `rate-sync.toml` e havia um `tier_rate_limit.py` guard, **mas nenhuma rota wired** a esse guard. O pipeline real usava apenas um limiter global `messages_per_month` (50.000/mês compartilhado entre todos os tenants).
+Uma auditoria interna em abril/2026 revelou um gap entre documentação e implementação: o quota mensal de mensagens por tier (`messages_{TIER}`) estava definido em `rate-sync.toml` e havia um `tier_rate_limit.py` guard, **mas nenhuma rota wired** a esse guard. O pipeline real usava apenas um limiter global `messages_per_month` (50.000/mês compartilhado entre todos os organizations).
 
 Resultado:
-- Tenant **free** podia mandar até 50k/mês (10× o documentado).
-- Tenant **custom** estava capped em 50k/mês (100× abaixo do documentado).
+- Organization **free** podia mandar até 50k/mês (10× o documentado).
+- Organization **custom** estava capped em 50k/mês (100× abaixo do documentado).
 
 ## Tabela de tiers — valores existentes, agora aplicados
 
 | Tier | Mensagens/30d (documentado desde 2025) | Enforcement antes | Enforcement agora |
 | ---- | --------------------------------------:| ----------------- | ----------------- |
-| free     | 1.000     | global 50k compartilhado | 1.000 por tenant |
-| solo     | 10.000    | global 50k compartilhado | 10.000 por tenant |
-| business | 50.000    | global 50k compartilhado | 50.000 por tenant |
-| custom   | 500.000+  | global 50k compartilhado | 500.000+ por tenant |
+| free     | 1.000     | global 50k compartilhado | 1.000 por organization |
+| solo     | 10.000    | global 50k compartilhado | 10.000 por organization |
+| business | 50.000    | global 50k compartilhado | 50.000 por organization |
+| custom   | 500.000+  | global 50k compartilhado | 500.000+ por organization |
 
 **Sem mudança de valor:** os limites de cada tier não foram alterados. Apenas o enforcement passa a refletir a documentação.
 
 ## Notificação aos clientes afetados
 
-Tenants que excederam o limite do seu tier no período de auditoria (abril-maio 2026) receberam comunicações por três canais:
+Organizations que excederam o limite do seu tier no período de auditoria (abril-maio 2026) receberam comunicações por três canais:
 
-1. **Email transacional** — Customer Success → contato primário do tenant.
-2. **Banner no dashboard** — visível para todos os usuários do tenant impactado.
+1. **Email transacional** — Customer Success → contato primário do organization.
+2. **Banner no dashboard** — visível para todos os usuários do organization impactado.
 3. **Status page** — comunicado público em `status.turbonotify.com`.
 
 Janela de notificação: **14 dias** entre comunicação inicial e enforcement final.
@@ -45,12 +45,12 @@ Janela de notificação: **14 dias** entre comunicação inicial e enforcement f
 | ---- | ------- | ------------- |
 | Phase D — Backfill | 2026-04-XX | Reseed de Redis counters com janela 30d via MV |
 | Phase 1 — Warn (≥7d) | 2026-04-XX | Pipeline com `OUTBOUND_PIPELINE_MESSAGE_QUOTA_ENFORCEMENT=warn` — emite `message.quota.warning` mas não rejeita |
-| Phase 2 — Comms (≥14d) | 2026-05-XX | Emails + banner + status page para tenants impactados |
+| Phase 2 — Comms (≥14d) | 2026-05-XX | Emails + banner + status page para organizations impactados |
 | Phase 3 — Enforce | 2026-05-15 | `OUTBOUND_PIPELINE_MESSAGE_QUOTA_ENFORCEMENT=enforce` — 429 nos estouros |
 
 ## Caminho de upgrade
 
-Tenants que precisam de mais volume podem:
+Organizations que precisam de mais volume podem:
 
 - Subir tier no dashboard (free → solo → business).
 - Para volumes acima de 500k/mês, falar com vendas via contato no dashboard.

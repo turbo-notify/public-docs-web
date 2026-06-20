@@ -127,7 +127,7 @@ WhatsApp), `channel: "whatsapp"` e `origin: "tn"`.
 ### `group.picture_changed`
 
 Emitido **apenas** quando uma foto de grupo real chega ao seu BYO Storage
-(estado `tenant_storage`). O bloco `picture` segue o mesmo ciclo de vida da mídia
+(estado `organization_storage`). O bloco `picture` segue o mesmo ciclo de vida da mídia
 de mensagem: `kind: "available"` com uma URL **pré-assinada e com validade
 limitada** (`url_expires_at`, ~15 min) do seu bucket — nunca uma URL do WhatsApp.
 Re-baixe a foto via o endpoint GET quando a URL expirar.
@@ -257,6 +257,6 @@ um envelope polimórfico.
 ## Idempotência
 
 Cada evento de ciclo de vida é entregue com um header `Nats-Msg-Id`
-derivado de `(tenant_id, group_id, concern, unix_ms)`. Replays do
+derivado de `(organization_id, group_id, concern, unix_ms)`. Replays do
 JetStream colapsam dentro de uma janela curta — se você processou
 o evento `id` uma vez, ignore qualquer reentrega do mesmo `id`.

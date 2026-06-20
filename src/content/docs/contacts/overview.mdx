@@ -7,16 +7,16 @@ sidebar:
 
 import ExternalLink from '@components/ExternalLink.astro';
 
-Um **TN Contact** é um registro de observabilidade passiva que o Turbo Notify cria automaticamente a partir do tráfego de mensagens entre o número do tenant e contatos externos. Não é um CRM. Não há sincronização de agenda. Não há endpoints de criação ou exclusão manual.
+Um **TN Contact** é um registro de observabilidade passiva que o Turbo Notify cria automaticamente a partir do tráfego de mensagens entre o número do organization e contatos externos. Não é um CRM. Não há sincronização de agenda. Não há endpoints de criação ou exclusão manual.
 
 ## Conceito
 
 | Aspecto | Comportamento |
 | ------- | ------------- |
 | Origem | Mensagens (`inbound` ou `outbound`) ou número próprio (`self`) |
-| Criação | Automática na primeira observação `(tenant, telefone)` |
+| Criação | Automática na primeira observação `(organization, telefone)` |
 | Identificador | `ct_{hex32}` — public ID estável |
-| Escopo | Tenant-scoped (mesmo telefone em tenants distintos = contatos distintos) |
+| Escopo | Organization-scoped (mesmo telefone em organizations distintos = contatos distintos) |
 | Endurance | Sem TTL; persiste após `deleted_at` (soft delete histórico) |
 
 ## Ciclo de vida
@@ -29,7 +29,7 @@ Um **TN Contact** é um registro de observabilidade passiva que o Turbo Notify c
 [Self] session.connected ──────────┘                     Webhook: contact.created
 ```
 
-1. **Discovery** — primeira mensagem `(tenant, phone)` cria o `Contact` com `source` apropriado.
+1. **Discovery** — primeira mensagem `(organization, phone)` cria o `Contact` com `source` apropriado.
 2. **Enrichment** — pipeline assíncrono enriquece com `name`, `profile_picture`. Falhas são fail-open: o contato existe mesmo sem enriquecimento.
 3. **Quota** — primeira mensagem outbound consome um slot do quota mensal de contatos (sliding window 30 dias).
 
@@ -42,13 +42,13 @@ Um **TN Contact** é um registro de observabilidade passiva que o Turbo Notify c
 | business | 5.000    | 50.000     |
 | custom   | 50.000+  | 500.000+   |
 
-A razão 10:1 (mensagens/contato) reflete o uso médio em produção. Customizações por tenant via `plan_overrides`.
+A razão 10:1 (mensagens/contato) reflete o uso médio em produção. Customizações por organization via `plan_overrides`.
 
 ## Origens (source)
 
 - `inbound` — primeira mensagem recebida desse telefone.
 - `outbound` — primeira mensagem enviada para esse telefone.
-- `self` — número controlado pelo tenant (primário ou extra). Flag `is_self=TRUE`.
+- `self` — número controlado pelo organization (primário ou extra). Flag `is_self=TRUE`.
 
 ## Fora de escopo
 

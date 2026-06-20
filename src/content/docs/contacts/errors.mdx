@@ -15,13 +15,13 @@ import ApiResponse from '@components/ApiResponse.astro';
 | 400  | `invalid_contact_id` | `contact_id` não bate com `^ct_[0-9a-f]{32}$` |
 | 400  | `invalid_cursor` | Cursor opaco corrompido |
 | 402  | `contact_quota_exceeded` | Quota mensal de contatos distintos atingida |
-| 404  | `contact_not_found` | ID inválido ou de outro tenant |
+| 404  | `contact_not_found` | ID inválido ou de outro organization |
 | 404  | `contact_picture_unavailable` | Sem foto disponível para este contato |
 | 429  | `rate_limit_exceeded` | Limite de refresh por minuto |
 
 ## Exemplo de resposta 402
 
-Retornado pelo `SendMessageUseCase` quando o tenant tenta mandar a primeira mensagem para um novo contato e a quota de contatos distintos está esgotada.
+Retornado pelo `SendMessageUseCase` quando o organization tenta mandar a primeira mensagem para um novo contato e a quota de contatos distintos está esgotada.
 
 <ApiResponse status={402}>
 ```json

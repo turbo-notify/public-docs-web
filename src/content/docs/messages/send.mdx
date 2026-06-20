@@ -384,7 +384,7 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.       |
 | `422`  | `sender_not_authorized` | O campo `from` não está ativo na conta.           |
 | `429`  | `rate_limit_exceeded`   | Limite de envio do plano ultrapassado.            |
-| `422`  | `contact_not_found`     | O `contact_id` informado não pertence ao tenant.  |
+| `422`  | `contact_not_found`     | O `contact_id` informado não pertence ao organization.  |
 | `422`  | `contacts_not_enabled`  | Envio por `contact_id` não configurado.           |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.              |
 | `503`  | `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.       |
@@ -764,7 +764,7 @@ A resposta tem o shape padrão (`message_id`, `status`). O webhook
 enviou no request); o `number_alias` do envelope identifica a linha que
 enviou — útil para correlacionar entregas inbound e outbound no mesmo grupo.
 
-:::caution[Tenant precisa estar no grupo]
+:::caution[Organization precisa estar no grupo]
 A TN só envia para grupos onde sua linha (primary ou extra) é
 participante. Tentar enviar para um `group_id` em que você não está
 mais retorna 422 `not_group_member`. Re-entre no grupo via WhatsApp

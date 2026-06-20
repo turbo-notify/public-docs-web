@@ -13,10 +13,10 @@ Lista de eventos webhook emitidos pelo Turbo Notify para mudanças relacionadas 
 
 | Evento | Quando |
 | ------ | ------ |
-| `contact.created` | Primeira observação do par `(tenant, telefone)` |
+| `contact.created` | Primeira observação do par `(organization, telefone)` |
 | `contact.name_changed` | `name` divergiu do snapshot anterior |
 | `contact.picture_changed` | WhatsApp emitiu `PictureUpdate` ou refresh detectou hash novo |
-| `contact.first_messaged` | Tenant enviou primeira mensagem outbound para este contato (slot consumido) |
+| `contact.first_messaged` | Organization enviou primeira mensagem outbound para este contato (slot consumido) |
 | `contact.quota.warning` | Cruzou threshold 80/90/95% da quota mensal |
 | `contact.quota.exceeded` | Tentativa rejeitada por estouro (HTTP 402) |
 
@@ -160,7 +160,7 @@ WhatsApp): aqui o TN emitiu o evento 3 s após a alteração do nome.
 ```
 
 O bloco `picture` segue o mesmo ciclo de vida da mídia de mensagem: quando a
-foto está no seu bucket (`tenant_storage`) ela vem como `kind: "available"` com
+foto está no seu bucket (`organization_storage`) ela vem como `kind: "available"` com
 uma URL **pré-assinada e com validade limitada** (`url_expires_at`, ~15 min) —
 nunca uma URL do WhatsApp. Re-baixe a foto via o endpoint GET quando a URL
 expirar. O evento dispara **apenas** quando a foto chega ao seu bucket, inclusive
@@ -242,4 +242,4 @@ Sintético — carrega `channel`/`origin` mas **sem `direction`**, **sem `at`** 
 
 Cada evento carrega `id` único (`evt_…`). Use `id` como chave de deduplicação no seu side.
 
-Internamente o publisher TN usa `Nats-Msg-Id` com formato `{tenant_id}:{contact_id}:{event_kind}` para idempotência no broker.
+Internamente o publisher TN usa `Nats-Msg-Id` com formato `{organization_id}:{contact_id}:{event_kind}` para idempotência no broker.

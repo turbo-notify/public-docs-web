@@ -12,5 +12,5 @@ description: "POST /v1/typing-indicator ahora acepta to.group_id para grupos de 
 `POST /v1/typing-indicator` ahora acepta `{"group_id": "grp_…"}` como destinatario, además del `{"number": "…"}` ya existente. `contact_id` no es compatible con indicadores de escritura.
 
 **Nuevos códigos de error:**
-- `group_not_found` (HTTP 422) — el `group_id` proporcionado no pertenece a este tenant.
+- `group_not_found` (HTTP 422) — el `group_id` proporcionado no pertenece a este organization.
 - `groups_not_enabled` (HTTP 422) — la funcionalidad Grupos no está habilitada en esta instancia.

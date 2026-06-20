@@ -31,14 +31,14 @@ Nenhuma das formas anteriores foi alterada — a mudança é **aditiva**.
 }
 ```
 
-O Turbo Notify resolve o telefone a partir do registro `TN Contact` no momento do envio. O contato deve pertencer ao mesmo tenant da chave de API usada.
+O Turbo Notify resolve o telefone a partir do registro `TN Contact` no momento do envio. O contato deve pertencer ao mesmo organization da chave de API usada.
 
 ## Novos códigos de erro
 
 | Código | HTTP | Significado |
 | ------ | ---- | ----------- |
-| `contact_not_found` | 422 | O `contact_id` informado não existe para este tenant |
-| `contacts_not_enabled` | 422 | O recurso Contatos não está provisionado para este tenant |
+| `contact_not_found` | 422 | O `contact_id` informado não existe para este organization |
+| `contacts_not_enabled` | 422 | O recurso Contatos não está provisionado para este organization |
 
 ## Por que usar `contact_id`
 

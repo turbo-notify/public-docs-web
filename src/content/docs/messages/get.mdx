@@ -165,7 +165,7 @@ Recupere o conteúdo completo, o status de entrega e a referência de mídia de 
     image: {
       caption: 'Foto do produto',
       kind: 'available',
-      url: 'https://your-bucket.r2.cloudflarestorage.com/tenants/.../image.jpeg?X-Amz-...',
+      url: 'https://your-bucket.r2.cloudflarestorage.com/organizations/.../image.jpeg?X-Amz-...',
       expires_at: '2026-06-01T11:00:00-03:00',
       mime_type: 'image/jpeg',
       size_bytes: 123456,
@@ -478,6 +478,6 @@ Quando o Object Storage está configurado, o Turbo Notify copia automaticamente 
 | :----: | -------------- | --------- |
 | `400` | `invalid_message_id` | O identificador não corresponde ao formato `msg_` + 32 hex. |
 | `403` | `not_authorized` | A chave de acesso está inválida, ausente ou sem o escopo `messages:read`. |
-| `404` | `not_found` | Mensagem não encontrada ou pertence a outro tenant. |
+| `404` | `not_found` | Mensagem não encontrada ou pertence a outro organization. |
 | `429` | `rate_limit_exceeded` | Limite de requisições ultrapassado. |
 | `500` | `internal_error` | Erro interno inesperado no servidor. |

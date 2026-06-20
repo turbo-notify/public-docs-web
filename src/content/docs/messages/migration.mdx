@@ -16,7 +16,7 @@ outbound). Mensagens 1:1 permanecem byte-idênticas — não há ação
 necessária se você não usa grupos.
 
 :::note[Superseded em 2026-06-19]
-O campo de identificação da linha tenant introduzido aqui (`member`, depois
+O campo de identificação da linha organization introduzido aqui (`member`, depois
 renomeado `inbox`) **foi removido** dos eventos e respostas `message.*`. A
 linha Turbo Notify agora é identificada pelo `number_alias` do envelope;
 resolva seu número/contato via `GET /v1/numbers/{alias}`. As menções a
@@ -86,7 +86,7 @@ da linha Turbo Notify. Em vez disso, carrega o identificador e nome do grupo.
 - Para obter qual linha Turbo Notify recebeu a mensagem, leia o `number_alias` do envelope e resolva seu número/contato via `GET /v1/numbers/{alias}`. (Este campo foi introduzido como `member` nesta migração, renomeado `inbox` em 2026-06-01 e **removido** em 2026-06-19 — veja a nota no topo da seção.)
 - Para obter o grupo destinatário, leia `data.to.group_id`.
 
-### 3. Campo `member` — identificação da linha tenant
+### 3. Campo `member` — identificação da linha organization
 
 O campo `member` é adicionado como sibling top-level em **todos** os
 payloads de grupo (inbound e outbound). Ele identifica a linha Turbo Notify
@@ -96,7 +96,7 @@ participante do grupo — o telefone (`number`) e alias (`alias`).
 "member": { "alias": "main", "number": "5511973117056" }
 ```
 
-Para tenants com múltiplos números extras, `member` é a referência
+Para organizations com múltiplos números extras, `member` é a referência
 autoritativa sobre qual linha está participando do grupo.
 
 ### 4. Detecção de grupo — padrão canônico
@@ -111,7 +111,7 @@ const groupName = data.group?.name;
 const isGroup = "group_id" in data.to;
 const groupId = data.to.group_id;
 const groupName = data.to.name;
-const inboxAlias = event.number_alias; // linha tenant via envelope (campo `inbox` removido em 2026-06-19)
+const inboxAlias = event.number_alias; // linha organization via envelope (campo `inbox` removido em 2026-06-19)
 ```
 
 ### Checklist de migração (grupos)

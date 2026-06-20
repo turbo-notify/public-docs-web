@@ -9,7 +9,7 @@ import ApiResponse from '@components/ApiResponse.astro';
 
 Retorna a foto de perfil do contato via 302 redirect. O destino do redirect depende do estado de armazenamento (`picture_storage`).
 
-> O 302 para `tenant_storage` aponta para uma URL **pré-assinada** do seu BYO Storage (nunca a object key crua). Uma foto marcada como `unavailable` enquanto o storage estava ausente é **reavaliada** e enviada assim que você habilita o BYO Storage — o webhook [`contact.picture_changed`](/webhooks/contact-events/#exemplo-contactpicture_changed) é então emitido.
+> O 302 para `organization_storage` aponta para uma URL **pré-assinada** do seu BYO Storage (nunca a object key crua). Uma foto marcada como `unavailable` enquanto o storage estava ausente é **reavaliada** e enviada assim que você habilita o BYO Storage — o webhook [`contact.picture_changed`](/webhooks/contact-events/#exemplo-contactpicture_changed) é então emitido.
 
 ## Endpoint
 
@@ -23,14 +23,14 @@ GET /v1/contacts/{contact_id}/profile-picture
 
 | Estado | Resposta |
 | ------ | -------- |
-| `tenant_storage` | 302 com URL pré-assinada do BYO Storage (R2/S3/Supabase) |
+| `organization_storage` | 302 com URL pré-assinada do BYO Storage (R2/S3/Supabase) |
 | `pending_upload` | 404 `contact_picture_unavailable` (upload ainda em andamento) |
 | `upload_failed` | 404 `contact_picture_unavailable` (a tentativa de upload deste ciclo falhou; **não há retry imediato**). Diferente da mídia de mensagem — que é terminal — a foto é **re-resolvida na próxima interação do contato** (inbound/outbound), de forma session-affine; uma falha de upload pode se recuperar em uma interação futura se o storage estiver saudável. |
 | `unavailable` | 404 `contact_picture_unavailable` |
 
 ## Modo proxy (opt-in)
 
-Tenants com modo proxy habilitado recebem 200 com bytes inline (o backend faz o GET e devolve). Útil para evitar expor URLs do WhatsApp a clientes finais. **Aumenta o custo de banda** do tenant — desabilitado por padrão.
+Organizations com modo proxy habilitado recebem 200 com bytes inline (o backend faz o GET e devolve). Útil para evitar expor URLs do WhatsApp a clientes finais. **Aumenta o custo de banda** do organization — desabilitado por padrão.
 
 Configuração: `dashboard → BYO Storage → Profile Picture Proxy = on`.
 

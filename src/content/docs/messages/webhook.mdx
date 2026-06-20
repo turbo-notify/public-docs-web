@@ -111,7 +111,7 @@ Todos os eventos `message.*` compartilham os campos abaixo em `data`:
 | `to` | `object` | Destinatário. 1:1: `{contact_id?, name?, number}`. Grupo: `{group_id, name?}`. |
 | `preview` | `string` | Recorte do conteúdo (até 50 chars). Veja [Preview por tipo](#preview-por-tipo). |
 | `content_type` | `string` | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, `poll`. Mensagens de tipo desconhecido chegam como `unsupported`. |
-| `direction` | `string` | `"outbound"` (ação do tenant/API) ou `"inbound"` (ação do peer/WhatsApp). |
+| `direction` | `string` | `"outbound"` (ação do organization/API) ou `"inbound"` (ação do peer/WhatsApp). |
 | `channel` | `string` | Sempre `"whatsapp"`. |
 | `origin` | `string` | `"tn"` (ação originada via API do Turbo Notify) ou `"native"` (originada no canal WhatsApp). Eventos inbound (`message.received`/`delivered`/`read`) são sempre `"native"`. Sempre presente. |
 | `at` | `string` | ISO 8601 com offset — momento WhatsApp do evento (envio, entrega, leitura, edição, etc.). |
@@ -181,7 +181,7 @@ O `number_alias` do envelope identifica a linha Turbo Notify do evento; resolva 
 
 `origin` discrimina a fonte do envio outbound:
 - `"tn"` — enviado via API do Turbo Notify.
-- `"native"` — detectado diretamente do app WhatsApp (quando o tenant digita pelo celular).
+- `"native"` — detectado diretamente do app WhatsApp (quando o organization digita pelo celular).
 
 `content_type` e `preview` espelham `message.received` — `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar` ou `poll`. Para o body completo, faça `GET /v1/messages/{id}`.
 
@@ -246,8 +246,8 @@ Para mensagens 1:1 `to.group_id` é omitido — payloads pré-existentes permane
 }
 ```
 
-- `to.group_id` é o identificador público do grupo (`grp_{hex32}`) — estável por tenant. Nunca expostos JIDs brutos do WhatsApp.
-- O `number_alias` do envelope identifica a linha Turbo Notify que participa do grupo. Essencial quando o tenant tem múltiplos números extras — resolva seu número/contato via `GET /v1/numbers/{alias}`.
+- `to.group_id` é o identificador público do grupo (`grp_{hex32}`) — estável por organization. Nunca expostos JIDs brutos do WhatsApp.
+- O `number_alias` do envelope identifica a linha Turbo Notify que participa do grupo. Essencial quando o organization tem múltiplos números extras — resolva seu número/contato via `GET /v1/numbers/{alias}`.
 - Para detectar mensagens de grupo: verifique `"group_id" in data.to` — conversas 1:1 nunca carregam esse campo.
 
 ### Exemplo — `message.edited`
@@ -436,7 +436,7 @@ Para responder uma mensagem via API, use o endpoint dedicado `POST /v1/messages/
 
 ### Exemplo — `message.delivered` / `message.read` (receipt inbound)
 
-Receipts são sempre **inbound**. `from` é quem disparou o recibo; `to` identifica o lado tenant (1:1: o seu número; grupo: o grupo). A linha tenant é dada pelo `number_alias` do envelope.
+Receipts são sempre **inbound**. `from` é quem disparou o recibo; `to` identifica o lado organization (1:1: o seu número; grupo: o grupo). A linha organization é dada pelo `number_alias` do envelope.
 
 ```json title="message.delivered (1:1)"
 {
@@ -486,7 +486,7 @@ Receipts são sempre **inbound**. `from` é quem disparou o recibo; `to` identif
 
 Quando você envia uma mensagem a um **grupo**, **cada outro participante**
 gera o seu próprio `delivered` (ao receber) e `read` (ao ler). Em cada
-recibo: `from` = aquele participante, `to` = o grupo. A linha tenant (linked
+recibo: `from` = aquele participante, `to` = o grupo. A linha organization (linked
 device) que observou o recibo é dada pelo `number_alias` do envelope.
 
 ```json title="message.read (grupo) — recibo do participante A"
@@ -746,7 +746,7 @@ Estes eventos são **provider-agnostic**: o payload é o mesmo independentemente
 :::
 
 :::caution[Mensagens recebidas com mídia — entrega só após resolução]
-Para mensagens **inbound com mídia** (imagem, vídeo, áudio, documento, sticker), o webhook `message.received` só é enviado depois que o estado de mídia chega a um *terminal* para o seu tenant:
+Para mensagens **inbound com mídia** (imagem, vídeo, áudio, documento, sticker), o webhook `message.received` só é enviado depois que o estado de mídia chega a um *terminal* para o seu organization:
 
 - **Com [BYO Storage](/general/byo-storage-setup/) ativo**: bytes salvos no seu bucket, ou falha permanente sinalizada por `media.unavailable`.
 - **Sem BYO Storage**: payload sai com `media` indisponível e `reason = "no_storage"`. O Turbo Notify **não baixa nem proxia** os bytes da CDN do WhatsApp.
