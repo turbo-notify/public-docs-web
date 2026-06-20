@@ -53,15 +53,15 @@ identifica o número Turbo Notify que participa do grupo — o telefone
 ```jsonc
 // Inbound de grupo
 {
-  "inbox":  { "number": "5511973117056", "alias": "main" },
+  "inbox":  { "alias": "main", "number": "5511973117056" },
   "from":   { "contact_id": "ct_...", "name": "Cleverson", "number": "5571999258283" },
   "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" }
 }
 
 // Outbound para grupo
 {
-  "inbox":  { "number": "5511973117056", "alias": "main" },
-  "from":   { "name": "Turbo Notify", "number": "5511973117056", "alias": "main" },
+  "inbox":  { "alias": "main", "number": "5511973117056" },
+  "from":   { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
   "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" }
 }
 ```

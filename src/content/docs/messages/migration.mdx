@@ -44,7 +44,7 @@ do próprio campo `to`.
 ```json
 {
   "from": { "name": "Cleverson", "number": "5571999258283" },
-  "to":   { "name": "Turbo Notify", "number": "5511973117056", "alias": "main" },
+  "to":   { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
   "group": { "id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" }
 }
 ```
@@ -55,7 +55,7 @@ do próprio campo `to`.
 {
   "from":   { "contact_id": "ct_...", "name": "Cleverson", "number": "5571999258283" },
   "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
-  "member": { "number": "5511973117056", "alias": "main" }
+  "member": { "alias": "main", "number": "5511973117056" }
 }
 ```
 
@@ -93,7 +93,7 @@ payloads de grupo (inbound e outbound). Ele identifica a linha Turbo Notify
 participante do grupo — o telefone (`number`) e alias (`alias`).
 
 ```json
-"member": { "number": "5511973117056", "alias": "main" }
+"member": { "alias": "main", "number": "5511973117056" }
 ```
 
 Para tenants com múltiplos números extras, `member` é a referência
@@ -321,7 +321,7 @@ O campo `new_text` foi removido do payload do evento `message.edited`. Em seu lu
   "created_at": "2026-06-01T10:05:00Z",
   "data": {
     "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
-    "from": { "number": "5571999258283", "alias": "main" },
+    "from": { "alias": "main", "number": "5571999258283" },
     "to": { "number": "5511988877766" },
     "preview": "Texto corrigido da mensagem co",
     "content_type": "text",

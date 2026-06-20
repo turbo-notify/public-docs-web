@@ -107,7 +107,7 @@ Todos os eventos `message.*` compartilham os campos abaixo em `data`:
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | `id` | `string \| null` | Identificador público da mensagem (`msg_{hex32}`). `null` apenas em `message.send.failed` (row não criada). |
-| `from` | `object` | Quem originou o evento. Pessoa (inbound): `{contact_id?, name?, number}`. Outbound: `{contact_id?, name?, number, alias}`. |
+| `from` | `object` | Quem originou o evento. Pessoa (inbound): `{contact_id?, name?, number}`. Outbound: `{contact_id?, name?, alias, number}`. |
 | `to` | `object` | Destinatário. 1:1: `{contact_id?, name?, number}`. Grupo: `{group_id, name?}`. |
 | `preview` | `string` | Recorte do conteúdo (até 50 chars). Veja [Preview por tipo](#preview-por-tipo). |
 | `content_type` | `string` | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, `poll`. Mensagens de tipo desconhecido chegam como `unsupported`. |
@@ -117,7 +117,7 @@ Todos os eventos `message.*` compartilham os campos abaixo em `data`:
 | `at` | `string` | ISO 8601 com offset — momento WhatsApp do evento (envio, entrega, leitura, edição, etc.). |
 
 > **Ordem dos campos do objeto party** (`from`/`to`): sempre
-> `contact_id, name, number, alias` (alias onde existir; campos opcionais
+> `contact_id, name, alias, number` (alias onde existir; campos opcionais
 > omitidos quando `null`). `GroupToParty` é a exceção — mantém `{group_id, name?}`.
 > A linha Turbo Notify do evento é identificada pelo `number_alias` do envelope;
 > resolva seu número/contato via `GET /v1/numbers/{alias}`.
@@ -161,7 +161,7 @@ shape** do `status.error` retornado por `GET /v1/messages/{id}` e
   "created_at": "2026-06-01T10:00:06-03:00",
   "data": {
     "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
-    "from": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "Turbo Notify", "alias": "main", "number": "5511999990001" },
     "to": { "name": "João Silva", "number": "5511999990002" },
     "preview": "Sua mensagem...",
     "content_type": "text",
@@ -197,7 +197,7 @@ O `number_alias` do envelope identifica a linha Turbo Notify do evento; resolva 
   "data": {
     "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
     "from": { "name": "João Silva", "number": "5511777777777" },
-    "to": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "to": { "name": "Turbo Notify", "alias": "main", "number": "5511999990001" },
     "preview": "Olá, gostaria de saber...",
     "content_type": "text",
     "direction": "inbound",
@@ -262,7 +262,7 @@ Para mensagens 1:1 `to.group_id` é omitido — payloads pré-existentes permane
   "data": {
     "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
     "from": { "name": "João Silva", "number": "5511777777777" },
-    "to": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "to": { "name": "Turbo Notify", "alias": "main", "number": "5511999990001" },
     "preview": "Texto corrigido da mensagem",
     "content_type": "text",
     "direction": "inbound",
@@ -282,7 +282,7 @@ Para mensagens 1:1 `to.group_id` é omitido — payloads pré-existentes permane
   "created_at": "2026-06-01T11:05:00-03:00",
   "data": {
     "id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
-    "from": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "Turbo Notify", "alias": "main", "number": "5511999990001" },
     "to": { "name": "João Silva", "number": "5511777777777" },
     "preview": "Texto atualizado da mensagem",
     "content_type": "text",
@@ -306,7 +306,7 @@ Para mensagens 1:1 `to.group_id` é omitido — payloads pré-existentes permane
   "data": {
     "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
     "from": { "name": "João Silva", "number": "5511777777777" },
-    "to": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "to": { "name": "Turbo Notify", "alias": "main", "number": "5511999990001" },
     "preview": "",
     "content_type": "text",
     "direction": "inbound",
@@ -326,7 +326,7 @@ Para mensagens 1:1 `to.group_id` é omitido — payloads pré-existentes permane
   "created_at": "2026-06-01T12:05:00-03:00",
   "data": {
     "id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
-    "from": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "Turbo Notify", "alias": "main", "number": "5511999990001" },
     "to": { "name": "João Silva", "number": "5511777777777" },
     "preview": "",
     "content_type": "text",
@@ -352,7 +352,7 @@ Para `message.reacted`: `content_type` é sempre `"text"` e `preview` contém o 
   "data": {
     "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
     "from": { "name": "João Silva", "number": "5511777777777" },
-    "to": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "to": { "name": "Turbo Notify", "alias": "main", "number": "5511999990001" },
     "preview": "👍",
     "content_type": "text",
     "direction": "inbound",
@@ -372,7 +372,7 @@ Para `message.reacted`: `content_type` é sempre `"text"` e `preview` contém o 
   "created_at": "2026-06-01T13:05:00-03:00",
   "data": {
     "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-    "from": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "Turbo Notify", "alias": "main", "number": "5511999990001" },
     "to": { "name": "João Silva", "number": "5511777777777" },
     "preview": "❤️",
     "content_type": "text",
@@ -400,7 +400,7 @@ Disponível desde 2026-04-28. Replies são entregues como evento dedicado. `prev
   "data": {
     "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
     "from": { "name": "João Silva", "number": "5511777777777" },
-    "to": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "to": { "name": "Turbo Notify", "alias": "main", "number": "5511999990001" },
     "preview": "Sim, é esse pedido mesmo!",
     "content_type": "text",
     "direction": "inbound",
@@ -420,7 +420,7 @@ Disponível desde 2026-04-28. Replies são entregues como evento dedicado. `prev
   "created_at": "2026-06-01T10:01:00-03:00",
   "data": {
     "id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
-    "from": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "from": { "name": "Turbo Notify", "alias": "main", "number": "5511999990001" },
     "to": { "name": "João Silva", "number": "5511777777777" },
     "preview": "Sem problemas, vou conferir.",
     "content_type": "text",
@@ -448,7 +448,7 @@ Receipts são sempre **inbound**. `from` é quem disparou o recibo; `to` identif
   "data": {
     "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
     "from": { "name": "João Silva", "number": "5511777777777" },
-    "to": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "to": { "name": "Turbo Notify", "alias": "main", "number": "5511999990001" },
     "preview": "Olá, gostaria de saber...",
     "content_type": "text",
     "direction": "inbound",
@@ -469,7 +469,7 @@ Receipts são sempre **inbound**. `from` é quem disparou o recibo; `to` identif
   "data": {
     "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
     "from": { "name": "João Silva", "number": "5511777777777" },
-    "to": { "name": "Turbo Notify", "number": "5511999990001", "alias": "main" },
+    "to": { "name": "Turbo Notify", "alias": "main", "number": "5511999990001" },
     "preview": "Olá, gostaria de saber...",
     "content_type": "text",
     "direction": "inbound",
@@ -528,7 +528,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
 {
   "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "from": { "name": "João Silva", "number": "5511777777777" },
-  "to": { "number": "5511999990001", "alias": "main" },
+  "to": { "alias": "main", "number": "5511999990001" },
   "preview": "Olá, gostaria de saber...",
   "content_type": "text",
   "direction": "inbound",
@@ -548,7 +548,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0010",
   "from": { "name": "João Silva", "number": "5511777777777" },
-  "to": { "number": "5511999990001", "alias": "main" },
+  "to": { "alias": "main", "number": "5511999990001" },
   "preview": "Foto do produto",
   "content_type": "image",
   "direction": "inbound",
@@ -566,7 +566,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0011",
   "from": { "name": "João Silva", "number": "5511777777777" },
-  "to": { "number": "5511999990001", "alias": "main" },
+  "to": { "alias": "main", "number": "5511999990001" },
   "preview": "[Video]",
   "content_type": "video",
   "direction": "inbound",
@@ -582,7 +582,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0012",
   "from": { "name": "João Silva", "number": "5511777777777" },
-  "to": { "number": "5511999990001", "alias": "main" },
+  "to": { "alias": "main", "number": "5511999990001" },
   "preview": "[Audio]",
   "content_type": "audio",
   "direction": "inbound",
@@ -600,7 +600,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0013",
   "from": { "name": "João Silva", "number": "5511777777777" },
-  "to": { "number": "5511999990001", "alias": "main" },
+  "to": { "alias": "main", "number": "5511999990001" },
   "preview": "fatura-abril.pdf",
   "content_type": "document",
   "direction": "inbound",
@@ -616,7 +616,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0014",
   "from": { "name": "João Silva", "number": "5511777777777" },
-  "to": { "number": "5511999990001", "alias": "main" },
+  "to": { "alias": "main", "number": "5511999990001" },
   "preview": "[Sticker]",
   "content_type": "sticker",
   "direction": "inbound",
@@ -632,7 +632,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0001",
   "from": { "name": "João Silva", "number": "5511777777777" },
-  "to": { "number": "5511999990001", "alias": "main" },
+  "to": { "alias": "main", "number": "5511999990001" },
   "preview": "Av. Paulista, Sao Paulo, SP",
   "content_type": "location",
   "direction": "inbound",
@@ -650,7 +650,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0003",
   "from": { "name": "João Silva", "number": "5511777777777" },
-  "to": { "number": "5511999990001", "alias": "main" },
+  "to": { "alias": "main", "number": "5511999990001" },
   "preview": "Sprint Planning — qui, 1 jun 2026 14:00",
   "content_type": "calendar",
   "direction": "inbound",
@@ -900,7 +900,7 @@ Quando você envia uma mensagem para um grupo via
   "created_at": "2026-06-01T10:00:05-03:00",
   "data": {
     "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
-    "from": { "name": "Turbo Notify", "number": "5511973117056", "alias": "main" },
+    "from": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
     "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
     "preview": "Bom dia, equipe",
     "content_type": "text",
