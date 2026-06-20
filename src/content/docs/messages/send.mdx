@@ -761,8 +761,8 @@ O campo `to` é polimórfico — aceita exatamente uma das três formas (sem `ki
 
 A resposta tem o shape padrão (`message_id`, `status`). O webhook
 `message.sent` correspondente usa `to.group_id` (mesmo valor que você
-enviou no request) + campo `inbox` identificando a linha que enviou —
-útil para correlacionar entregas inbound e outbound no mesmo grupo.
+enviou no request); o `number_alias` do envelope identifica a linha que
+enviou — útil para correlacionar entregas inbound e outbound no mesmo grupo.
 
 :::caution[Tenant precisa estar no grupo]
 A TN só envia para grupos onde sua linha (primary ou extra) é

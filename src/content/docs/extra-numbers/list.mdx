@@ -127,23 +127,29 @@ Liste todos os números extras vinculados à sua conta para consultar alias, nú
   body={{
     numbers: [
       {
-        alias: 'condominio_1',
-        phone_number: '+5511999999997',
+        contact_id: 'ct_c7abb1f5ee9640bf86a0a20290810ae9',
         name: 'Condomínio Alpha',
+        type: 'extra',
+        alias: 'condominio_1',
+        number: '5511999999997',
         description: 'Avisos do condomínio 1',
-        status: { status: 'active', at: '2025-07-16T10:01:00Z', reason: null },
+        status: { status: 'connected', at: '2025-07-16T10:01:00Z', reason: null },
       },
       {
+        contact_id: null,
+        name: null,
+        type: 'extra',
         alias: 'condominio_2',
-        phone_number: '+5511999999998',
-        name: null,
+        number: '5511999999998',
         description: null,
-        status: { status: 'active', at: '2025-07-18T14:22:00Z', reason: null },
+        status: { status: 'connected', at: '2025-07-18T14:22:00Z', reason: null },
       },
       {
-        alias: 'condominio_3',
-        phone_number: '+5511999999999',
+        contact_id: null,
         name: null,
+        type: 'extra',
+        alias: 'condominio_3',
+        number: '5511999999999',
         description: null,
         status: { status: 'pending', at: '2025-07-20T09:45:00Z', reason: null },
       },
@@ -158,9 +164,11 @@ Liste todos os números extras vinculados à sua conta para consultar alias, nú
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `numbers` | array | Lista de números extras cadastrados |
-| `numbers[].alias` | string | Identificador único do número extra na conta |
-| `numbers[].phone_number` | string | Número de telefone no formato E.164 |
+| `numbers[].contact_id` | string\|null | Identificador público (`ct_…`) do contato próprio do número; `null` enquanto não resolvido |
 | `numbers[].name` | string\|null | Nome da conta WhatsApp do número (capturado na conexão); `null` enquanto não houver conexão estabelecida |
+| `numbers[].type` | string | Sempre `"extra"` para números extras |
+| `numbers[].alias` | string | Identificador único do número extra na conta |
+| `numbers[].number` | string | Número de telefone em dígitos E.164 (sem `+`) |
 | `numbers[].description` | string\|null | Descrição livre definida pelo usuário |
 | `numbers[].status` | object | `{status, at, reason?}` — estado atual do número |
 | `numbers[].status.status` | string | `active`, `inactive`, `pending`, `pairing`, `failed` ou `revoked` |

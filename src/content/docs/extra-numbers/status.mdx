@@ -134,11 +134,12 @@ Para verificar o status de um número extra específico, faça uma requisição 
 <ApiResponse
   status={200}
   body={{
-    alias: 'condominio_1',
-    phone_number: '+5511999999997',
+    contact_id: 'ct_c7abb1f5ee9640bf86a0a20290810ae9',
     name: 'Condomínio Alpha',
-    number_type: 'extra',
-    status: 'active',
+    type: 'extra',
+    alias: 'condominio_1',
+    number: '5511999999997',
+    status: 'connected',
     at: '2025-07-16T10:01:00Z',
     description: 'Avisos do condomínio 1',
     scheduled_deletion_at: null,
@@ -151,10 +152,11 @@ Para verificar o status de um número extra específico, faça uma requisição 
 
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
-| `alias` | string | Identificador único do número extra na conta |
-| `phone_number` | string | Número de telefone no formato E.164 |
+| `contact_id` | string\|null | Identificador público (`ct_…`) do contato próprio do número; `null` enquanto não resolvido |
 | `name` | string\|null | Nome da conta WhatsApp do número (capturado na conexão); `null` enquanto não houver conexão estabelecida |
-| `number_type` | string | Sempre `"extra"` para números extras |
+| `type` | string | Sempre `"extra"` para números extras |
+| `alias` | string | Identificador único do número extra na conta |
+| `number` | string | Número de telefone em dígitos E.164 (sem `+`) |
 | `status` | string | Estado atual — veja tabela abaixo |
 | `at` | string | Timestamp ISO 8601 da última mudança de status |
 | `description` | string\|null | Descrição livre definida pelo usuário |

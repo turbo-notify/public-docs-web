@@ -136,7 +136,8 @@ Recupere o conteúdo completo, o status de entrega e a referência de mídia de 
   status={200}
   body={{
     id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
-    inbox: { name: 'Turbo Notify', number: '5511973117056', alias: 'main' },
+    organization_id: 'org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+    number_alias: 'main',
     from: { name: 'Turbo Notify', number: '5511973117056', alias: 'main' },
     to: { name: 'João', number: '5511999999999' },
     preview: 'Olá, seu pedido foi confirmado!',
@@ -156,7 +157,8 @@ Recupere o conteúdo completo, o status de entrega e a referência de mídia de 
   status={200}
   body={{
     id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f71',
-    inbox: { name: 'Turbo Notify', number: '5511973117056', alias: 'main' },
+    organization_id: 'org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+    number_alias: 'main',
     from: { name: 'João', number: '5511999999999' },
     to: { name: 'Turbo Notify', number: '5511973117056', alias: 'main' },
     preview: 'Foto do produto',
@@ -179,12 +181,13 @@ Recupere o conteúdo completo, o status de entrega e a referência de mídia de 
 
 ## Campos da resposta
 
-`from` e `to` são objetos com forma direção-aware — o mesmo shape usado nos webhooks. `inbox` é sempre presente e identifica a linha Turbo Notify participante.
+`from` e `to` são objetos com forma direção-aware — o mesmo shape usado nos webhooks. A linha Turbo Notify participante é identificada pelo `number_alias`; resolva seu número/contato via `GET /v1/numbers/{alias}`.
 
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `id` | string | Identificador público da mensagem (`msg_` + 32 hex) |
-| `inbox` | object | Linha Turbo Notify participante — `{contact_id?, name?, number, alias}` (ordem canônica de campos). Sempre presente. |
+| `organization_id` | string | Identificador público da sua organização (`org_{hex32}`). Sempre presente. |
+| `number_alias` | string | Handle do número Turbo Notify ao qual a mensagem pertence — `"main"` ou o alias de um número extra. Resolva seu número/contato via `GET /v1/numbers/{alias}`. |
 | `from` | object | Remetente — shape direção-aware |
 | `to` | object | Destinatário — shape direção-aware |
 | `preview` | string | Permanente — recorte grapheme-aware do conteúdo |
@@ -228,7 +231,8 @@ Para mensagens `reacted`:
 ```json title="GET /v1/messages/{id} — text"
 {
   "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
-  "inbox": { "name": "Turbo Notify", "number": "5511973117056", "alias": "main" },
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
   "from": { "name": "Turbo Notify", "number": "5511973117056", "alias": "main" },
   "to": { "name": "João", "number": "5511999999999" },
   "preview": "Olá, seu pedido foi confirmado!",
@@ -247,7 +251,8 @@ Para mensagens `reacted`:
 ```json title="GET /v1/messages/{id} — image (available)"
 {
   "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f71",
-  "inbox": { "number": "5511973117056", "alias": "main" },
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
   "from": { "name": "João", "number": "5511999999999" },
   "to": { "number": "5511973117056", "alias": "main" },
   "preview": "Foto do produto",
@@ -273,7 +278,8 @@ Para mensagens `reacted`:
 ```json title="GET /v1/messages/{id} — image (unavailable)"
 {
   "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f72",
-  "inbox": { "number": "5511973117056", "alias": "main" },
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
   "from": { "name": "João", "number": "5511999999999" },
   "to": { "number": "5511973117056", "alias": "main" },
   "preview": "[Image]",
@@ -302,7 +308,8 @@ Para mensagens `reacted`:
 ```json title="GET /v1/messages/{id} — location"
 {
   "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f73",
-  "inbox": { "number": "5511973117056", "alias": "main" },
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
   "from": { "name": "João", "number": "5511999999999" },
   "to": { "number": "5511973117056", "alias": "main" },
   "preview": "Av. Paulista, Sao Paulo, SP",
@@ -329,7 +336,8 @@ Para mensagens `reacted`:
 ```json title="GET /v1/messages/{id} — calendar"
 {
   "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f74",
-  "inbox": { "number": "5511973117056", "alias": "main" },
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
   "from": { "name": "João", "number": "5511999999999" },
   "to": { "number": "5511973117056", "alias": "main" },
   "preview": "Sprint Planning — qui, 1 jun 2026 14:00",
@@ -357,7 +365,8 @@ Para mensagens `reacted`:
 ```json title="GET /v1/messages/{id} — replied"
 {
   "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-  "inbox": { "number": "5511973117056", "alias": "main" },
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
   "from": { "name": "João", "number": "5511999999999" },
   "to": { "number": "5511973117056", "alias": "main" },
   "preview": "Sim, é esse pedido mesmo!",
@@ -380,7 +389,8 @@ Para mensagens `reacted`:
 ```json title="GET /v1/messages/{id} — reacted"
 {
   "id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
-  "inbox": { "number": "5511973117056", "alias": "main" },
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
   "from": { "name": "João", "number": "5511999999999" },
   "to": { "number": "5511973117056", "alias": "main" },
   "preview": "👍",
