@@ -62,10 +62,11 @@ armazenamento subsequente.
 - `created_at` (envelope) — momento de **emissão do evento pelo TN**.
 - `at` (em `data`) — momento da **ação real no WhatsApp**.
 
-São **valores distintos**. Eventos sintéticos do TN (`contact.created`,
-`contact.quota.warning`, `contact.quota.exceeded`) **não** têm `at` — só o
-`created_at` do envelope. Eventos de ação real (`name_changed`,
-`picture_changed`, `first_messaged`) têm `at`.
+São **valores distintos**. Não carregam `at` — só o `created_at` do envelope —
+os eventos sintéticos do TN (`contact.created`, `contact.quota.warning`,
+`contact.quota.exceeded`) e também `contact.picture_changed` (uma descoberta de
+foto/snapshot, sem um momento de ação WhatsApp único). Carregam `at` os eventos
+de ação real `contact.name_changed` e `contact.first_messaged`.
 
 Todo evento `contact.*` carrega `channel: "whatsapp"` e `origin: "tn"`. Os
 eventos de ciclo de vida do contato carregam `direction: "inbound"`; os eventos
@@ -153,11 +154,14 @@ WhatsApp): aqui o TN emitiu o evento 3 s após a alteração do nome.
     },
     "direction": "inbound",
     "channel": "whatsapp",
-    "origin": "tn",
-    "at": "2026-05-15T12:00:00Z"
+    "origin": "tn"
   }
 }
 ```
+
+`contact.picture_changed` **não** carrega `data.at` — é uma descoberta de foto
+(snapshot) sem momento de ação WhatsApp único; o `picture.fetched_at` indica
+quando a foto foi baixada e o `created_at` do envelope quando o evento foi emitido.
 
 O bloco `picture` segue o mesmo ciclo de vida da mídia de mensagem: quando a
 foto está no seu bucket (`organization_storage`) ela vem como `kind: "available"` com

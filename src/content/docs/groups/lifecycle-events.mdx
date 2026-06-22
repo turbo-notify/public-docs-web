@@ -31,6 +31,15 @@ WhatsApp), `channel: "whatsapp"` e `origin: "tn"`.
 > (`{contact_id, name, number}`) — referenciam contatos da contraparte, não o
 > sujeito do evento, então mantêm a chave `contact_id`.
 
+> **Campo `at`.** Os eventos que refletem uma ação real no WhatsApp —
+> `group.name_changed`, `group.description_changed`, `group.settings_changed`,
+> `group.participants_added`, `group.participants_removed`,
+> `group.participants_promoted`, `group.participants_demoted` e `group.left` —
+> carregam `data.at` com o **momento genuíno da ação no WhatsApp** (distinto do
+> `created_at` do envelope). Já `group.joined` e `group.picture_changed`
+> **não** carregam `at`: são descobertas de snapshot/foto sem um momento de ação
+> WhatsApp único — apenas o `created_at` do envelope se aplica.
+
 ## Exemplos
 
 > O primeiro exemplo (`group.joined`) mostra o **envelope completo**. Por
@@ -56,13 +65,13 @@ WhatsApp), `channel: "whatsapp"` e `origin: "tn"`.
     "initial_participants_count": 7,
     "direction": "inbound",
     "channel": "whatsapp",
-    "origin": "tn",
-    "at": "2026-05-25T10:00:00Z"
+    "origin": "tn"
   }
 }
 ```
 
 - `id`/`name` são o id público (`grp_{hex32}`) e o snapshot de nome do grupo (o sujeito do evento).
+- `group.joined` **não** carrega `data.at` — é uma descoberta de snapshot, não uma ação WhatsApp com momento próprio; use o `created_at` do envelope.
 - `joined_by` é o número (digits-only) do admin que adicionou seu número, ou `null` quando o evento foi originado por sua própria criação do grupo (`creation=true`).
 
 ### `group.left`
@@ -95,7 +104,6 @@ WhatsApp), `channel: "whatsapp"` e `origin: "tn"`.
     "id": "grp_...",
     "name": "Grupo A 2.0",
     "old_name": "Grupo A",
-    "new_name": "Grupo A 2.0",
     "changed_by": "5511999999999",
     "direction": "inbound",
     "channel": "whatsapp",
@@ -104,6 +112,10 @@ WhatsApp), `channel: "whatsapp"` e `origin: "tn"`.
   }
 }
 ```
+
+`name` é o nome **novo/atual** do grupo; `old_name` é o nome anterior. Não há
+campo `new_name` — `name` já carrega o nome novo (mesma forma de
+`contact.name_changed`).
 
 ### `group.description_changed`
 
@@ -148,11 +160,15 @@ Re-baixe a foto via o endpoint GET quando a URL expirar.
     "changed_by": "5511999999999",
     "direction": "inbound",
     "channel": "whatsapp",
-    "origin": "tn",
-    "at": "2026-05-25T10:04:00Z"
+    "origin": "tn"
   }
 }
 ```
+
+`group.picture_changed` **não** carrega `data.at` — é uma descoberta de foto
+(snapshot) sem um momento de ação WhatsApp único; o `picture.fetched_at`
+indica quando a foto foi baixada, e o `created_at` do envelope quando o evento
+foi emitido.
 
 Guarde o `picture.hash` para detectar mudanças efetivas e re-baixar a foto
 antes que a URL pré-assinada expire (`url_expires_at`). Para ler a foto sob
