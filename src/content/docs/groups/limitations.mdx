@@ -28,7 +28,7 @@ de grupo (criação, gerenciamento de membros, alteração de configurações)
 | Recurso | Status |
 |---|---|
 | Receber mensagens de grupos | ✅ (webhook `message.received` com sibling `group`) |
-| Enviar mensagens para grupos | ✅ (`POST /v1/messages` com `to.group_id`) |
+| Enviar mensagens para grupos | ✅ (`POST /v1/numbers/{alias}/messages` com `to.group_id`) |
 | Reagir, editar, deletar mensagens em grupo | ✅ |
 | Receber notificação quando entra/sai de grupo | ✅ (`group.joined` / `group.left`) |
 | Receber notificação quando nome/descrição/imagem do grupo muda | ✅ |

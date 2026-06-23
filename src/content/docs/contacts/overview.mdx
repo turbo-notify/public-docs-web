@@ -24,7 +24,7 @@ Um **TN Contact** é um registro de observabilidade passiva que o Turbo Notify c
 ```
 [Inbound] message.received ────────┐
                                    ▼
-[Outbound] POST /v1/messages ──► TN Contact created ──► Enrichment (name, picture)
+[Outbound] POST /v1/numbers/{alias}/messages ──► TN Contact created ──► Enrichment (name, picture)
                                    ▲                                ▼
 [Self] session.connected ──────────┘                     Webhook: contact.created
 ```

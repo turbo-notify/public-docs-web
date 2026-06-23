@@ -895,7 +895,7 @@ Diferentemente de `message.send.failed`, essas operações falham **sobre uma me
 ## Mensagens de grupo nos webhooks outbound
 
 Quando você envia uma mensagem para um grupo via
-`POST /v1/messages` com `to.group_id`, os webhooks subsequentes
+`POST /v1/numbers/{alias}/messages` com `to.group_id`, os webhooks subsequentes
 (`message.sent`, `message.delivered`, `message.read`,
 `message.send.failed`) usam o mesmo shape polimórfico — `to` carrega
 `group_id` + snapshot `name`, e o `number_alias` do envelope identifica a linha que enviou:
@@ -921,7 +921,7 @@ Quando você envia uma mensagem para um grupo via
 }
 ```
 
-- `to.group_id` é o identificador público `grp_{hex32}` — mesmo valor fornecido no `POST /v1/messages`.
+- `to.group_id` é o identificador público `grp_{hex32}` — mesmo valor fornecido no `POST /v1/numbers/{alias}/messages`.
 - O `number_alias` do envelope identifica a linha Turbo Notify que enviou a mensagem ao grupo.
 - Para detectar mensagens de grupo: verifique `"group_id" in data.to`.
 

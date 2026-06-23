@@ -285,20 +285,20 @@
         }
       }
     },
-    "/v1/extra-numbers": {
+    "/v1/numbers": {
       "get": {
         "tags": [
-          "Extra Numbers"
+          "Numbers"
         ],
-        "summary": "List Extra Numbers",
-        "operationId": "list_extra_numbers_v1_extra_numbers_get",
+        "summary": "List Numbers",
+        "operationId": "list_numbers_v1_numbers_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListExtraNumbersResponse"
+                  "$ref": "#/components/schemas/ListNumbersResponse"
                 }
               }
             }
@@ -307,15 +307,15 @@
       },
       "post": {
         "tags": [
-          "Extra Numbers"
+          "Numbers"
         ],
-        "summary": "Add Extra Number",
-        "operationId": "add_extra_number_v1_extra_numbers_post",
+        "summary": "Add Number",
+        "operationId": "add_number_v1_numbers_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddExtraNumberRequest"
+                "$ref": "#/components/schemas/AddNumberRequest"
               }
             }
           },
@@ -327,7 +327,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AddExtraNumberResponse"
+                  "$ref": "#/components/schemas/AddNumberResponse"
                 }
               }
             }
@@ -345,13 +345,13 @@
         }
       }
     },
-    "/v1/extra-numbers/{alias}/status": {
+    "/v1/numbers/{alias}/status": {
       "get": {
         "tags": [
-          "Extra Numbers"
+          "Numbers"
         ],
-        "summary": "Get Extra Number Status",
-        "operationId": "get_extra_number_status_v1_extra_numbers__alias__status_get",
+        "summary": "Get Number Status",
+        "operationId": "get_number_status_v1_numbers__alias__status_get",
         "parameters": [
           {
             "name": "alias",
@@ -369,7 +369,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetExtraNumberStatusResponse"
+                  "$ref": "#/components/schemas/GetNumberStatusResponse"
                 }
               }
             }
@@ -387,30 +387,31 @@
         }
       }
     },
-    "/v1/extra-numbers/activate": {
+    "/v1/numbers/{alias}/connect": {
       "post": {
         "tags": [
-          "Extra Numbers"
+          "Numbers"
         ],
-        "summary": "Activate Extra Number",
-        "operationId": "activate_extra_number_v1_extra_numbers_activate_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangeExtraNumberStateRequest"
-              }
+        "summary": "Connect Number",
+        "operationId": "connect_number_v1_numbers__alias__connect_post",
+        "parameters": [
+          {
+            "name": "alias",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Alias"
             }
-          },
-          "required": true
-        },
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChangeExtraNumberStateResponse"
+                  "$ref": "#/components/schemas/ChangeNumberStateResponse"
                 }
               }
             }
@@ -428,30 +429,31 @@
         }
       }
     },
-    "/v1/extra-numbers/deactivate": {
+    "/v1/numbers/{alias}/disconnect": {
       "post": {
         "tags": [
-          "Extra Numbers"
+          "Numbers"
         ],
-        "summary": "Deactivate Extra Number",
-        "operationId": "deactivate_extra_number_v1_extra_numbers_deactivate_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangeExtraNumberStateRequest"
-              }
+        "summary": "Disconnect Number",
+        "operationId": "disconnect_number_v1_numbers__alias__disconnect_post",
+        "parameters": [
+          {
+            "name": "alias",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Alias"
             }
-          },
-          "required": true
-        },
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChangeExtraNumberStateResponse"
+                  "$ref": "#/components/schemas/ChangeNumberStateResponse"
                 }
               }
             }
@@ -469,13 +471,13 @@
         }
       }
     },
-    "/v1/extra-numbers/{alias}": {
+    "/v1/numbers/{alias}": {
       "delete": {
         "tags": [
-          "Extra Numbers"
+          "Numbers"
         ],
-        "summary": "Remove Extra Number",
-        "operationId": "remove_extra_number_v1_extra_numbers__alias__delete",
+        "summary": "Remove Number",
+        "operationId": "remove_number_v1_numbers__alias__delete",
         "parameters": [
           {
             "name": "alias",
@@ -548,7 +550,7 @@
   },
   "components": {
     "schemas": {
-      "AddExtraNumberRequest": {
+      "AddNumberRequest": {
         "properties": {
           "alias": {
             "type": "string",
@@ -564,9 +566,9 @@
           "alias",
           "phone"
         ],
-        "title": "AddExtraNumberRequest"
+        "title": "AddNumberRequest"
       },
-      "AddExtraNumberResponse": {
+      "AddNumberResponse": {
         "properties": {
           "alias": {
             "type": "string",
@@ -592,22 +594,9 @@
           "status",
           "created_at"
         ],
-        "title": "AddExtraNumberResponse"
+        "title": "AddNumberResponse"
       },
-      "ChangeExtraNumberStateRequest": {
-        "properties": {
-          "alias": {
-            "type": "string",
-            "title": "Alias"
-          }
-        },
-        "type": "object",
-        "required": [
-          "alias"
-        ],
-        "title": "ChangeExtraNumberStateRequest"
-      },
-      "ChangeExtraNumberStateResponse": {
+      "ChangeNumberStateResponse": {
         "properties": {
           "state": {
             "type": "string",
@@ -623,7 +612,7 @@
           "state",
           "at"
         ],
-        "title": "ChangeExtraNumberStateResponse"
+        "title": "ChangeNumberStateResponse"
       },
       "EditMessageRequest": {
         "properties": {
@@ -657,7 +646,7 @@
         ],
         "title": "EditMessageResponse"
       },
-      "ExtraNumberStatusPayload": {
+      "NumberStatusPayload": {
         "properties": {
           "state": {
             "type": "string",
@@ -684,9 +673,9 @@
           "state",
           "at"
         ],
-        "title": "ExtraNumberStatusPayload"
+        "title": "NumberStatusPayload"
       },
-      "ExtraNumberSummaryResponse": {
+      "NumberSummaryResponse": {
         "properties": {
           "alias": {
             "type": "string",
@@ -697,7 +686,7 @@
             "title": "Number"
           },
           "status": {
-            "$ref": "#/components/schemas/ExtraNumberStatusPayload"
+            "$ref": "#/components/schemas/NumberStatusPayload"
           }
         },
         "type": "object",
@@ -706,9 +695,9 @@
           "number",
           "status"
         ],
-        "title": "ExtraNumberSummaryResponse"
+        "title": "NumberSummaryResponse"
       },
-      "GetExtraNumberStatusResponse": {
+      "GetNumberStatusResponse": {
         "properties": {
           "state": {
             "type": "string",
@@ -735,7 +724,7 @@
           "state",
           "at"
         ],
-        "title": "GetExtraNumberStatusResponse"
+        "title": "GetNumberStatusResponse"
       },
       "GetRequestEventsResponse": {
         "properties": {
@@ -793,11 +782,11 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "ListExtraNumbersResponse": {
+      "ListNumbersResponse": {
         "properties": {
           "numbers": {
             "items": {
-              "$ref": "#/components/schemas/ExtraNumberSummaryResponse"
+              "$ref": "#/components/schemas/NumberSummaryResponse"
             },
             "type": "array",
             "title": "Numbers"
@@ -807,7 +796,7 @@
         "required": [
           "numbers"
         ],
-        "title": "ListExtraNumbersResponse"
+        "title": "ListNumbersResponse"
       },
       "MessageStatusPayload": {
         "properties": {

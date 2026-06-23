@@ -3,6 +3,18 @@ import starlight from '@astrojs/starlight';
 
 export default defineConfig({
   site: 'https://docs.turbonotify.com',
+  // The /extra-numbers/* section was folded into /numbers/* (domain-aligned
+  // grouping realignment, ADR 2026-06-22). Redirect old links so they don't 404.
+  redirects: {
+    '/extra-numbers': '/numbers/add/',
+    '/extra-numbers/': '/numbers/add/',
+    '/extra-numbers/add': '/numbers/add/',
+    '/extra-numbers/status': '/numbers/status/',
+    '/extra-numbers/list': '/numbers/list/',
+    '/extra-numbers/remove': '/numbers/remove/',
+    '/extra-numbers/activation': '/numbers/activation/',
+    '/extra-numbers/billing': '/numbers/billing/',
+  },
   integrations: [
     starlight({
       title: 'Turbo Notify',
@@ -135,36 +147,36 @@ export default defineConfig({
           ],
         },
         {
-          label: 'Números extras',
-          translations: { en: 'Extra Numbers', es: 'Números Extra' },
+          label: 'Números',
+          translations: { en: 'Numbers', es: 'Números' },
           items: [
             {
-              slug: 'extra-numbers/add',
+              slug: 'numbers/add',
               label: 'Inclusão',
               translations: { en: 'Add', es: 'Agregar' },
             },
             {
-              slug: 'extra-numbers/status',
+              slug: 'numbers/status',
               label: 'Status',
               translations: { en: 'Status', es: 'Estado' },
             },
             {
-              slug: 'extra-numbers/list',
+              slug: 'numbers/list',
               label: 'Listagem',
               translations: { en: 'List', es: 'Listar' },
             },
             {
-              slug: 'extra-numbers/remove',
+              slug: 'numbers/remove',
               label: 'Remoção',
               translations: { en: 'Remove', es: 'Eliminar' },
             },
             {
-              slug: 'extra-numbers/activation',
+              slug: 'numbers/activation',
               label: 'Ativação',
               translations: { en: 'Activation', es: 'Activación' },
             },
             {
-              slug: 'extra-numbers/billing',
+              slug: 'numbers/billing',
               label: 'Cobrança',
               translations: { en: 'Billing', es: 'Facturación' },
             },

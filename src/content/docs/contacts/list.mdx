@@ -43,7 +43,7 @@ curl -X GET "https://api.turbonotify.com/v1/contacts?limit=20" \
 const res = await fetch("https://api.turbonotify.com/v1/contacts?limit=20", {
   headers: { Authorization: `Bearer ${process.env.TURBO_API_KEY}` },
 });
-const { contacts, cursor, has_more } = await res.json();
+const { data, cursor, has_more } = await res.json();
 ```
 </TabItem>
 <TabItem label="Python">
@@ -64,7 +64,7 @@ data = r.json()
 <ApiResponse status={200}>
 ```json
 {
-  "contacts": [
+  "data": [
     {
       "id": "ct_a1b2c3d4e5f6789012345678901234ab",
       "phone_number": "+5571999294756",
