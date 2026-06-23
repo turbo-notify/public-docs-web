@@ -1,6 +1,6 @@
 ---
 title: "2026-06-04 — to.contact_id as recipient"
-description: "POST /v1/messages now accepts contact_id as recipient. Doc bug fix for the to field."
+description: "The send endpoint now accepts contact_id as recipient. Doc bug fix for the to field."
 ---
 
 > This page is being translated. See the PT-BR (canonical) version: [/changelog/2026-06-04-contact-id-recipient/](/changelog/2026-06-04-contact-id-recipient/).
@@ -9,7 +9,9 @@ description: "POST /v1/messages now accepts contact_id as recipient. Doc bug fix
 
 ### `to.contact_id` as recipient
 
-`POST /v1/messages` now accepts `{"contact_id": "ct_…"}` as a third mutually exclusive form for the `to` field, alongside `{"number": "…"}` and `{"group_id": "…"}`.
+The send endpoint (`POST /v1/numbers/{alias}/messages`) now accepts `{"contact_id": "ct_…"}` as a third mutually exclusive form for the `to` field, alongside `{"number": "…"}` and `{"group_id": "…"}`.
+
+> Note: at the time of this change the route was the flat `POST /v1/messages`. It was later moved under the number ([2026-06-22](/changelog/2026-06-22-number-scoped-routes/)).
 
 The phone number is resolved automatically from the TN Contacts catalog.
 

@@ -2,15 +2,13 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Turbo Notify Public API",
-    "description": "Turbo Notify Public API for WhatsApp messaging",
+    "description": "Turbo Notify Public API for WhatsApp messaging. All message, contact, and group operations are nested under `/v1/numbers/{alias}/...` so the inbox number (the reserved `main` alias or an extra-number alias) is identified by the URL rather than a request-body `from` field. Account-wide resources (usage, events, numbers lifecycle) remain flat.",
     "version": "1.0.0"
   },
   "paths": {
     "/health": {
       "get": {
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "summary": "Health",
         "description": "Basic health check.",
         "operationId": "health_health_get",
@@ -20,9 +18,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
+                  "additionalProperties": { "type": "string" },
                   "type": "object",
                   "title": "Response Health Health Get"
                 }
@@ -34,29 +30,21 @@
     },
     "/health/ready": {
       "get": {
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "summary": "Ready",
         "description": "Readiness check with dependency verification.\n\nRuns all registered health checkers and returns 503 if any\ncritical dependency is unhealthy.",
         "operationId": "ready_health_ready_get",
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           }
         }
       }
     },
     "/health/live": {
       "get": {
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "summary": "Live",
         "description": "Liveness check (for Kubernetes).",
         "operationId": "live_health_live_get",
@@ -66,9 +54,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
+                  "additionalProperties": { "type": "string" },
                   "type": "object",
                   "title": "Response Live Health Live Get"
                 }
@@ -78,27 +64,68 @@
         }
       }
     },
-    "/v1/messages": {
-      "post": {
-        "tags": [
-          "Messages"
-        ],
-        "summary": "Send Message",
-        "operationId": "send_message_v1_messages_post",
+    "/v1/numbers/{alias}/messages": {
+      "get": {
+        "tags": ["Messages"],
+        "summary": "List Messages",
+        "description": "List messages for the inbox identified by `alias` (cursor-paginated, newest first).",
+        "operationId": "list_messages_v1_numbers__alias__messages_get",
         "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Send Message",
+        "description": "Send a message from the number identified by `alias` (`main` or an extra alias). The sender is taken from the URL — there is no request-body `from` field.",
+        "operationId": "send_message_v1_numbers__alias__messages_post",
+        "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
           {
             "name": "Idempotency-Key",
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
               "title": "Idempotency-Key"
             }
           }
@@ -107,9 +134,7 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SendMessageRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/SendMessageRequest" }
             }
           }
         },
@@ -118,9 +143,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SendMessageResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/SendMessageResponse" }
               }
             }
           },
@@ -128,31 +151,149 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
         }
       }
     },
-    "/v1/messages/{message_id}/edit": {
-      "post": {
-        "tags": [
-          "Messages"
-        ],
-        "summary": "Edit Message By Wa Id",
-        "description": "Edit a previously sent message by WhatsApp message ID.\n\nReturns 202 Accepted. Result delivered via webhook (message.edited).",
-        "operationId": "edit_message_by_wa_id_v1_messages__message_id__edit_post",
+    "/v1/numbers/{alias}/messages/{message_id}": {
+      "get": {
+        "tags": ["Messages"],
+        "summary": "Get Message Details",
+        "description": "Retrieve the full details of a message by its public `msg_{hex32}` id, scoped to the inbox identified by `alias`.",
+        "operationId": "get_message_details_v1_numbers__alias__messages__message_id__get",
         "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          { "$ref": "#/components/parameters/MessageIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GetMessageDetailsResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/messages/{message_id}/status": {
+      "get": {
+        "tags": ["Messages"],
+        "summary": "Get Message Status",
+        "description": "Get delivery status for a sent message by its public `msg_{hex32}` id, scoped to the inbox identified by `alias`.",
+        "operationId": "get_message_status_v1_numbers__alias__messages__message_id__status_get",
+        "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          { "$ref": "#/components/parameters/MessageIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GetMessageStatusResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/messages/{message_id}/reactions": {
+      "get": {
+        "tags": ["Messages"],
+        "summary": "Get Message Reactions",
+        "description": "List all active reactions to a message.",
+        "operationId": "get_message_reactions_v1_numbers__alias__messages__message_id__reactions_get",
+        "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          { "$ref": "#/components/parameters/MessageIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GetMessageReactionsResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/messages/{message_id}/receipts": {
+      "get": {
+        "tags": ["Messages"],
+        "summary": "Get Message Receipts",
+        "description": "List delivery receipt history for a message (status transitions, ascending).",
+        "operationId": "get_message_receipts_v1_numbers__alias__messages__message_id__receipts_get",
+        "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          { "$ref": "#/components/parameters/MessageIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GetMessageReceiptsResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/messages/{message_id}/reply": {
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Reply To Message",
+        "description": "Reply to a message from the number identified by `alias`. The recipient is inferred from the quoted message direction; there is no request-body `from` field. Returns 202 Accepted; the result is delivered via webhook (`message.replied`).",
+        "operationId": "reply_to_message_v1_numbers__alias__messages__message_id__reply_post",
+        "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          { "$ref": "#/components/parameters/MessageIdPath" },
           {
-            "name": "message_id",
-            "in": "path",
-            "required": true,
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
             "schema": {
-              "type": "string",
-              "title": "Message Id"
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Idempotency-Key"
             }
           }
         ],
@@ -160,9 +301,7 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EditMessageRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/ReplyMessageRequest" }
             }
           }
         },
@@ -171,9 +310,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EditMessageResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/SendMessageResponse" }
               }
             }
           },
@@ -181,41 +318,28 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
         }
       }
     },
-    "/v1/messages/{message_id}/react": {
+    "/v1/numbers/{alias}/messages/{message_id}/react": {
       "post": {
-        "tags": [
-          "Messages"
-        ],
+        "tags": ["Messages"],
         "summary": "React To Message",
-        "description": "Add or remove a reaction on a message.\n\nReturns 202 Accepted. Result delivered via webhook (message.reacted).",
-        "operationId": "react_to_message_v1_messages__message_id__react_post",
+        "description": "Add or remove a reaction from the number identified by `alias`. Returns 202 Accepted; the result is delivered via webhook (`message.reacted`).",
+        "operationId": "react_to_message_v1_numbers__alias__messages__message_id__react_post",
         "parameters": [
-          {
-            "name": "message_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Message Id"
-            }
-          }
+          { "$ref": "#/components/parameters/AliasPath" },
+          { "$ref": "#/components/parameters/MessageIdPath" }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SendReactionRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/SendReactionRequest" }
             }
           }
         },
@@ -224,9 +348,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SendReactionResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/SendReactionResponse" }
               }
             }
           },
@@ -234,9 +356,592 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/messages/{message_id}/edit": {
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Edit Message",
+        "description": "Edit a previously sent message by its public `msg_{hex32}` id. Returns 202 Accepted; the result is delivered via webhook (`message.edited`).",
+        "operationId": "edit_message_v1_numbers__alias__messages__message_id__edit_post",
+        "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          { "$ref": "#/components/parameters/MessageIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EditMessageRequest" }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EditMessageResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/messages/{message_id}/delete": {
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Delete Message",
+        "description": "Delete (revoke) a previously sent message by its public `msg_{hex32}` id. Returns 202 Accepted; the result is delivered via webhook (`message.deleted`).",
+        "operationId": "delete_message_v1_numbers__alias__messages__message_id__delete_post",
+        "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          { "$ref": "#/components/parameters/MessageIdPath" }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeleteMessageResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/typing-indicator": {
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Send Typing Indicator",
+        "description": "Send a typing indicator from the number identified by `alias`. The sender is inferred from the URL; there is no request-body `from` field.",
+        "operationId": "send_typing_indicator_v1_numbers__alias__typing_indicator_post",
+        "parameters": [{ "$ref": "#/components/parameters/AliasPath" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SendTypingRequest" }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SendTypingResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/contacts": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "List Contacts",
+        "description": "Return a cursor-paginated list of contacts for the inbox `{alias}`.",
+        "operationId": "list_contacts_v1_numbers__alias__contacts_get",
+        "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "phone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Phone"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Name"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Source"
+            }
+          },
+          {
+            "name": "has_messaged_in_window",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+              "title": "Has Messaged In Window"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ContactListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/contacts/quota": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Get Contact Quota",
+        "description": "Return the contact quota state for the inbox identified by `{alias}`.",
+        "operationId": "get_contact_quota_v1_numbers__alias__contacts_quota_get",
+        "parameters": [{ "$ref": "#/components/parameters/AliasPath" }],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ContactQuotaResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/contacts/{contact_id}": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Get Contact",
+        "description": "Retrieve a single contact, asserting it belongs to inbox `{alias}`.",
+        "operationId": "get_contact_v1_numbers__alias__contacts__contact_id__get",
+        "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          { "$ref": "#/components/parameters/ContactIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ContactResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/contacts/{contact_id}/profile-picture": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Get Contact Profile Picture",
+        "description": "Resolve the contact's profile picture, asserting ownership by `{alias}`. Returns 302 redirect to a presigned URL when available, or 200 with an unavailable payload.",
+        "operationId": "get_contact_profile_picture_v1_numbers__alias__contacts__contact_id__profile_picture_get",
+        "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          { "$ref": "#/components/parameters/ContactIdPath" }
+        ],
+        "responses": {
+          "302": { "description": "Redirect to presigned picture URL" },
+          "200": {
+            "description": "Picture unavailable payload",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/contacts/{contact_id}/refresh": {
+      "post": {
+        "tags": ["Contacts"],
+        "summary": "Refresh Contact",
+        "description": "Queue a WhatsApp metadata refresh for a contact in inbox `{alias}`.",
+        "operationId": "refresh_contact_v1_numbers__alias__contacts__contact_id__refresh_post",
+        "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          { "$ref": "#/components/parameters/ContactIdPath" }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RefreshResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/groups": {
+      "get": {
+        "tags": ["Groups"],
+        "summary": "List Groups",
+        "description": "Return a cursor-paginated list of groups for the inbox `{alias}`.",
+        "operationId": "list_groups_v1_numbers__alias__groups_get",
+        "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "maxLength": 100 }, { "type": "null" }],
+              "title": "Name"
+            }
+          },
+          {
+            "name": "include_left",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": false, "title": "Include Left" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GroupListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/groups/{group_id}": {
+      "get": {
+        "tags": ["Groups"],
+        "summary": "Get Group",
+        "description": "Retrieve a single group for the inbox `{alias}`.",
+        "operationId": "get_group_v1_numbers__alias__groups__group_id__get",
+        "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          { "$ref": "#/components/parameters/GroupIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GroupResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/groups/{group_id}/picture": {
+      "get": {
+        "tags": ["Groups"],
+        "summary": "Get Group Picture",
+        "description": "Resolve the group's profile picture for inbox `{alias}`. Returns 302 redirect to a presigned URL when available, or 200 with an unavailable payload.",
+        "operationId": "get_group_picture_v1_numbers__alias__groups__group_id__picture_get",
+        "parameters": [
+          { "$ref": "#/components/parameters/AliasPath" },
+          { "$ref": "#/components/parameters/GroupIdPath" }
+        ],
+        "responses": {
+          "302": { "description": "Redirect to presigned picture URL" },
+          "200": {
+            "description": "Picture unavailable payload",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/usage": {
+      "get": {
+        "tags": ["Usage"],
+        "summary": "Get Usage",
+        "description": "Account-wide usage snapshot — message quota and contact quota.",
+        "operationId": "get_usage_v1_usage_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UsageResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/usage/messages": {
+      "get": {
+        "tags": ["Usage"],
+        "summary": "Get Usage Messages",
+        "description": "Account-wide message quota snapshot (contact section stripped).",
+        "operationId": "get_usage_messages_v1_usage_messages_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UsageMessagesResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/events": {
+      "get": {
+        "tags": ["Events"],
+        "summary": "List Events",
+        "description": "Account-wide event polling (Stripe-like). Optionally filter by `number_alias` to restrict results to a specific inbox; organization-scoped events without a `number_alias` (e.g. `storage.*`, `message.quota.*`) are excluded when that filter is active.",
+        "operationId": "list_events_v1_events_get",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "description": "Filter by exact event type",
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Type"
+            }
+          },
+          {
+            "name": "types[]",
+            "in": "query",
+            "required": false,
+            "description": "Filter by multiple event types",
+            "schema": {
+              "anyOf": [
+                { "type": "array", "items": { "type": "string" }, "maxItems": 20 },
+                { "type": "null" }
+              ],
+              "title": "Types"
+            }
+          },
+          {
+            "name": "request_id",
+            "in": "query",
+            "required": false,
+            "description": "Filter by request ID",
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Request Id"
+            }
+          },
+          {
+            "name": "number_alias",
+            "in": "query",
+            "required": false,
+            "description": "Filter by inbox handle (`main` or extra alias). ADR 2026-06-22: restricts results to events belonging to this specific number. Organization-scoped events without a `number_alias` (e.g. `storage.*`, `message.quota.*`) are excluded when this filter is active.",
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Number Alias"
+            }
+          },
+          {
+            "name": "created[gte]",
+            "in": "query",
+            "required": false,
+            "description": "Events created at or after this time",
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+              "title": "Created Gte"
+            }
+          },
+          {
+            "name": "created[lte]",
+            "in": "query",
+            "required": false,
+            "description": "Events created at or before this time",
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+              "title": "Created Lte"
+            }
+          },
+          {
+            "name": "starting_after",
+            "in": "query",
+            "required": false,
+            "description": "Cursor for forward pagination (event ID)",
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Starting After"
+            }
+          },
+          {
+            "name": "ending_before",
+            "in": "query",
+            "required": false,
+            "description": "Cursor for backward pagination (event ID)",
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Ending Before"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Number of events to return",
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ListEventsResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -245,9 +950,7 @@
     },
     "/v1/requests/{request_id}": {
       "get": {
-        "tags": [
-          "Requests"
-        ],
+        "tags": ["Requests"],
         "summary": "Get Request Status",
         "operationId": "get_request_status_v1_requests__request_id__get",
         "parameters": [
@@ -255,10 +958,7 @@
             "name": "request_id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Request Id"
-            }
+            "schema": { "type": "string", "title": "Request Id" }
           }
         ],
         "responses": {
@@ -266,9 +966,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetRequestEventsResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/GetRequestEventsResponse" }
               }
             }
           },
@@ -276,9 +974,41 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/extra-numbers": {
+      "post": {
+        "tags": ["Numbers"],
+        "summary": "Add Extra Number",
+        "description": "Create (add) an extra number, then trigger pairing via `POST /v1/numbers/{alias}/pair`.",
+        "operationId": "add_extra_number_v1_extra_numbers_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddNumberRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AddNumberResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -287,9 +1017,7 @@
     },
     "/v1/numbers": {
       "get": {
-        "tags": [
-          "Numbers"
-        ],
+        "tags": ["Numbers"],
         "summary": "List Numbers",
         "operationId": "list_numbers_v1_numbers_get",
         "responses": {
@@ -297,38 +1025,30 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListNumbersResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ListNumbersResponse" }
               }
             }
           }
         }
       },
       "post": {
-        "tags": [
-          "Numbers"
-        ],
+        "tags": ["Numbers"],
         "summary": "Add Number",
         "operationId": "add_number_v1_numbers_post",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddNumberRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/AddNumberRequest" }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
-          "202": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AddNumberResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/AddNumberResponse" }
               }
             }
           },
@@ -336,9 +1056,59 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/main": {
+      "get": {
+        "tags": ["Numbers"],
+        "summary": "Get Main Number",
+        "description": "Retrieve main-number status + display name.",
+        "operationId": "get_main_number_v1_numbers_main_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GetNumberStatusResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/main/connect": {
+      "post": {
+        "tags": ["Numbers"],
+        "summary": "Connect Main Number",
+        "operationId": "connect_main_number_v1_numbers_main_connect_post",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MainNumberActionResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/main/disconnect": {
+      "post": {
+        "tags": ["Numbers"],
+        "summary": "Disconnect Main Number",
+        "operationId": "disconnect_main_number_v1_numbers_main_disconnect_post",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MainNumberActionResponse" }
               }
             }
           }
@@ -347,30 +1117,16 @@
     },
     "/v1/numbers/{alias}/status": {
       "get": {
-        "tags": [
-          "Numbers"
-        ],
+        "tags": ["Numbers"],
         "summary": "Get Number Status",
         "operationId": "get_number_status_v1_numbers__alias__status_get",
-        "parameters": [
-          {
-            "name": "alias",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Alias"
-            }
-          }
-        ],
+        "parameters": [{ "$ref": "#/components/parameters/AliasPath" }],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetNumberStatusResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/GetNumberStatusResponse" }
               }
             }
           },
@@ -378,9 +1134,59 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/pair": {
+      "post": {
+        "tags": ["Numbers"],
+        "summary": "Pair Extra Number",
+        "operationId": "pair_extra_number_v1_numbers__alias__pair_post",
+        "parameters": [{ "$ref": "#/components/parameters/AliasPath" }],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PairExtraNumberResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/cancel-pairing": {
+      "post": {
+        "tags": ["Numbers"],
+        "summary": "Cancel Extra Number Pairing",
+        "operationId": "cancel_extra_number_pairing_v1_numbers__alias__cancel_pairing_post",
+        "parameters": [{ "$ref": "#/components/parameters/AliasPath" }],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ChangeNumberStateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -389,30 +1195,16 @@
     },
     "/v1/numbers/{alias}/connect": {
       "post": {
-        "tags": [
-          "Numbers"
-        ],
+        "tags": ["Numbers"],
         "summary": "Connect Number",
         "operationId": "connect_number_v1_numbers__alias__connect_post",
-        "parameters": [
-          {
-            "name": "alias",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Alias"
-            }
-          }
-        ],
+        "parameters": [{ "$ref": "#/components/parameters/AliasPath" }],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChangeNumberStateResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ChangeNumberStateResponse" }
               }
             }
           },
@@ -420,9 +1212,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -431,30 +1221,16 @@
     },
     "/v1/numbers/{alias}/disconnect": {
       "post": {
-        "tags": [
-          "Numbers"
-        ],
+        "tags": ["Numbers"],
         "summary": "Disconnect Number",
         "operationId": "disconnect_number_v1_numbers__alias__disconnect_post",
-        "parameters": [
-          {
-            "name": "alias",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Alias"
-            }
-          }
-        ],
+        "parameters": [{ "$ref": "#/components/parameters/AliasPath" }],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChangeNumberStateResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ChangeNumberStateResponse" }
               }
             }
           },
@@ -462,9 +1238,33 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/numbers/{alias}/cancel-deletion": {
+      "post": {
+        "tags": ["Numbers"],
+        "summary": "Cancel Extra Number Deletion",
+        "operationId": "cancel_extra_number_deletion_v1_numbers__alias__cancel_deletion_post",
+        "parameters": [{ "$ref": "#/components/parameters/AliasPath" }],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ChangeNumberStateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -472,64 +1272,51 @@
       }
     },
     "/v1/numbers/{alias}": {
-      "delete": {
-        "tags": [
-          "Numbers"
-        ],
-        "summary": "Remove Number",
-        "operationId": "remove_number_v1_numbers__alias__delete",
-        "parameters": [
-          {
-            "name": "alias",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Alias"
+      "patch": {
+        "tags": ["Numbers"],
+        "summary": "Update Extra Number",
+        "operationId": "update_extra_number_v1_numbers__alias__patch",
+        "parameters": [{ "$ref": "#/components/parameters/AliasPath" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateExtraNumberRequest" }
             }
           }
-        ],
+        },
         "responses": {
-          "204": {
-            "description": "Successful Response"
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UpdateExtraNumberResponse" }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
         }
-      }
-    },
-    "/v1/typing-indicator": {
-      "post": {
-        "tags": [
-          "Typing Indicator"
-        ],
-        "summary": "Send Typing Indicator",
-        "operationId": "send_typing_indicator_v1_typing_indicator_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SendTypingRequest"
-              }
-            }
-          },
-          "required": true
-        },
+      },
+      "delete": {
+        "tags": ["Numbers"],
+        "summary": "Remove Extra Number",
+        "description": "Delete (schedule deletion of) an extra number. If eligible for a 72h refund, deletion is immediate.",
+        "operationId": "remove_extra_number_v1_numbers__alias__delete",
+        "parameters": [{ "$ref": "#/components/parameters/AliasPath" }],
         "responses": {
-          "202": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SendTypingResponse"
+                  "$ref": "#/components/schemas/ScheduleExtraNumberDeletionResponse"
                 }
               }
             }
@@ -538,9 +1325,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -549,70 +1334,128 @@
     }
   },
   "components": {
+    "parameters": {
+      "AliasPath": {
+        "name": "alias",
+        "in": "path",
+        "required": true,
+        "description": "Inbox handle — the reserved `main` alias or an extra-number alias.",
+        "schema": { "type": "string", "title": "Alias" }
+      },
+      "MessageIdPath": {
+        "name": "message_id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "pattern": "^msg_[0-9a-f]{32}$", "title": "Message Id" }
+      },
+      "ContactIdPath": {
+        "name": "contact_id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "pattern": "^ct_[0-9a-f]{32}$", "title": "Contact Id" }
+      },
+      "GroupIdPath": {
+        "name": "group_id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "pattern": "^grp_[0-9a-f]{32}$", "title": "Group Id" }
+      }
+    },
     "schemas": {
       "AddNumberRequest": {
         "properties": {
-          "alias": {
-            "type": "string",
-            "title": "Alias"
-          },
-          "phone": {
-            "type": "string",
-            "title": "Phone"
-          }
+          "alias": { "type": "string", "title": "Alias" },
+          "phone": { "type": "string", "title": "Phone" }
         },
         "type": "object",
-        "required": [
-          "alias",
-          "phone"
-        ],
+        "required": ["alias", "phone"],
         "title": "AddNumberRequest"
       },
       "AddNumberResponse": {
         "properties": {
-          "alias": {
-            "type": "string",
-            "title": "Alias"
-          },
-          "phone_number": {
-            "type": "string",
-            "title": "Phone Number"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "created_at": {
-            "type": "string",
-            "title": "Created At"
-          }
+          "alias": { "type": "string", "title": "Alias" },
+          "phone_number": { "type": "string", "title": "Phone Number" },
+          "status": { "type": "string", "title": "Status" },
+          "created_at": { "type": "string", "title": "Created At" }
         },
         "type": "object",
-        "required": [
-          "alias",
-          "phone_number",
-          "status",
-          "created_at"
-        ],
+        "required": ["alias", "phone_number", "status", "created_at"],
         "title": "AddNumberResponse"
       },
       "ChangeNumberStateResponse": {
         "properties": {
-          "state": {
-            "type": "string",
-            "title": "State"
+          "state": { "type": "string", "title": "State" },
+          "at": { "type": "string", "title": "At" }
+        },
+        "type": "object",
+        "required": ["state", "at"],
+        "title": "ChangeNumberStateResponse"
+      },
+      "MainNumberActionResponse": {
+        "properties": {
+          "alias": { "type": "string", "title": "Alias" },
+          "status": { "type": "string", "title": "Status" }
+        },
+        "type": "object",
+        "required": ["alias", "status"],
+        "title": "MainNumberActionResponse"
+      },
+      "PairExtraNumberResponse": {
+        "properties": {
+          "alias": { "type": "string", "title": "Alias" },
+          "status": { "type": "string", "title": "Status" }
+        },
+        "type": "object",
+        "required": ["alias", "status"],
+        "title": "PairExtraNumberResponse"
+      },
+      "UpdateExtraNumberRequest": {
+        "properties": {
+          "alias": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Alias"
           },
-          "at": {
-            "type": "string",
-            "title": "At"
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
           }
         },
         "type": "object",
-        "required": [
-          "state",
-          "at"
-        ],
-        "title": "ChangeNumberStateResponse"
+        "title": "UpdateExtraNumberRequest"
+      },
+      "UpdateExtraNumberResponse": {
+        "properties": {
+          "alias": { "type": "string", "title": "Alias" },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "status": { "type": "string", "title": "Status" },
+          "at": { "type": "string", "title": "At" }
+        },
+        "type": "object",
+        "required": ["alias", "status", "at"],
+        "title": "UpdateExtraNumberResponse"
+      },
+      "ScheduleExtraNumberDeletionResponse": {
+        "properties": {
+          "scheduled_deletion_at": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Scheduled Deletion At"
+          },
+          "refund_eligible": { "type": "boolean", "title": "Refund Eligible" },
+          "refund_amount_cents": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Refund Amount Cents"
+          },
+          "messages_sent": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Messages Sent"
+          }
+        },
+        "type": "object",
+        "required": ["refund_eligible"],
+        "title": "ScheduleExtraNumberDeletionResponse"
       },
       "EditMessageRequest": {
         "properties": {
@@ -624,157 +1467,419 @@
           }
         },
         "type": "object",
-        "required": [
-          "text"
-        ],
+        "required": ["text"],
         "title": "EditMessageRequest"
       },
       "EditMessageResponse": {
         "properties": {
-          "request_id": {
-            "type": "string",
-            "title": "Request Id"
+          "message_id": { "type": "string", "title": "Message Id" },
+          "status": { "$ref": "#/components/schemas/MessageStatusPayload" }
+        },
+        "type": "object",
+        "required": ["message_id", "status"],
+        "title": "EditMessageResponse"
+      },
+      "DeleteMessageResponse": {
+        "properties": {
+          "message_id": { "type": "string", "title": "Message Id" },
+          "status": { "$ref": "#/components/schemas/MessageStatusPayload" }
+        },
+        "type": "object",
+        "required": ["message_id", "status"],
+        "title": "DeleteMessageResponse"
+      },
+      "ReplyMessageRequest": {
+        "properties": {
+          "content": {
+            "type": "object",
+            "title": "Content",
+            "description": "Message content variant (text, image, video, audio, document, location, calendar, contact, sticker)."
           },
-          "status": {
-            "$ref": "#/components/schemas/MessageStatusPayload"
+          "quoted_message_id": {
+            "anyOf": [
+              { "type": "string", "pattern": "^msg_[0-9a-f]{32}$" },
+              { "type": "null" }
+            ],
+            "title": "Quoted Message Id"
           }
         },
         "type": "object",
-        "required": [
-          "request_id",
-          "status"
-        ],
-        "title": "EditMessageResponse"
+        "required": ["content"],
+        "title": "ReplyMessageRequest"
+      },
+      "MessageListItem": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "number_alias": { "type": "string", "title": "Number Alias" },
+          "direction": { "type": "string", "title": "Direction" },
+          "content_type": { "type": "string", "title": "Content Type" },
+          "preview": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Preview"
+          },
+          "at": { "type": "string", "title": "At" },
+          "status": { "$ref": "#/components/schemas/MessageStatusPayload" }
+        },
+        "type": "object",
+        "required": ["id", "number_alias", "direction", "content_type", "at", "status"],
+        "title": "MessageListItem"
+      },
+      "MessageListResponse": {
+        "properties": {
+          "data": {
+            "items": { "$ref": "#/components/schemas/MessageListItem" },
+            "type": "array",
+            "title": "Data"
+          },
+          "cursor": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cursor"
+          },
+          "has_more": { "type": "boolean", "title": "Has More" }
+        },
+        "type": "object",
+        "required": ["data", "has_more"],
+        "title": "MessageListResponse"
+      },
+      "GetMessageDetailsResponse": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "organization_id": { "type": "string", "title": "Organization Id" },
+          "number_alias": { "type": "string", "title": "Number Alias" },
+          "direction": { "type": "string", "title": "Direction" },
+          "from": { "type": "object", "title": "From" },
+          "to": { "type": "object", "title": "To" },
+          "content_type": { "type": "string", "title": "Content Type" },
+          "origin": { "type": "string", "title": "Origin" },
+          "preview": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Preview"
+          },
+          "status": { "$ref": "#/components/schemas/MessageStatusPayload" },
+          "at": { "type": "string", "title": "At" },
+          "channel": { "type": "string", "title": "Channel" }
+        },
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "number_alias", "direction", "content_type", "status", "at"],
+        "title": "GetMessageDetailsResponse"
+      },
+      "GetMessageStatusResponse": {
+        "properties": {
+          "message_id": { "type": "string", "title": "Message Id" },
+          "status": { "$ref": "#/components/schemas/MessageStatusPayload" }
+        },
+        "type": "object",
+        "required": ["message_id", "status"],
+        "title": "GetMessageStatusResponse"
+      },
+      "ReactionFromPayload": {
+        "properties": {
+          "number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Number"
+          },
+          "contact_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Contact Id"
+          },
+          "name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "title": "ReactionFromPayload"
+      },
+      "ReactionItem": {
+        "properties": {
+          "from": { "$ref": "#/components/schemas/ReactionFromPayload" },
+          "emoji": { "type": "string", "title": "Emoji" },
+          "at": { "type": "string", "title": "At" },
+          "direction": { "type": "string", "title": "Direction" }
+        },
+        "type": "object",
+        "required": ["from", "emoji", "at", "direction"],
+        "title": "ReactionItem"
+      },
+      "GetMessageReactionsResponse": {
+        "properties": {
+          "message_id": { "type": "string", "title": "Message Id" },
+          "reactions": {
+            "items": { "$ref": "#/components/schemas/ReactionItem" },
+            "type": "array",
+            "title": "Reactions"
+          }
+        },
+        "type": "object",
+        "required": ["message_id", "reactions"],
+        "title": "GetMessageReactionsResponse"
+      },
+      "ReceiptFromPayload": {
+        "properties": {
+          "number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Number"
+          },
+          "contact_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Contact Id"
+          },
+          "name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "title": "ReceiptFromPayload"
+      },
+      "ReceiptItem": {
+        "properties": {
+          "status": { "type": "string", "title": "Status" },
+          "at": { "type": "string", "title": "At" },
+          "from": { "$ref": "#/components/schemas/ReceiptFromPayload" }
+        },
+        "type": "object",
+        "required": ["status", "at"],
+        "title": "ReceiptItem"
+      },
+      "GetMessageReceiptsResponse": {
+        "properties": {
+          "message_id": { "type": "string", "title": "Message Id" },
+          "receipts": {
+            "items": { "$ref": "#/components/schemas/ReceiptItem" },
+            "type": "array",
+            "title": "Receipts"
+          }
+        },
+        "type": "object",
+        "required": ["message_id", "receipts"],
+        "title": "GetMessageReceiptsResponse"
+      },
+      "ContactResponse": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "phone_number": { "type": "string", "title": "Phone Number" },
+          "name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "phone_number"],
+        "title": "ContactResponse"
+      },
+      "ContactListResponse": {
+        "properties": {
+          "data": {
+            "items": { "$ref": "#/components/schemas/ContactResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "cursor": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cursor"
+          },
+          "has_more": { "type": "boolean", "title": "Has More" }
+        },
+        "type": "object",
+        "required": ["data", "has_more"],
+        "title": "ContactListResponse"
+      },
+      "ContactQuotaResponse": {
+        "properties": {
+          "used": { "type": "integer", "title": "Used" },
+          "quota": { "type": "integer", "title": "Quota" },
+          "remaining": { "type": "integer", "title": "Remaining" },
+          "window_days": { "type": "integer", "title": "Window Days" },
+          "resets_at": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Resets At"
+          },
+          "tier": { "type": "string", "title": "Tier" }
+        },
+        "type": "object",
+        "required": ["used", "quota", "remaining", "window_days", "tier"],
+        "title": "ContactQuotaResponse"
+      },
+      "RefreshResponse": {
+        "properties": {
+          "status": { "type": "string", "title": "Status" }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "RefreshResponse"
+      },
+      "MessageUsageSnapshot": {
+        "properties": {
+          "used": { "type": "integer", "title": "Used" },
+          "quota": { "type": "integer", "title": "Quota" },
+          "remaining": { "type": "integer", "title": "Remaining" },
+          "resets_at": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Resets At"
+          },
+          "tier": { "type": "string", "title": "Tier" }
+        },
+        "type": "object",
+        "required": ["used", "quota", "remaining", "tier"],
+        "title": "MessageUsageSnapshot"
+      },
+      "ContactUsageSnapshot": {
+        "properties": {
+          "used": { "type": "integer", "title": "Used" },
+          "quota": { "type": "integer", "title": "Quota" },
+          "remaining": { "type": "integer", "title": "Remaining" },
+          "resets_at": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Resets At"
+          },
+          "tier": { "type": "string", "title": "Tier" }
+        },
+        "type": "object",
+        "required": ["used", "quota", "remaining", "tier"],
+        "title": "ContactUsageSnapshot"
+      },
+      "UsageResponse": {
+        "properties": {
+          "messages": { "$ref": "#/components/schemas/MessageUsageSnapshot" },
+          "contacts": { "$ref": "#/components/schemas/ContactUsageSnapshot" }
+        },
+        "type": "object",
+        "required": ["messages", "contacts"],
+        "title": "UsageResponse"
+      },
+      "UsageMessagesResponse": {
+        "properties": {
+          "messages": { "$ref": "#/components/schemas/MessageUsageSnapshot" }
+        },
+        "type": "object",
+        "required": ["messages"],
+        "title": "UsageMessagesResponse"
+      },
+      "GroupResponse": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id"],
+        "title": "GroupResponse"
+      },
+      "GroupListResponse": {
+        "properties": {
+          "data": {
+            "items": { "$ref": "#/components/schemas/GroupResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "cursor": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cursor"
+          },
+          "has_more": { "type": "boolean", "title": "Has More" }
+        },
+        "type": "object",
+        "required": ["data", "has_more"],
+        "title": "GroupListResponse"
       },
       "NumberStatusPayload": {
         "properties": {
-          "state": {
-            "type": "string",
-            "title": "State"
-          },
-          "at": {
-            "type": "string",
-            "title": "At"
-          },
+          "state": { "type": "string", "title": "State" },
+          "at": { "type": "string", "title": "At" },
           "reason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Reason"
           }
         },
         "type": "object",
-        "required": [
-          "state",
-          "at"
-        ],
+        "required": ["state", "at"],
         "title": "NumberStatusPayload"
       },
       "NumberSummaryResponse": {
         "properties": {
-          "alias": {
-            "type": "string",
-            "title": "Alias"
-          },
-          "number": {
-            "type": "string",
-            "title": "Number"
-          },
-          "status": {
-            "$ref": "#/components/schemas/NumberStatusPayload"
-          }
+          "alias": { "type": "string", "title": "Alias" },
+          "number": { "type": "string", "title": "Number" },
+          "status": { "$ref": "#/components/schemas/NumberStatusPayload" }
         },
         "type": "object",
-        "required": [
-          "alias",
-          "number",
-          "status"
-        ],
+        "required": ["alias", "number", "status"],
         "title": "NumberSummaryResponse"
       },
       "GetNumberStatusResponse": {
         "properties": {
-          "state": {
-            "type": "string",
-            "title": "State"
-          },
-          "at": {
-            "type": "string",
-            "title": "At"
-          },
+          "state": { "type": "string", "title": "State" },
+          "at": { "type": "string", "title": "At" },
           "reason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Reason"
           }
         },
         "type": "object",
-        "required": [
-          "state",
-          "at"
-        ],
+        "required": ["state", "at"],
         "title": "GetNumberStatusResponse"
       },
       "GetRequestEventsResponse": {
         "properties": {
-          "request_id": {
-            "type": "string",
-            "title": "Request Id"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "requested_at": {
-            "type": "string",
-            "title": "Requested At"
-          },
+          "request_id": { "type": "string", "title": "Request Id" },
+          "status": { "type": "string", "title": "Status" },
+          "requested_at": { "type": "string", "title": "Requested At" },
           "last_event_at": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Last Event At"
           },
           "events": {
-            "items": {
-              "$ref": "#/components/schemas/RequestEventItem"
-            },
+            "items": { "$ref": "#/components/schemas/RequestEventItem" },
             "type": "array",
             "title": "Events"
           }
         },
         "type": "object",
-        "required": [
-          "request_id",
-          "status",
-          "requested_at",
-          "last_event_at",
-          "events"
-        ],
+        "required": ["request_id", "status", "requested_at", "last_event_at", "events"],
         "title": "GetRequestEventsResponse"
+      },
+      "EventItem": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "object": { "type": "string", "title": "Object" },
+          "type": { "type": "string", "title": "Type" },
+          "created_at": { "type": "string", "title": "Created At" },
+          "organization_id": { "type": "string", "title": "Organization Id" },
+          "number_alias": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "description": "Inbox handle (`main` or extra alias). Omitted for organization-scoped events (e.g. `storage.*`, `message.quota.*`).",
+            "title": "Number Alias"
+          },
+          "data": { "type": "object", "additionalProperties": true, "title": "Data" }
+        },
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "type", "created_at", "data"],
+        "title": "EventItem"
+      },
+      "ListEventsResponse": {
+        "properties": {
+          "object": { "type": "string", "title": "Object" },
+          "data": {
+            "items": { "$ref": "#/components/schemas/EventItem" },
+            "type": "array",
+            "title": "Data"
+          },
+          "has_more": { "type": "boolean", "title": "Has More" }
+        },
+        "type": "object",
+        "required": ["object", "data", "has_more"],
+        "title": "ListEventsResponse"
       },
       "HTTPValidationError": {
         "properties": {
           "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
+            "items": { "$ref": "#/components/schemas/ValidationError" },
             "type": "array",
             "title": "Detail"
           }
@@ -785,76 +1890,57 @@
       "ListNumbersResponse": {
         "properties": {
           "numbers": {
-            "items": {
-              "$ref": "#/components/schemas/NumberSummaryResponse"
-            },
+            "items": { "$ref": "#/components/schemas/NumberSummaryResponse" },
             "type": "array",
             "title": "Numbers"
           }
         },
         "type": "object",
-        "required": [
-          "numbers"
-        ],
+        "required": ["numbers"],
         "title": "ListNumbersResponse"
       },
       "MessageStatusPayload": {
         "properties": {
-          "state": {
-            "type": "string",
-            "title": "State"
-          },
-          "at": {
-            "type": "string",
-            "title": "At"
-          },
-          "reason": {
+          "state": { "type": "string", "title": "State" },
+          "at": { "type": "string", "title": "At" },
+          "error": {
             "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+              { "$ref": "#/components/schemas/MessageError" },
+              { "type": "null" }
             ],
-            "title": "Reason"
+            "title": "Error"
           }
         },
         "type": "object",
-        "required": [
-          "state",
-          "at"
-        ],
+        "required": ["state", "at"],
         "title": "MessageStatusPayload"
+      },
+      "MessageError": {
+        "properties": {
+          "code": { "type": "string", "title": "Code" },
+          "message": { "type": "string", "title": "Message" },
+          "hint": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Hint"
+          }
+        },
+        "type": "object",
+        "required": ["code", "message"],
+        "title": "MessageError"
       },
       "ReactionStatusPayload": {
         "properties": {
-          "state": {
-            "type": "string",
-            "title": "State"
-          },
-          "at": {
-            "type": "string",
-            "title": "At"
-          }
+          "state": { "type": "string", "title": "State" },
+          "at": { "type": "string", "title": "At" }
         },
         "type": "object",
-        "required": [
-          "state",
-          "at"
-        ],
+        "required": ["state", "at"],
         "title": "ReactionStatusPayload"
       },
       "RequestEventItem": {
         "properties": {
-          "type": {
-            "type": "string",
-            "title": "Type"
-          },
-          "at": {
-            "type": "string",
-            "title": "At"
-          },
+          "type": { "type": "string", "title": "Type" },
+          "at": { "type": "string", "title": "At" },
           "data": {
             "additionalProperties": true,
             "type": "object",
@@ -862,11 +1948,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "type",
-          "at",
-          "data"
-        ],
+        "required": ["type", "at", "data"],
         "title": "RequestEventItem"
       },
       "SendMessageRequest": {
@@ -875,42 +1957,26 @@
             "oneOf": [
               {
                 "type": "object",
-                "properties": {
-                  "number": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "number"
-                ],
+                "properties": { "number": { "type": "string" } },
+                "required": ["number"],
                 "title": "PhoneRecipient",
                 "description": "1:1 recipient — E.164 phone number"
               },
               {
                 "type": "object",
                 "properties": {
-                  "group_id": {
-                    "type": "string",
-                    "pattern": "^grp_[0-9a-f]{32}$"
-                  }
+                  "group_id": { "type": "string", "pattern": "^grp_[0-9a-f]{32}$" }
                 },
-                "required": [
-                  "group_id"
-                ],
+                "required": ["group_id"],
                 "title": "GroupRecipient",
                 "description": "WhatsApp group — public grp_{hex32} identifier"
               },
               {
                 "type": "object",
                 "properties": {
-                  "contact_id": {
-                    "type": "string",
-                    "pattern": "^ct_[0-9a-f]{32}$"
-                  }
+                  "contact_id": { "type": "string", "pattern": "^ct_[0-9a-f]{32}$" }
                 },
-                "required": [
-                  "contact_id"
-                ],
+                "required": ["contact_id"],
                 "title": "ContactRecipient",
                 "description": "TN Contact — phone resolved from the contact registry at send time"
               }
@@ -918,110 +1984,52 @@
             "title": "To",
             "description": "Recipient — exactly one of number (E.164), group_id (grp_{hex32}), or contact_id (ct_{hex32})"
           },
-          "text": {
-            "type": "string",
-            "title": "Text"
-          },
-          "from": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "From"
+          "content": {
+            "type": "object",
+            "title": "Content",
+            "description": "Message content variant (text, image, video, audio, document, location, calendar, contact, sticker)."
           },
           "quoted_message_id": {
             "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^msg_[0-9a-f]{32}$"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "pattern": "^msg_[0-9a-f]{32}$" },
+              { "type": "null" }
             ],
-            "title": "Reply To Message Id",
+            "title": "Quoted Message Id",
             "description": "Optional public id of the message being quoted (msg_{hex32}). When set, the resulting webhook is `message.replied` (instead of `message.sent`); failures route to `message.reply.failed`."
           }
         },
         "type": "object",
-        "required": [
-          "to",
-          "text"
-        ],
+        "required": ["to", "content"],
         "title": "SendMessageRequest"
       },
       "SendMessageResponse": {
         "properties": {
-          "request_id": {
-            "type": "string",
-            "title": "Request Id"
-          },
-          "status": {
-            "$ref": "#/components/schemas/MessageStatusPayload"
-          }
+          "message_id": { "type": "string", "title": "Message Id" },
+          "status": { "$ref": "#/components/schemas/MessageStatusPayload" }
         },
         "type": "object",
-        "required": [
-          "request_id",
-          "status"
-        ],
+        "required": ["message_id", "status"],
         "title": "SendMessageResponse"
       },
       "SendReactionRequest": {
         "properties": {
           "reaction": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Reaction"
-          },
-          "from": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "From"
           }
         },
         "type": "object",
-        "required": [
-          "reaction"
-        ],
+        "required": ["reaction"],
         "title": "SendReactionRequest"
       },
       "SendReactionResponse": {
         "properties": {
-          "operation_id": {
-            "type": "string",
-            "title": "Operation Id"
-          },
-          "message_id": {
-            "type": "string",
-            "title": "Message Id"
-          },
-          "status": {
-            "$ref": "#/components/schemas/ReactionStatusPayload"
-          }
+          "message_id": { "type": "string", "title": "Message Id" },
+          "reaction_event_id": { "type": "string", "title": "Reaction Event Id" },
+          "status": { "$ref": "#/components/schemas/ReactionStatusPayload" }
         },
         "type": "object",
-        "required": [
-          "operation_id",
-          "message_id",
-          "status"
-        ],
+        "required": ["message_id", "reaction_event_id", "status"],
         "title": "SendReactionResponse"
       },
       "SendTypingRequest": {
@@ -1030,42 +2038,26 @@
             "oneOf": [
               {
                 "type": "object",
-                "properties": {
-                  "number": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "number"
-                ],
+                "properties": { "number": { "type": "string" } },
+                "required": ["number"],
                 "title": "PhoneRecipient",
                 "description": "1:1 recipient — E.164 phone number"
               },
               {
                 "type": "object",
                 "properties": {
-                  "group_id": {
-                    "type": "string",
-                    "pattern": "^grp_[0-9a-f]{32}$"
-                  }
+                  "group_id": { "type": "string", "pattern": "^grp_[0-9a-f]{32}$" }
                 },
-                "required": [
-                  "group_id"
-                ],
+                "required": ["group_id"],
                 "title": "GroupRecipient",
                 "description": "WhatsApp group — public grp_{hex32} identifier"
               },
               {
                 "type": "object",
                 "properties": {
-                  "contact_id": {
-                    "type": "string",
-                    "pattern": "^ct_[0-9a-f]{32}$"
-                  }
+                  "contact_id": { "type": "string", "pattern": "^ct_[0-9a-f]{32}$" }
                 },
-                "required": [
-                  "contact_id"
-                ],
+                "required": ["contact_id"],
                 "title": "ContactRecipient",
                 "description": "TN Contact — phone resolved from the contact registry at send time"
               }
@@ -1077,102 +2069,44 @@
             "type": "boolean",
             "title": "Is Typing",
             "description": "true to start the typing indicator, false to stop it"
-          },
-          "from": {
-            "anyOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "alias": {
-                    "type": "string"
-                  },
-                  "number": {
-                    "type": "string"
-                  }
-                },
-                "title": "SenderInput",
-                "description": "Sender — alias OR number (not both). Omit to use the account primary number."
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "From"
           }
         },
         "type": "object",
-        "required": [
-          "to",
-          "is_typing"
-        ],
+        "required": ["to", "is_typing"],
         "title": "SendTypingRequest"
       },
       "SendTypingResponse": {
         "properties": {
-          "operation_id": {
-            "type": "string",
-            "title": "Operation Id"
-          },
-          "status": {
-            "$ref": "#/components/schemas/TypingStatusPayload"
-          }
+          "operation_id": { "type": "string", "title": "Operation Id" },
+          "status": { "$ref": "#/components/schemas/TypingStatusPayload" }
         },
         "type": "object",
-        "required": [
-          "operation_id",
-          "status"
-        ],
+        "required": ["operation_id", "status"],
         "title": "SendTypingResponse"
       },
       "TypingStatusPayload": {
         "properties": {
-          "state": {
-            "type": "string",
-            "title": "State"
-          },
-          "at": {
-            "type": "string",
-            "title": "At"
-          }
+          "state": { "type": "string", "title": "State" },
+          "at": { "type": "string", "title": "At" }
         },
         "type": "object",
-        "required": [
-          "state",
-          "at"
-        ],
+        "required": ["state", "at"],
         "title": "TypingStatusPayload"
       },
       "ValidationError": {
         "properties": {
           "loc": {
             "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
+              "anyOf": [{ "type": "string" }, { "type": "integer" }]
             },
             "type": "array",
             "title": "Location"
           },
-          "msg": {
-            "type": "string",
-            "title": "Message"
-          },
-          "type": {
-            "type": "string",
-            "title": "Error Type"
-          }
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
       }
     }

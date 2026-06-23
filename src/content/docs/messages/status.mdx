@@ -27,14 +27,14 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
   <TabItem label="cURL">
     ```bash title="turbo-notify.sh"
     curl -X GET \
-      https://api.turbonotify.com/v1/messages/msg_abc123/status \
+      https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/status \
       -H "Authorization: Bearer SUA_CHAVE"
     ```
   </TabItem>
   <TabItem label="Node">
     ```js title="turbo-notify.js"
     const response = await fetch(
-      'https://api.turbonotify.com/messages/msg_abc123/status',
+      'https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/status',
       {
         method: 'GET',
         headers: {
@@ -51,7 +51,7 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
     ```python title="turbo_notify.py"
     import requests
 
-    url = "https://api.turbonotify.com/messages/msg_abc123/status"
+    url = "https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/status"
     headers = {
         "Authorization": "Bearer SUA_CHAVE"
     }
@@ -72,7 +72,7 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
     )
 
     func main() {
-        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/messages/msg_abc123/status", nil)
+        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/status", nil)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         resp, _ := http.DefaultClient.Do(req)
         defer resp.Body.Close()
@@ -84,7 +84,7 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
   <TabItem label="PHP">
     ```php title="turbo-notify.php"
     <?php
-    $url = 'https://api.turbonotify.com/messages/msg_abc123/status';
+    $url = 'https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/status';
 
     $options = [
         'http' => [
@@ -108,7 +108,7 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var response = await client.GetAsync(
-        "https://api.turbonotify.com/messages/msg_abc123/status"
+        "https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/status"
     );
     var result = await response.Content.ReadAsStringAsync();
     Console.WriteLine(result);
@@ -124,7 +124,7 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
             var client = HttpClient.newHttpClient();
 
             var request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.turbonotify.com/messages/msg_abc123/status"))
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/status"))
                 .header("Authorization", "Bearer SUA_CHAVE")
                 .GET()
                 .build();
@@ -229,8 +229,8 @@ As mensagens ficam disponíveis para consulta por um período limitado. Após es
 
 O momento da **transição de entrega atual** é exposto pelo campo `status.at`, que **avança** a cada transição (`sent → delivered → read`):
 
-- Em `GET /v1/messages/{id}/status` o objeto `status` carrega `{state, at}` — o `status.at` é o instante em que o estado atual foi atingido.
-- Em `GET /v1/messages/{id}` o mesmo `status.at` aparece dentro do objeto `status`. Não confunda com o `at` no **nível raiz** da mensagem: este é o **momento estável de ocorrência** (outbound: o envio real no WhatsApp; inbound: o recebimento) e **não muda** conforme a mensagem avança para `delivered`/`read`.
+- Em `GET /v1/numbers/{alias}/messages/{id}/status` o objeto `status` carrega `{state, at}` — o `status.at` é o instante em que o estado atual foi atingido.
+- Em `GET /v1/numbers/{alias}/messages/{id}` o mesmo `status.at` aparece dentro do objeto `status`. Não confunda com o `at` no **nível raiz** da mensagem: este é o **momento estável de ocorrência** (outbound: o envio real no WhatsApp; inbound: o recebimento) e **não muda** conforme a mensagem avança para `delivered`/`read`.
 - Nos eventos `message.sent`, `message.delivered` e `message.read` (webhook e polling via `GET /v1/events`) o instante da ação vem em `data.at` — o mesmo nome de campo em todos os eventos `message.*`.
 
 ## Atualizações em tempo real

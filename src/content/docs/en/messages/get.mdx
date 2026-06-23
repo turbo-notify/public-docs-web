@@ -1,0 +1,26 @@
+---
+title: Get a Message
+description: Retrieve a message with GET /v1/numbers/{alias}/messages/{id}. Translation pending; see the canonical PT-BR version.
+---
+
+> This page is being translated. See the PT-BR (canonical) version: [/messages/get/](/messages/get/).
+
+```http title="Get a message"
+GET /v1/numbers/{alias}/messages/{id}
+```
+
+Returns a single message by id (`msg_…`). `{alias}` is the message's
+`number_alias` — read it from the event/webhook envelope or the send response.
+Accessing an id under the wrong alias returns **404**.
+
+- Top-level `at` = the **stable** occurrence moment (does not advance).
+- `status.at` = the **current** delivery-status time (advances `sent → delivered → read`).
+
+Related sub-resources: `.../{id}/status`, `.../{id}/reactions`, `.../{id}/receipts`.
+
+```bash
+curl https://api.turbonotify.com/v1/numbers/main/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7 \
+  -H "Authorization: Bearer tn_live_..."
+```
+
+The flat `GET /v1/messages/{id}` route is retired (**404**).

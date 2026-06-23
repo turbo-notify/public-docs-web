@@ -1,0 +1,21 @@
+---
+title: Webhook Events
+description: Receive events via webhook; fetch the full message body with the number-scoped get endpoint using number_alias from the envelope. Translation pending; see the canonical PT-BR version.
+---
+
+> This page is being translated. See the PT-BR (canonical) version: [/messages/webhook/](/messages/webhook/).
+
+Turbo Notify delivers events to your configured webhook endpoint as HTTP POST.
+Each event envelope carries **`number_alias`** (below `organization_id`) for
+events tied to a number.
+
+To fetch the full message body referenced by a `message.*` event, call the
+number-scoped get endpoint using the alias from the envelope:
+
+```http title="Fetch the full message"
+GET /v1/numbers/{alias}/messages/{id}
+```
+
+where `{alias}` is the envelope's `number_alias` and `{id}` is the `msg_…` id.
+The webhook `data` is **byte-identical** to the equivalent `GET /v1/events`
+item. `number_alias` is omitted only on `storage.*` and `message.quota.*`.

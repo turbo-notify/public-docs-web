@@ -1,6 +1,6 @@
 ---
 title: "El `at` del evento es el momento real de la acción en WhatsApp"
-description: "El campo `at` de los eventos ahora refleja el momento genuino de la acción en WhatsApp (distinto de `created_at`); tres eventos de foto/snapshot dejan de llevar `at`; todos los webhooks de ciclo de vida de grupo ahora se entregan; el `at` raíz en GET /v1/messages/{id} es estable mientras `status.at` avanza."
+description: "El campo `at` de los eventos ahora refleja el momento genuino de la acción en WhatsApp (distinto de `created_at`); tres eventos de foto/snapshot dejan de llevar `at`; todos los webhooks de ciclo de vida de grupo ahora se entregan; el `at` raíz en GET /v1/numbers/{alias}/messages/{id} es estable mientras `status.at` avanza."
 sidebar:
   order: 5
 ---
@@ -25,7 +25,7 @@ sidebar:
   `group.participants_added`, `group.participants_removed`,
   `group.participants_promoted`, `group.participants_demoted`, `group.joined`,
   `group.left` (además del ya existente `group.picture_changed`).
-- **`GET /v1/messages/{id}`**: el `at` de **nivel raíz** es el **momento estable
+- **`GET /v1/numbers/{alias}/messages/{id}`**: el `at` de **nivel raíz** es el **momento estable
   de ocurrencia** del mensaje (outbound: el envío real; inbound: la recepción) y
   **no cambia** a medida que el mensaje avanza `sent → delivered → read`. El
   `status.at` (anidado) es el timestamp del **estado de entrega actual** y

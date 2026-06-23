@@ -1,0 +1,100 @@
+---
+title: "Rotas aninhadas por número + `contact.quota.*` por número"
+description: "Mensagens, contatos e grupos passam a residir abaixo da rota do número (`/v1/numbers/{alias}/…`); o envio deixa de aceitar `from` no body (o remetente é o alias do path); os eventos `contact.quota.*` passam a carregar `number_alias` no envelope e `GET /v1/events` aceita o filtro `number_alias`."
+sidebar:
+  order: 6
+---
+
+**Data:** 2026-06-22
+**Status:** Aplicado
+
+:::caution[Mudança de rota — quebra de compatibilidade]
+Esta é uma **mudança de rota** que quebra a compatibilidade. Toda chamada a
+mensagens, contatos e grupos precisa migrar para o caminho aninhado abaixo do
+número (`/v1/numbers/{alias}/…`). As rotas planas antigas
+(`/v1/messages`, `/v1/contacts`, `/v1/groups` e suas sub-rotas) passam a
+retornar **404**.
+:::
+
+## O que mudou
+
+### Mensagens, contatos e grupos sempre abaixo do número
+
+Mensagens, contatos e grupos passam a estar **sempre associados a um número** da
+sua organização. Isso é expresso de forma **estrutural** na API: as rotas
+residem abaixo da rota do número, identificado pelo `{alias}` (`main` para o
+número principal ou o alias de um número extra).
+
+| Antes (plano — agora 404) | Agora (aninhado por número) |
+| ------------------------- | --------------------------- |
+| `POST /v1/messages` | `POST /v1/numbers/{alias}/messages` |
+| — (não havia lista pública) | `GET /v1/numbers/{alias}/messages` (lista por cursor — **novo**) |
+| `GET /v1/messages/{id}` | `GET /v1/numbers/{alias}/messages/{id}` |
+| `GET /v1/messages/{id}/status` | `GET /v1/numbers/{alias}/messages/{id}/status` |
+| `GET /v1/messages/{id}/reactions` | `GET /v1/numbers/{alias}/messages/{id}/reactions` |
+| `GET /v1/messages/{id}/receipts` | `GET /v1/numbers/{alias}/messages/{id}/receipts` |
+| `POST /v1/messages/{id}/reply` | `POST /v1/numbers/{alias}/messages/{id}/reply` |
+| `POST /v1/messages/{id}/edit` | `POST /v1/numbers/{alias}/messages/{id}/edit` |
+| `POST /v1/messages/{id}/delete` | `POST /v1/numbers/{alias}/messages/{id}/delete` |
+| `POST /v1/messages/{id}/react` | `POST /v1/numbers/{alias}/messages/{id}/react` |
+| `POST /v1/typing-indicator` | `POST /v1/numbers/{alias}/typing-indicator` |
+| `GET /v1/contacts` | `GET /v1/numbers/{alias}/contacts` |
+| `GET /v1/contacts/{id}` | `GET /v1/numbers/{alias}/contacts/{id}` |
+| `GET /v1/contacts/{id}/profile-picture` | `GET /v1/numbers/{alias}/contacts/{id}/profile-picture` |
+| `GET /v1/contacts/quota` | `GET /v1/numbers/{alias}/contacts/quota` |
+| `POST /v1/contacts/{id}/refresh` | `POST /v1/numbers/{alias}/contacts/{id}/refresh` |
+| `GET /v1/groups` | `GET /v1/numbers/{alias}/groups` |
+| `GET /v1/groups/{id}` | `GET /v1/numbers/{alias}/groups/{id}` |
+| `GET /v1/groups/{id}/picture` | `GET /v1/numbers/{alias}/groups/{id}/picture` |
+
+### O envio não aceita mais `from` no body
+
+Como o remetente agora é o número do path, o campo `from` no corpo de envio foi
+**removido**. Para enviar a partir do número principal use
+`POST /v1/numbers/main/messages`; para um número extra use o alias dele
+(`POST /v1/numbers/{alias}/messages`). O campo `to` (destinatário) permanece
+inalterado e continua aceitando `number`, `group_id` ou `contact_id`.
+
+### Identificadores únicos, mas não endereçáveis sozinhos
+
+Os ids públicos (`msg_…`, `ct_…`, `grp_…`) continuam globalmente únicos, mas
+**não são mais endereçáveis sozinhos**: para ler ou agir sobre um recurso por id
+você precisa do `number_alias` ao qual ele pertence. Esse handle está **sempre
+presente no envelope** de todo webhook, item de `GET /v1/events` e resposta de
+envio — leia-o de lá e use-o nas chamadas por id subsequentes. Tentar acessar um
+id sob o alias errado retorna **404**.
+
+### Chave de idempotência por alias
+
+O escopo da chave de idempotência (`Idempotency-Key`) passa a ser
+`(organização, number_alias, chave)`. A mesma chave em dois aliases diferentes
+produz **dois envios independentes**.
+
+### `contact.quota.*` agora por número
+
+Os eventos `contact.quota.warning` e `contact.quota.exceeded` passam a carregar
+o campo **`number_alias` no envelope** (logo abaixo de `organization_id`),
+identificando o número cuja quota de contatos foi atingida. O `data` do evento
+permanece inalterado. `number_alias` continua **omitido** apenas em `storage.*` e
+nos eventos de quota de mensagem (`message.quota.*`).
+
+### `GET /v1/events` aceita o filtro `number_alias`
+
+A rota de polling `GET /v1/events` ganha um parâmetro opcional **`number_alias`**
+que restringe a resposta aos eventos de um único número. As superfícies de conta
+(`GET /v1/usage`, `GET /v1/usage/messages`, `GET /v1/events`, `storage.*`)
+permanecem **no nível raiz** e não foram afetadas pela mudança de rota.
+
+## Compatibilidade
+
+Pré-produção: a mudança quebra a compatibilidade sem camada de transição. As
+rotas planas retornam 404 imediatamente. Migre todas as chamadas para o caminho
+aninhado e passe a ler o `number_alias` do envelope para chamadas por id.
+
+## Referências
+
+- [Envio de mensagens](/messages/send/) · [Início rápido](/general/getting-started/)
+- [Consultar mensagem](/messages/get/) · [Polling de eventos](/messages/polling/)
+- [Listar contatos](/contacts/list/) · [Quota de contatos](/usage/quota/)
+- [Eventos de contato](/webhooks/contact-events/)
+- [Foto do grupo](/groups/picture/) · [Limitações de grupos](/groups/limitations/)

@@ -1,6 +1,8 @@
 ---
-title: Message Quota Webhook Events
-description: Translation pending. See the canonical PT-BR version.
+title: Eventos de Cuota de Mensajes por Webhook
+description: "Eventos message.quota.* a nivel de cuenta (sin number_alias). Traducción pendiente; ver versión canónica en PT-BR."
 ---
 
-> This page is being translated. See the PT-BR (canonical) version: [/webhooks/message-quota-events/](/webhooks/message-quota-events/).
+> Esta página está siendo traducida. Consulte la versión canónica en PT-BR: [/webhooks/message-quota-events/](/webhooks/message-quota-events/).
+
+Los eventos `message.quota.*` son **a nivel de cuenta** (por organización), no por número. Por eso **no** llevan `number_alias` en el envelope — a diferencia de los eventos `contact.quota.*`, que sí lo llevan (cuota de contactos por número). El uso de mensajes a nivel de cuenta se consulta en `GET /v1/usage/messages`.

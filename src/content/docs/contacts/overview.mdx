@@ -9,6 +9,8 @@ import ExternalLink from '@components/ExternalLink.astro';
 
 Um **TN Contact** é um registro de observabilidade passiva que o Turbo Notify cria automaticamente a partir do tráfego de mensagens entre o número do organization e contatos externos. Não é um CRM. Não há sincronização de agenda. Não há endpoints de criação ou exclusão manual.
 
+Contatos são escopados por número: todas as rotas ficam sob `/v1/numbers/{alias}/contacts`, onde `{alias}` é `main` (número primário) ou o alias de um número extra — o mesmo telefone alcançado por dois números diferentes gera dois contatos distintos.
+
 ## Conceito
 
 | Aspecto | Comportamento |
@@ -52,8 +54,8 @@ A razão 10:1 (mensagens/contato) reflete o uso médio em produção. Customiza�
 
 ## Fora de escopo
 
-- Não há `POST /v1/contacts` — contatos são derivados de tráfego.
-- Não há `DELETE /v1/contacts/{id}` — use soft delete via dashboard.
+- Não há `POST /v1/numbers/{alias}/contacts` — contatos são derivados de tráfego.
+- Não há `DELETE /v1/numbers/{alias}/contacts/{id}` — use soft delete via dashboard.
 - Não há sincronização de agenda do WhatsApp.
 
 ## Próximos passos

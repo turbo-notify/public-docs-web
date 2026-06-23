@@ -1,6 +1,14 @@
 ---
-title: Contact Errors
-description: Translation pending. See the canonical PT-BR version.
+title: Errores de Contactos
+description: "Códigos de error de la API de Contactos (anidada por número). Traducción pendiente; ver versión canónica en PT-BR."
 ---
 
-> This page is being translated. See the PT-BR (canonical) version: [/contacts/errors/](/contacts/errors/).
+> Esta página está siendo traducida. Consulte la versión canónica en PT-BR: [/contacts/errors/](/contacts/errors/).
+
+Los endpoints de Contactos viven bajo `GET /v1/numbers/{alias}/contacts…`. Errores comunes:
+
+- `contact_not_found` (HTTP 404) — el `ct_…` no existe bajo ese `{alias}` (revisa el `number_alias` del envelope).
+- `contacts_not_enabled` (HTTP 422) — funcionalidad no configurada en esta instancia.
+- `contact.quota.exceeded` (HTTP 402) — cuota mensual de contactos del número alcanzada.
+
+Las rutas planas `/v1/contacts…` están retiradas y devuelven **404**.

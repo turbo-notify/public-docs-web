@@ -1,6 +1,21 @@
 ---
-title: Usage & Quota
-description: Translation pending. See the canonical PT-BR version.
+title: Uso y Cuota
+description: "Cuota de mensajes a nivel de cuenta (GET /v1/usage, /v1/usage/messages) y cuota de contactos por número (GET /v1/numbers/{alias}/contacts/quota). Traducción pendiente; ver versión canónica en PT-BR."
 ---
 
-> This page is being translated. See the PT-BR (canonical) version: [/usage/quota/](/usage/quota/).
+> Esta página está siendo traducida. Consulte la versión canónica en PT-BR: [/usage/quota/](/usage/quota/).
+
+**A nivel de cuenta** (permanecen en la raíz, sin cambios):
+
+```http title="Uso a nivel de cuenta"
+GET /v1/usage
+GET /v1/usage/messages
+```
+
+**Cuota de contactos — ahora por número:**
+
+```http title="Cuota de contactos del número"
+GET /v1/numbers/{alias}/contacts/quota
+```
+
+`{alias}` es `main` o el alias de un número extra. La cuota de contactos pasa a ser **por número**; la antigua ruta plana `GET /v1/contacts/quota` está retirada (404).

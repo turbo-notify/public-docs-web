@@ -13,7 +13,7 @@ Após uma mensagem ser enviada ou recebida, você pode consultar todas as reaç�
 
 Para listar as reações de uma mensagem, faça uma requisição `GET` informando o `message_id` retornado no envio.
 
-**Endpoint:** `GET /v1/messages/{message_id}/reactions`
+**Endpoint:** `GET /v1/numbers/{alias}/messages/{message_id}/reactions`
 
 **Autenticação:** Bearer token com escopo `messages:read`
 
@@ -27,14 +27,14 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
   <TabItem label="cURL">
     ```bash title="turbo-notify.sh"
     curl -X GET \
-      https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions \
+      https://api.turbonotify.com/v1/numbers/main/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions \
       -H "Authorization: Bearer SUA_CHAVE"
     ```
   </TabItem>
   <TabItem label="Node">
     ```js title="turbo-notify.js"
     const response = await fetch(
-      'https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions',
+      'https://api.turbonotify.com/v1/numbers/main/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions',
       {
         method: 'GET',
         headers: {
@@ -51,7 +51,7 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
     ```python title="turbo_notify.py"
     import requests
 
-    url = "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions"
+    url = "https://api.turbonotify.com/v1/numbers/main/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions"
     headers = {
         "Authorization": "Bearer SUA_CHAVE"
     }
@@ -72,7 +72,7 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
     )
 
     func main() {
-        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions", nil)
+        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/v1/numbers/main/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions", nil)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         resp, _ := http.DefaultClient.Do(req)
         defer resp.Body.Close()
@@ -84,7 +84,7 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
   <TabItem label="PHP">
     ```php title="turbo-notify.php"
     <?php
-    $url = 'https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions';
+    $url = 'https://api.turbonotify.com/v1/numbers/main/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions';
 
     $options = [
         'http' => [
@@ -108,7 +108,7 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var response = await client.GetAsync(
-        "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions"
+        "https://api.turbonotify.com/v1/numbers/main/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions"
     );
     var result = await response.Content.ReadAsStringAsync();
     Console.WriteLine(result);
@@ -124,7 +124,7 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
             var client = HttpClient.newHttpClient();
 
             var request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions"))
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers/main/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions"))
                 .header("Authorization", "Bearer SUA_CHAVE")
                 .GET()
                 .build();

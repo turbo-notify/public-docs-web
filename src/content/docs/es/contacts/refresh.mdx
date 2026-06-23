@@ -1,6 +1,12 @@
 ---
-title: Refresh Contact
-description: Translation pending. See the canonical PT-BR version.
+title: Refrescar Contacto
+description: "POST /v1/numbers/{alias}/contacts/{id}/refresh — refresca los metadatos de un contacto por número. Traducción pendiente; ver versión canónica en PT-BR."
 ---
 
-> This page is being translated. See the PT-BR (canonical) version: [/contacts/refresh/](/contacts/refresh/).
+> Esta página está siendo traducida. Consulte la versión canónica en PT-BR: [/contacts/refresh/](/contacts/refresh/).
+
+```http title="Refrescar contacto"
+POST /v1/numbers/{alias}/contacts/{id}/refresh
+```
+
+`{alias}` es `main` o el alias de un número extra; `{id}` es el `ct_…` del contacto. La ruta plana `POST /v1/contacts/{id}/refresh` está retirada (404).

@@ -74,14 +74,23 @@ sintéticos de quota **não** carregam `direction`.
 
 ## `number_alias` no envelope
 
-Os eventos de ciclo de vida do contato (`contact.created`, `contact.name_changed`,
-`contact.picture_changed`, `contact.first_messaged`) carregam, logo abaixo de
-`organization_id`, o campo `number_alias` — o handle do número TN ("inbox")
-**pelo qual o contato foi observado** (`"main"` ou o alias de um número extra).
-Use-o para rotear a observação ao inbox correto. Os eventos sintéticos de quota
-(`contact.quota.warning`, `contact.quota.exceeded`) **não** carregam
-`number_alias` (não pertencem a um único número). O campo é omitido quando o
-inbox de observação não é conhecido.
+**Todos** os eventos `contact.*` — tanto os de ciclo de vida (`contact.created`,
+`contact.name_changed`, `contact.picture_changed`, `contact.first_messaged`)
+quanto os de quota (`contact.quota.warning`, `contact.quota.exceeded`) — carregam,
+logo abaixo de `organization_id`, o campo `number_alias`: o handle do número TN
+("inbox") ao qual o contato (ou a quota de contatos) pertence — `"main"` para o
+número principal ou o alias de um número extra. Use-o para rotear a observação ao
+inbox correto.
+
+A quota de contatos passou a ser **por número** (ADR 2026-06-22): cada número tem
+sua própria contagem de contatos distintos, então os eventos
+`contact.quota.warning`/`contact.quota.exceeded` identificam o número afetado via
+`number_alias` no envelope. O `data` do evento de quota **não** muda — os campos
+de quota (`threshold_bps`, `used`, `quota`, …) permanecem iguais.
+
+> O `number_alias` fica no **envelope**, nunca dentro de `data`. Entre os eventos
+> de conta, o campo é omitido apenas em `storage.*` e nos eventos de quota de
+> mensagem (`message.quota.*`) — esses não pertencem a um único número.
 
 ## Exemplo: `contact.created`
 
@@ -170,7 +179,8 @@ nunca uma URL do WhatsApp. Re-baixe a foto via o endpoint GET quando a URL
 expirar. O evento dispara **apenas** quando a foto chega ao seu bucket, inclusive
 quando o contato foi observado sem foto e ela fica disponível depois (basta
 habilitar o BYO Storage). Para ler a foto sob demanda use
-[`GET /v1/contacts/{contact_id}/profile-picture`](/contacts/profile-picture/).
+[`GET /v1/numbers/{alias}/contacts/{contact_id}/profile-picture`](/contacts/profile-picture/),
+onde `{alias}` é o `number_alias` recebido no envelope deste evento.
 
 ## Exemplo: `contact.first_messaged`
 
@@ -201,6 +211,7 @@ habilitar o BYO Storage). Para ler a foto sob demanda use
   "id": "evt_...",
   "type": "contact.quota.warning",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
   "created_at": "2026-05-15T12:00:00Z",
   "data": {
     "threshold_bps": 90,
@@ -227,6 +238,7 @@ janela de quota reinicia), não o momento da ação.
   "id": "evt_...",
   "type": "contact.quota.exceeded",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
   "created_at": "2026-05-15T12:00:00Z",
   "data": {
     "used": 100,

@@ -1,6 +1,6 @@
 ---
 title: Detalhe do contato
-description: Endpoint GET /v1/contacts/{contact_id} — payload completo incluindo telefone e foto de perfil.
+description: Endpoint GET /v1/numbers/{alias}/contacts/{contact_id} — payload completo incluindo telefone e foto de perfil.
 sidebar:
   order: 3
 ---
@@ -13,7 +13,7 @@ Retorna o payload completo de um contato, incluindo telefone e metadados da foto
 ## Endpoint
 
 ```http
-GET /v1/contacts/{contact_id}
+GET /v1/numbers/{alias}/contacts/{contact_id}
 ```
 
 **Scope:** `contacts:read`.
@@ -29,13 +29,13 @@ GET /v1/contacts/{contact_id}
 <Tabs>
 <TabItem label="cURL">
 ```bash
-curl "https://api.turbonotify.com/v1/contacts/ct_a1b2c3d4e5f6789012345678901234ab" \
+curl "https://api.turbonotify.com/v1/numbers/main/contacts/ct_a1b2c3d4e5f6789012345678901234ab" \
   -H "Authorization: Bearer $TURBO_API_KEY"
 ```
 </TabItem>
 <TabItem label="Node">
 ```ts
-const res = await fetch(`https://api.turbonotify.com/v1/contacts/${id}`, {
+const res = await fetch(`https://api.turbonotify.com/v1/numbers/main/contacts/${id}`, {
   headers: { Authorization: `Bearer ${process.env.TURBO_API_KEY}` },
 });
 const contact = await res.json();
@@ -44,7 +44,7 @@ const contact = await res.json();
 <TabItem label="Python">
 ```python
 r = httpx.get(
-    f"https://api.turbonotify.com/v1/contacts/{contact_id}",
+    f"https://api.turbonotify.com/v1/numbers/main/contacts/{contact_id}",
     headers={"Authorization": f"Bearer {API_KEY}"},
 )
 contact = r.json()

@@ -1,6 +1,16 @@
 ---
-title: Contacts Overview
-description: Translation pending. See the canonical PT-BR version.
+title: Visión general de Contactos
+description: "API de Contactos anidada por número: GET /v1/numbers/{alias}/contacts y sub-rutas. Traducción pendiente; ver versión canónica en PT-BR."
 ---
 
-> This page is being translated. See the PT-BR (canonical) version: [/contacts/overview/](/contacts/overview/).
+> Esta página está siendo traducida. Consulte la versión canónica en PT-BR: [/contacts/overview/](/contacts/overview/).
+
+La API de Contactos vive **bajo el número**, donde `{alias}` es `main` (número principal) o el alias de un número extra:
+
+- `GET /v1/numbers/{alias}/contacts` — listar contactos
+- `GET /v1/numbers/{alias}/contacts/{id}` — detalle de un contacto
+- `GET /v1/numbers/{alias}/contacts/{id}/profile-picture` — foto de perfil
+- `GET /v1/numbers/{alias}/contacts/quota` — cuota de contactos (por número)
+- `POST /v1/numbers/{alias}/contacts/{id}/refresh` — refrescar metadatos
+
+Las rutas planas `/v1/contacts` quedaron **retiradas** (404). Obtén el `{alias}` del campo `number_alias` del envelope del evento.

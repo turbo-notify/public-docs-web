@@ -1,6 +1,14 @@
 ---
 title: Message Quota Webhook Events
-description: Translation pending. See the canonical PT-BR version.
+description: message.quota.* events stay account-wide (per-organization) and carry no number_alias. Translation pending; see the canonical PT-BR version.
 ---
 
 > This page is being translated. See the PT-BR (canonical) version: [/webhooks/message-quota-events/](/webhooks/message-quota-events/).
+
+The `message.quota.warning` and `message.quota.exceeded` events are **account-wide
+(per-organization)**: message quota is not scoped to a single number, so these
+events do **not** carry `number_alias` in the envelope.
+
+This contrasts with `contact.quota.*`, which became **per-number** and now carries
+`number_alias` (see [Contact events](/webhooks/contact-events/)). `number_alias` is
+omitted only on `storage.*` and `message.quota.*`.

@@ -1,5 +1,5 @@
 ---
-title: "Identidad del confirmador en GET /v1/messages/{id}/receipts"
+title: "Identidad del confirmador en GET /v1/numbers/{alias}/messages/{id}/receipts"
 description: "El campo `from` ahora retorna la identidad de la parte que emitió cada recibo de entrega/lectura — número, contact_id y nombre de visualización."
 sidebar:
   order: 4
@@ -10,7 +10,7 @@ sidebar:
 
 ## Qué cambió
 
-Cada elemento en `receipts[]` ahora incluye un objeto `from` con la identidad de la parte que confirmó la entrega o lectura — alineando el endpoint con el patrón ya existente en `GET /v1/messages/{id}/reactions`.
+Cada elemento en `receipts[]` ahora incluye un objeto `from` con la identidad de la parte que confirmó la entrega o lectura — alineando el endpoint con el patrón ya existente en `GET /v1/numbers/{alias}/messages/{id}/reactions`.
 
 | Campo | Tipo | Descripción |
 | ----- | ---- | ----------- |

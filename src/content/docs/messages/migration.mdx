@@ -31,7 +31,7 @@ resolva seu número/contato via `GET /v1/numbers/{alias}`. As menções a
 | Webhook/polling grupo outbound | `to` agora carrega `group_id` + `name` em vez de `number` | Breaking |
 | Campo `group` sibling | **Removido** — substituído por `to.group_id` | Breaking |
 | Campo `member` | **Adicionado** como sibling top-level em mensagens de grupo | Aditivo |
-| Request `POST /v1/messages` (grupo) | Sem mudança — já usava `to.group_id` | Sem ação |
+| Request `POST /v1/numbers/{alias}/messages` (grupo) | Sem mudança — já usava `to.group_id` | Sem ação |
 
 ### 1. Remoção do campo `group` sibling
 
@@ -270,7 +270,7 @@ O campo `content` foi removido do payload do evento `message.received`. Em seu l
 
 **O que fazer:**
 - Substitua o uso de `data.content` por `data.preview` para exibição ou logging rápido.
-- Para o corpo completo da mensagem, chame `GET /v1/messages/{message_id}` dentro da janela de retenção.
+- Para o corpo completo da mensagem, chame `GET /v1/numbers/{alias}/messages/{message_id}` dentro da janela de retenção.
 - Use `data.content_type` para identificar o tipo de conteúdo recebido.
 - Atualize referências a `data.from` e `data.to`: agora são objetos `{number: string}`, não strings planas.
 
@@ -333,13 +333,13 @@ O campo `new_text` foi removido do payload do evento `message.edited`. Em seu lu
 }
 ```
 
-Após a edição via `POST /messages/{id}/edit`, `GET /v1/messages/{message_id}` retorna o body já atualizado — não é mais necessário tratar o body antigo. Edits feitos diretamente no app do WhatsApp (channel-side) também passam a ser persistidos via decrypt nativo do `secretEncryptedMessage` (ver ADR `2026-05-05-message-contract-consistency` Refinement 11).
+Após a edição via `POST /v1/numbers/{alias}/messages/{id}/edit`, `GET /v1/numbers/{alias}/messages/{message_id}` retorna o body já atualizado — não é mais necessário tratar o body antigo. Edits feitos diretamente no app do WhatsApp (channel-side) também passam a ser persistidos via decrypt nativo do `secretEncryptedMessage` (ver ADR `2026-05-05-message-contract-consistency` Refinement 11).
 
 **O que fazer:**
 
 1. Substitua o uso de `data.new_text` por `data.preview`.
 2. Se já tinha migrado para `new_preview`, faça a substituição final por `preview`. Migration shims do servidor continuam aceitando payloads legados no read-side, mas o write-side só emite `preview`.
-3. Para o corpo completo atualizado (qualquer edição, API ou channel-side), chame `GET /v1/messages/{message_id}`.
+3. Para o corpo completo atualizado (qualquer edição, API ou channel-side), chame `GET /v1/numbers/{alias}/messages/{message_id}`.
 
 ---
 
@@ -365,7 +365,7 @@ O campo `value` no payload do typing indicator foi renomeado para `is_typing`.
 }
 ```
 
-**O que fazer:** Atualize as chamadas a `POST /v1/typing-indicator` para usar `is_typing` no lugar de `value` e o campo `to` no formato estruturado `{"number": "..."}` (ver seção "Parties Estruturados" acima).
+**O que fazer:** Atualize as chamadas a `POST /v1/numbers/{alias}/typing-indicator` para usar `is_typing` no lugar de `value` e o campo `to` no formato estruturado `{"number": "..."}` (ver seção "Parties Estruturados" acima).
 
 ---
 
@@ -440,8 +440,8 @@ Além das mudanças incompatíveis, esta versão introduz novos recursos:
 
 | Recurso | Endpoint | Descrição |
 | ------- | -------- | --------- |
-| Consulta de mensagem | `GET /v1/messages/{message_id}` | Recupere corpo completo, status e mídia por ID |
-| Envio de mídia | `POST /v1/messages` com `content_type` + `media` | Envie imagens, áudios, vídeos, documentos e figurinhas |
+| Consulta de mensagem | `GET /v1/numbers/{alias}/messages/{message_id}` | Recupere corpo completo, status e mídia por ID |
+| Envio de mídia | `POST /v1/numbers/{alias}/messages` com `content_type` + `media` | Envie imagens, áudios, vídeos, documentos e figurinhas |
 | BYO S3 | Dashboard → Settings → Integrations | Armazenamento durável para mídia recebida e enviada |
 | Polling de eventos | `GET /v1/events` | Alternativa ou complemento ao webhook para processar eventos |
 

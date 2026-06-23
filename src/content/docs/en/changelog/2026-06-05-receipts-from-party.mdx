@@ -1,5 +1,5 @@
 ---
-title: "Party identity on GET /v1/messages/{id}/receipts"
+title: "Party identity on the receipts endpoint"
 description: "The `from` field now returns the identity of the party who emitted each delivery/read receipt — number, contact_id, and display name."
 sidebar:
   order: 4
@@ -10,7 +10,9 @@ sidebar:
 
 ## What changed
 
-Each item in `receipts[]` now includes a `from` object with the identity of the party who acknowledged the delivery or read — aligning the endpoint with the existing pattern in `GET /v1/messages/{id}/reactions`.
+Each item in `receipts[]` returned by `GET /v1/numbers/{alias}/messages/{id}/receipts` now includes a `from` object with the identity of the party who acknowledged the delivery or read — aligning the endpoint with the existing pattern in `GET /v1/numbers/{alias}/messages/{id}/reactions`.
+
+> Note: at the time of this change these routes were the flat `GET /v1/messages/{id}/receipts` and `.../reactions`. They were later moved under the number ([2026-06-22](/changelog/2026-06-22-number-scoped-routes/)).
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |

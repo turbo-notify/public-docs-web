@@ -1,6 +1,23 @@
 ---
-title: Contact Webhook Events
-description: Translation pending. See the canonical PT-BR version.
+title: Eventos de Contacto por Webhook
+description: "Eventos contact.* con number_alias en el envelope (incluidos los de cuota). Traducción pendiente; ver versión canónica en PT-BR."
 ---
 
-> This page is being translated. See the PT-BR (canonical) version: [/webhooks/contact-events/](/webhooks/contact-events/).
+> Esta página está siendo traducida. Consulte la versión canónica en PT-BR: [/webhooks/contact-events/](/webhooks/contact-events/).
+
+## `number_alias` en el envelope
+
+Todos los eventos `contact.*` — **incluidos los de cuota** (`contact.quota.warning`, `contact.quota.exceeded`) — llevan, justo debajo de `organization_id`, el campo `number_alias`: el handle del número TN (`main` o el alias de un número extra) afectado. La cuota de contactos es **por número** (ADR 2026-06-22), por lo que los eventos de cuota identifican el número vía `number_alias` en el envelope. El `data` del evento de cuota **no** cambia.
+
+`number_alias` queda en el **envelope**, nunca dentro de `data`. Solo se **omite** en los eventos `storage.*` y en los de cuota de mensaje (`message.quota.*`), que son a nivel de cuenta.
+
+```json title="Ejemplo: contact.quota.warning"
+{
+  "type": "contact.quota.warning",
+  "organization_id": "org_…",
+  "number_alias": "main",
+  "data": { "...": "campos de cuota sin cambios" }
+}
+```
+
+Para leer el recurso completo de un contacto, usa el `number_alias` del envelope: `GET /v1/numbers/{alias}/contacts/{id}` (y sub-rutas como `/profile-picture`). Las rutas planas `/v1/contacts…` están retiradas (404).

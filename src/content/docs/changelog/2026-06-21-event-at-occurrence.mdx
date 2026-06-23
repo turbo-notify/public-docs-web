@@ -10,6 +10,10 @@ sidebar:
 
 ## O que mudou
 
+> Nota: na data desta mudança a consulta era a plana `GET /v1/messages/{id}`. Depois ela
+> foi aninhada sob o número — hoje use `GET /v1/numbers/{alias}/messages/{id}`
+> ([2026-06-22](/changelog/2026-06-22-number-scoped-routes/)).
+
 - **`at` = momento real da ação no WhatsApp** para eventos **outbound** de
   mensagem (`message.sent`/`replied`/`edited`/`deleted` e os `*.failed`) e para os
   eventos `number.*` de ação real (`number.connected`/`disconnected`/`revoked`/`connect.failed`).

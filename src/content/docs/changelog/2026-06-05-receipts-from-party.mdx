@@ -10,6 +10,11 @@ sidebar:
 
 ## O que mudou
 
+> Nota: na data desta mudança estas rotas eram as planas `GET /v1/messages/{id}/receipts`
+> e `.../reactions`. Depois foram aninhadas sob o número — hoje use
+> `GET /v1/numbers/{alias}/messages/{id}/receipts` e `.../reactions`
+> ([2026-06-22](/changelog/2026-06-22-number-scoped-routes/)).
+
 Cada item em `receipts[]` agora inclui um objeto `from` com a identidade da parte que confirmou a entrega ou leitura — alinhando o endpoint com o padrão já existente em `GET /v1/messages/{id}/reactions`.
 
 | Campo | Tipo | Descrição |

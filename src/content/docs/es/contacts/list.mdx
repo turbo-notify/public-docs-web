@@ -1,6 +1,12 @@
 ---
-title: List Contacts
-description: Translation pending. See the canonical PT-BR version.
+title: Listar Contactos
+description: "GET /v1/numbers/{alias}/contacts — lista de contactos por número. Traducción pendiente; ver versión canónica en PT-BR."
 ---
 
-> This page is being translated. See the PT-BR (canonical) version: [/contacts/list/](/contacts/list/).
+> Esta página está siendo traducida. Consulte la versión canónica en PT-BR: [/contacts/list/](/contacts/list/).
+
+```http title="Listar contactos"
+GET /v1/numbers/{alias}/contacts
+```
+
+`{alias}` es `main` (número principal) o el alias de un número extra. Devuelve los contactos vistos por **ese** número, paginados por cursor. La antigua ruta plana `GET /v1/contacts` está retirada (404).

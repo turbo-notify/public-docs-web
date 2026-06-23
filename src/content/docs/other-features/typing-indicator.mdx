@@ -22,7 +22,7 @@ Para sinalizar que uma mensagem está sendo preparada, envie uma requisição co
   <TabItem label="cURL">
     ```bash title="typing.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/typing-indicator \
+      https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -33,7 +33,7 @@ Para sinalizar que uma mensagem está sendo preparada, envie uma requisição co
   </TabItem>
   <TabItem label="Node">
     ```js title="typing.js"
-    const response = await fetch('https://api.turbonotify.com/v1/typing-indicator', {
+    const response = await fetch('https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE',
@@ -52,7 +52,7 @@ Para sinalizar que uma mensagem está sendo preparada, envie uma requisição co
     ```python title="typing.py"
     import requests
 
-    url = "https://api.turbonotify.com/v1/typing-indicator"
+    url = "https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator"
     headers = {
         "Authorization": "Bearer SUA_CHAVE",
         "Content-Type": "application/json"
@@ -78,7 +78,7 @@ Para sinalizar que uma mensagem está sendo preparada, envie uma requisição co
 
     func main() {
         payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "is_typing": true}`)
-        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/typing-indicator", payload)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
         resp, _ := http.DefaultClient.Do(req)
@@ -90,7 +90,7 @@ Para sinalizar que uma mensagem está sendo preparada, envie uma requisição co
   <TabItem label="PHP">
     ```php title="typing.php"
     <?php
-    $url = 'https://api.turbonotify.com/v1/typing-indicator';
+    $url = 'https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator';
     $data = [
         'to' => ['number' => '+5511999999999'],
         'is_typing' => true
@@ -129,7 +129,7 @@ Para sinalizar que uma mensagem está sendo preparada, envie uma requisição co
     var json = JsonSerializer.Serialize(data);
     var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-    var response = await client.PostAsync("https://api.turbonotify.com/v1/typing-indicator", content);
+    var response = await client.PostAsync("https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator", content);
     Console.WriteLine((int)response.StatusCode); // 202
     ```
   </TabItem>
@@ -150,7 +150,7 @@ Para sinalizar que uma mensagem está sendo preparada, envie uma requisição co
                 """;
 
             var request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.turbonotify.com/v1/typing-indicator"))
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator"))
                 .header("Authorization", "Bearer SUA_CHAVE")
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
@@ -183,7 +183,7 @@ Para interromper o aviso de digitação manualmente, envie a mesma requisição 
   <TabItem label="cURL">
     ```bash title="typing.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/typing-indicator \
+      https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -194,7 +194,7 @@ Para interromper o aviso de digitação manualmente, envie a mesma requisição 
   </TabItem>
   <TabItem label="Node">
     ```js title="typing.js"
-    const response = await fetch('https://api.turbonotify.com/v1/typing-indicator', {
+    const response = await fetch('https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE',
@@ -213,7 +213,7 @@ Para interromper o aviso de digitação manualmente, envie a mesma requisição 
     ```python title="typing.py"
     import requests
 
-    url = "https://api.turbonotify.com/v1/typing-indicator"
+    url = "https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator"
     headers = {
         "Authorization": "Bearer SUA_CHAVE",
         "Content-Type": "application/json"
@@ -239,7 +239,7 @@ Para interromper o aviso de digitação manualmente, envie a mesma requisição 
 
     func main() {
         payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "is_typing": false}`)
-        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/typing-indicator", payload)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
         resp, _ := http.DefaultClient.Do(req)
@@ -251,7 +251,7 @@ Para interromper o aviso de digitação manualmente, envie a mesma requisição 
   <TabItem label="PHP">
     ```php title="typing.php"
     <?php
-    $url = 'https://api.turbonotify.com/v1/typing-indicator';
+    $url = 'https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator';
     $data = [
         'to' => ['number' => '+5511999999999'],
         'is_typing' => false
@@ -290,7 +290,7 @@ Para interromper o aviso de digitação manualmente, envie a mesma requisição 
     var json = JsonSerializer.Serialize(data);
     var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-    var response = await client.PostAsync("https://api.turbonotify.com/v1/typing-indicator", content);
+    var response = await client.PostAsync("https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator", content);
     Console.WriteLine((int)response.StatusCode); // 202
     ```
   </TabItem>
@@ -311,7 +311,7 @@ Para interromper o aviso de digitação manualmente, envie a mesma requisição 
                 """;
 
             var request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.turbonotify.com/v1/typing-indicator"))
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator"))
                 .header("Authorization", "Bearer SUA_CHAVE")
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
@@ -352,7 +352,7 @@ Para enviar o indicador de digitação em um grupo do WhatsApp, use `to.group_id
 
 ```bash title="typing-group.sh"
 curl -X POST \
-  https://api.turbonotify.com/v1/typing-indicator \
+  https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator \
   -H "Authorization: Bearer SUA_CHAVE" \
   -H "Content-Type: application/json" \
   -d '{
@@ -369,7 +369,7 @@ Use `to.contact_id` para indicar digitação a um contato do catálogo TN sem in
 
 ```bash title="typing-contact.sh"
 curl -X POST \
-  https://api.turbonotify.com/v1/typing-indicator \
+  https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator \
   -H "Authorization: Bearer SUA_CHAVE" \
   -H "Content-Type: application/json" \
   -d '{
@@ -384,7 +384,7 @@ Para escolher o remetente do aviso de digitação, informe o campo `from` com um
 
 ```bash title="typing.sh"
 curl -X POST \
-  https://api.turbonotify.com/v1/typing-indicator \
+  https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator \
   -H "Authorization: Bearer SUA_CHAVE" \
   -H "Content-Type: application/json" \
   -d '{

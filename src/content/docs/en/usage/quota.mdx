@@ -1,6 +1,19 @@
 ---
 title: Usage & Quota
-description: Translation pending. See the canonical PT-BR version.
+description: Account-wide usage stays at GET /v1/usage and /v1/usage/messages; contact quota is now per-number at GET /v1/numbers/{alias}/contacts/quota. Translation pending; see the canonical PT-BR version.
 ---
 
 > This page is being translated. See the PT-BR (canonical) version: [/usage/quota/](/usage/quota/).
+
+| Quota | Route | Scope |
+| ----- | ----- | ----- |
+| Account usage | `GET /v1/usage` | Account-wide (top-level) |
+| Message quota | `GET /v1/usage/messages` | Account-wide (top-level) |
+| Contact quota | `GET /v1/numbers/{alias}/contacts/quota` | Per-number |
+
+Contact quota is now **per-number**: each number (`main` or an extra-number alias)
+tracks its own contact quota, so it is queried under that number. The flat
+`GET /v1/contacts/quota` route is retired (**404**).
+
+Account-wide usage (`GET /v1/usage`, `GET /v1/usage/messages`) stays **top-level**
+and was not affected by the number-nested route change.

@@ -16,7 +16,7 @@ de grupo (criação, gerenciamento de membros, alteração de configurações)
 | Criar grupo via API | ❌ | Operação administrativa; foge do escopo transacional |
 | Adicionar/remover participante via API | ❌ | Idem |
 | Promover/rebaixar admin via API | ❌ | Idem |
-| Listar grupos do organization (`GET /v1/groups`) | ❌ (deferido) | Use os webhooks `group.joined`/`group.left` para manter o índice local |
+| Listar grupos do número (`GET /v1/numbers/{alias}/groups`) | ❌ (deferido) | Use os webhooks `group.joined`/`group.left` para manter o índice local |
 | Listar participantes de um grupo | ❌ | Privacidade; o webhook `group.participants_*` entrega quem foi alterado |
 | Editar nome/descrição/imagem do grupo | ❌ | Operação administrativa |
 | Gerar link de convite do grupo | ❌ | Operação administrativa |
@@ -53,6 +53,6 @@ ser entregue), aguarde a próxima mensagem inbound — o webhook
 
 ## Roadmap
 
-Listagem (`GET /v1/groups`) e endpoint dedicado de refresh
-(`GET /v1/groups/{id}`) podem ser adicionados em release futuro se
+Listagem (`GET /v1/numbers/{alias}/groups`) e endpoint dedicado de refresh
+(`GET /v1/numbers/{alias}/groups/{id}`) podem ser adicionados em release futuro se
 houver demanda de cliente.

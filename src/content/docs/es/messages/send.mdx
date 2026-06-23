@@ -1,0 +1,17 @@
+---
+title: Enviar Mensajes
+description: "POST /v1/numbers/{alias}/messages — el remitente es el alias del path (sin from en el body). Traducción pendiente; ver versión canónica en PT-BR."
+---
+
+> Esta página está siendo traducida. Consulte la versión canónica en PT-BR: [/messages/send/](/messages/send/).
+
+```http title="Enviar mensaje"
+POST /v1/numbers/{alias}/messages
+```
+
+`{alias}` es `main` (número principal) o el alias de un número extra — **es el remitente**. El campo `from` en el body fue **eliminado**.
+
+- `to`: exactamente uno de `{ "number": "…" }`, `{ "group_id": "grp_…" }` o `{ "contact_id": "ct_…" }`.
+- `content`: objeto anidado con el contenido del mensaje (texto, media, etc.).
+
+Para responder a un mensaje recibido: `POST /v1/numbers/{alias}/messages/{id}/reply`. La ruta plana `POST /v1/messages` está retirada (404).

@@ -80,105 +80,147 @@ export default defineConfig({
           ],
         },
         {
-          label: 'Mensagens',
-          translations: { en: 'Messages', es: 'Mensajes' },
-          items: [
-            {
-              slug: 'messages/send',
-              label: 'Envio',
-              translations: { en: 'Send', es: 'Envio' },
-            },
-            {
-              slug: 'messages/status',
-              label: 'Status',
-              translations: { en: 'Status', es: 'Estado' },
-            },
-            {
-              slug: 'messages/receipts',
-              label: 'Recibos',
-              translations: { en: 'Receipts', es: 'Recibos' },
-            },
-            {
-              slug: 'messages/reactions',
-              label: 'Reações',
-              translations: { en: 'Reactions', es: 'Reacciones' },
-            },
-            {
-              slug: 'messages/webhook',
-              label: 'Webhook',
-              translations: { en: 'Webhook', es: 'Webhook' },
-            },
-            {
-              slug: 'messages/retention',
-              label: 'Retenção',
-              translations: { en: 'Retention', es: 'Retención' },
-            },
-            {
-              slug: 'messages/rate-limits',
-              label: 'Limites',
-              translations: { en: 'Rate Limits', es: 'Limites' },
-            },
-          ],
-        },
-        {
-          label: 'Grupos',
-          translations: { en: 'Groups', es: 'Grupos' },
-          items: [
-            {
-              slug: 'groups/overview',
-              label: 'Visão geral',
-              translations: { en: 'Overview', es: 'Visión general' },
-            },
-            {
-              slug: 'groups/picture',
-              label: 'Foto do grupo',
-              translations: { en: 'Group Picture', es: 'Foto del Grupo' },
-            },
-            {
-              slug: 'groups/lifecycle-events',
-              label: 'Eventos de ciclo de vida',
-              translations: { en: 'Lifecycle Events', es: 'Eventos de ciclo de vida' },
-            },
-            {
-              slug: 'groups/limitations',
-              label: 'Limitações',
-              translations: { en: 'Limitations', es: 'Limitaciones' },
-            },
-          ],
-        },
-        {
+          // The number-scoped messaging domain (ADR 2026-06-22): messages,
+          // contacts and groups all live below /v1/numbers/{alias}/…, so they
+          // are grouped under a single "Numbers" section. Number lifecycle
+          // (add/status/…) leads the section; the per-number resources follow.
           label: 'Números',
           translations: { en: 'Numbers', es: 'Números' },
           items: [
             {
-              slug: 'numbers/add',
-              label: 'Inclusão',
-              translations: { en: 'Add', es: 'Agregar' },
+              label: 'Gerenciamento de números',
+              translations: { en: 'Number Management', es: 'Gestión de números' },
+              items: [
+                {
+                  slug: 'numbers/add',
+                  label: 'Inclusão',
+                  translations: { en: 'Add', es: 'Agregar' },
+                },
+                {
+                  slug: 'numbers/status',
+                  label: 'Status',
+                  translations: { en: 'Status', es: 'Estado' },
+                },
+                {
+                  slug: 'numbers/list',
+                  label: 'Listagem',
+                  translations: { en: 'List', es: 'Listar' },
+                },
+                {
+                  slug: 'numbers/remove',
+                  label: 'Remoção',
+                  translations: { en: 'Remove', es: 'Eliminar' },
+                },
+                {
+                  slug: 'numbers/activation',
+                  label: 'Ativação',
+                  translations: { en: 'Activation', es: 'Activación' },
+                },
+                {
+                  slug: 'numbers/billing',
+                  label: 'Cobrança',
+                  translations: { en: 'Billing', es: 'Facturación' },
+                },
+              ],
             },
             {
-              slug: 'numbers/status',
-              label: 'Status',
-              translations: { en: 'Status', es: 'Estado' },
+              label: 'Mensagens',
+              translations: { en: 'Messages', es: 'Mensajes' },
+              items: [
+                {
+                  slug: 'messages/send',
+                  label: 'Envio',
+                  translations: { en: 'Send', es: 'Envio' },
+                },
+                {
+                  slug: 'messages/send-media',
+                  label: 'Envio de mídia',
+                  translations: { en: 'Send Media', es: 'Envío de medios' },
+                },
+                {
+                  slug: 'messages/get',
+                  label: 'Consultar',
+                  translations: { en: 'Get', es: 'Consultar' },
+                },
+                {
+                  slug: 'messages/status',
+                  label: 'Status',
+                  translations: { en: 'Status', es: 'Estado' },
+                },
+                {
+                  slug: 'messages/receipts',
+                  label: 'Recibos',
+                  translations: { en: 'Receipts', es: 'Recibos' },
+                },
+                {
+                  slug: 'messages/reactions',
+                  label: 'Reações',
+                  translations: { en: 'Reactions', es: 'Reacciones' },
+                },
+                {
+                  slug: 'messages/polling',
+                  label: 'Polling de eventos',
+                  translations: { en: 'Event Polling', es: 'Polling de eventos' },
+                },
+                {
+                  slug: 'messages/webhook',
+                  label: 'Webhook',
+                  translations: { en: 'Webhook', es: 'Webhook' },
+                },
+                {
+                  slug: 'messages/retention',
+                  label: 'Retenção',
+                  translations: { en: 'Retention', es: 'Retención' },
+                },
+                {
+                  slug: 'messages/rate-limits',
+                  label: 'Limites',
+                  translations: { en: 'Rate Limits', es: 'Limites' },
+                },
+                {
+                  slug: 'messages/migration',
+                  label: 'Migração',
+                  translations: { en: 'Migration', es: 'Migración' },
+                },
+              ],
             },
             {
-              slug: 'numbers/list',
-              label: 'Listagem',
-              translations: { en: 'List', es: 'Listar' },
+              label: 'Contatos',
+              translations: { en: 'Contacts', es: 'Contactos' },
+              items: [
+                { slug: 'contacts/overview', label: 'Visão geral', translations: { en: 'Overview', es: 'Visión General' } },
+                { slug: 'contacts/list', label: 'Listar', translations: { en: 'List', es: 'Listar' } },
+                { slug: 'contacts/detail', label: 'Detalhe', translations: { en: 'Detail', es: 'Detalle' } },
+                { slug: 'contacts/refresh', label: 'Refresh', translations: { en: 'Refresh', es: 'Refresh' } },
+                { slug: 'contacts/profile-picture', label: 'Foto de perfil', translations: { en: 'Profile Picture', es: 'Foto de Perfil' } },
+                { slug: 'contacts/errors', label: 'Erros', translations: { en: 'Errors', es: 'Errores' } },
+              ],
             },
             {
-              slug: 'numbers/remove',
-              label: 'Remoção',
-              translations: { en: 'Remove', es: 'Eliminar' },
-            },
-            {
-              slug: 'numbers/activation',
-              label: 'Ativação',
-              translations: { en: 'Activation', es: 'Activación' },
-            },
-            {
-              slug: 'numbers/billing',
-              label: 'Cobrança',
-              translations: { en: 'Billing', es: 'Facturación' },
+              label: 'Grupos',
+              translations: { en: 'Groups', es: 'Grupos' },
+              items: [
+                {
+                  slug: 'groups/overview',
+                  label: 'Visão geral',
+                  translations: { en: 'Overview', es: 'Visión general' },
+                },
+                {
+                  slug: 'groups/picture',
+                  label: 'Foto do grupo',
+                  translations: { en: 'Group Picture', es: 'Foto del Grupo' },
+                },
+                {
+                  slug: 'groups/lifecycle-events',
+                  label: 'Eventos de ciclo de vida',
+                  translations: { en: 'Lifecycle Events', es: 'Eventos de ciclo de vida' },
+                },
+                {
+                  slug: 'groups/limitations',
+                  label: 'Limitações',
+                  translations: { en: 'Limitations', es: 'Limitaciones' },
+                },
+              ],
             },
           ],
         },
@@ -196,18 +238,6 @@ export default defineConfig({
               label: 'Digitação',
               translations: { en: 'Typing Indicator', es: 'Indicador de Escritura' },
             },
-          ],
-        },
-        {
-          label: 'Contatos',
-          translations: { en: 'Contacts', es: 'Contactos' },
-          items: [
-            { slug: 'contacts/overview', label: 'Visão geral', translations: { en: 'Overview', es: 'Visión General' } },
-            { slug: 'contacts/list', label: 'Listar', translations: { en: 'List', es: 'Listar' } },
-            { slug: 'contacts/detail', label: 'Detalhe', translations: { en: 'Detail', es: 'Detalle' } },
-            { slug: 'contacts/refresh', label: 'Refresh', translations: { en: 'Refresh', es: 'Refresh' } },
-            { slug: 'contacts/profile-picture', label: 'Foto de perfil', translations: { en: 'Profile Picture', es: 'Foto de Perfil' } },
-            { slug: 'contacts/errors', label: 'Erros', translations: { en: 'Errors', es: 'Errores' } },
           ],
         },
         {
@@ -229,6 +259,8 @@ export default defineConfig({
           label: 'Changelog',
           translations: { en: 'Changelog', es: 'Changelog' },
           items: [
+            { slug: 'changelog/2026-06-22-number-scoped-routes', label: 'Rotas aninhadas por número', translations: { en: 'Number-nested routes', es: 'Rutas anidadas por número' } },
+            { slug: 'changelog/2026-06-21-event-at-occurrence', label: 'at do evento = momento real', translations: { en: 'Event at = real moment', es: 'at del evento = momento real' } },
             { slug: 'changelog/2026-06-04-contact-id-recipient', label: 'contact_id como destinatário', translations: { en: 'contact_id as recipient', es: 'contact_id como destinatario' } },
             { slug: 'changelog/2026-06-04-typing-indicator-groups', label: 'Aviso de digitação em grupos', translations: { en: 'Group typing indicator', es: 'Indicador de escritura en grupos' } },
             { slug: 'changelog/2026-05-15-message-quota-activation', label: 'Ativação de quota de mensagem por tier' },

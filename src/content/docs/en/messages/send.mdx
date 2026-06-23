@@ -1,0 +1,30 @@
+---
+title: Send a Message
+description: Send a WhatsApp message from a number with POST /v1/numbers/{alias}/messages. Translation pending; see the canonical PT-BR version.
+---
+
+> This page is being translated. See the PT-BR (canonical) version: [/messages/send/](/messages/send/).
+
+```http title="Send a message"
+POST /v1/numbers/{alias}/messages
+```
+
+The **sender is the path number** — `{alias}` is `main` (primary number) or an
+extra-number alias. The request body no longer has a `from` field.
+
+- **`to`** — recipient, exactly one of `number`, `group_id` or `contact_id`.
+- **`content`** — nested object describing the message (text, media, etc.).
+
+```bash
+curl -X POST https://api.turbonotify.com/v1/numbers/main/messages \
+  -H "Authorization: Bearer tn_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": { "number": "+5511999999999" },
+    "content": { "text": "Hello from Turbo Notify" }
+  }'
+```
+
+To reply to a message, use `POST /v1/numbers/{alias}/messages/{id}/reply`. The
+`Idempotency-Key` scope is `(organization, number_alias, key)`. The flat
+`POST /v1/messages` route is retired (**404**).

@@ -1,6 +1,19 @@
 ---
 title: List Contacts
-description: Translation pending. See the canonical PT-BR version.
+description: List contacts for a number via GET /v1/numbers/{alias}/contacts. Translation pending; see the canonical PT-BR version.
 ---
 
 > This page is being translated. See the PT-BR (canonical) version: [/contacts/list/](/contacts/list/).
+
+```http title="List contacts"
+GET /v1/numbers/{alias}/contacts
+```
+
+Lists the contacts of a single number. `{alias}` is `main` (primary) or an
+extra-number alias. Supports cursor pagination. The flat `GET /v1/contacts`
+route is retired (**404**).
+
+```bash
+curl https://api.turbonotify.com/v1/numbers/main/contacts \
+  -H "Authorization: Bearer tn_live_..."
+```

@@ -1,6 +1,6 @@
 ---
 title: Foto de perfil
-description: Endpoint GET /v1/contacts/{contact_id}/profile-picture — retorna 302 redirect; comportamento depende de Picture Storage e da configuração BYO Storage.
+description: Endpoint GET /v1/numbers/{alias}/contacts/{contact_id}/profile-picture — retorna 302 redirect; comportamento depende de Picture Storage e da configuração BYO Storage.
 sidebar:
   order: 5
 ---
@@ -14,10 +14,12 @@ Retorna a foto de perfil do contato via 302 redirect. O destino do redirect depe
 ## Endpoint
 
 ```http
-GET /v1/contacts/{contact_id}/profile-picture
+GET /v1/numbers/{alias}/contacts/{contact_id}/profile-picture
 ```
 
 **Scope:** `contacts:read`.
+
+O `{alias}` é o `number_alias` do envelope do evento de contato (`main` ou o alias de um número extra).
 
 ## Comportamento por `picture_storage`
 
@@ -37,7 +39,7 @@ Configuração: `dashboard → BYO Storage → Profile Picture Proxy = on`.
 ## Exemplo
 
 ```bash
-curl -I "https://api.turbonotify.com/v1/contacts/ct_.../profile-picture" \
+curl -I "https://api.turbonotify.com/v1/numbers/main/contacts/ct_.../profile-picture" \
   -H "Authorization: Bearer $TURBO_API_KEY"
 
 HTTP/1.1 302 Found

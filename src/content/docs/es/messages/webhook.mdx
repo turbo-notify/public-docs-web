@@ -1,0 +1,16 @@
+---
+title: Eventos por Webhook
+description: "Eventos webhook con number_alias en el envelope; usa el alias para leer el recurso completo por id. Traducción pendiente; ver versión canónica en PT-BR."
+---
+
+> Esta página está siendo traducida. Consulte la versión canónica en PT-BR: [/messages/webhook/](/messages/webhook/).
+
+Turbo Notify entrega los eventos vía HTTP POST a tu endpoint. Cada envelope lleva `number_alias` (`main` o el alias de un número extra) justo debajo de `organization_id`, salvo en `storage.*` y `message.quota.*`.
+
+Para obtener el cuerpo completo de un mensaje, usa el `number_alias` del envelope:
+
+```http title="Leer el mensaje completo"
+GET /v1/numbers/{alias}/messages/{id}
+```
+
+donde `{alias}` es el `number_alias` recibido y `{id}` es el `msg_…` del evento. El `data` del webhook es byte-idéntico al de `GET /v1/events` (polling).

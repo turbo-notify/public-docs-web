@@ -1,6 +1,21 @@
 ---
 title: Contacts Overview
-description: Translation pending. See the canonical PT-BR version.
+description: Contacts are number-scoped — every endpoint lives under GET /v1/numbers/{alias}/contacts. Translation pending; see the canonical PT-BR version.
 ---
 
 > This page is being translated. See the PT-BR (canonical) version: [/contacts/overview/](/contacts/overview/).
+
+Contacts are **number-scoped**: every contact belongs to one of your organization's
+numbers and all contact endpoints live under that number.
+
+| Operation | Route |
+| --------- | ----- |
+| List | `GET /v1/numbers/{alias}/contacts` |
+| Detail | `GET /v1/numbers/{alias}/contacts/{id}` |
+| Profile picture | `GET /v1/numbers/{alias}/contacts/{id}/profile-picture` |
+| Refresh | `POST /v1/numbers/{alias}/contacts/{id}/refresh` |
+| Contact quota | `GET /v1/numbers/{alias}/contacts/quota` |
+
+`{alias}` is `main` (primary number) or the alias of an extra number. A contact's
+`number_alias` is present in the envelope of every webhook / `GET /v1/events` item;
+use it for subsequent by-id calls. The old flat `/v1/contacts...` routes return **404**.

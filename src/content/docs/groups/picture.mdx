@@ -1,6 +1,6 @@
 ---
 title: Foto do grupo
-description: Endpoint GET /v1/groups/{group_id}/picture — 302 redirect para URL pré-assinada quando disponível; caso contrário 200 com a união picture e reason/setup_hint.
+description: Endpoint GET /v1/numbers/{alias}/groups/{group_id}/picture — 302 redirect para URL pré-assinada quando disponível; caso contrário 200 com a união picture e reason/setup_hint.
 sidebar:
   order: 4
 ---
@@ -12,10 +12,10 @@ Retorna a foto de um grupo do WhatsApp. Espelha o endpoint de [foto de perfil de
 ## Endpoint
 
 ```http
-GET /v1/groups/{group_id}/picture
+GET /v1/numbers/{alias}/groups/{group_id}/picture
 ```
 
-**Scope:** `groups:read`. `group_id` é o id público (`grp_{hex32}`).
+**Scope:** `groups:read`. `{alias}` é o `number_alias` do envelope do evento do grupo — a linha TN (`main` ou o alias de um número extra) que participa do grupo. `group_id` é o id público (`grp_{hex32}`).
 
 ## Comportamento por `picture_storage`
 
@@ -31,7 +31,7 @@ A foto do grupo é re-resolvida pelo pipeline de metadados do grupo: uma foto ma
 ## Exemplo — foto disponível
 
 ```bash
-curl -I "https://api.turbonotify.com/v1/groups/grp_.../picture" \
+curl -I "https://api.turbonotify.com/v1/numbers/main/groups/grp_.../picture" \
   -H "Authorization: Bearer $TURBO_API_KEY"
 
 HTTP/1.1 302 Found
@@ -61,7 +61,7 @@ A URL pré-assinada tem validade limitada (R2: 1h por padrão).
 
 O campo `reason` discrimina a causa: `no_storage` (sem storage configurado), `storage_circuit_open` (circuit breaker aberto), `upload_failed` (falha de upload neste ciclo) ou `peer_has_none` (o grupo não tem foto). O `setup_hint` acompanha apenas `no_storage` e `storage_circuit_open` — para `upload_failed` e `peer_has_none` ele é omitido. É o mesmo envelope usado por mídia e pela foto de contato.
 
-## Campo `picture` inline em `GET /v1/groups/{group_id}`
+## Campo `picture` inline em `GET /v1/numbers/{alias}/groups/{group_id}`
 
 O campo `picture` no payload completo do grupo reflete o mesmo estado: presigna a URL quando `organization_storage` e emite o `reason` + `setup_hint` corretos quando `unavailable`.
 

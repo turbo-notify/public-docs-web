@@ -1,6 +1,6 @@
 ---
 title: "2026-06-04 — to.contact_id como destinatario"
-description: "POST /v1/messages ahora acepta contact_id como destinatario. Corrección del bug de documentación en el campo to."
+description: "POST /v1/numbers/{alias}/messages ahora acepta contact_id como destinatario. Corrección del bug de documentación en el campo to."
 ---
 
 > Esta página está siendo traducida. Consulte la versión canónica en PT-BR: [/changelog/2026-06-04-contact-id-recipient/](/changelog/2026-06-04-contact-id-recipient/).
@@ -9,7 +9,7 @@ description: "POST /v1/messages ahora acepta contact_id como destinatario. Corre
 
 ### `to.contact_id` como destinatario
 
-`POST /v1/messages` ahora acepta `{"contact_id": "ct_…"}` como tercera forma mutuamente excluyente para el campo `to`, junto a `{"number": "…"}` y `{"group_id": "…"}`.
+`POST /v1/numbers/{alias}/messages` ahora acepta `{"contact_id": "ct_…"}` como tercera forma mutuamente excluyente para el campo `to`, junto a `{"number": "…"}` y `{"group_id": "…"}`.
 
 El número de teléfono se resuelve automáticamente desde el catálogo de Contactos TN.
 

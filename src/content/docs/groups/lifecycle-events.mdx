@@ -172,7 +172,9 @@ foi emitido.
 
 Guarde o `picture.hash` para detectar mudanças efetivas e re-baixar a foto
 antes que a URL pré-assinada expire (`url_expires_at`). Para ler a foto sob
-demanda use [`GET /v1/groups/{group_id}/picture`](/groups/picture/).
+demanda use [`GET /v1/numbers/{alias}/groups/{group_id}/picture`](/groups/picture/),
+onde `{alias}` é o `number_alias` do envelope deste evento (a linha TN que
+participa do grupo).
 
 > **Pré-requisito: BYO Storage.** Este evento só dispara quando você tem uma
 > integração de Object Storage habilitada — o Turbo Notify não serve a CDN do

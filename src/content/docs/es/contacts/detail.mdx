@@ -1,6 +1,12 @@
 ---
-title: Contact Detail
-description: Translation pending. See the canonical PT-BR version.
+title: Detalle de Contacto
+description: "GET /v1/numbers/{alias}/contacts/{id} — detalle de un contacto por número. Traducción pendiente; ver versión canónica en PT-BR."
 ---
 
-> This page is being translated. See the PT-BR (canonical) version: [/contacts/detail/](/contacts/detail/).
+> Esta página está siendo traducida. Consulte la versión canónica en PT-BR: [/contacts/detail/](/contacts/detail/).
+
+```http title="Detalle de contacto"
+GET /v1/numbers/{alias}/contacts/{id}
+```
+
+`{alias}` es `main` o el alias de un número extra; `{id}` es el `ct_…` recibido en el envelope del evento. Acceder a un `id` bajo el alias equivocado devuelve **404**. La ruta plana `GET /v1/contacts/{id}` está retirada.

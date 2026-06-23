@@ -1,6 +1,6 @@
 ---
 title: "Event `at` is the real WhatsApp action moment"
-description: "Event `at` now reflects the genuine WhatsApp action moment (distinct from `created_at`); three picture/snapshot events stop carrying `at`; all group lifecycle webhooks are now delivered; the top-level `at` in GET /v1/messages/{id} is stable while `status.at` advances."
+description: "Event `at` now reflects the genuine WhatsApp action moment (distinct from `created_at`); three picture/snapshot events stop carrying `at`; all group lifecycle webhooks are now delivered; the top-level `at` in GET /v1/numbers/{alias}/messages/{id} is stable while `status.at` advances."
 sidebar:
   order: 5
 ---
@@ -25,7 +25,7 @@ sidebar:
   `group.participants_removed`, `group.participants_promoted`,
   `group.participants_demoted`, `group.joined`, `group.left` (in addition to the
   already-existing `group.picture_changed`).
-- **`GET /v1/messages/{id}`**: the **top-level** `at` is the message's **stable
+- **`GET /v1/numbers/{alias}/messages/{id}`**: the **top-level** `at` is the message's **stable
   occurrence moment** (outbound: the real send; inbound: the receive) and does
   **not** change as the message advances `sent → delivered → read`. The nested
   `status.at` is the **current delivery-status** timestamp and **advances** with

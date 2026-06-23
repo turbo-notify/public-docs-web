@@ -1,6 +1,20 @@
 ---
 title: Profile Picture
-description: Translation pending. See the canonical PT-BR version.
+description: Get a contact picture via GET /v1/numbers/{alias}/contacts/{id}/profile-picture. Translation pending; see the canonical PT-BR version.
 ---
 
 > This page is being translated. See the PT-BR (canonical) version: [/contacts/profile-picture/](/contacts/profile-picture/).
+
+```http title="Get a contact's profile picture"
+GET /v1/numbers/{alias}/contacts/{id}/profile-picture
+```
+
+Returns the contact's profile picture (302 → presigned URL when stored, or a
+JSON availability union). `{alias}` is the contact's `number_alias` (`main` or an
+extra-number alias). The flat `GET /v1/contacts/{id}/profile-picture` route is
+retired (**404**).
+
+```bash
+curl https://api.turbonotify.com/v1/numbers/main/contacts/ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/profile-picture \
+  -H "Authorization: Bearer tn_live_..."
+```

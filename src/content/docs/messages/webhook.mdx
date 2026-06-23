@@ -13,7 +13,7 @@ O Turbo Notify notifica seu sistema sobre eventos — envio confirmado, entrega,
 Para começar a receber eventos, cadastre a URL do seu webhook no <DashboardLink path="/webhook">Dashboard</DashboardLink>. A URL deve ser pública, acessível via HTTPS e responder com status `2xx` dentro de 5 segundos.
 
 :::tip[Inspecione e aprenda em tempo real]
-Antes de plugar o webhook na sua aplicação, abra o <ExternalLink href="https://webhook.turbonotify.com">Webhook Inspector</ExternalLink> e cadastre a URL gerada. O Inspector recebe cada delivery em tempo real (via WebSocket), exibe headers/body completos, valida a assinatura HMAC interativamente e sugere a próxima chamada REST típica para cada tipo de evento (`message.received` → `GET /v1/messages/{id}`).
+Antes de plugar o webhook na sua aplicação, abra o <ExternalLink href="https://webhook.turbonotify.com">Webhook Inspector</ExternalLink> e cadastre a URL gerada. O Inspector recebe cada delivery em tempo real (via WebSocket), exibe headers/body completos, valida a assinatura HMAC interativamente e sugere a próxima chamada REST típica para cada tipo de evento (`message.received` → `GET /v1/numbers/{alias}/messages/{id}`). O `{alias}` vem do campo `number_alias` do envelope do evento (`"main"` ou o alias de um número extra).
 :::
 
 ## Privacidade
@@ -134,8 +134,8 @@ abaixo `data.at` é tipicamente **anterior** ao `created_at` do envelope — o e
 :::
 
 Eventos `message.*.failed` adicionam um objeto `error` estruturado — **o mesmo
-shape** do `status.error` retornado por `GET /v1/messages/{id}` e
-`GET /v1/messages/{id}/status` (coerência evento ↔ recurso):
+shape** do `status.error` retornado por `GET /v1/numbers/{alias}/messages/{id}` e
+`GET /v1/numbers/{alias}/messages/{id}/status` (coerência evento ↔ recurso):
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
@@ -192,7 +192,7 @@ O `number_alias` do envelope identifica a linha Turbo Notify do evento; resolva 
 - `"tn"` — enviado via API do Turbo Notify.
 - `"native"` — detectado diretamente do app WhatsApp (quando o organization digita pelo celular).
 
-`content_type` e `preview` espelham `message.received` — `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar` ou `poll`. Para o body completo, faça `GET /v1/messages/{id}`.
+`content_type` e `preview` espelham `message.received` — `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar` ou `poll`. Para o body completo, faça `GET /v1/numbers/{alias}/messages/{id}`.
 
 ### Exemplo — `message.received` (inbound)
 
@@ -349,7 +349,7 @@ Para mensagens 1:1 `to.group_id` é omitido — payloads pré-existentes permane
 
 ### Exemplo — `message.reacted`
 
-Para `message.reacted`: `content_type` é sempre `"text"` e `preview` contém o emoji (ou `""` para remoção). Os campos `emoji`, `action` e `reaction_event_id` foram removidos dos eventos — use `GET /v1/messages/{id}` para o detalhe completo da reação.
+Para `message.reacted`: `content_type` é sempre `"text"` e `preview` contém o emoji (ou `""` para remoção). Os campos `emoji`, `action` e `reaction_event_id` foram removidos dos eventos — use `GET /v1/numbers/{alias}/messages/{id}` para o detalhe completo da reação.
 
 ```json title="message.reacted (inbound — contato reagiu a uma mensagem sua)"
 {
@@ -393,11 +393,11 @@ Para `message.reacted`: `content_type` é sempre `"text"` e `preview` contém o 
 }
 ```
 
-Para remover uma reação, envie `POST /v1/messages/{id}/react` com `emoji: ""` (string vazia). O evento `message.reacted` é emitido com `preview: ""`.
+Para remover uma reação, envie `POST /v1/numbers/{alias}/messages/{id}/react` com `emoji: ""` (string vazia). O evento `message.reacted` é emitido com `preview: ""`.
 
 ### Exemplo — `message.replied` (inbound/outbound)
 
-Disponível desde 2026-04-28. Replies são entregues como evento dedicado. `preview` contém o preview da **nova mensagem** (o reply, não a mensagem citada). O `quoted_message_id` foi removido dos eventos — faça `GET /v1/messages/{id}` para acessar `replied.message_id` e `replied.preview`.
+Disponível desde 2026-04-28. Replies são entregues como evento dedicado. `preview` contém o preview da **nova mensagem** (o reply, não a mensagem citada). O `quoted_message_id` foi removido dos eventos — faça `GET /v1/numbers/{alias}/messages/{id}` para acessar `replied.message_id` e `replied.preview`.
 
 ```json title="message.replied (inbound)"
 {
@@ -441,7 +441,7 @@ Disponível desde 2026-04-28. Replies são entregues como evento dedicado. `prev
 }
 ```
 
-Para responder uma mensagem via API, use o endpoint dedicado `POST /v1/messages/{message_id}/reply` (body plano). Veja [/messages/send/](/messages/send/).
+Para responder uma mensagem via API, use o endpoint dedicado `POST /v1/numbers/{alias}/messages/{message_id}/reply` (body plano). Veja [/messages/send/](/messages/send/).
 
 ### Exemplo — `message.delivered` / `message.read` (receipt inbound)
 
@@ -529,7 +529,7 @@ inbound — apenas `data.content_type` e `data.preview` mudam. Os
 trechos abaixo mostram só o objeto `data` para reduzir ruído visual.
 
 Para obter o **body completo** (texto, vCard, coordenadas, descrição
-do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
+do evento, link da mídia, etc.), faça `GET /v1/numbers/{alias}/messages/{id}`.
 
 #### `text` — texto simples
 
@@ -567,7 +567,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
 }
 ```
 
-`media` foi removido dos eventos — faça `GET /v1/messages/{id}` para obter o bloco `image` com a URL de download.
+`media` foi removido dos eventos — faça `GET /v1/numbers/{alias}/messages/{id}` para obter o bloco `image` com a URL de download.
 
 #### `video`
 
@@ -651,7 +651,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
 }
 ```
 
-`preview` é o texto humanizado sem colchetes. Body completo via `GET /v1/messages/{id}` no campo `location` com `latitude`, `longitude`, `name`, `address`, etc.
+`preview` é o texto humanizado sem colchetes. Body completo via `GET /v1/numbers/{alias}/messages/{id}` no campo `location` com `latitude`, `longitude`, `name`, `address`, etc.
 
 #### `calendar` — evento/calendário (WhatsApp `eventMessage`)
 
@@ -669,7 +669,7 @@ do evento, link da mídia, etc.), faça `GET /v1/messages/{id}`.
 }
 ```
 
-Body completo via `GET /v1/messages/{id}` no campo `calendar` com `name`, `description`, `start_at`, `end_at`, etc.
+Body completo via `GET /v1/numbers/{alias}/messages/{id}` no campo `calendar` com `name`, `description`, `start_at`, `end_at`, etc.
 
 :::tip
 Quer ver o body renderizado de forma visual antes de plugar em
@@ -695,7 +695,7 @@ O catálogo público é fechado — seu endpoint só recebe os 24 eventos listad
 | Tipo                      | Quando é emitido                                                   |
 | ------------------------- | ------------------------------------------------------------------ |
 | `message.replied`         | Reply enviado/recebido (qualquer `content_type`, ambas direções).  |
-| `message.reply.failed`    | Falha ao enviar um reply (via `POST /v1/messages/{message_id}/reply`). |
+| `message.reply.failed`    | Falha ao enviar um reply (via `POST /v1/numbers/{alias}/messages/{message_id}/reply`). |
 
 ### Mensagens — recebimento e operações
 
@@ -760,7 +760,7 @@ Para mensagens **inbound com mídia** (imagem, vídeo, áudio, documento, sticke
 - **Com [BYO Storage](/general/byo-storage-setup/) ativo**: bytes salvos no seu bucket, ou falha permanente sinalizada por `media.unavailable`.
 - **Sem BYO Storage**: payload sai com `media` indisponível e `reason = "no_storage"`. O Turbo Notify **não baixa nem proxia** os bytes da CDN do WhatsApp.
 
-Use `GET /v1/messages/{id}` para acessar o bloco `image`/`video`/`audio`/`document`/`sticker` com a URL de download (quando disponível).
+Use `GET /v1/numbers/{alias}/messages/{id}` para acessar o bloco `image`/`video`/`audio`/`document`/`sticker` com a URL de download (quando disponível).
 :::
 
 #### Saúde do storage
