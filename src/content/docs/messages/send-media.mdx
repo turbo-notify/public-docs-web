@@ -8,10 +8,15 @@ import ApiResponse from '@components/ApiResponse.astro';
 import DashboardLink from '@components/DashboardLink.astro';
 
 Mídia (imagens, áudios, vídeos, documentos e figurinhas) é enviada
-pelo mesmo endpoint `POST /v1/numbers/{alias}/messages` usado para texto. Os campos de
+pelo mesmo endpoint `POST /v1/messages` usado para texto. Os campos de
 mídia ficam dentro do objeto **aninhado `content`** — o tipo é inferido
 automaticamente pelo campo âncora presente (`image_url`, `video_url`,
 `audio_url`, `document_url` ou `sticker_url`).
+
+:::tip[Usando números extras?]
+Para enviar mídia a partir de um número extra, use `/v1/numbers/{alias}/messages` onde
+`{alias}` é o alias do seu número extra. [Saiba mais](/numbers/add/).
+:::
 
 :::caution[Implementação em progresso]
 O contrato HTTP é final, mas o upload outbound de mídia para o
@@ -46,7 +51,7 @@ arquivo antes de entregar ao WhatsApp.
   <TabItem label="cURL">
     ```bash title="send-image.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/numbers/main/messages \
+      https://api.turbonotify.com/v1/messages \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -61,7 +66,7 @@ arquivo antes de entregar ao WhatsApp.
   </TabItem>
   <TabItem label="Node">
     ```js title="send-image.js"
-    await fetch('https://api.turbonotify.com/v1/numbers/main/messages', {
+    await fetch('https://api.turbonotify.com/v1/messages', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE',
@@ -83,7 +88,7 @@ arquivo antes de entregar ao WhatsApp.
     import requests
 
     requests.post(
-        "https://api.turbonotify.com/v1/numbers/main/messages",
+        "https://api.turbonotify.com/v1/messages",
         headers={
             "Authorization": "Bearer SUA_CHAVE",
             "Content-Type": "application/json",
@@ -107,7 +112,7 @@ arquivo antes de entregar ao WhatsApp.
   <TabItem label="cURL">
     ```bash title="send-video.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/numbers/main/messages \
+      https://api.turbonotify.com/v1/messages \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -122,7 +127,7 @@ arquivo antes de entregar ao WhatsApp.
   </TabItem>
   <TabItem label="Node">
     ```js title="send-video.js"
-    await fetch('https://api.turbonotify.com/v1/numbers/main/messages', {
+    await fetch('https://api.turbonotify.com/v1/messages', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE',
@@ -144,7 +149,7 @@ arquivo antes de entregar ao WhatsApp.
     import requests
 
     requests.post(
-        "https://api.turbonotify.com/v1/numbers/main/messages",
+        "https://api.turbonotify.com/v1/messages",
         headers={
             "Authorization": "Bearer SUA_CHAVE",
             "Content-Type": "application/json",
@@ -168,7 +173,7 @@ arquivo antes de entregar ao WhatsApp.
   <TabItem label="cURL">
     ```bash title="send-audio.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/numbers/main/messages \
+      https://api.turbonotify.com/v1/messages \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -182,7 +187,7 @@ arquivo antes de entregar ao WhatsApp.
   </TabItem>
   <TabItem label="Node">
     ```js title="send-audio.js"
-    await fetch('https://api.turbonotify.com/v1/numbers/main/messages', {
+    await fetch('https://api.turbonotify.com/v1/messages', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE',
@@ -203,7 +208,7 @@ arquivo antes de entregar ao WhatsApp.
     import requests
 
     requests.post(
-        "https://api.turbonotify.com/v1/numbers/main/messages",
+        "https://api.turbonotify.com/v1/messages",
         headers={
             "Authorization": "Bearer SUA_CHAVE",
             "Content-Type": "application/json",
@@ -229,7 +234,7 @@ use `audio/mpeg` ou `audio/mp4`.
   <TabItem label="cURL">
     ```bash title="send-document.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/numbers/main/messages \
+      https://api.turbonotify.com/v1/messages \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -245,7 +250,7 @@ use `audio/mpeg` ou `audio/mp4`.
   </TabItem>
   <TabItem label="Node">
     ```js title="send-document.js"
-    await fetch('https://api.turbonotify.com/v1/numbers/main/messages', {
+    await fetch('https://api.turbonotify.com/v1/messages', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE',
@@ -268,7 +273,7 @@ use `audio/mpeg` ou `audio/mp4`.
     import requests
 
     requests.post(
-        "https://api.turbonotify.com/v1/numbers/main/messages",
+        "https://api.turbonotify.com/v1/messages",
         headers={
             "Authorization": "Bearer SUA_CHAVE",
             "Content-Type": "application/json",
@@ -295,7 +300,7 @@ use `audio/mpeg` ou `audio/mp4`.
   <TabItem label="cURL">
     ```bash title="send-sticker.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/numbers/main/messages \
+      https://api.turbonotify.com/v1/messages \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -309,7 +314,7 @@ use `audio/mpeg` ou `audio/mp4`.
   </TabItem>
   <TabItem label="Node">
     ```js title="send-sticker.js"
-    await fetch('https://api.turbonotify.com/v1/numbers/main/messages', {
+    await fetch('https://api.turbonotify.com/v1/messages', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE',
@@ -330,7 +335,7 @@ use `audio/mpeg` ou `audio/mp4`.
     import requests
 
     requests.post(
-        "https://api.turbonotify.com/v1/numbers/main/messages",
+        "https://api.turbonotify.com/v1/messages",
         headers={
             "Authorization": "Bearer SUA_CHAVE",
             "Content-Type": "application/json",

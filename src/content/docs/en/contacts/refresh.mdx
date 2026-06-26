@@ -10,11 +10,12 @@ POST /v1/numbers/{alias}/contacts/{id}/refresh
 ```
 
 Forces a re-fetch of the contact's WhatsApp metadata (name, profile picture).
-`{alias}` is the contact's `number_alias` (`main` or an extra-number alias). The
-flat `POST /v1/contacts/{id}/refresh` route is retired (**404**).
+`{alias}` is the contact's `number_alias` — take it from the event envelope.
 
 ```bash
 curl -X POST \
-  https://api.turbonotify.com/v1/numbers/main/contacts/ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/refresh \
+  https://api.turbonotify.com/v1/contacts/ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/refresh \
   -H "Authorization: Bearer tn_live_..."
 ```
+
+For extra numbers: `POST /v1/numbers/{alias}/contacts/{id}/refresh`

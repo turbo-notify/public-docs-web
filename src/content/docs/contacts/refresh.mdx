@@ -13,8 +13,10 @@ Solicita o reenriquecimento de um contato sob demanda (name, foto). É um **syst
 ## Endpoint
 
 ```http
-POST /v1/numbers/{alias}/contacts/{contact_id}/refresh
+POST /v1/contacts/{contact_id}/refresh
 ```
+
+Para números extras: `POST /v1/numbers/{alias}/contacts/{contact_id}/refresh`
 
 **Scope:** `contacts:read`.
 
@@ -36,13 +38,13 @@ Estourar o limite retorna `429 rate_limit_exceeded` com `Retry-After`.
 <Tabs>
 <TabItem label="cURL">
 ```bash
-curl -X POST "https://api.turbonotify.com/v1/numbers/main/contacts/ct_.../refresh" \
+curl -X POST "https://api.turbonotify.com/v1/contacts/ct_.../refresh" \
   -H "Authorization: Bearer $TURBO_API_KEY"
 ```
 </TabItem>
 <TabItem label="Node">
 ```ts
-const res = await fetch(`https://api.turbonotify.com/v1/numbers/main/contacts/${id}/refresh`, {
+const res = await fetch(`https://api.turbonotify.com/v1/contacts/${id}/refresh`, {
   method: "POST",
   headers: { Authorization: `Bearer ${process.env.TURBO_API_KEY}` },
 });
@@ -52,7 +54,7 @@ const { accepted_at } = await res.json();
 <TabItem label="Python">
 ```python
 r = httpx.post(
-    f"https://api.turbonotify.com/v1/numbers/main/contacts/{contact_id}/refresh",
+    f"https://api.turbonotify.com/v1/contacts/{contact_id}/refresh",
     headers={"Authorization": f"Bearer {API_KEY}"},
 )
 ```

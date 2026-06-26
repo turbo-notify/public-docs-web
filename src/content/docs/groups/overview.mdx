@@ -82,12 +82,17 @@ Turbo Notify que participa do grupo.
 
 ## Enviando para grupo
 
-Para enviar a um grupo, use `POST /v1/numbers/{alias}/messages` onde `{alias}` identifica o número remetente (`main` para o número principal, ou o alias de um número extra). O campo `to` assume a forma `{ "group_id": "grp_..." }`.
+Para enviar a um grupo a partir do número principal, use `POST /v1/messages`. Para números extras, use `POST /v1/numbers/{alias}/messages` onde `{alias}` é o alias do número extra. O campo `to` assume a forma `{ "group_id": "grp_..." }`.
+
+:::tip[Usando números extras?]
+Para enviar de um número extra para o grupo, use `/v1/numbers/{alias}/messages` onde
+`{alias}` é o alias do seu número extra. [Saiba mais](/numbers/add/).
+:::
 
 <Tabs>
   <TabItem label="cURL">
 ```bash
-curl -X POST "https://api.turbonotify.com/v1/numbers/main/messages" \
+curl -X POST "https://api.turbonotify.com/v1/messages" \
   -H "Authorization: Bearer $TN_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -99,7 +104,7 @@ curl -X POST "https://api.turbonotify.com/v1/numbers/main/messages" \
   </TabItem>
   <TabItem label="Node">
 ```javascript
-await fetch('https://api.turbonotify.com/v1/numbers/main/messages', {
+await fetch('https://api.turbonotify.com/v1/messages', {
   method: 'POST',
   headers: {
     Authorization: `Bearer ${process.env.TN_API_KEY}`,
@@ -118,7 +123,7 @@ await fetch('https://api.turbonotify.com/v1/numbers/main/messages', {
 import httpx
 
 httpx.post(
-    "https://api.turbonotify.com/v1/numbers/main/messages",
+    "https://api.turbonotify.com/v1/messages",
     headers={"Authorization": f"Bearer {os.environ['TN_API_KEY']}"},
     json={
         "to": {"group_id": "grp_e442553a56b14e2695f6acfd7d651b1a"},

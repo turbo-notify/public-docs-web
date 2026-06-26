@@ -5,6 +5,12 @@ description: Guia de migração para mudanças incompatíveis da API Turbo Notif
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
+:::note[Atualização 2026-06-25]
+As rotas flat `/v1/messages`, `/v1/contacts` e `/v1/groups` foram reintroduzidas
+como tier de acesso direto ao número principal. Se você usa apenas o número principal,
+estas rotas são a forma recomendada de integração.
+:::
+
 ---
 
 ## Migração — Maio 2026 (2026-05-25): `to` polimórfico + campo `member` em grupos

@@ -16,7 +16,7 @@ extra-number alias. The request body no longer has a `from` field.
 - **`content`** — nested object describing the message (text, media, etc.).
 
 ```bash
-curl -X POST https://api.turbonotify.com/v1/numbers/main/messages \
+curl -X POST https://api.turbonotify.com/v1/messages \
   -H "Authorization: Bearer tn_live_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -25,6 +25,6 @@ curl -X POST https://api.turbonotify.com/v1/numbers/main/messages \
   }'
 ```
 
-To reply to a message, use `POST /v1/numbers/{alias}/messages/{id}/reply`. The
-`Idempotency-Key` scope is `(organization, number_alias, key)`. The flat
-`POST /v1/messages` route is retired (**404**).
+To reply to a message, use `POST /v1/messages/{id}/reply`. The
+`Idempotency-Key` scope is `(organization, number_alias, key)`. For extra
+numbers use `POST /v1/numbers/{alias}/messages`.

@@ -20,4 +20,4 @@ Todos los eventos `contact.*` — **incluidos los de cuota** (`contact.quota.war
 }
 ```
 
-Para leer el recurso completo de un contacto, usa el `number_alias` del envelope: `GET /v1/numbers/{alias}/contacts/{id}` (y sub-rutas como `/profile-picture`). Las rutas planas `/v1/contacts…` están retiradas (404).
+Para leer el recurso completo de un contacto, usa el `number_alias` del envelope: `GET /v1/numbers/{alias}/contacts/{id}` (y sub-rutas como `/profile-picture`). Para el número principal también puedes usar la ruta plana `GET /v1/contacts/{id}`; para números extra usa la forma con `{alias}`.

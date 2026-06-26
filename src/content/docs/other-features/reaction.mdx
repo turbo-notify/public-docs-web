@@ -12,13 +12,13 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há cam
 
 ## Adicionar uma reação
 
-`POST /v1/numbers/{alias}/messages/{message_id}/react` — adiciona uma reação à mensagem identificada por `{message_id}` (formato `msg_{hex32}`). O número remetente é identificado pelo `{alias}` no path da URL (`main` para o número principal, ou alias de número extra).
+`POST /v1/messages/{message_id}/react` — adiciona uma reação à mensagem identificada por `{message_id}` (formato `msg_{hex32}`). Esta rota opera sobre o número principal. Para enviar a reação a partir de um número extra, use a forma completa `POST /v1/numbers/{alias}/messages/{message_id}/react` com o alias do número no path.
 
 <Tabs>
   <TabItem label="cURL">
     ```bash title="reaction.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/react \
+      https://api.turbonotify.com/v1/messages/msg_abc123/react \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -29,7 +29,7 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há cam
   <TabItem label="Node">
     ```js title="reaction.js"
     const response = await fetch(
-      'https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/react',
+      'https://api.turbonotify.com/v1/messages/msg_abc123/react',
       {
         method: 'POST',
         headers: {
@@ -47,7 +47,7 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há cam
     ```python title="reaction.py"
     import requests
 
-    url = "https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/react"
+    url = "https://api.turbonotify.com/v1/messages/msg_abc123/react"
     headers = {
         "Authorization": "Bearer SUA_CHAVE",
         "Content-Type": "application/json"
@@ -72,7 +72,7 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há cam
         payload := strings.NewReader(`{"reaction": "🎉"}`)
         req, _ := http.NewRequest(
             "POST",
-            "https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/react",
+            "https://api.turbonotify.com/v1/messages/msg_abc123/react",
             payload,
         )
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
@@ -86,7 +86,7 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há cam
   <TabItem label="PHP">
     ```php title="reaction.php"
     <?php
-    $url = 'https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/react';
+    $url = 'https://api.turbonotify.com/v1/messages/msg_abc123/react';
     $data = ['reaction' => '🎉'];
 
     $options = [
@@ -119,7 +119,7 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há cam
     var content = new StringContent(json, Encoding.UTF8, "application/json");
 
     var response = await client.PostAsync(
-        "https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/react", content);
+        "https://api.turbonotify.com/v1/messages/msg_abc123/react", content);
     Console.WriteLine((int)response.StatusCode); // 202
     ```
   </TabItem>
@@ -136,7 +136,7 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há cam
 
             var request = HttpRequest.newBuilder()
                 .uri(URI.create(
-                    "https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/react"))
+                    "https://api.turbonotify.com/v1/messages/msg_abc123/react"))
                 .header("Authorization", "Bearer SUA_CHAVE")
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
@@ -170,7 +170,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
   <TabItem label="cURL">
     ```bash title="reaction.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/react \
+      https://api.turbonotify.com/v1/messages/msg_abc123/react \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -181,7 +181,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
   <TabItem label="Node">
     ```js title="reaction.js"
     const response = await fetch(
-      'https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/react',
+      'https://api.turbonotify.com/v1/messages/msg_abc123/react',
       {
         method: 'POST',
         headers: {
@@ -199,7 +199,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
     ```python title="reaction.py"
     import requests
 
-    url = "https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/react"
+    url = "https://api.turbonotify.com/v1/messages/msg_abc123/react"
     headers = {
         "Authorization": "Bearer SUA_CHAVE",
         "Content-Type": "application/json"
@@ -224,7 +224,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
         payload := strings.NewReader(`{"reaction": null}`)
         req, _ := http.NewRequest(
             "POST",
-            "https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/react",
+            "https://api.turbonotify.com/v1/messages/msg_abc123/react",
             payload,
         )
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
@@ -238,7 +238,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
   <TabItem label="PHP">
     ```php title="reaction.php"
     <?php
-    $url = 'https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/react';
+    $url = 'https://api.turbonotify.com/v1/messages/msg_abc123/react';
     $data = ['reaction' => null];
 
     $options = [
@@ -269,7 +269,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
     var content = new StringContent(json, Encoding.UTF8, "application/json");
 
     var response = await client.PostAsync(
-        "https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/react", content);
+        "https://api.turbonotify.com/v1/messages/msg_abc123/react", content);
     Console.WriteLine((int)response.StatusCode); // 202
     ```
   </TabItem>
@@ -286,7 +286,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
 
             var request = HttpRequest.newBuilder()
                 .uri(URI.create(
-                    "https://api.turbonotify.com/v1/numbers/main/messages/msg_abc123/react"))
+                    "https://api.turbonotify.com/v1/messages/msg_abc123/react"))
                 .header("Authorization", "Bearer SUA_CHAVE")
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))

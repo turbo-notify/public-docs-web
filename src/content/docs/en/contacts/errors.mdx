@@ -15,5 +15,6 @@ Errors returned by the number-scoped contact endpoints
 | `number_not_found` | 404 | The `{alias}` is not a number of this organization. |
 
 Note: a contact id accessed under the **wrong** `{alias}` returns **404** — ids are
-globally unique but no longer alone-addressable. The flat `/v1/contacts...` routes
-are retired.
+globally unique but not alone-addressable (the `{alias}` or flat route is required).
+For the primary number the flat routes (`/v1/contacts/{id}` etc.) are also available;
+for extra numbers always use the nested form with the correct `{alias}`.

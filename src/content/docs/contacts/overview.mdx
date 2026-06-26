@@ -9,7 +9,7 @@ import ExternalLink from '@components/ExternalLink.astro';
 
 Um **TN Contact** é um registro de observabilidade passiva que o Turbo Notify cria automaticamente a partir do tráfego de mensagens entre o número do organization e contatos externos. Não é um CRM. Não há sincronização de agenda. Não há endpoints de criação ou exclusão manual.
 
-Contatos são escopados por número: todas as rotas ficam sob `/v1/numbers/{alias}/contacts`, onde `{alias}` é `main` (número primário) ou o alias de um número extra — o mesmo telefone alcançado por dois números diferentes gera dois contatos distintos.
+Contatos são escopados por número. Para o **número principal**, use as rotas planas (`/v1/contacts`, `/v1/contacts/{id}`, `/v1/contacts/quota`, etc.) ou a forma aninhada com o alias `main` (`/v1/numbers/main/contacts`, `/v1/numbers/main/contacts/{id}`, etc.) — ambas são equivalentes. Para **números extras**, use a forma aninhada `/v1/numbers/{alias}/contacts`. O mesmo telefone alcançado por dois números diferentes gera dois contatos distintos.
 
 ## Conceito
 

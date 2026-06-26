@@ -18,4 +18,4 @@ GET /v1/usage/messages
 GET /v1/numbers/{alias}/contacts/quota
 ```
 
-`{alias}` es `main` o el alias de un número extra. La cuota de contactos pasa a ser **por número**; la antigua ruta plana `GET /v1/contacts/quota` está retirada (404).
+`{alias}` es `main` o el alias de un número extra. La cuota de contactos es **por número**. Para el número principal también puedes usar la ruta plana `GET /v1/contacts/quota`; para números extra usa `GET /v1/numbers/{alias}/contacts/quota`.

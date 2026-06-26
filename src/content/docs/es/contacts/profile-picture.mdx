@@ -9,4 +9,4 @@ description: "GET /v1/numbers/{alias}/contacts/{id}/profile-picture — foto de 
 GET /v1/numbers/{alias}/contacts/{id}/profile-picture
 ```
 
-`{alias}` es `main` o el alias de un número extra; `{id}` es el `ct_…` del contacto. Devuelve una URL presignada (302) o un cuerpo de unión cuando no hay foto disponible. La ruta plana `GET /v1/contacts/{id}/profile-picture` está retirada (404).
+`{alias}` es `main` o el alias de un número extra; `{id}` es el `ct_…` del contacto. Devuelve una URL presignada (302) o un cuerpo de unión cuando no hay foto disponible. Para el número principal use la ruta plana `GET /v1/contacts/{id}/profile-picture`; para números extra use `GET /v1/numbers/{alias}/contacts/{id}/profile-picture`.

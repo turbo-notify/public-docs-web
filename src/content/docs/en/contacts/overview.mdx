@@ -18,4 +18,6 @@ numbers and all contact endpoints live under that number.
 
 `{alias}` is `main` (primary number) or the alias of an extra number. A contact's
 `number_alias` is present in the envelope of every webhook / `GET /v1/events` item;
-use it for subsequent by-id calls. The old flat `/v1/contacts...` routes return **404**.
+use it for subsequent by-id calls. For the primary number you can also use the flat
+routes (`/v1/contacts`, `/v1/contacts/{id}`, etc.) without the `{alias}` segment;
+for extra numbers always use the nested form with `{alias}`.

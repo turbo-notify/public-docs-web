@@ -9,14 +9,19 @@ import ExternalLink from '@components/ExternalLink.astro';
 
 Envie mensagens pelo Turbo Notify de forma simples, segura e em conformidade com as <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">políticas do WhatsApp</ExternalLink>.
 
-O corpo de `POST /v1/numbers/{alias}/messages` usa um objeto **aninhado `content`**
+O corpo de `POST /v1/messages` usa um objeto **aninhado `content`**
 para transportar o payload da mensagem. O tipo é inferido
 automaticamente pelo campo âncora presente em `content` — não há campo
 `content_type` obrigatório. Suporta texto, localização, contato, calendário e
 mídia (`image`, `video`, `audio`, `document`, `sticker` — veja
 [Envio de Mídia](/messages/send-media/)).
 
-Para citar (responder) uma mensagem existente — qualquer variante de conteúdo — use o endpoint dedicado `POST /v1/numbers/{alias}/messages/{message_id}/reply`, onde `{alias}` é o alias do número remetente e `{message_id}` é o id público da mensagem citada (`msg_{hex32}`). O body do reply contém apenas `content`. O webhook resultante é `message.replied` (em vez de `message.sent`); veja [Webhooks](/messages/webhook/#exemplo--messagereplied-inboundoutbound).
+Para citar (responder) uma mensagem existente — qualquer variante de conteúdo — use o endpoint dedicado `POST /v1/messages/{message_id}/reply`, onde `{message_id}` é o id público da mensagem citada (`msg_{hex32}`). O body do reply contém apenas `content`. O webhook resultante é `message.replied` (em vez de `message.sent`); veja [Webhooks](/messages/webhook/#exemplo--messagereplied-inboundoutbound).
+
+:::tip[Roteamento por número]
+- **Número principal** → `POST /v1/messages` (rota plana) **ou** `POST /v1/numbers/main/messages` — as duas formas são idênticas.
+- **Número extra** → `POST /v1/numbers/{alias}/messages`, onde `{alias}` é o alias configurado no dashboard. [Saiba mais](/numbers/add/).
+:::
 
 ## Envio básico
 
@@ -26,7 +31,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
   <TabItem label="cURL">
     ```bash title="turbo-notify.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/numbers/main/messages \
+      https://api.turbonotify.com/v1/messages \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -39,7 +44,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
   </TabItem>
   <TabItem label="Node">
     ```js title="turbo-notify.js"
-    const response = await fetch('https://api.turbonotify.com/v1/numbers/main/messages', {
+    const response = await fetch('https://api.turbonotify.com/v1/messages', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE',
@@ -61,7 +66,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     ```python title="turbo_notify.py"
     import requests
 
-    url = "https://api.turbonotify.com/v1/numbers/main/messages"
+    url = "https://api.turbonotify.com/v1/messages"
     headers = {
         "Authorization": "Bearer SUA_CHAVE",
         "Content-Type": "application/json"
@@ -91,7 +96,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
 
     func main() {
         payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "content": {"text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"}}`)
-        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/numbers/main/messages", payload)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/messages", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
         resp, _ := http.DefaultClient.Do(req)
@@ -104,7 +109,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
   <TabItem label="PHP">
     ```php title="turbo-notify.php"
     <?php
-    $url = 'https://api.turbonotify.com/v1/numbers/main/messages';
+    $url = 'https://api.turbonotify.com/v1/messages';
     $data = [
         'to' => ['number' => '+5511999999999'],
         'content' => [
@@ -149,7 +154,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     var content = new StringContent(json, Encoding.UTF8, "application/json");
 
     var response = await client.PostAsync(
-        "https://api.turbonotify.com/v1/numbers/main/messages",
+        "https://api.turbonotify.com/v1/messages",
         content
     );
     var result = await response.Content.ReadAsStringAsync();
@@ -175,7 +180,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
                 """;
 
             var request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.turbonotify.com/v1/numbers/main/messages"))
+                .uri(URI.create("https://api.turbonotify.com/v1/messages"))
                 .header("Authorization", "Bearer SUA_CHAVE")
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
@@ -405,7 +410,7 @@ Para saber por quanto tempo as mensagens ficam disponíveis para consulta e oper
 
 ## Conteúdo rico — localização, contato e calendário
 
-A partir de 2026-04-27 o `POST /v1/numbers/{alias}/messages` aceita três variantes de
+A partir de 2026-04-27 o `POST /v1/messages` aceita três variantes de
 conteúdo rico além de `text`. Cada variante tem um campo âncora próprio
 dentro do objeto `content` e é despachada para o WhatsApp como o tipo
 nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
@@ -416,7 +421,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
   <TabItem label="cURL">
     ```bash title="send-location.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/numbers/main/messages \
+      https://api.turbonotify.com/v1/messages \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -433,7 +438,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
   </TabItem>
   <TabItem label="Node">
     ```js title="send-location.js"
-    await fetch('https://api.turbonotify.com/v1/numbers/main/messages', {
+    await fetch('https://api.turbonotify.com/v1/messages', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE',
@@ -457,7 +462,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
     import requests
 
     requests.post(
-        "https://api.turbonotify.com/v1/numbers/main/messages",
+        "https://api.turbonotify.com/v1/messages",
         headers={
             "Authorization": "Bearer SUA_CHAVE",
             "Content-Type": "application/json",
@@ -491,7 +496,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
   <TabItem label="cURL">
     ```bash title="send-contact.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/numbers/main/messages \
+      https://api.turbonotify.com/v1/messages \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -514,7 +519,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
   </TabItem>
   <TabItem label="Node">
     ```js title="send-contact.js"
-    await fetch('https://api.turbonotify.com/v1/numbers/main/messages', {
+    await fetch('https://api.turbonotify.com/v1/messages', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE',
@@ -544,7 +549,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
     import requests
 
     requests.post(
-        "https://api.turbonotify.com/v1/numbers/main/messages",
+        "https://api.turbonotify.com/v1/messages",
         headers={
             "Authorization": "Bearer SUA_CHAVE",
             "Content-Type": "application/json",
@@ -589,7 +594,7 @@ você nunca precisa lidar com escaping vCard manualmente.
   <TabItem label="cURL">
     ```bash title="send-calendar.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/numbers/main/messages \
+      https://api.turbonotify.com/v1/messages \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -613,7 +618,7 @@ você nunca precisa lidar com escaping vCard manualmente.
   </TabItem>
   <TabItem label="Node">
     ```js title="send-calendar.js"
-    await fetch('https://api.turbonotify.com/v1/numbers/main/messages', {
+    await fetch('https://api.turbonotify.com/v1/messages', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer SUA_CHAVE',
@@ -644,7 +649,7 @@ você nunca precisa lidar com escaping vCard manualmente.
     import requests
 
     requests.post(
-        "https://api.turbonotify.com/v1/numbers/main/messages",
+        "https://api.turbonotify.com/v1/messages",
         headers={
             "Authorization": "Bearer SUA_CHAVE",
             "Content-Type": "application/json",
@@ -724,7 +729,7 @@ assume a forma de objeto `{ "group_id": "grp_..." }` em vez da string
 de telefone usada em 1:1. Veja
 [Visão geral de grupos](/groups/overview/) para detalhes do modelo.
 
-```json title="POST /v1/numbers/main/messages — grupo"
+```json title="POST /v1/messages — grupo"
 {
   "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a" },
   "content": {

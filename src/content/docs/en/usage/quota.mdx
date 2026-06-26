@@ -12,8 +12,9 @@ description: Account-wide usage stays at GET /v1/usage and /v1/usage/messages; c
 | Contact quota | `GET /v1/numbers/{alias}/contacts/quota` | Per-number |
 
 Contact quota is now **per-number**: each number (`main` or an extra-number alias)
-tracks its own contact quota, so it is queried under that number. The flat
-`GET /v1/contacts/quota` route is retired (**404**).
+tracks its own contact quota, so it is queried under that number. For the main number
+you can also use the flat route `GET /v1/contacts/quota`; for extra numbers use
+`GET /v1/numbers/{alias}/contacts/quota`.
 
 Account-wide usage (`GET /v1/usage`, `GET /v1/usage/messages`) stays **top-level**
 and was not affected by the number-nested route change.

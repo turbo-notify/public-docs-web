@@ -11,4 +11,4 @@ Los endpoints de Contactos viven bajo `GET /v1/numbers/{alias}/contacts…`. Err
 - `contacts_not_enabled` (HTTP 422) — funcionalidad no configurada en esta instancia.
 - `contact.quota.exceeded` (HTTP 402) — cuota mensual de contactos del número alcanzada.
 
-Las rutas planas `/v1/contacts…` están retiradas y devuelven **404**.
+Para el número principal use la ruta plana `/v1/contacts…` (sin `{alias}`); para números extra use siempre la forma con `{alias}`.

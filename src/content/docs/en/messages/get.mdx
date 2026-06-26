@@ -19,8 +19,8 @@ Accessing an id under the wrong alias returns **404**.
 Related sub-resources: `.../{id}/status`, `.../{id}/reactions`, `.../{id}/receipts`.
 
 ```bash
-curl https://api.turbonotify.com/v1/numbers/main/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7 \
+curl https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7 \
   -H "Authorization: Bearer tn_live_..."
 ```
 
-The flat `GET /v1/messages/{id}` route is retired (**404**).
+For extra numbers: `GET /v1/numbers/{alias}/messages/{id}`

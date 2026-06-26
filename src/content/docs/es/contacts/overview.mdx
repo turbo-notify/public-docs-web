@@ -13,4 +13,4 @@ La API de Contactos vive **bajo el número**, donde `{alias}` es `main` (número
 - `GET /v1/numbers/{alias}/contacts/quota` — cuota de contactos (por número)
 - `POST /v1/numbers/{alias}/contacts/{id}/refresh` — refrescar metadatos
 
-Las rutas planas `/v1/contacts` quedaron **retiradas** (404). Obtén el `{alias}` del campo `number_alias` del envelope del evento.
+Para el número principal también están disponibles las rutas planas (`/v1/contacts`, `/v1/contacts/{id}`, etc.) — sin necesidad de `{alias}`. Para números extra use siempre la forma con `{alias}`. Obtén el `{alias}` del campo `number_alias` del envelope del evento.

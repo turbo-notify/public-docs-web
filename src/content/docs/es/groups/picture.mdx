@@ -9,4 +9,4 @@ description: "GET /v1/numbers/{alias}/groups/{id}/picture — foto de un grupo p
 GET /v1/numbers/{alias}/groups/{id}/picture
 ```
 
-`{alias}` es `main` o el alias de un número extra; `{id}` es el `grp_…` del grupo. Devuelve una URL presignada (302) o un cuerpo de unión (200) cuando no hay foto disponible. La ruta plana `GET /v1/groups/{id}/picture` está retirada (404).
+`{alias}` es `main` o el alias de un número extra; `{id}` es el `grp_…` del grupo. Devuelve una URL presignada (302) o un cuerpo de unión (200) cuando no hay foto disponible. Para el número principal use la ruta plana `GET /v1/groups/{id}/picture`; para números extra use `GET /v1/numbers/{alias}/groups/{id}/picture`.

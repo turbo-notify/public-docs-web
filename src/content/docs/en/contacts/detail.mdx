@@ -11,10 +11,11 @@ GET /v1/numbers/{alias}/contacts/{id}
 
 Returns a single contact by id (`ct_…`). `{alias}` (`main` or an extra-number
 alias) is the contact's `number_alias` — take it from the event envelope.
-Accessing an id under the wrong alias returns **404**. The flat
-`GET /v1/contacts/{id}` route is retired.
+Accessing an id under the wrong alias returns **404**.
 
 ```bash
-curl https://api.turbonotify.com/v1/numbers/main/contacts/ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4 \
+curl https://api.turbonotify.com/v1/contacts/ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4 \
   -H "Authorization: Bearer tn_live_..."
 ```
+
+For extra numbers: `GET /v1/numbers/{alias}/contacts/{id}`

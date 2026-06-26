@@ -44,10 +44,10 @@ A razão 10:1 (mensagens/contato) reflete o uso médio. Organizations podem ter 
 ## Endpoints adicionais
 
 - `GET /v1/usage/messages` — somente mensagens (escopo de conta; permanece no nível raiz).
-- `GET /v1/numbers/{alias}/contacts/quota` — somente contatos, **por número**. A quota de
-  contatos passou a ser por número (ADR 2026-06-22): cada número (`main` ou alias extra)
-  tem sua própria contagem de contatos distintos. A rota plana antiga `GET /v1/contacts/quota`
-  foi removida e retorna 404.
+- `GET /v1/contacts/quota` — quota de contatos do **número principal** (rota plana,
+  equivalente a `GET /v1/numbers/main/contacts/quota`). Para números extras, use
+  `GET /v1/numbers/{alias}/contacts/quota`. A quota de contatos é por número
+  (ADR 2026-06-22): cada número (`main` ou alias extra) tem sua própria contagem.
 
 ## Resposta 402 (contact quota)
 

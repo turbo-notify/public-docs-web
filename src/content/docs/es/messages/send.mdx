@@ -14,4 +14,4 @@ POST /v1/numbers/{alias}/messages
 - `to`: exactamente uno de `{ "number": "…" }`, `{ "group_id": "grp_…" }` o `{ "contact_id": "ct_…" }`.
 - `content`: objeto anidado con el contenido del mensaje (texto, media, etc.).
 
-Para responder a un mensaje recibido: `POST /v1/numbers/{alias}/messages/{id}/reply`. La ruta plana `POST /v1/messages` está retirada (404).
+Para enviar desde el número principal use la ruta plana `POST /v1/messages` (sin `{alias}`). Para números extra use `POST /v1/numbers/{alias}/messages`. Para responder a un mensaje recibido: `POST /v1/messages/{id}/reply`.

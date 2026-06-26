@@ -9,4 +9,4 @@ description: "POST /v1/numbers/{alias}/contacts/{id}/refresh — refresca los me
 POST /v1/numbers/{alias}/contacts/{id}/refresh
 ```
 
-`{alias}` es `main` o el alias de un número extra; `{id}` es el `ct_…` del contacto. La ruta plana `POST /v1/contacts/{id}/refresh` está retirada (404).
+`{alias}` es `main` o el alias de un número extra; `{id}` es el `ct_…` del contacto. Para el número principal use la ruta plana `POST /v1/contacts/{id}/refresh`; para números extra use `POST /v1/numbers/{alias}/contacts/{id}/refresh`.

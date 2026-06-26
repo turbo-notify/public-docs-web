@@ -9,4 +9,4 @@ description: "GET /v1/numbers/{alias}/contacts — lista de contactos por númer
 GET /v1/numbers/{alias}/contacts
 ```
 
-`{alias}` es `main` (número principal) o el alias de un número extra. Devuelve los contactos vistos por **ese** número, paginados por cursor. La antigua ruta plana `GET /v1/contacts` está retirada (404).
+`{alias}` es `main` (número principal) o el alias de un número extra. Devuelve los contactos vistos por **ese** número, paginados por cursor. Para el número principal use la ruta plana `GET /v1/contacts`; para números extra use `GET /v1/numbers/{alias}/contacts`.

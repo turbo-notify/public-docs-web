@@ -15,8 +15,15 @@ Os contatos são escopados por número: `{alias}` é `main` (número primário) 
 ## Endpoint
 
 ```http
-GET /v1/numbers/{alias}/contacts?limit=20&cursor=<opaque>
+GET /v1/contacts?limit=20&cursor=<opaque>
 ```
+
+Para números extras: `GET /v1/numbers/{alias}/contacts?limit=20&cursor=<opaque>`
+
+:::tip[Usando números extras?]
+Para listar contatos de um número extra, use `/v1/numbers/{alias}/contacts` onde
+`{alias}` é o alias do seu número extra. [Saiba mais](/numbers/add/).
+:::
 
 **Scope necessário:** `contacts:read`.
 
@@ -36,13 +43,13 @@ GET /v1/numbers/{alias}/contacts?limit=20&cursor=<opaque>
 <Tabs>
 <TabItem label="cURL">
 ```bash
-curl -X GET "https://api.turbonotify.com/v1/numbers/main/contacts?limit=20" \
+curl -X GET "https://api.turbonotify.com/v1/contacts?limit=20" \
   -H "Authorization: Bearer $TURBO_API_KEY"
 ```
 </TabItem>
 <TabItem label="Node">
 ```ts
-const res = await fetch("https://api.turbonotify.com/v1/numbers/main/contacts?limit=20", {
+const res = await fetch("https://api.turbonotify.com/v1/contacts?limit=20", {
   headers: { Authorization: `Bearer ${process.env.TURBO_API_KEY}` },
 });
 const { data, cursor, has_more } = await res.json();
@@ -52,7 +59,7 @@ const { data, cursor, has_more } = await res.json();
 ```python
 import httpx
 r = httpx.get(
-    "https://api.turbonotify.com/v1/numbers/main/contacts",
+    "https://api.turbonotify.com/v1/contacts",
     params={"limit": 20},
     headers={"Authorization": f"Bearer {API_KEY}"},
 )

@@ -12,10 +12,10 @@ Retorna a foto de um grupo do WhatsApp. Espelha o endpoint de [foto de perfil de
 ## Endpoint
 
 ```http
-GET /v1/numbers/{alias}/groups/{group_id}/picture
+GET /v1/groups/{group_id}/picture
 ```
 
-**Scope:** `groups:read`. `{alias}` é o `number_alias` do envelope do evento do grupo — a linha TN (`main` ou o alias de um número extra) que participa do grupo. `group_id` é o id público (`grp_{hex32}`).
+**Scope:** `groups:read`. Para números extras: `GET /v1/numbers/{alias}/groups/{group_id}/picture`, onde `{alias}` é o `number_alias` do envelope do evento do grupo. `group_id` é o id público (`grp_{hex32}`).
 
 ## Comportamento por `picture_storage`
 
@@ -31,7 +31,7 @@ A foto do grupo é re-resolvida pelo pipeline de metadados do grupo: uma foto ma
 ## Exemplo — foto disponível
 
 ```bash
-curl -I "https://api.turbonotify.com/v1/numbers/main/groups/grp_.../picture" \
+curl -I "https://api.turbonotify.com/v1/groups/grp_.../picture" \
   -H "Authorization: Bearer $TURBO_API_KEY"
 
 HTTP/1.1 302 Found
