@@ -397,7 +397,7 @@ Para remover uma reação, envie `POST /v1/numbers/{alias}/messages/{id}/react` 
 
 ### Exemplo — `message.replied` (inbound/outbound)
 
-Disponível desde 2026-04-28. Replies são entregues como evento dedicado. `preview` contém o preview da **nova mensagem** (o reply, não a mensagem citada). O `quoted_message_id` foi removido dos eventos — faça `GET /v1/numbers/{alias}/messages/{id}` para acessar `replied.message_id` e `replied.preview`.
+Disponível desde 2026-04-28. Replies são entregues como evento dedicado. `preview` contém o preview da **nova mensagem** (o reply, não a mensagem citada). `quoted_message_id` identifica a mensagem citada no formato `msg_<hex32>`; omitido quando o alvo não pôde ser resolvido (mensagem anterior ao TN ou expirada por retenção — use `GET /v1/numbers/{alias}/messages/{id}` para acessar `replied.message_id` e `replied.preview` nesses casos).
 
 ```json title="message.replied (inbound)"
 {
@@ -415,6 +415,7 @@ Disponível desde 2026-04-28. Replies são entregues como evento dedicado. `prev
     "direction": "inbound",
     "channel": "whatsapp",
     "origin": "native",
+    "quoted_message_id": "msg_c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6",
     "at": "2026-06-01T10:00:00-03:00"
   }
 }
@@ -436,6 +437,7 @@ Disponível desde 2026-04-28. Replies são entregues como evento dedicado. `prev
     "direction": "outbound",
     "channel": "whatsapp",
     "origin": "tn",
+    "quoted_message_id": "msg_c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6",
     "at": "2026-06-01T10:01:00-03:00"
   }
 }
