@@ -152,7 +152,7 @@ shape** do `status.error` retornado por `GET /v1/numbers/{alias}/messages/{id}` 
 | `image` | Legenda ou `[Image]` |
 | `sticker` | `[Sticker]` |
 | `video` | Legenda ou `[Video]` |
-| `audio` | Transcrição Whisper (se configurada) ou `[Audio]` |
+| `audio` | `[Audio]` |
 | `document` | Legenda → nome do arquivo → `[Document]` |
 | `location` | Texto humanizado sem colchetes, ex: `Av. Paulista, Sao Paulo, SP` |
 | `calendar` | Sem colchetes, ex: `Reuniao — seg, 2 jun 2026 14:00` |
@@ -589,7 +589,7 @@ do evento, link da mídia, etc.), faça `GET /v1/numbers/{alias}/messages/{id}`.
 
 #### `audio` — voice note ou música
 
-```json title="data — message.received (audio)"
+```json title="data — message.received (audio, sem BYO STT)"
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0012",
   "from": { "name": "João Silva", "number": "5511777777777" },
@@ -603,7 +603,30 @@ do evento, link da mídia, etc.), faça `GET /v1/numbers/{alias}/messages/{id}`.
 }
 ```
 
-`mime_type` típico: `audio/ogg` (voice note) ou `audio/mpeg` (música). Se transcrição Whisper estiver configurada, `preview` exibe o texto transcrito.
+```json title="data — message.received (audio, com BYO STT ativo)"
+{
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0012",
+  "from": { "name": "João Silva", "number": "5511777777777" },
+  "to": { "alias": "main", "number": "5511999990001" },
+  "preview": "[Audio]",
+  "content_type": "audio",
+  "transcription": "Oi, pode confirmar o pedido?",
+  "transcription_language": "pt",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T15:36:08-03:00"
+}
+```
+
+`mime_type` típico: `audio/ogg` (voice note) ou `audio/mpeg` (música).
+
+Quando **BYO Speech-to-Text** está configurado para o número, mensagens de áudio inbound ganham dois campos adicionais:
+
+- **`transcription`** — texto transcrito (omitido quando STT não está configurado ou não é mensagem de áudio)
+- **`transcription_language`** — código BCP-47 do idioma detectado/configurado (ex: `"pt"`, `"en"`)
+
+Se a transcrição for tentada mas falhar, o campo **`transcription_failed_reason`** aparece no lugar (`"timeout"`, `"provider_error"` ou `"internal_error"`). O fluxo da mensagem nunca é bloqueado por falha de transcrição.
 
 #### `document`
 
