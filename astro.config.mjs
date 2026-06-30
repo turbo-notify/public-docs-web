@@ -29,8 +29,10 @@ export default defineConfig({
         },
       ],
       logo: {
-        light: './src/assets/logo-light.svg',
-        dark: './src/assets/logo-dark.svg',
+        // Single-line horizontal lockup (icon + "Turbo Notify") — ADR 2026-06-29,
+        // shared with the dashboard + webhook-inspector headers for brand consistency.
+        light: './src/assets/logo-lockup-light.svg',
+        dark: './src/assets/logo-lockup-dark.svg',
         replacesTitle: true,
       },
       defaultLocale: 'root',
