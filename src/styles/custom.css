@@ -133,6 +133,14 @@ starlight-lang-select {
   align-items: center;
 }
 
+/* Language selector: widen the control so the longest label ("Português")
+   fits instead of clipping to "Portug…". Starlight's Select.astro sets the
+   default (7em) via an inline style on the label, so `!important` is required
+   to override it from here. */
+starlight-lang-select label {
+  --sl-select-width: 9.5em !important;
+}
+
 /* ------------------------------------------------------------
    4. Layout Panels (remove all borders/shadows between panels)
    ------------------------------------------------------------ */
@@ -377,6 +385,16 @@ starlight-lang-select {
   font-size: 1.05rem;
 }
 
+/* Unify every category-card icon chip to the single TN accent. Starlight's
+   Card.astro tints the chips rainbow per :nth-child (orange/purple/green/red
+   via --sl-card-border / --sl-card-bg), which introduces a second palette and
+   breaks the single-accent contract. `!important` wins the custom-property
+   cascade over those scoped nth-child rules regardless of specificity. */
+.card-grid .card {
+  --sl-card-border: var(--sl-color-accent) !important;
+  --sl-card-bg: var(--sl-color-accent-low) !important;
+}
+
 /* ------------------------------------------------------------
    11. Tabs
    ------------------------------------------------------------ */
@@ -581,4 +599,62 @@ starlight-lang-select {
 .external-link::after {
   content: ' \2197';
   font-size: 0.8em;
+}
+
+/* ------------------------------------------------------------
+   15. Asides / Callouts
+   Starlight's defaults pull in a second (rainbow) palette:
+   note→blue, tip→purple, caution→orange, danger→red. Re-map them
+   to the Turbo Notify semantic set — note→info, tip→success,
+   caution→warning, danger→danger — kept subtle (tinted fill +
+   accent stripe). Theme-scoped selectors (0,3,0) outrank
+   Starlight's `.starlight-aside--*` (0,1,0), so no !important.
+   ------------------------------------------------------------ */
+
+/* note → info (#1366D6) */
+:root[data-theme='dark'] .starlight-aside--note {
+  --sl-color-asides-text-accent: #7fb0f2;
+  --sl-color-asides-border: #2f7fe6;
+  background-color: rgba(19, 102, 214, 0.13);
+}
+:root[data-theme='light'] .starlight-aside--note {
+  --sl-color-asides-text-accent: #0f4fa8;
+  --sl-color-asides-border: #1366d6;
+  background-color: rgba(19, 102, 214, 0.08);
+}
+
+/* tip → success (#28A74F) */
+:root[data-theme='dark'] .starlight-aside--tip {
+  --sl-color-asides-text-accent: #6dd68f;
+  --sl-color-asides-border: #34c063;
+  background-color: rgba(40, 167, 79, 0.13);
+}
+:root[data-theme='light'] .starlight-aside--tip {
+  --sl-color-asides-text-accent: #0f6e30;
+  --sl-color-asides-border: #28a74f;
+  background-color: rgba(40, 167, 79, 0.09);
+}
+
+/* caution → warning (#F59E0B) */
+:root[data-theme='dark'] .starlight-aside--caution {
+  --sl-color-asides-text-accent: #f5c364;
+  --sl-color-asides-border: #f5b53c;
+  background-color: rgba(245, 158, 11, 0.13);
+}
+:root[data-theme='light'] .starlight-aside--caution {
+  --sl-color-asides-text-accent: #8a5510;
+  --sl-color-asides-border: #d9820a;
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+/* danger → danger (#C72D2D) */
+:root[data-theme='dark'] .starlight-aside--danger {
+  --sl-color-asides-text-accent: #ec8780;
+  --sl-color-asides-border: #e0564f;
+  background-color: rgba(199, 45, 45, 0.13);
+}
+:root[data-theme='light'] .starlight-aside--danger {
+  --sl-color-asides-text-accent: #b3322b;
+  --sl-color-asides-border: #c72d2d;
+  background-color: rgba(199, 45, 45, 0.09);
 }
