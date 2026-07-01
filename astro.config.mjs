@@ -6,8 +6,10 @@ export default defineConfig({
   // The /extra-numbers/* section was folded into /numbers/* (domain-aligned
   // grouping realignment, ADR 2026-06-22). Redirect old links so they don't 404.
   redirects: {
+    // `trailingSlash: 'ignore'` (default) normalises `/extra-numbers` and
+    // `/extra-numbers/` to one route, so a single key covers both forms.
+    // Listing both collides ("a static route cannot be defined more than once").
     '/extra-numbers': '/numbers/add/',
-    '/extra-numbers/': '/numbers/add/',
     '/extra-numbers/add': '/numbers/add/',
     '/extra-numbers/status': '/numbers/status/',
     '/extra-numbers/list': '/numbers/list/',

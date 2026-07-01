@@ -36,7 +36,7 @@
 
 :root[data-theme='light'] {
   --sl-color-accent-low: #e7f5f1;
-  --sl-color-accent: #167c63;
+  --sl-color-accent: #177d60;
   --sl-color-accent-high: #115e4d;
 
   --sl-color-white: #0f1720;
@@ -200,7 +200,7 @@ starlight-lang-select {
 }
 
 :root[data-theme='light'] .sidebar-content a[aria-current='page'] {
-  background: rgba(22, 124, 99, 0.07);
+  background: rgba(23, 125, 96, 0.07);
   color: #115e4d;
 }
 
@@ -335,8 +335,8 @@ starlight-lang-select {
 }
 
 :root[data-theme='light'] .sl-link-button.primary {
-  background: #167c63;
-  border-color: #167c63;
+  background: #177d60;
+  border-color: #177d60;
   color: #ffffff;
 }
 
@@ -347,7 +347,7 @@ starlight-lang-select {
 }
 
 :root[data-theme='light'] .sl-link-button.minimal {
-  color: #167c63;
+  color: #177d60;
 }
 
 :root[data-theme='dark'] .sl-link-button.minimal {
@@ -406,7 +406,7 @@ starlight-lang-select {
 }
 
 :root[data-theme='light'] .tab > [role='tab'][aria-selected='true'] {
-  background: rgba(22, 124, 99, 0.07);
+  background: rgba(23, 125, 96, 0.07);
   color: #115e4d;
 }
 
