@@ -1,11 +1,13 @@
 ---
 title: Eventos de quota de mensagem
-description: Webhooks message.quota.warning e message.quota.exceeded — emitidos quando o quota mensal de mensagens por tier cruza thresholds.
+description: Webhooks message.quota.warning e message.quota.exceeded — por número (número identificado via number_alias no envelope), emitidos quando a quota de mensagens do número cruza thresholds.
 sidebar:
   order: 2
 ---
 
-Eventos relacionados ao **quota mensal de mensagens por tier** (free=1k, solo=10k, business=50k, custom=500k+).
+Eventos relacionados à **quota de mensagens por número** (janela rolling de 30 dias; limites por tier: free=1k, solo=10k, business=50k, custom=500k+ **por número**).
+
+Desde a ADR 2026-07-02 a quota de mensagens é **por número** — espelhando a quota de contatos: cada número vinculado (`main` ou alias extra) tem sua própria franquia, e uma organization com N números tem N× a franquia do tier. Estes eventos identificam o número afetado via **`number_alias` no envelope** (não em `data`). Apenas mensagens enviadas **via Turbo Notify** (`origin: "tn"`) consomem a quota.
 
 > **Nota (2026-05-15):** o enforcement deste quota foi ativado em 2026-05-15. Os limites já estavam documentados — a partir desta data, o código aplica os limites efetivamente. Veja [Per-Tier Message Quota Activation](/changelog/2026-05-15-message-quota-activation/) e a [auditoria em rate-limits](/messages/rate-limits/).
 
@@ -13,8 +15,14 @@ Eventos relacionados ao **quota mensal de mensagens por tier** (free=1k, solo=10
 
 | Evento | Quando |
 | ------ | ------ |
-| `message.quota.warning` | Cruzou threshold 80/90/95% da quota mensal de mensagens |
+| `message.quota.warning` | Cruzou threshold 80/90/95% da quota de mensagens do número |
 | `message.quota.exceeded` | Tentativa rejeitada por estouro (HTTP 429) |
+
+## `number_alias` no envelope
+
+Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_alias`: o handle do número TN ("inbox") cuja quota de mensagens foi atingida — `"main"` para o número principal ou o alias de um número extra. O `data` do evento **não** muda (os campos de quota `threshold_bps`, `used`, `quota`, `window_days`, `resets_at`, `tier`, `channel`, `origin` permanecem iguais) — o `number_alias` fica no **envelope**, nunca dentro de `data`.
+
+> Entre os eventos de conta, `number_alias` é omitido **apenas** em `storage.*`. Toda família `*.quota.*` (contatos e mensagens) passou a carregá-lo.
 
 ## Exemplo: `message.quota.warning`
 
@@ -23,11 +31,13 @@ Eventos relacionados ao **quota mensal de mensagens por tier** (free=1k, solo=10
   "id": "evt_...",
   "type": "message.quota.warning",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
   "created_at": "2026-05-15T12:00:00Z",
   "data": {
     "threshold_bps": 80,
     "used": 800,
     "quota": 1000,
+    "window_days": 30,
     "resets_at": "2026-06-14T...",
     "tier": "free",
     "channel": "whatsapp",
@@ -43,6 +53,7 @@ Eventos relacionados ao **quota mensal de mensagens por tier** (free=1k, solo=10
   "id": "evt_...",
   "type": "message.quota.exceeded",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
   "created_at": "2026-05-15T12:00:00Z",
   "data": {
     "quota": 1000,

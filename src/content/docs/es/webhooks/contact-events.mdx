@@ -9,7 +9,7 @@ description: "Eventos contact.* con number_alias en el envelope (incluidos los d
 
 Todos los eventos `contact.*` — **incluidos los de cuota** (`contact.quota.warning`, `contact.quota.exceeded`) — llevan, justo debajo de `organization_id`, el campo `number_alias`: el handle del número TN (`main` o el alias de un número extra) afectado. La cuota de contactos es **por número** (ADR 2026-06-22), por lo que los eventos de cuota identifican el número vía `number_alias` en el envelope. El `data` del evento de cuota **no** cambia.
 
-`number_alias` queda en el **envelope**, nunca dentro de `data`. Solo se **omite** en los eventos `storage.*` y en los de cuota de mensaje (`message.quota.*`), que son a nivel de cuenta.
+`number_alias` queda en el **envelope**, nunca dentro de `data`. Solo se **omite** en los eventos `storage.*` (el único sin un número único). Toda familia `*.quota.*` — tanto `contact.quota.*` como `message.quota.*` (por número desde la ADR 2026-07-02) — lo lleva.
 
 ```json title="Ejemplo: contact.quota.warning"
 {

@@ -17,7 +17,7 @@ number whose contact quota was reached. The event `data` is unchanged.
 
 ```json title="contact.quota.warning envelope"
 {
-  "event_id": "evt_…",
+  "id": "evt_…",
   "type": "contact.quota.warning",
   "organization_id": "org_…",
   "number_alias": "main",
@@ -26,5 +26,6 @@ number whose contact quota was reached. The event `data` is unchanged.
 }
 ```
 
-`number_alias` is omitted **only** on `storage.*` and the message-quota events
-(`message.quota.*`) — account-wide events with no single number.
+`number_alias` is omitted **only** on `storage.*` (the sole event with no single
+number). Every `*.quota.*` family — both `contact.quota.*` and `message.quota.*`
+(per-number since ADR 2026-07-02) — carries `number_alias`.

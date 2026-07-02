@@ -9,10 +9,13 @@ import ExternalLink from '@components/ExternalLink.astro';
 
 Envie mensagens pelo Turbo Notify de forma simples, segura e em conformidade com as <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">políticas do WhatsApp</ExternalLink>.
 
-O corpo de `POST /v1/messages` usa um objeto **aninhado `content`**
-para transportar o payload da mensagem. O tipo é inferido
-automaticamente pelo campo âncora presente em `content` — não há campo
-`content_type` obrigatório. Suporta texto, localização, contato, calendário e
+O corpo de `POST /v1/numbers/{alias}/messages` (ou o atalho
+`POST /v1/messages` para o número principal) usa um objeto
+**aninhado `content`** para transportar o payload da mensagem. O tipo é
+inferido automaticamente pelo campo âncora presente em `content`
+(`text`, `image_url`, `latitude`, `start_at`, …) — **não envie** um campo
+`content_type` no request: ele nunca é aceito (incluí-lo retorna `422`).
+Suporta texto, localização, contato, calendário e
 mídia (`image`, `video`, `audio`, `document`, `sticker` — veja
 [Envio de Mídia](/messages/send-media/)).
 
@@ -746,7 +749,7 @@ O campo `to` é polimórfico — aceita exatamente uma das três formas (sem `ki
 | `{ "group_id": "grp_..." }` | Mensagem para grupo |
 | `{ "contact_id": "ct_..." }` | Mensagem 1:1 via ID de contato TN |
 
-- As duas formas são **mutuamente exclusivas** — envie exatamente uma.
+- As três formas são **mutuamente exclusivas** — envie exatamente uma.
 - `group_id` é o identificador público `grp_{hex32}` recebido em
   webhooks/polling de `message.received` (`to.group_id`) ou nos
   eventos de [ciclo de vida de grupo](/groups/lifecycle-events/).

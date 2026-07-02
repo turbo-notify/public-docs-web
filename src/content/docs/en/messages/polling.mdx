@@ -23,4 +23,5 @@ curl "https://api.turbonotify.com/v1/events?number_alias=main" \
 
 The event `data` is **byte-identical** to the matching webhook delivery, so
 polling and webhooks are interchangeable. `number_alias` is omitted only on
-`storage.*` and `message.quota.*`.
+`storage.*`; every `*.quota.*` family (including `message.quota.*`, per-number
+since ADR 2026-07-02) carries it.

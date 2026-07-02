@@ -1,14 +1,30 @@
 ---
 title: Message Quota Webhook Events
-description: message.quota.* events stay account-wide (per-organization) and carry no number_alias. Translation pending; see the canonical PT-BR version.
+description: message.quota.* events are now per-number (ADR 2026-07-02) and carry number_alias in the envelope. Translation pending; see the canonical PT-BR version.
 ---
 
 > This page is being translated. See the PT-BR (canonical) version: [/webhooks/message-quota-events/](/webhooks/message-quota-events/).
 
-The `message.quota.warning` and `message.quota.exceeded` events are **account-wide
-(per-organization)**: message quota is not scoped to a single number, so these
-events do **not** carry `number_alias` in the envelope.
+The `message.quota.warning` and `message.quota.exceeded` events are **per-number**
+(ADR 2026-07-02, mirroring `contact.quota.*`): message quota is scoped to a single
+number, so these events carry **`number_alias`** in the envelope (immediately below
+`organization_id`) identifying the number whose message quota was reached — `main` or an
+extra-number alias. The event `data` (quota fields `threshold_bps`, `used`, `quota`,
+`window_days`, `resets_at`, `tier`, `channel`, `origin`) is unchanged — `number_alias`
+rides the envelope, never `data`.
 
-This contrasts with `contact.quota.*`, which became **per-number** and now carries
-`number_alias` (see [Contact events](/webhooks/contact-events/)). `number_alias` is
-omitted only on `storage.*` and `message.quota.*`.
+```json title="message.quota.warning envelope"
+{
+  "id": "evt_…",
+  "type": "message.quota.warning",
+  "organization_id": "org_…",
+  "number_alias": "main",
+  "created_at": "2026-05-15T12:00:00Z",
+  "data": { /* threshold_bps, used, quota, window_days, resets_at, tier, channel, origin — unchanged */ }
+}
+```
+
+`number_alias` is now omitted **only** on `storage.*`; every `*.quota.*` family
+(contacts and messages) carries it. Only messages sent **via Turbo Notify**
+(`origin: "tn"`) consume the quota. See [Contact events](/webhooks/contact-events/)
+for the identical envelope treatment.

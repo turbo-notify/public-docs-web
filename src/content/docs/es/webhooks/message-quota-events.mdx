@@ -1,8 +1,10 @@
 ---
 title: Eventos de Cuota de Mensajes por Webhook
-description: "Eventos message.quota.* a nivel de cuenta (sin number_alias). Traducción pendiente; ver versión canónica en PT-BR."
+description: "Los eventos message.quota.* ahora son por número (ADR 2026-07-02) y llevan number_alias en el envelope. Traducción pendiente; ver versión canónica en PT-BR."
 ---
 
 > Esta página está siendo traducida. Consulte la versión canónica en PT-BR: [/webhooks/message-quota-events/](/webhooks/message-quota-events/).
 
-Los eventos `message.quota.*` son **a nivel de cuenta** (por organización), no por número. Por eso **no** llevan `number_alias` en el envelope — a diferencia de los eventos `contact.quota.*`, que sí lo llevan (cuota de contactos por número). El uso de mensajes a nivel de cuenta se consulta en `GET /v1/usage/messages`.
+Los eventos `message.quota.warning` y `message.quota.exceeded` son **por número** (ADR 2026-07-02, reflejando `contact.quota.*`): la cuota de mensajes está acotada a un único número, por eso estos eventos **sí** llevan `number_alias` en el envelope (justo debajo de `organization_id`), identificando el número cuya cuota de mensajes se alcanzó — `main` o el alias de un número extra. El `data` del evento (campos de cuota `threshold_bps`, `used`, `quota`, `window_days`, `resets_at`, `tier`, `channel`, `origin`) **no** cambia — `number_alias` va en el envelope, nunca en `data`.
+
+`number_alias` ahora se omite **solo** en `storage.*`; toda familia `*.quota.*` (contactos y mensajes) lo lleva. Solo los mensajes enviados **vía Turbo Notify** (`origin: "tn"`) consumen la cuota. La cuota por número se consulta en `GET /v1/numbers/{alias}/messages/quota` (o la ruta plana `GET /v1/messages/quota` para el principal).

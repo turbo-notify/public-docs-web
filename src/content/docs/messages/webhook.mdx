@@ -85,7 +85,7 @@ Toda requisição de webhook segue a mesma estrutura base:
 | `id`              | `string` | Identificador único do evento (`evt_…`). Use como chave de idempotência.  |
 | `type`            | `string` | Tipo do evento (ex.: `message.sent`).                                     |
 | `organization_id` | `string` | Identificador público da sua organização (`org_{hex32}`). Sempre presente.|
-| `number_alias`    | `string` | Handle do número Turbo Notify ("inbox") ao qual o evento pertence — `"main"` para o número principal ou o alias de um número extra. É a **string do alias**, nunca um UUID. Presente em eventos ligados a um número específico — `message.*`, `number.*`, `group.*` e o ciclo de vida de `contact.*` (a observação do contato é atribuída ao número cujo inbox a viu); **omitido** apenas em eventos de escopo de conta sem número único — `storage.*` e os de quota (incluindo `contact.quota.*`). |
+| `number_alias`    | `string` | Handle do número Turbo Notify ("inbox") ao qual o evento pertence — `"main"` para o número principal ou o alias de um número extra. É a **string do alias**, nunca um UUID. Presente em eventos ligados a um número específico — `message.*`, `number.*`, `group.*`, todos os `contact.*` (inclusive `contact.quota.*`) e `message.quota.*` (a quota de mensagens é por número desde a ADR 2026-07-02); **omitido** apenas em `storage.*` (o único evento de escopo de conta sem número único). |
 | `created_at`      | `string` | Momento de **emissão** do evento pelo TN — distinto de `data.at` (momento da ação no WhatsApp). ISO 8601 com offset do timezone da conta (ex.: `2026-06-01T10:00:05-03:00`). Fallback para `+00:00` quando nenhum timezone está configurado. |
 | `data`            | `object` | Dados específicos do evento (veja [Campos da mensagem](#campos-da-mensagem)). |
 
@@ -698,8 +698,9 @@ Body completo via `GET /v1/numbers/{alias}/messages/{id}` no campo `calendar` co
 
 :::tip
 Quer ver o body renderizado de forma visual antes de plugar em
-produção? Abra o <ExternalLink href="https://webhook.turbonotify.com">Webhook Inspector</ExternalLink>
-e use **Send sample**.
+produção? Cadastre a URL gerada pelo <ExternalLink href="https://webhook.turbonotify.com">Webhook Inspector</ExternalLink>
+como seu webhook e envie uma mensagem de teste real — cada delivery chega em
+tempo real, com headers e body completos.
 :::
 
 ## Tipos de evento

@@ -10,6 +10,6 @@ GET /v1/events
 GET /v1/events?number_alias={alias}
 ```
 
-`GET /v1/events` es **a nivel de cuenta** y permanece en la raíz (no se anida bajo el número). Cada ítem lleva `number_alias` en el envelope (`main` o el alias de un número extra), salvo los eventos `storage.*` y `message.quota.*`. Acepta el filtro opcional `number_alias` para restringir la respuesta a un único número.
+`GET /v1/events` es **a nivel de cuenta** y permanece en la raíz (no se anida bajo el número). Cada ítem lleva `number_alias` en el envelope (`main` o el alias de un número extra), salvo los eventos `storage.*` (toda familia `*.quota.*`, incluida `message.quota.*`, es por número desde la ADR 2026-07-02 y lo lleva). Acepta el filtro opcional `number_alias` para restringir la respuesta a un único número.
 
 El `data` de cada evento es **byte-idéntico** al del webhook. Usa el `number_alias` del envelope para las llamadas por id posteriores (p. ej. `GET /v1/numbers/{alias}/messages/{id}`).

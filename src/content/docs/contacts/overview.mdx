@@ -33,7 +33,7 @@ Contatos são escopados por número. Para o **número principal**, use as rotas 
 
 1. **Discovery** — primeira mensagem `(organization, phone)` cria o `Contact` com `source` apropriado.
 2. **Enrichment** — pipeline assíncrono enriquece com `name`, `profile_picture`. Falhas são fail-open: o contato existe mesmo sem enriquecimento.
-3. **Quota** — primeira mensagem outbound consome um slot do quota mensal de contatos (sliding window 30 dias).
+3. **Quota** — cada contato distinto **contactado via Turbo Notify** dentro da janela deslizante (30 dias) consome um slot do quota mensal de contatos — **novo ou recorrente**. Re-mensagear alguém cujo envio anterior já saiu da janela consome um slot novamente; re-mensagear as mesmas pessoas dentro da janela **não é mais grátis**.
 
 ## Tier de quota
 

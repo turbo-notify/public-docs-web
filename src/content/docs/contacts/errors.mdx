@@ -21,7 +21,7 @@ import ApiResponse from '@components/ApiResponse.astro';
 
 ## Exemplo de resposta 402
 
-Retornado pelo `SendMessageUseCase` quando o organization tenta mandar a primeira mensagem para um novo contato e a quota de contatos distintos está esgotada.
+Retornado pelo `SendMessageUseCase` quando o organization tenta contatar via Turbo Notify um contato que passa a ser **contado na janela atual** (`counted_this_window`) — um contato **novo** OU um contato **recorrente** cujo envio anterior ficou fora da janela — e a quota de contatos distintos já está esgotada.
 
 <ApiResponse status={402}>
 ```json

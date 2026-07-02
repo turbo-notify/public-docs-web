@@ -16,7 +16,7 @@ o envio para grupos usa o identificador público `grp_{hex32}`.
 
 Toda referência pública a um grupo usa o formato `grp_` + 32 caracteres
 hexadecimais, derivado do UUID interno do registro em
-`tn_whatsapp.groups`. Mirror dos prefixos de outras entidades públicas
+`tn_group.groups`. Mirror dos prefixos de outras entidades públicas
 (`msg_`, `ct_`, `req_`, `evt_`).
 
 > O identificador do WhatsApp (`120363xxxxx@g.us`) **nunca** é exposto
@@ -43,26 +43,31 @@ Grupos não falam — participantes falam dentro de grupos. Portanto:
 
 Em nenhum cenário `from` carrega um `group_id`.
 
-### Campo `inbox` (mensagens de grupo)
+### Linha Turbo Notify (`number_alias` do envelope)
 
-O campo `inbox` é um sibling top-level, presente **sempre** (em todas as
-mensagens — 1:1 e grupo, inbound e outbound). Em mensagens de grupo ele
-identifica o número Turbo Notify que participa do grupo — o telefone
-(`number`) e o alias (`alias`) da linha organization-side.
+A linha Turbo Notify que participa da conversa — 1:1 ou grupo, inbound ou
+outbound — é identificada pelo campo **`number_alias` do envelope** do evento
+(`"main"` para o número principal ou o alias de um número extra). Resolva o
+número/contato correspondente via `GET /v1/numbers/{alias}`. Não existe campo
+`inbox`/`member` dentro de `data` (removido em 2026-06-19).
 
 ```jsonc
-// Inbound de grupo
+// Inbound de grupo (envelope + data)
 {
-  "inbox":  { "alias": "main", "number": "5511973117056" },
-  "from":   { "contact_id": "ct_...", "name": "Cleverson", "number": "5571999258283" },
-  "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" }
+  "number_alias": "main",
+  "data": {
+    "from": { "contact_id": "ct_...", "name": "Cleverson", "number": "5571999258283" },
+    "to":   { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" }
+  }
 }
 
-// Outbound para grupo
+// Outbound para grupo (envelope + data)
 {
-  "inbox":  { "alias": "main", "number": "5511973117056" },
-  "from":   { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
-  "to":     { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" }
+  "number_alias": "main",
+  "data": {
+    "from": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "to":   { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" }
+  }
 }
 ```
 
@@ -77,8 +82,8 @@ const isGroup = "group_id" in data.to;
 Cada mensagem inbound proveniente de um grupo é entregue como
 [`message.received`](/messages/webhook/#exemplo--messagereceived-grupo)
 no webhook + polling. `from` é o participante que enviou; `to` traz o
-`group_id` e o snapshot do nome do grupo; `inbox` identifica a linha
-Turbo Notify que participa do grupo.
+`group_id` e o snapshot do nome do grupo; a linha Turbo Notify que participa
+do grupo é identificada pelo `number_alias` do envelope.
 
 ## Enviando para grupo
 
@@ -97,8 +102,7 @@ curl -X POST "https://api.turbonotify.com/v1/messages" \
   -H "Content-Type: application/json" \
   -d '{
     "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a" },
-    "content_type": "text",
-    "text": "Bom dia, equipe"
+    "content": { "text": "Bom dia, equipe" }
   }'
 ```
   </TabItem>
@@ -112,8 +116,7 @@ await fetch('https://api.turbonotify.com/v1/messages', {
   },
   body: JSON.stringify({
     to: { group_id: 'grp_e442553a56b14e2695f6acfd7d651b1a' },
-    content_type: 'text',
-    text: 'Bom dia, equipe',
+    content: { text: 'Bom dia, equipe' },
   }),
 });
 ```
@@ -127,8 +130,7 @@ httpx.post(
     headers={"Authorization": f"Bearer {os.environ['TN_API_KEY']}"},
     json={
         "to": {"group_id": "grp_e442553a56b14e2695f6acfd7d651b1a"},
-        "content_type": "text",
-        "text": "Bom dia, equipe",
+        "content": {"text": "Bom dia, equipe"},
     },
 )
 ```

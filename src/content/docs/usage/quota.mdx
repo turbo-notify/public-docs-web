@@ -9,6 +9,8 @@ import ApiResponse from '@components/ApiResponse.astro';
 
 Snapshot unificado de uso. Inclui **duas quotas independentes**: mensagens emitidas e contatos distintos contactados, ambas em janela rolling de 30 dias.
 
+Ambas as quotas são **por número** (a de mensagens desde a ADR 2026-07-02, espelhando a de contatos): cada número vinculado (`main` ou alias extra) tem sua própria franquia — uma organization com N números tem N× a franquia do tier, e esgotar a quota do número A não bloqueia o número B. `GET /v1/usage` (e `GET /v1/usage/messages`) permanece no **nível raiz** e é o **roll-up da conta** = a soma do uso de todos os números. Apenas o que trafega **via Turbo Notify** (`origin: "tn"`) consome a quota; mensagens enviadas direto do telefone físico não contam.
+
 ## Endpoint
 
 ```http
@@ -43,11 +45,35 @@ A razão 10:1 (mensagens/contato) reflete o uso médio. Organizations podem ter 
 
 ## Endpoints adicionais
 
-- `GET /v1/usage/messages` — somente mensagens (escopo de conta; permanece no nível raiz).
+- `GET /v1/usage/messages` — somente mensagens (escopo de conta; permanece no nível
+  raiz; é o roll-up = soma do uso de mensagens de todos os números).
+- `GET /v1/messages/quota` — quota de **mensagens** do **número principal** (rota plana,
+  equivalente a `GET /v1/numbers/main/messages/quota`). Para números extras, use
+  `GET /v1/numbers/{alias}/messages/quota`. A quota de mensagens é por número
+  (ADR 2026-07-02): cada número (`main` ou alias extra) tem sua própria franquia, e
+  apenas mensagens enviadas **via Turbo Notify** (`origin: "tn"`) a consomem.
 - `GET /v1/contacts/quota` — quota de contatos do **número principal** (rota plana,
   equivalente a `GET /v1/numbers/main/contacts/quota`). Para números extras, use
   `GET /v1/numbers/{alias}/contacts/quota`. A quota de contatos é por número
   (ADR 2026-06-22): cada número (`main` ou alias extra) tem sua própria contagem.
+
+### Resposta da quota por número (200)
+
+`GET /v1/numbers/{alias}/messages/quota` e `GET /v1/numbers/{alias}/contacts/quota`
+(e suas formas planas para `main`) retornam o mesmo shape:
+
+<ApiResponse status={200}>
+```json
+{
+  "used": 1234,
+  "quota": 10000,
+  "remaining": 8766,
+  "window_days": 30,
+  "resets_at": "2026-06-14T00:00:00Z",
+  "tier": "solo"
+}
+```
+</ApiResponse>
 
 ## Resposta 402 (contact quota)
 

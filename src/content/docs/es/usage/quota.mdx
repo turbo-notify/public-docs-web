@@ -1,21 +1,24 @@
 ---
 title: Uso y Cuota
-description: "Cuota de mensajes a nivel de cuenta (GET /v1/usage, /v1/usage/messages) y cuota de contactos por número (GET /v1/numbers/{alias}/contacts/quota). Traducción pendiente; ver versión canónica en PT-BR."
+description: "Roll-up de cuenta en GET /v1/usage y /v1/usage/messages (suma de todos los números); las cuotas de mensajes y de contactos son por número en GET /v1/numbers/{alias}/messages/quota y .../contacts/quota. Traducción pendiente; ver versión canónica en PT-BR."
 ---
 
 > Esta página está siendo traducida. Consulte la versión canónica en PT-BR: [/usage/quota/](/usage/quota/).
 
-**A nivel de cuenta** (permanecen en la raíz, sin cambios):
+**A nivel de cuenta** (permanecen en la raíz; son el roll-up = suma de todos los números):
 
 ```http title="Uso a nivel de cuenta"
 GET /v1/usage
 GET /v1/usage/messages
 ```
 
-**Cuota de contactos — ahora por número:**
+**Cuotas — ahora por número (mensajes y contactos):**
 
-```http title="Cuota de contactos del número"
+```http title="Cuota por número"
+GET /v1/numbers/{alias}/messages/quota
 GET /v1/numbers/{alias}/contacts/quota
 ```
 
-`{alias}` es `main` o el alias de un número extra. La cuota de contactos es **por número**. Para el número principal también puedes usar la ruta plana `GET /v1/contacts/quota`; para números extra usa `GET /v1/numbers/{alias}/contacts/quota`.
+`{alias}` es `main` o el alias de un número extra. Tanto la cuota de **mensajes** (ADR 2026-07-02) como la de **contactos** son **por número**: cada número tiene su propia franquicia, así que una organización con N números obtiene N× la franquicia del tier. Para el número principal también puedes usar las rutas planas `GET /v1/messages/quota` y `GET /v1/contacts/quota`; para números extra usa la forma anidada. Solo el tráfico enviado **vía Turbo Notify** (`origin: "tn"`) consume la cuota.
+
+Los endpoints de cuota por número devuelven `{ used, quota, remaining, window_days, resets_at, tier }`.

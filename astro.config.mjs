@@ -79,7 +79,11 @@ export default defineConfig({
               slug: 'general/byo-storage-setup',
               label: 'BYO Object Storage',
               translations: { en: 'BYO Object Storage', es: 'BYO Object Storage' },
-              badge: { text: 'Obrigatório para mídia', variant: 'caution' },
+              badge: {
+                text: { 'pt-BR': 'Mídia', en: 'Media', es: 'Multimedia' },
+                variant: 'default',
+                class: 'tn-badge-media',
+              },
             },
           ],
         },

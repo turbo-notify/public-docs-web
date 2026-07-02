@@ -658,3 +658,38 @@ starlight-lang-select label {
   --sl-color-asides-border: #c72d2d;
   background-color: rgba(199, 45, 45, 0.09);
 }
+
+/* ------------------------------------------------------------------ */
+/* Sidebar media badge (BYO Object Storage) — on-brand, legible pill   */
+/* Replaces the crude yellow `caution` badge with a subtle brand-green */
+/* treatment tuned for both themes. Scoped to `.tn-badge-media` so no  */
+/* other sidebar badge is affected. `.sl-badge` raises specificity to  */
+/* reliably override Starlight's default variant styling.              */
+/* ------------------------------------------------------------------ */
+.sl-badge.tn-badge-media {
+  border: 1px solid rgba(63, 193, 106, 0.4);
+  background-color: rgba(23, 125, 96, 0.18);
+  color: #6fe0a6;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+:root[data-theme='light'] .sl-badge.tn-badge-media {
+  border-color: rgba(23, 125, 96, 0.32);
+  background-color: rgba(23, 125, 96, 0.1);
+  color: #12684f;
+}
+
+/* ------------------------------------------------------------------ */
+/* Field-reference tables — keep dotted key paths on one line.         */
+/* Dotted keys like `data[].status.at` live in the first column; they  */
+/* must never break mid-token. Value cells (2nd+ columns) keep normal  */
+/* wrapping, so wide descriptions and long URLs are unaffected, and    */
+/* the narrow first-column code can scroll rather than fracture on     */
+/* mobile. Applies site-wide to every Starlight markdown table.        */
+/* ------------------------------------------------------------------ */
+.sl-markdown-content table td:first-child code,
+.sl-markdown-content table th:first-child code {
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}

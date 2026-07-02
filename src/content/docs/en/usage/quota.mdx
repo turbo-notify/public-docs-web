@@ -1,20 +1,26 @@
 ---
 title: Usage & Quota
-description: Account-wide usage stays at GET /v1/usage and /v1/usage/messages; contact quota is now per-number at GET /v1/numbers/{alias}/contacts/quota. Translation pending; see the canonical PT-BR version.
+description: Account roll-up at GET /v1/usage and /v1/usage/messages (sum across numbers); message and contact quotas are per-number at GET /v1/numbers/{alias}/messages/quota and .../contacts/quota. Translation pending; see the canonical PT-BR version.
 ---
 
 > This page is being translated. See the PT-BR (canonical) version: [/usage/quota/](/usage/quota/).
 
 | Quota | Route | Scope |
 | ----- | ----- | ----- |
-| Account usage | `GET /v1/usage` | Account-wide (top-level) |
-| Message quota | `GET /v1/usage/messages` | Account-wide (top-level) |
-| Contact quota | `GET /v1/numbers/{alias}/contacts/quota` | Per-number |
+| Account usage | `GET /v1/usage` | Account roll-up (top-level) = sum across numbers |
+| Message usage (account) | `GET /v1/usage/messages` | Account roll-up (top-level) |
+| Message quota (per number) | `GET /v1/numbers/{alias}/messages/quota` | Per-number |
+| Contact quota (per number) | `GET /v1/numbers/{alias}/contacts/quota` | Per-number |
 
-Contact quota is now **per-number**: each number (`main` or an extra-number alias)
-tracks its own contact quota, so it is queried under that number. For the main number
-you can also use the flat route `GET /v1/contacts/quota`; for extra numbers use
-`GET /v1/numbers/{alias}/contacts/quota`.
+Both the **message** quota (ADR 2026-07-02) and the **contact** quota are now
+**per-number**: each number (`main` or an extra-number alias) has its own allowance,
+so an organization with N numbers gets N× the tier allowance, and exhausting one
+number's quota does not block another. Query each under its number; for the main number
+you can also use the flat routes `GET /v1/messages/quota` and `GET /v1/contacts/quota`.
+Only traffic sent **via Turbo Notify** (`origin: "tn"`) consumes the quota.
 
-Account-wide usage (`GET /v1/usage`, `GET /v1/usage/messages`) stays **top-level**
-and was not affected by the number-nested route change.
+Account-wide usage (`GET /v1/usage`, `GET /v1/usage/messages`) stays **top-level** and
+is the **account roll-up = the sum of the per-number usages**.
+
+The per-number quota endpoints return
+`{ used, quota, remaining, window_days, resets_at, tier }`.

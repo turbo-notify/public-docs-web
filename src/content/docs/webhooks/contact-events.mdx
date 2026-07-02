@@ -16,7 +16,7 @@ Lista de eventos webhook emitidos pelo Turbo Notify para mudanças relacionadas 
 | `contact.created` | Primeira observação do par `(organization, telefone)` |
 | `contact.name_changed` | `name` divergiu do snapshot anterior |
 | `contact.picture_changed` | WhatsApp emitiu `PictureUpdate` ou refresh detectou hash novo |
-| `contact.first_messaged` | Organization enviou primeira mensagem outbound para este contato (slot consumido) |
+| `contact.first_messaged` | Organization enviou a primeira mensagem outbound para este contato (sinal de **aquisição** de novo contato — observability; a quota é consumida por contato contactado na janela, não por este evento) |
 | `contact.quota.warning` | Cruzou threshold 80/90/95% da quota mensal |
 | `contact.quota.exceeded` | Tentativa rejeitada por estouro (HTTP 402) |
 
@@ -89,8 +89,9 @@ sua própria contagem de contatos distintos, então os eventos
 de quota (`threshold_bps`, `used`, `quota`, …) permanecem iguais.
 
 > O `number_alias` fica no **envelope**, nunca dentro de `data`. Entre os eventos
-> de conta, o campo é omitido apenas em `storage.*` e nos eventos de quota de
-> mensagem (`message.quota.*`) — esses não pertencem a um único número.
+> de conta, o campo é omitido apenas em `storage.*` (o único evento sem um número
+> único). Toda família `*.quota.*` — tanto `contact.quota.*` quanto
+> `message.quota.*` (por número desde a ADR 2026-07-02) — carrega `number_alias`.
 
 ## Exemplo: `contact.created`
 
