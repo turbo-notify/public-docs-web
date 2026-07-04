@@ -106,6 +106,13 @@ arquivo antes de entregar ao WhatsApp.
   </TabItem>
 </Tabs>
 
+:::tip[Menções no caption]
+O `caption` de imagem aceita tokens de menção `@<numero>` — por exemplo
+`"caption": "Confere essa foto, @5511987650000?"` — com as mesmas regras do
+`text` (detecção implícita, dígitos E.164 sem `+`, fail-open).
+Veja [Menções (@mentions)](/messages/send/#menções-mentions).
+:::
+
 ### Vídeo
 
 <Tabs>
@@ -166,6 +173,8 @@ arquivo antes de entregar ao WhatsApp.
     ```
   </TabItem>
 </Tabs>
+
+O `caption` de vídeo também aceita [menções `@<numero>`](/messages/send/#menções-mentions).
 
 ### Áudio
 
@@ -292,7 +301,8 @@ use `audio/mpeg` ou `audio/mp4`.
   </TabItem>
 </Tabs>
 
-`filename` aparece como o nome do anexo no chat do destinatário.
+`filename` aparece como o nome do anexo no chat do destinatário. O `caption`
+de documento também aceita [menções `@<numero>`](/messages/send/#menções-mentions).
 
 ### Figurinha (sticker)
 
@@ -410,7 +420,7 @@ Os campos de mídia ficam dentro do objeto `content`. O campo âncora (ex.: `ima
 | `sticker_url` | URL | condicional | Campo âncora para figurinhas; URL pública HTTPS; exclusivo com `s3_object_key` |
 | `s3_object_key` | string | condicional | Chave do objeto no seu BYO Storage; exclusivo com os campos `*_url`. Exige storage configurado. |
 | `mime_type` | string | não | recomendado; o worker pode inferir do `Content-Type` da resposta |
-| `caption` | string | parcial | aceito em `image`, `video`, `document`; **não aceito** em `audio` e `sticker` (retorna `422`) |
+| `caption` | string | parcial | aceito em `image`, `video`, `document`; **não aceito** em `audio` e `sticker` (retorna `422`). Aceita tokens de [menção `@<numero>`](/messages/send/#menções-mentions) — detecção implícita, mesmas regras do `text` |
 | `filename` | string | não | apenas em `document`; aparece como nome do anexo no chat |
 
 ## Resposta

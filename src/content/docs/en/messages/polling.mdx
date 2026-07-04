@@ -25,3 +25,8 @@ The event `data` is **byte-identical** to the matching webhook delivery, so
 polling and webhooks are interchangeable. `number_alias` is omitted only on
 `storage.*`; every `*.quota.*` family (including `message.quota.*`, per-number
 since ADR 2026-07-02) carries it.
+
+Parity includes **`data.mentions`** (since 2026-07-03): when a message mentions
+someone, the polled `message.received`/`replied`/`sent`/`edited` items return
+the same `mentions` list — and the same mention-aware `preview` (each mention
+token counts as 1 character) — byte-identical to the webhook delivery.

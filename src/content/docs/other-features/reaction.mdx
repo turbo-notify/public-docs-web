@@ -338,8 +338,9 @@ Saiba mais sobre os números extra em [Números Extras](/numbers/add/).
 | :----: | ----------------------- | -------------------------------------------------- |
 | `400`  | `invalid_json`          | O JSON da requisição está malformado ou inválido.  |
 | `400`  | `invalid_message_id`    | O `message_id` na URL não está no formato `msg_{hex32}`. |
-| `402`  | `not_available_in_plan` | O recurso não está disponível no plano contratado. |
+| `402`  | `feature_not_available` | O recurso não está disponível no plano contratado. |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
+| `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
 | `404`  | `message_not_found`     | O `message_id` não foi encontrado.                 |
 | `422`  | `sender_not_authorized` | O alias na URL não está ativo na conta.            |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.               |

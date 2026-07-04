@@ -217,6 +217,7 @@ Status não-`failed` (`pending`/`sent`/`delivered`/`read`) não trazem o campo `
 | Status | Código de erro   | Descrição                                            |
 | :----: | ---------------- | ---------------------------------------------------- |
 | `403`  | `not_authorized` | A chave de acesso está inválida ou ausente.          |
+| `403`  | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
 | `404`  | `not_found`      | A mensagem não foi encontrada ou já expirou.         |
 | `500`  | `internal_error` | Erro interno inesperado no servidor.                 |
 | `503`  | `service_unavailable` | O serviço está temporariamente indisponível.    |

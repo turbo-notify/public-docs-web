@@ -12,3 +12,5 @@ GET /v1/numbers/{alias}/messages/{id}
 `{alias}` es el `number_alias` recibido en el envelope del evento (`main` o el alias de un número extra); `{id}` es el `msg_…`. Acceder a un `id` bajo el alias equivocado devuelve **404**.
 
 Sub-rutas relacionadas: `/status`, `/reactions`, `/receipts`. El `at` de nivel raíz es el momento de ocurrencia **estable**; `status.at` **avanza** con cada transición de entrega. Para el número principal use la ruta plana `GET /v1/messages/{id}`; para números extra use `GET /v1/numbers/{alias}/messages/{id}`.
+
+Cuando el mensaje menciona a alguien (ver [Menciones](/es/messages/send/#menciones-mentions)), la respuesta lleva un array opcional **`mentions`** — ítems `{contact_id?, name?, number}` (el mismo shape del `from` inbound), en el orden de los tokens en el texto, sin duplicados — para mensajes inbound **y** outbound; omitido cuando no hay menciones. Un `@<digitos>` en el texto/`preview` **solo** es mención si su número consta allí. El campo sobrevive a la retención del body, y en los previews cada token de mención cuenta como exactamente **1 carácter** (el recorte nunca parte un token).

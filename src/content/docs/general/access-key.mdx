@@ -36,3 +36,19 @@ Se desejar remover o acesso de forma definitiva, exclua a chave pelo dashboard. 
 Todas as chaves criadas têm permissão para enviar mensagens tanto para o número principal da conta quanto para os números extra associados. Não é possível limitar o acesso de uma chave a um número específico; todas têm acesso irrestrito aos números vinculados à conta.
 
 Caso precise restringir o acesso a determinados números, é necessário criar contas separadas para cada número desejado. Essa limitação existe para evitar uso indevido do Turbo Notify.
+
+## Escopos
+
+Cada chave carrega **escopos de permissão** que determinam quais operações ela pode chamar — por exemplo `messages:send`, `messages:read`, `numbers:read`, `numbers:write`, `events:read`, `contacts:read` e `groups:read`. A API distingue dois erros `403`:
+
+- `not_authorized` — a chave está ausente, inválida ou revogada.
+- `insufficient_scope` — a chave é válida, mas não possui o escopo exigido pelo endpoint. A resposta inclui o campo `required_scope` com o escopo necessário:
+
+```json
+{
+  "error": "insufficient_scope",
+  "required_scope": "messages:send"
+}
+```
+
+A tabela de erros de cada endpoint indica o escopo exigido pela operação.

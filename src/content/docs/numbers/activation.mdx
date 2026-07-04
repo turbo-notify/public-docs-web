@@ -273,6 +273,7 @@ Para desativar (desconectar) um número extra que está ativo, faça uma requisi
 | :----: | ------------------ | ------------------------------------------------------------- |
 | `400`  | `invalid_json`     | O JSON da requisição está malformado ou inválido.             |
 | `403`  | `not_authorized`   | A chave de acesso está inválida ou ausente.                   |
+| `403`  | `insufficient_scope` | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
 | `409`  | `invalid_status`   | O número já está no status solicitado.                        |
 | `422`  | `number_not_found` | O alias informado não corresponde a nenhum número cadastrado. |
 | `500`  | `internal_error`   | Erro interno inesperado no servidor.                          |

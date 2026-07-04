@@ -198,6 +198,56 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
   </TabItem>
 </Tabs>
 
+## Menções (@mentions)
+
+Disponível desde 2026-07-03 (ADR 2026-07-03 — message mentions). Para mencionar
+alguém — a menção real do WhatsApp, com nome tocável e notificação no aparelho
+do mencionado — escreva o token **`@<numero>`** diretamente no `text` (ou no
+`caption` de mídia — veja [Envio de Mídia](/messages/send-media/)): `@` seguido
+do telefone do contato em **dígitos E.164, sem `+`**.
+
+```json title="POST /v1/messages — texto com menção (1:1)"
+{
+  "to": { "number": "+5511988887777" },
+  "content": {
+    "text": "Olá @5511987650000, seu pedido chegou!"
+  }
+}
+```
+
+Menções brilham em grupos — mencione um participante pelo número:
+
+```json title="POST /v1/messages — grupo mencionando um participante"
+{
+  "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a" },
+  "content": {
+    "text": "Bom dia @5511987650000, pode validar o pedido de hoje?"
+  }
+}
+```
+
+**Não existe campo `mentions` no request** — a detecção é **implícita**, pelo
+próprio texto (o mesmo modelo da inferência de tipo de conteúdo pelo campo
+âncora). Todo token válido vira uma menção real no dispositivo do destinatário.
+
+### Regras do token
+
+| Regra | Comportamento |
+|---|---|
+| Sintaxe | `@` + 7–15 dígitos, delimitado por fronteira de palavra — `nome@dominio.com`, `@@123`, sequências com mais de 15 dígitos e `@+55…` **não** viram menção |
+| Normalização | Números BR de 12 dígitos são normalizados para a forma canônica de 13 dígitos — o conteúdo persistido/devolvido carrega o token normalizado (ex.: `@551187650000` → `@5511987650000`) |
+| Fail-open | Dígitos inválidos ou não normalizáveis permanecem **texto puro** — o envio nunca falha por causa de uma menção |
+| Escopo | Funciona em 1:1 e em grupos, em `text` e em `caption` de `image`/`video`/`document` (`audio`/`sticker` não têm caption) |
+| Eco simétrico | O token `@<numero>` que você recebe em `message.received` pode ser colado de volta no envio — menciona corretamente sem transformação manual |
+| Quota | Mencionar alguém **nunca** consome quota de mensagens nem de contatos |
+
+Depois do envio, a mensagem passa a carregar a estrutura `mentions`
+(lista de `{contact_id?, name?, number}` — `contact_id` e `name` são omitidos
+quando a menção não corresponde a um contato conhecido) em
+[`GET /v1/messages/{message_id}`](/messages/get/) e no `data.mentions` dos
+eventos [`message.sent`/`message.replied`/`message.edited`](/messages/webhook/)
+— um `@<digitos>` literal no texto **só** é menção se constar dessa estrutura.
+
 ## Envio com número extra
 
 Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na sua conta, use o alias do número diretamente no path da URL.
@@ -382,6 +432,7 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 | :----: | ----------------------- | ------------------------------------------------- |
 | `400`  | `invalid_json`          | O JSON da requisição está malformado ou inválido. |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.       |
+| `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
 | `422`  | `sender_not_authorized` | O alias na URL não está ativo na conta.           |
 | `429`  | `rate_limit_exceeded`   | Limite de envio do plano ultrapassado.            |
 | `422`  | `contact_not_found`     | O `contact_id` informado não pertence ao organization.  |

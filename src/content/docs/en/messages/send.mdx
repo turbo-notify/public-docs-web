@@ -28,3 +28,31 @@ curl -X POST https://api.turbonotify.com/v1/messages \
 To reply to a message, use `POST /v1/messages/{id}/reply`. The
 `Idempotency-Key` scope is `(organization, number_alias, key)`. For extra
 numbers use `POST /v1/numbers/{alias}/messages`.
+
+## Mentions (@mentions)
+
+Since 2026-07-03, write **`@<number>`** tokens directly in `content.text` (or in
+a media `caption` — image/video/document; audio/sticker have no caption) to
+produce a **real WhatsApp mention** (tappable name + notification on the
+mentioned person's device): `@` followed by the contact's phone as E.164 digits
+**without `+`**.
+
+```bash
+curl -X POST https://api.turbonotify.com/v1/messages \
+  -H "Authorization: Bearer tn_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a" },
+    "content": { "text": "Good morning @5511987650000, your order has arrived!" }
+  }'
+```
+
+Detection is **implicit** — there is no `mentions` request field. Invalid or
+non-canonicalizable digit runs (emails, `@+55…`, more than 15 digits) stay plain
+text — the send never fails because of a mention (fail-open). Brazilian
+12-digit tokens are normalized to the canonical 13-digit form in the
+stored/public content. Works in 1:1 chats and groups, and never consumes
+message or contact quota. The resulting message carries a hydrated `mentions`
+array (`{contact_id?, name?, number}` items) on `GET …/messages/{id}` and on
+the `message.sent`/`replied`/`edited` event `data`; a received `@<number>`
+token can be pasted straight back into a send (echo symmetry).

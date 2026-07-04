@@ -200,6 +200,7 @@ Use `GET /v1/messages/{id}` para o número principal. Para números extras, use 
 | `origin` | string | `"tn"` (envio via Turbo Notify API) ou `"native"` (digitada no celular). Sempre presente. |
 | `at` | string | ISO 8601 com offset — momento **estável de ocorrência** da mensagem no WhatsApp (outbound: o momento real de envio; inbound: o momento de recebimento). **Não muda** conforme a mensagem avança `sent → delivered → read` — para o momento da entrega/leitura atual use `status.at`. |
 | `status` | object | `{state, at}` — estado atual de entrega e o `status.at` correspondente. Diferente do `at` raiz, o `status.at` **avança** a cada transição (move para `delivered`, depois `read`). |
+| `mentions` | array | **Opcional** — presente apenas quando a mensagem menciona alguém (inbound ou outbound). Lista de contatos mencionados, itens `{contact_id?, name?, number}` (mesmo shape do `from` inbound), na ordem dos tokens no texto, sem duplicatas. Um `@<digitos>` no texto **só** é menção se o número constar aqui. Sobrevive à retenção do body. Veja [Menções (@mentions)](/messages/send/#menções-mentions). |
 
 ### Campos por `content_type`
 
@@ -362,6 +363,40 @@ Para mensagens `reacted`:
 }
 ```
 
+### Exemplo — mensagem com menções
+
+O texto carrega os tokens `@<numero>` normalizados; a estrutura `mentions` traz
+os contatos correspondentes, já resolvidos:
+
+```json title="GET /v1/numbers/{alias}/messages/{id} — text com mentions"
+{
+  "id": "msg_c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "from": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+  "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "Equipe Vendas" },
+  "preview": "Bom dia @5511987650000, pode validar o pedido de hoje?",
+  "text": "Bom dia @5511987650000, pode validar o pedido de hoje?",
+  "mentions": [
+    {
+      "contact_id": "ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+      "name": "Maria Santos",
+      "number": "5511987650000"
+    }
+  ],
+  "content_type": "text",
+  "direction": "outbound",
+  "channel": "whatsapp",
+  "origin": "tn",
+  "at": "2026-07-03T10:00:05-03:00",
+  "status": { "state": "delivered", "at": "2026-07-03T10:01:00-03:00" }
+}
+```
+
+O campo aparece em mensagens inbound **e** outbound, e continua presente mesmo
+depois que o body expira pela retenção (o token no `preview` permanece
+identificável contra `mentions`).
+
 ### Exemplo — reply (mensagem citada)
 
 ```json title="GET /v1/numbers/{alias}/messages/{id} — replied"
@@ -465,6 +500,10 @@ O campo `preview` é **permanente** — nunca é removido pelo ciclo de retenç�
 - Para `calendar`: resumo sem colchetes (ex: `Sprint Planning — qui, 1 jun 2026 14:00`).
 - Para mídia: a legenda (quando disponível) ou o label do tipo em inglês (`[Image]`, `[Video]`, `[Audio]`, `[Document]`, `[Sticker]`).
 - Para reações: o emoji ou `""` para remoção.
+- Menções: cada token `@<numero>` presente em `mentions` conta como exatamente
+  **1 caractere** no limite de ~50, e o recorte nunca corta um token no meio; um
+  `@<digitos>` literal fora de `mentions` conta caractere a caractere. O valor é
+  **byte-idêntico** ao `data.preview` dos webhooks/polling.
 
 O campo do conteúdo completo (`text`, `image`, `location`, etc.) pode ser `null` após o período de retenção — `preview` é o único campo que garante acesso ao conteúdo em qualquer momento.
 
@@ -479,7 +518,8 @@ Quando o Object Storage está configurado, o Turbo Notify copia automaticamente 
 | Status | Código de erro | Descrição |
 | :----: | -------------- | --------- |
 | `400` | `invalid_message_id` | O identificador não corresponde ao formato `msg_` + 32 hex. |
-| `403` | `not_authorized` | A chave de acesso está inválida, ausente ou sem o escopo `messages:read`. |
+| `403` | `not_authorized` | A chave de acesso está inválida ou ausente. |
+| `403` | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
 | `404` | `not_found` | Mensagem não encontrada ou pertence a outro organization. |
 | `429` | `rate_limit_exceeded` | Limite de requisições ultrapassado. |
 | `500` | `internal_error` | Erro interno inesperado no servidor. |

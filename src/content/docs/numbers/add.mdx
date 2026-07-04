@@ -197,8 +197,9 @@ Veja os principais erros que podem ocorrer no cadastro de números extras:
 | Status | Código de erro           | Descrição                                              |
 | :----: | ------------------------ | ------------------------------------------------------ |
 | `400`  | `invalid_json`           | O JSON da requisição está malformado ou inválido.      |
-| `402`  | `not_available_in_plan`  | O plano atual não suporta números extras.              |
+| `402`  | `feature_not_available`  | O plano atual não suporta números extras.              |
 | `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.            |
+| `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
 | `409`  | `number_already_exists`  | O número informado já está cadastrado na conta.        |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                   |
 | `503`  | `whatsapp_unavailable`   | O WhatsApp está temporariamente fora do ar.            |

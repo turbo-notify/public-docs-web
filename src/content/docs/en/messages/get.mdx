@@ -18,6 +18,15 @@ Accessing an id under the wrong alias returns **404**.
 
 Related sub-resources: `.../{id}/status`, `.../{id}/reactions`, `.../{id}/receipts`.
 
+When the message mentions someone (see [Mentions](/en/messages/send/#mentions-mentions)),
+the response carries an optional **`mentions`** array — items
+`{contact_id?, name?, number}` (the inbound `from` shape), in first-token
+order, deduped — for inbound **and** outbound messages; omitted when there are
+no mentions. An `@<digits>` run in the text/`preview` is a mention **only if**
+its number is listed there. The field survives body retention, and in previews
+each mention token counts as exactly **1 character** (the crop never splits a
+token).
+
 ```bash
 curl https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7 \
   -H "Authorization: Bearer tn_live_..."

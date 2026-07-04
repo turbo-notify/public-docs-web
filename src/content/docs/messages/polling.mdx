@@ -293,6 +293,13 @@ Isso permite:
 - Catálogo completo de `type` e `data`: consulte a [referência de eventos no documento de webhook](/messages/webhook/#tipos-de-evento).
 - Exemplos de payload por `content_type` (texto, mídia, localização, calendário): [Exemplos por content_type](/messages/webhook/#exemplos-por-content_type-inbound).
 
+A paridade inclui o campo [`data.mentions`](/messages/webhook/#campos-da-mensagem)
+(desde 2026-07-03): quando uma mensagem menciona alguém, os eventos
+`message.received`/`message.replied`/`message.sent`/`message.edited` retornados
+pelo polling carregam exatamente a mesma lista `mentions` — e o mesmo `preview`
+(cada token de menção conta como 1 caractere) — entregues via webhook,
+byte-a-byte.
+
 ## Recuperação após falha de webhook
 
 Para recuperar eventos perdidos durante uma indisponibilidade do seu endpoint:
@@ -350,6 +357,7 @@ Eventos ficam disponíveis para consulta por **30 dias**. Consultas além desse 
 | Status | Código de erro | Descrição |
 | :----: | -------------- | --------- |
 | `400` | `invalid_cursor` | O cursor fornecido em `starting_after` ou `ending_before` é inválido. |
-| `403` | `not_authorized` | A chave de acesso está inválida, ausente ou sem o escopo `events:read`. |
+| `403` | `not_authorized` | A chave de acesso está inválida ou ausente. |
+| `403` | `insufficient_scope` | A chave de acesso não possui o escopo `events:read` (resposta inclui `required_scope`). |
 | `429` | `rate_limit_exceeded` | Limite de requisições ultrapassado. Aguarde antes de tentar novamente. |
 | `500` | `internal_error` | Erro interno inesperado no servidor. |

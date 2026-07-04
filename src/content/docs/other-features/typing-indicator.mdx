@@ -170,7 +170,7 @@ Após enviar, o Turbo Notify retorna aceite assíncrono:
 <ApiResponse
   status={202}
   body={{
-    operation_id: 'op_typing_001',
+    operation_id: 'op_typing_9f3c2a1d47e8',
     status: { state: 'pending', at: '2025-07-16T10:00:00Z' },
   }}
 />
@@ -331,7 +331,7 @@ Após enviar, o Turbo Notify retorna aceite assíncrono:
 <ApiResponse
   status={202}
   body={{
-    operation_id: 'op_typing_002',
+    operation_id: 'op_typing_5b8e0d6c21fa',
     status: { state: 'pending', at: '2025-07-16T10:00:05Z' },
   }}
 />
@@ -380,47 +380,47 @@ curl -X POST \
 
 ## Aviso com número extra
 
-Para escolher o remetente do aviso de digitação, informe o campo `from` com um [número extra](/numbers/add/) cadastrado e ativo na sua conta.
+O remetente do aviso de digitação é **sempre o alias do path**. Para digitar a partir de um
+[número extra](/numbers/add/) cadastrado e ativo, use a forma aninhada com o alias desse número
+no lugar de `{alias}`:
 
 ```bash title="typing.sh"
 curl -X POST \
-  https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator \
+  https://api.turbonotify.com/v1/numbers/vendas-sp/typing-indicator \
   -H "Authorization: Bearer SUA_CHAVE" \
   -H "Content-Type: application/json" \
   -d '{
-    "from": {"alias": "vendas-sp"},
     "to": {"number": "+5511999999999"},
     "is_typing": true
   }'
 ```
 
-Também é possível usar o alias definido no cadastro do número extra para identificar o remetente de forma mais prática.
+A forma plana `POST /v1/typing-indicator` é um atalho que envia **sempre** a partir do número
+principal (`main`). Um campo `from` no corpo é aceito por compatibilidade, porém **ignorado** em
+ambas as formas — o path sempre vence.
 
-Caso o número ou alias informado no campo `from` não estiver cadastrado como número extra ou não estiver ativo, a operação será rejeitada.
+Caso o alias informado no path não estiver cadastrado ou o número não estiver ativo, a operação
+será rejeitada.
 
 Saiba mais sobre os números extra em [Números Extras](/numbers/add/).
 
 ## Eventos de webhook
 
-A conclusão da operação chega via webhook com os seguintes eventos:
-
-| Evento            | Descrição                                             |
-| ----------------- | ----------------------------------------------------- |
-| `typing.started`  | O aviso de digitação foi ativado com sucesso.         |
-| `typing.stopped`  | O aviso de digitação foi interrompido com sucesso.    |
-| `typing.failed`   | Ocorreu um erro ao processar o aviso de digitação.    |
+Operações de aviso de digitação são **fire-and-forget**: o `202 Accepted` confirma apenas o
+aceite assíncrono e **nenhum evento de webhook** é entregue para essas operações.
 
 ## Erros possíveis
 
 | Status | Código de erro          | Descrição                                          |
 | :----: | ----------------------- | -------------------------------------------------- |
 | `400`  | `invalid_json`          | O JSON da requisição está malformado ou inválido.  |
-| `402`  | `not_available_in_plan` | O recurso não está disponível no plano contratado. |
+| `402`  | `feature_not_available` | O recurso não está disponível no plano contratado. |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
+| `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
 | `422`  | `contact_not_found`     | O `contact_id` informado em `to` não pertence ao organization.  |
 | `422`  | `contacts_not_enabled`  | Envio por `contact_id` não está configurado nesta instância. |
 | `422`  | `group_not_found`       | O `group_id` informado em `to` não foi encontrado. |
 | `422`  | `groups_not_enabled`    | Suporte a grupos não está habilitado nesta instância. |
-| `422`  | `sender_not_authorized` | O campo `from` não está ativo na conta.            |
+| `422`  | `sender_not_authorized` | O número remetente (alias do path) não está conectado/apto a enviar. |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.               |
 | `503`  | `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.        |
