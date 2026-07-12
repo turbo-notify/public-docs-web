@@ -1041,6 +1041,20 @@ Se seu endpoint não responder com status `2xx` dentro de 5 segundos, o Turbo No
 
 Após esgotar as tentativas, o evento é marcado como `dead_letter` e descartado.
 
+:::note[Reentrega exige o plano BUSINESS ou superior]
+O backoff exponencial acima é uma feature de plano, disponível a partir
+do tier `BUSINESS`. Organizations em `FREE`/`SOLO` recebem **exatamente
+1 tentativa** — se essa única tentativa não retornar `2xx`, o evento é
+marcado como `dead_letter` imediatamente, sem nenhuma reentrega. O header
+`X-Webhook-Max-Attempts`, presente em toda tentativa de entrega, reflete
+esse limite (`1` para `FREE`/`SOLO`; o orçamento configurado do webhook
+para `BUSINESS`/`CUSTOM`).
+
+Isso afeta apenas a **reentrega** em caso de falha — a primeira tentativa
+de entrega acontece normalmente em todos os tiers. Veja [Quota e
+uso](/usage/quota/) para a tabela completa de tiers.
+:::
+
 ## Garantia de entrega e idempotência
 
 O Turbo Notify adota o modelo **at-least-once**. Em situações excepcionais, o mesmo evento pode ser entregue mais de uma vez. Use o campo `id` para implementar idempotência e evitar processamento duplicado.

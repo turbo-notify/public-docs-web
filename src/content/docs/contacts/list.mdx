@@ -36,7 +36,7 @@ Para listar contatos de um número extra, use `/v1/numbers/{alias}/contacts` ond
 | `phone` | string | Filtro exato por E.164 (`+5571999...`) |
 | `name` | string | Match parcial (trigram) sobre o nome do contato |
 | `source` | enum | `inbound \| outbound \| self` |
-| `has_messaged_in_window` | bool | Só contatos com `first_messaged_at` na janela atual |
+| `contacted_in_cycle` | bool | Só contatos **contactados via Turbo Notify** no ciclo de faturamento avaliado do número (mesma população da cota de contatos — `used` em [Quota e Uso](/usage/quota/)); novos **ou** recorrentes, `is_self` excluído. Renomeado do antigo `has_messaged_in_window` (janela rolling de 30 dias sobre `first_messaged_at`) — o nome antigo não é mais reconhecido e é ignorado silenciosamente (ver [changelog](/changelog/2026-07-04-evaluated-cycle-quotas/)) |
 
 ## Exemplo de request
 
@@ -44,6 +44,13 @@ Para listar contatos de um número extra, use `/v1/numbers/{alias}/contacts` ond
 <TabItem label="cURL">
 ```bash
 curl -X GET "https://api.turbonotify.com/v1/contacts?limit=20" \
+  -H "Authorization: Bearer $TURBO_API_KEY"
+```
+
+Só os contatos que consumiram a cota do ciclo atual:
+
+```bash
+curl -X GET "https://api.turbonotify.com/v1/contacts?contacted_in_cycle=true" \
   -H "Authorization: Bearer $TURBO_API_KEY"
 ```
 </TabItem>

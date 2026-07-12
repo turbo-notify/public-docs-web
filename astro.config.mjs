@@ -267,8 +267,11 @@ export default defineConfig({
           label: 'Changelog',
           translations: { en: 'Changelog', es: 'Changelog' },
           items: [
+            { slug: 'changelog/2026-07-04-evaluated-cycle-quotas', label: 'Quotas ancoradas no ciclo avaliado', translations: { en: 'Cycle-anchored quotas', es: 'Cuotas ancladas al ciclo evaluado' } },
+            { slug: 'changelog/2026-06-25-flat-main-routes', label: 'Rotas flat para o número principal', translations: { en: 'Flat routes for the primary number', es: 'Rutas planas para el número principal' } },
             { slug: 'changelog/2026-06-22-number-scoped-routes', label: 'Rotas aninhadas por número', translations: { en: 'Number-nested routes', es: 'Rutas anidadas por número' } },
             { slug: 'changelog/2026-06-21-event-at-occurrence', label: 'at do evento = momento real', translations: { en: 'Event at = real moment', es: 'at del evento = momento real' } },
+            { slug: 'changelog/2026-06-05-receipts-from-party', label: 'Identidade do confirmador em recibos', translations: { en: 'Party identity on receipts', es: 'Identidad del confirmador en recibos' } },
             { slug: 'changelog/2026-06-04-contact-id-recipient', label: 'contact_id como destinatário', translations: { en: 'contact_id as recipient', es: 'contact_id como destinatario' } },
             { slug: 'changelog/2026-06-04-typing-indicator-groups', label: 'Aviso de digitação em grupos', translations: { en: 'Group typing indicator', es: 'Indicador de escritura en grupos' } },
             { slug: 'changelog/2026-05-15-message-quota-activation', label: 'Ativação de quota de mensagem por tier' },

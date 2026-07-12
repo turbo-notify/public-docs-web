@@ -1,11 +1,14 @@
 ---
 title: Eventos de quota de mensagem
-description: Webhooks message.quota.warning e message.quota.exceeded — por número (número identificado via number_alias no envelope), emitidos quando a quota de mensagens do número cruza thresholds.
+description: Webhooks message.quota.warning e message.quota.exceeded — por número (número identificado via number_alias no envelope), emitidos quando a quota de mensagens do número cruza thresholds no ciclo de faturamento avaliado.
 sidebar:
   order: 2
 ---
 
-Eventos relacionados à **quota de mensagens por número** (janela rolling de 30 dias; limites por tier: free=1k, solo=10k, business=50k, custom=500k+ **por número**).
+Eventos relacionados à **quota de mensagens por número**, medida contra o
+**ciclo de faturamento avaliado** da organization (`cycle_start`/`cycle_end` —
+não mais uma janela rolling de 30 dias). Limites por tier: `FREE`=1k,
+`SOLO`=10k, `BUSINESS`=50k, `CUSTOM`=500k+ **por número, por ciclo**.
 
 Desde a ADR 2026-07-02 a quota de mensagens é **por número** — espelhando a quota de contatos: cada número vinculado (`main` ou alias extra) tem sua própria franquia, e uma organization com N números tem N× a franquia do tier. Estes eventos identificam o número afetado via **`number_alias` no envelope** (não em `data`). Apenas mensagens enviadas **via Turbo Notify** (`origin: "tn"`) consomem a quota.
 
@@ -20,7 +23,9 @@ Desde a ADR 2026-07-02 a quota de mensagens é **por número** — espelhando a 
 
 ## `number_alias` no envelope
 
-Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_alias`: o handle do número TN ("inbox") cuja quota de mensagens foi atingida — `"main"` para o número principal ou o alias de um número extra. O `data` do evento **não** muda (os campos de quota `threshold_bps`, `used`, `quota`, `window_days`, `resets_at`, `tier`, `channel`, `origin` permanecem iguais) — o `number_alias` fica no **envelope**, nunca dentro de `data`.
+Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_alias`: o handle do número TN ("inbox") cuja quota de mensagens foi atingida — `"main"` para o número principal ou o alias de um número extra. O `data` do evento carrega os campos de quota `threshold_bps` (só em `warning`), `used`, `quota`, `cycle_start`, `cycle_end`, `resets_at`, `tier`, `channel`, `origin` — o `number_alias` fica no **envelope**, nunca dentro de `data`.
+
+> **Ciclo avaliado (2026-07-04):** o antigo campo `window_days` foi **removido** — `used`/`quota` agora são medidos contra o ciclo de faturamento avaliado da organization, representado por `cycle_start`/`cycle_end` (ISO 8601 UTC). `resets_at` continua igual a `cycle_end`.
 
 > Entre os eventos de conta, `number_alias` é omitido **apenas** em `storage.*`. Toda família `*.quota.*` (contatos e mensagens) passou a carregá-lo.
 
@@ -37,9 +42,10 @@ Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_ali
     "threshold_bps": 80,
     "used": 800,
     "quota": 1000,
-    "window_days": 30,
-    "resets_at": "2026-06-14T...",
-    "tier": "free",
+    "cycle_start": "2026-06-01T00:00:00Z",
+    "cycle_end": "2026-07-01T00:00:00Z",
+    "resets_at": "2026-07-01T00:00:00Z",
+    "tier": "FREE",
     "channel": "whatsapp",
     "origin": "tn"
   }
@@ -58,8 +64,10 @@ Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_ali
   "data": {
     "quota": 1000,
     "used": 1000,
-    "resets_at": "2026-06-14T...",
-    "tier": "free",
+    "cycle_start": "2026-06-01T00:00:00Z",
+    "cycle_end": "2026-07-01T00:00:00Z",
+    "resets_at": "2026-07-01T00:00:00Z",
+    "tier": "FREE",
     "channel": "whatsapp",
     "origin": "tn"
   }
@@ -69,7 +77,7 @@ Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_ali
 ## Timestamps e correlação
 
 - Estes são eventos **sintéticos** do Turbo Notify (não refletem uma ação no WhatsApp): desde 2026-06-02 **não** carregam `at` em `data` — apenas o `created_at` do envelope (momento de emissão do evento pelo TN).
-- `resets_at` é um timestamp de **valor de negócio** (quando a janela de quota reinicia), mantido com seu nome semântico — não é o momento de ocorrência.
+- `cycle_start`/`cycle_end` são o ciclo de faturamento avaliado contra o qual `used`/`quota` foram medidos. `resets_at` é um timestamp de **valor de negócio** (quando o ciclo de quota reinicia), mantido com seu nome semântico — igual a `cycle_end` na emissão, não é o momento de ocorrência.
 - Não há `phone` no payload destes eventos. Para correlacionar com a requisição que disparou o estouro, use `GET /v1/events?request_id=req_...`.
 
 ## Ação recomendada

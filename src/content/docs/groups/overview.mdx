@@ -89,6 +89,15 @@ do grupo é identificada pelo `number_alias` do envelope.
 
 Para enviar a um grupo a partir do número principal, use `POST /v1/messages`. Para números extras, use `POST /v1/numbers/{alias}/messages` onde `{alias}` é o alias do número extra. O campo `to` assume a forma `{ "group_id": "grp_..." }`.
 
+:::note[Requer plano BUSINESS ou superior]
+Enviar mensagem para um `group_id` exige a feature `groups:messages`,
+disponível a partir do tier `BUSINESS`. Em `FREE`/`SOLO` o envio é
+recusado com `402 feature_not_available` — receber mensagens de grupo e
+consultar detalhes continuam funcionando normalmente. Veja
+[Limitações de grupos](/groups/limitations/) e
+[Quota e uso](/usage/quota/#envio-para-grupos-exige-plano-business-ou-superior).
+:::
+
 :::tip[Usando números extras?]
 Para enviar de um número extra para o grupo, use `/v1/numbers/{alias}/messages` onde
 `{alias}` é o alias do seu número extra. [Saiba mais](/numbers/add/).

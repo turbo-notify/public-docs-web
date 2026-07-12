@@ -350,6 +350,24 @@ O campo `to` aceita exatamente uma das três formas abaixo, igualmente à rota d
 
 Para enviar o indicador de digitação em um grupo do WhatsApp, use `to.group_id` com o identificador do grupo no lugar de `to.number`.
 
+:::note[Requer plano BUSINESS ou superior]
+Enviar indicador de digitação (assim como mensagem) para um `group_id` exige a
+feature `groups:messages`, disponível a partir do tier `BUSINESS`. Em
+`FREE`/`SOLO` você ainda **recebe** mensagens de grupo, lista grupos
+localmente pelos webhooks e consulta detalhes — apenas o **envio** outbound
+para grupo (incluindo o indicador de digitação) é bloqueado com `402`:
+
+<ApiResponse
+  status={402}
+  body={{
+    error: 'feature_not_available',
+  }}
+/>
+
+Veja [Quota e uso](/usage/quota/#envio-para-grupos-exige-plano-business-ou-superior)
+e [Limitações de grupos](/groups/limitations/).
+:::
+
 ```bash title="typing-group.sh"
 curl -X POST \
   https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator \

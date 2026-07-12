@@ -28,11 +28,23 @@ de grupo (criação, gerenciamento de membros, alteração de configurações)
 | Recurso | Status |
 |---|---|
 | Receber mensagens de grupos | ✅ (webhook `message.received` com sibling `group`) |
-| Enviar mensagens para grupos | ✅ (`POST /v1/numbers/{alias}/messages` com `to.group_id`) |
+| Enviar mensagens para grupos | ✅ (`POST /v1/numbers/{alias}/messages` com `to.group_id`) — **requer plano `BUSINESS` ou superior**, veja abaixo |
+| Enviar indicador de digitação para grupos | ✅ (`POST /v1/numbers/{alias}/typing-indicator` com `to.group_id`) — **requer plano `BUSINESS` ou superior**, veja abaixo |
 | Reagir, editar, deletar mensagens em grupo | ✅ |
 | Receber notificação quando entra/sai de grupo | ✅ (`group.joined` / `group.left`) |
 | Receber notificação quando nome/descrição/imagem do grupo muda | ✅ |
 | Receber notificação quando membros são adicionados/removidos/promovidos/rebaixados | ✅ |
+
+## Envio de mensagens para grupo exige plano BUSINESS ou superior
+
+Receber mensagens de grupo, listar grupos (via webhooks) e consultar
+detalhes funcionam em qualquer tier. Apenas o **envio** outbound para um
+`group_id` — mensagem ou indicador de digitação — exige a feature
+`groups:messages`, disponível a partir do tier `BUSINESS` — em `FREE`/`SOLO`
+o envio é recusado com `402 feature_not_available`. Veja
+[Envio para grupo](/messages/send/#envio-para-grupo),
+[Aviso em grupos](/other-features/typing-indicator/#aviso-em-grupos)
+e [Quota e uso](/usage/quota/#envio-para-grupos-exige-plano-business-ou-superior).
 
 ## Identificador público
 

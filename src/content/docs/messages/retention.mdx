@@ -1,54 +1,70 @@
 ---
 title: Retenção das mensagens
-description: Como funciona o ciclo de vida das mensagens no Turbo Notify.
+description: Janela de leitura por tier (7 a 365 dias) — mensagens fora da janela retornam 404. Retenção física de 12 meses é independente do tier.
 ---
 
-O Turbo Notify adota uma política de retenção curta para garantir a privacidade dos dados e manter a infraestrutura leve e eficiente.
+import ApiResponse from '@components/ApiResponse.astro';
 
-## Armazenamento e privacidade
+> **Nota (2026-07-04):** a retenção deixou de ser apenas informativa e passou a ser uma **janela de leitura efetivamente aplicada** pela API, com o prazo definido pelo tier do plano contratado. Veja o changelog [Quotas ancoradas no ciclo avaliado](/changelog/2026-07-04-evaluated-cycle-quotas/).
 
-O Turbo Notify não armazena o conteúdo das mensagens de forma permanente. O texto enviado é utilizado apenas para processar o envio e, após a conclusão, os dados são descartados automaticamente conforme o prazo de retenção.
+O Turbo Notify aplica uma janela de leitura por tier de plano para consulta de mensagens via API, equilibrando privacidade dos dados com a necessidade de auditoria de curto/médio prazo do seu negócio.
 
-Essa abordagem prioriza a privacidade dos seus usuários e está alinhada com as melhores práticas de proteção de dados.
+## Janela de leitura por tier
 
-## Prazo de retenção
+Cada tier de plano define por quantos dias, a partir do envio/recebimento, uma mensagem permanece **consultável** pela API:
 
-O status e os metadados da mensagem ficam disponíveis para consulta durante um período limitado. Após esse prazo, a mensagem deixa de existir no sistema.
+| Tier       | Janela de leitura |
+| ---------- | -----------------:|
+| `FREE`     | 7 dias            |
+| `SOLO`     | 30 dias           |
+| `BUSINESS` | 90 dias           |
+| `CUSTOM`   | 365 dias          |
 
-| Período após o envio | Consulta de status | Resposta da API |
-| -------------------- | :----------------: | :-------------: |
-| Até 8 horas          | Disponível         | `200`           |
-| Entre 8 e 24 horas   | Expirado           | `410`           |
-| Após 24 horas        | Removido           | `404`           |
+Uma mensagem mais antiga que a janela do seu tier deixa de existir para efeitos de leitura via API — mesmo que o registro ainda exista fisicamente no banco de dados (veja [Retenção física vs. janela de leitura](#retenção-física-vs-janela-de-leitura) abaixo).
 
-### Até 8 horas
+## Comportamento ao consultar por id
 
-A mensagem e seus metadados estão totalmente disponíveis. Você pode consultar o status, verificar se foi entregue, lida ou se houve falha.
+`GET /v1/numbers/{alias}/messages/{id}` (e a rota plana `GET /v1/messages/{id}` para o número principal) retorna **404** quando o `id` está fora da janela de retenção do tier — o mesmo shape de uma mensagem que nunca existiu, sem vazar a existência passada do recurso:
 
-### Entre 8 e 24 horas
+<ApiResponse
+  status={404}
+  body={{
+    error: 'not_found',
+  }}
+/>
 
-A mensagem entra em período de expiração. A API retorna `410 Gone`, indicando que o recurso existiu mas não está mais disponível. Nenhum dado é retornado.
+Isso vale também para os sub-recursos que dependem do id — `.../status`, `.../receipts`, `.../reactions` — que passam a retornar 404 pela mesma razão quando a mensagem-pai está fora da janela.
 
-### Após 24 horas
+## Comportamento na listagem
 
-A mensagem é completamente removida do sistema. A API retorna `404 Not Found`, como se a mensagem nunca tivesse existido.
+`GET /v1/numbers/{alias}/messages` (listagem por cursor) **filtra** mensagens fora da janela de retenção do tier — elas simplesmente não aparecem em nenhuma página, sem afetar a paginação das mensagens que ainda estão dentro da janela.
 
-## Implicações práticas
+## Retenção física vs. janela de leitura
 
-- Consulte o status da mensagem o mais cedo possível após o envio.
-- Configure um [webhook](/messages/webhook/) para receber atualizações em tempo real e não depender exclusivamente da consulta manual.
-- Armazene no seu sistema os dados que forem relevantes para o seu negócio, como o `message_id` e o status final.
-- Operações que dependem da mensagem original, como [responder](/messages/send/) (via endpoint `POST /v1/numbers/{alias}/messages/{message_id}/reply`), também estão sujeitas ao prazo de retenção.
+A janela acima é sobre **visibilidade via API** — um filtro de leitura aplicado por cima do armazenamento físico. Independentemente do tier contratado, o armazenamento físico segue uma retenção fixa de **12 meses** (partições de banco de dados removidas por idade). A janela de 365 dias do tier `CUSTOM` está sempre dentro desse piso físico de 12 meses — não há conflito entre os dois conceitos, apenas dois horizontes diferentes:
+
+- **Retenção física (12 meses, fixa, igual para todos os tiers):** quando o dado deixa de existir no banco, ponto final — nenhum tier consegue ler além disso.
+- **Janela de leitura (por tier, 7 a 365 dias):** quando a API para de responder a consultas sobre a mensagem — um corte mais cedo que a retenção física, definido pelo plano contratado.
+
+Fazer upgrade de tier **não recupera** mensagens que já passaram pela retenção física de 12 meses; recupera apenas o acesso a mensagens que estavam dentro do piso físico, mas fora da janela de leitura do tier anterior.
 
 ## Durabilidade de mídia (BYO Storage)
 
-Para mensagens com mídia (imagem, vídeo, áudio, documento, sticker), a durabilidade dos **bytes** é independente da retenção dos metadados acima:
+Para mensagens com mídia (imagem, vídeo, áudio, documento, sticker), a durabilidade dos **bytes** é independente da janela de leitura acima:
 
-- **Com [BYO Object Storage](/general/byo-storage-setup/) configurado**: os bytes são copiados para o seu bucket assim que a mensagem é recebida. Permanecem disponíveis enquanto o seu bucket retiver o objeto — sob seu controle total.
+- **Com [BYO Object Storage](/general/byo-storage-setup/) configurado**: os bytes são copiados para o seu bucket assim que a mensagem é recebida. Permanecem disponíveis enquanto o seu bucket retiver o objeto — sob seu controle total, inclusive depois que a mensagem sair da janela de leitura.
 - **Sem BYO Storage**: apenas os metadados (mime, tamanho, hash, legenda) são persistidos. Os bytes NÃO são proxyados nem armazenados pelo Turbo Notify. O campo `media.kind` retorna `"unavailable"` com um `setup_hint` envelope estimulando a configuração.
 
 Esse comportamento é canônico desde 2026-05-26 — não há mais janela de 24h via CDN do WhatsApp. Detalhes em [BYO Object Storage](/general/byo-storage-setup/).
 
+## Implicações práticas
+
+- Consulte o status da mensagem o quanto antes após o envio — não dependa da janela de leitura do tier para arquivamento de longo prazo.
+- Configure um [webhook](/messages/webhook/) para receber atualizações em tempo real e não depender exclusivamente da consulta manual.
+- Armazene no seu sistema os dados que forem relevantes para o seu negócio, como o `message_id` e o status final — a API não é um armazenamento de longo prazo para o seu histórico de conversas.
+- Operações que dependem da mensagem original, como [responder](/messages/send/) (via endpoint `POST /v1/numbers/{alias}/messages/{message_id}/reply`), também estão sujeitas à janela de leitura — respostas a mensagens fora da janela falham como se a mensagem-alvo não existisse.
+- As franquias de mensagens/contatos por ciclo são um conceito diferente da retenção — veja [Quota e Uso](/usage/quota/).
+
 ## Consulta de status
 
-Para verificar o status de uma mensagem dentro do prazo de retenção, veja a documentação de [Status](/messages/status/).
+Para verificar o status de uma mensagem dentro da janela de retenção, veja a documentação de [Status](/messages/status/).

@@ -434,6 +434,7 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.       |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
 | `422`  | `sender_not_authorized` | O alias na URL não está ativo na conta.           |
+| `402`  | `feature_not_available` | Envio para grupo (`to.group_id`) requer plano `BUSINESS` ou superior — veja [Envio para grupo](#envio-para-grupo). |
 | `429`  | `rate_limit_exceeded`   | Limite de envio do plano ultrapassado.            |
 | `422`  | `contact_not_found`     | O `contact_id` informado não pertence ao organization.  |
 | `422`  | `contacts_not_enabled`  | Envio por `contact_id` não configurado.           |
@@ -782,6 +783,24 @@ Disponível desde 2026-05-25. Para enviar a um grupo, o campo `to`
 assume a forma de objeto `{ "group_id": "grp_..." }` em vez da string
 de telefone usada em 1:1. Veja
 [Visão geral de grupos](/groups/overview/) para detalhes do modelo.
+
+:::note[Requer plano BUSINESS ou superior]
+Enviar mensagem (ou indicador de digitação) para um `group_id` exige a
+feature `groups:messages`, disponível a partir do tier `BUSINESS`. Em
+`FREE`/`SOLO` você ainda **recebe** mensagens de grupo, lista grupos
+localmente pelos webhooks e consulta detalhes — apenas o **envio**
+outbound para grupo é bloqueado com `402`:
+
+<ApiResponse
+  status={402}
+  body={{
+    error: 'feature_not_available',
+  }}
+/>
+
+Veja [Quota e uso](/usage/quota/#envio-para-grupos-exige-plano-business-ou-superior)
+e [Limitações de grupos](/groups/limitations/).
+:::
 
 ```json title="POST /v1/messages — grupo"
 {

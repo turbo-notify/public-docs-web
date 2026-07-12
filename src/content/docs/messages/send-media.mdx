@@ -399,10 +399,11 @@ Quando `s3_object_key` é informado mas nenhum Object Storage está configurado:
 ```json title="412 storage_required"
 {
   "error": "storage_required",
-  "message": "BYO Object Storage is required to use s3_object_key. Configure it in the Dashboard.",
-  "hint": {
+  "message": "This request requires BYO Object Storage to be configured. Set up S3, Cloudflare R2, or Supabase Storage in your dashboard.",
+  "setup_hint": {
     "setup_url": "https://dashboard.turbonotify.com/settings/integrations/storage",
-    "docs_url": "https://docs.turbonotify.com/general/byo-storage-setup/"
+    "docs_url": "https://docs.turbonotify.com/general/byo-storage-setup/",
+    "message": "Configure object storage (S3, Cloudflare R2, or Supabase Storage — free tiers available) to receive media. Visit your dashboard or read the docs."
   }
 }
 ```

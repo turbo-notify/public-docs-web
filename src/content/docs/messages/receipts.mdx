@@ -201,11 +201,27 @@ O campo `contact_id` aparece apenas para participantes cujo contato já esteja r
 
 > **Nota:** Apenas confirmações enviadas pelo WhatsApp (`delivered` e `read`) são registradas nos recibos. O status `sent` (envio ao WhatsApp) pode ser consultado via [`GET /v1/numbers/{alias}/messages/{id}/status`](/messages/status/).
 
+## Exige plano BUSINESS ou superior
+
+O histórico detalhado de recibos (`GET .../messages/{id}/receipts`) requer a feature `read_receipts`, disponível a partir do tier `BUSINESS`. Organizations em `FREE`/`SOLO` recebem:
+
+<ApiResponse
+  status={402}
+  body={{
+    error: 'feature_not_available',
+  }}
+/>
+
+Este gate cobre as duas rotas montadas (aninhada `/v1/numbers/{alias}/messages/{id}/receipts` e a rota plana `/v1/messages/{id}/receipts` do número principal) — ambas compartilham o mesmo use case, então ambas ficam bloqueadas juntas. O gate **não** afeta o status geral da mensagem: [`GET .../messages/{id}/status`](/messages/status/) continua disponível em **todos** os tiers, inclusive `FREE`/`SOLO` — apenas o histórico **detalhado**, transição a transição, exige BUSINESS+.
+
+Veja [Quota e Uso](/usage/quota/) para a tabela completa de features por tier.
+
 ## Erros possíveis
 
-| Status | Código de erro   | Descrição                                            |
-| :----: | ---------------- | ---------------------------------------------------- |
-| `403`  | `not_authorized`    | A chave de acesso está inválida ou ausente.                       |
-| `403`  | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read`.           |
-| `404`  | `not_found`         | A mensagem não foi encontrada.                                    |
-| `500`  | `internal_error`    | Erro interno inesperado no servidor.                              |
+| Status | Código de erro          | Descrição                                                                    |
+| :----: | ------------------------ | ------------------------------------------------------------------------------ |
+| `402`  | `feature_not_available` | Organization em plano `FREE`/`SOLO` — histórico de recibos exige `BUSINESS`+.  |
+| `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.                                    |
+| `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:read`.                         |
+| `404`  | `not_found`             | A mensagem não foi encontrada (ou está fora da janela de retenção do tier).    |
+| `500`  | `internal_error`        | Erro interno inesperado no servidor.                                           |

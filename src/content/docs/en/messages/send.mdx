@@ -56,3 +56,18 @@ message or contact quota. The resulting message carries a hydrated `mentions`
 array (`{contact_id?, name?, number}` items) on `GET …/messages/{id}` and on
 the `message.sent`/`replied`/`edited` event `data`; a received `@<number>`
 token can be pasted straight back into a send (echo symmetry).
+
+## Sending to a group
+
+Since 2026-05-25, sending to a `group_id` requires a **BUSINESS** (or
+higher) plan — the `groups:messages` feature. On `FREE`/`SOLO` the send is
+rejected:
+
+```json title="402 Payment Required"
+{
+  "error": "feature_not_available"
+}
+```
+
+See [Quota and usage](/en/usage/quota/#sending-to-groups-requires-business-or-above)
+and the canonical [PT-BR page](/messages/send/#envio-para-grupo) for full details.

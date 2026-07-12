@@ -85,8 +85,14 @@ inbox correto.
 A quota de contatos passou a ser **por número** (ADR 2026-06-22): cada número tem
 sua própria contagem de contatos distintos, então os eventos
 `contact.quota.warning`/`contact.quota.exceeded` identificam o número afetado via
-`number_alias` no envelope. O `data` do evento de quota **não** muda — os campos
-de quota (`threshold_bps`, `used`, `quota`, …) permanecem iguais.
+`number_alias` no envelope. O `data` do evento de quota carrega os campos
+`threshold_bps` (só em `warning`), `used`, `quota`, `cycle_start`, `cycle_end`,
+`resets_at`, `tier`, `channel`, `origin`.
+
+> **Ciclo avaliado (2026-07-04):** o antigo campo `window_days` foi **removido**
+> de ambas as famílias `*.quota.*` — `used`/`quota` agora são medidos contra o
+> ciclo de faturamento avaliado da organization, representado por
+> `cycle_start`/`cycle_end` (ISO 8601 UTC). `resets_at` continua igual a `cycle_end`.
 
 > O `number_alias` fica no **envelope**, nunca dentro de `data`. Entre os eventos
 > de conta, o campo é omitido apenas em `storage.*` (o único evento sem um número
@@ -218,9 +224,10 @@ onde `{alias}` é o `number_alias` recebido no envelope deste evento.
     "threshold_bps": 90,
     "used": 90,
     "quota": 100,
-    "window_days": 30,
-    "resets_at": "2026-06-14T...",
-    "tier": "free",
+    "cycle_start": "2026-06-01T00:00:00Z",
+    "cycle_end": "2026-07-01T00:00:00Z",
+    "resets_at": "2026-07-01T00:00:00Z",
+    "tier": "FREE",
     "channel": "whatsapp",
     "origin": "tn"
   }
@@ -229,8 +236,10 @@ onde `{alias}` é o `number_alias` recebido no envelope deste evento.
 
 `threshold_bps` é integer em basis points: `80 | 90 | 95 | 100`. Evento
 sintético — carrega `channel`/`origin` mas **sem `direction`** (não é um fluxo de
-mensagem) e **sem `at`**; `resets_at` é timestamp de valor de negócio (quando a
-janela de quota reinicia), não o momento da ação.
+mensagem) e **sem `at`**; `cycle_start`/`cycle_end` são o ciclo de faturamento
+avaliado contra o qual `used`/`quota` foram medidos; `resets_at` é timestamp de
+valor de negócio (quando o ciclo de quota reinicia, igual a `cycle_end`), não o
+momento da ação.
 
 ## Exemplo: `contact.quota.exceeded`
 
@@ -244,8 +253,10 @@ janela de quota reinicia), não o momento da ação.
   "data": {
     "used": 100,
     "quota": 100,
-    "resets_at": "2026-06-14T...",
-    "tier": "free",
+    "cycle_start": "2026-06-01T00:00:00Z",
+    "cycle_end": "2026-07-01T00:00:00Z",
+    "resets_at": "2026-07-01T00:00:00Z",
+    "tier": "FREE",
     "channel": "whatsapp",
     "origin": "tn"
   }
