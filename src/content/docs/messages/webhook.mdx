@@ -124,6 +124,17 @@ Todos os eventos `message.*` compartilham os campos abaixo em `data`:
 > resolva seu número/contato via `GET /v1/numbers/{alias}`.
 > `created_at` (envelope) é o momento de **emissão** do evento; `at` (em `data`)
 > é o momento da **ação no WhatsApp** — valores distintos.
+>
+> `name` em `from`/`to` é o push name (nome de exibição) configurado pelo
+> contato no WhatsApp — o Turbo Notify nunca infere ou busca isso em uma
+> agenda de contatos. Ele fica disponível quando o contato **já enviou
+> pelo menos uma mensagem inbound para a sua organização** (é assim que o
+> WhatsApp entrega o push name), ou quando o número de destino é ele mesmo
+> uma linha Turbo Notify de **outra** organização com o nome já conhecido.
+> Fora esses dois casos, em um `message.sent` para alguém que nunca
+> apareceu em nenhuma dessas fontes, `to.name` vem **omitido** — não é um
+> erro; trate a ausência como "nome ainda desconhecido", não como falha de
+> entrega.
 
 :::note[`at` outbound também é o momento real do WhatsApp]
 Para eventos **outbound** (`message.sent`/`replied`/`edited`/`deleted` e os
