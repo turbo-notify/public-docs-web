@@ -8,11 +8,23 @@ sidebar:
 **Fecha:** 2026-06-22
 **Estado:** Aplicado
 
-:::caution[Cambio de ruta — incompatible]
-Este es un **cambio de ruta incompatible**. Toda llamada a mensajes, contactos y
-grupos debe migrar a la ruta anidada bajo el número (`/v1/numbers/{alias}/…`).
-Las rutas planas antiguas (`/v1/messages`, `/v1/contacts`, `/v1/groups` y sus
-sub-rutas) ahora devuelven **404**.
+:::note[Actualización 2026-06-25]
+Las rutas planas mencionadas como "404" en esta entrada fueron
+**reintroducidas** tres días después como un nivel de acceso directo válido al
+número principal — ver [Rutas planas para el número principal](/es/changelog/2026-06-25-flat-main-routes/).
+Hoy `/v1/messages`, `/v1/contacts` y `/v1/groups` (+ sub-rutas) **nunca
+devuelven 404** por ser planas: funcionan como equivalentes de
+`/v1/numbers/main/…`, con una respuesta idéntica. El 404 descrito abajo fue
+real solo durante la ventana entre el 2026-06-22 y el 2026-06-25.
+:::
+
+:::caution[Cambio de ruta — incompatible desde el 2026-06-22]
+Este fue un **cambio de ruta incompatible**. Toda llamada a mensajes, contactos
+y grupos tuvo que migrar a la ruta anidada bajo el número
+(`/v1/numbers/{alias}/…`). Entre el 2026-06-22 y el 2026-06-25, las rutas
+planas antiguas (`/v1/messages`, `/v1/contacts`, `/v1/groups` y sus sub-rutas)
+devolvían **404** — desde el 2026-06-25 volvieron a funcionar como forma corta
+para el número principal (ver la nota de arriba).
 :::
 
 ## Qué cambió
@@ -24,8 +36,8 @@ de tu organización. La API lo expresa de forma **estructural**: las rutas resid
 bajo la ruta del número, identificado por `{alias}` (`main` para el número
 principal o el alias de un número extra).
 
-| Antes (plano — ahora 404) | Ahora (anidado por número) |
-| ------------------------- | -------------------------- |
+| Antes (ruta plana, anidamiento obligatorio desde 2026-06-22) | Ahora (anidado por número) |
+| ---------------------------------------------------------------- | -------------------------- |
 | `POST /v1/messages` | `POST /v1/numbers/{alias}/messages` |
 | — (no existía lista pública) | `GET /v1/numbers/{alias}/messages` (lista por cursor — **nuevo**) |
 | `GET /v1/messages/{id}` | `GET /v1/numbers/{alias}/messages/{id}` |
@@ -74,8 +86,17 @@ produce **dos envíos independientes**.
 Los eventos `contact.quota.warning` y `contact.quota.exceeded` pasan a incluir el
 campo **`number_alias` en el envelope** (justo debajo de `organization_id`),
 identificando el número cuya cuota de contactos se alcanzó. El `data` del evento
-no cambia. `number_alias` sigue **omitido** solo en `storage.*` y en los eventos
-de cuota de mensaje (`message.quota.*`).
+no cambia. `number_alias` sigue **omitido** solo en `storage.*` y, en este
+momento (2026-06-22), también en los eventos de cuota de mensaje
+(`message.quota.*`) — la cuota de mensaje todavía era por organización.
+
+:::note[Actualización 2026-07-02]
+La [ADR 2026-07-02 — Per-Number Message Quota](/reference/decisions/2026-07-02-per-number-message-quota/)
+hizo que la cuota de mensaje también sea **por número**. Desde entonces,
+`message.quota.warning` y `message.quota.exceeded` **también incluyen
+`number_alias`** en el envelope — la regla de omisión se estrecha a **solo
+`storage.*`**, igual que `contact.quota.*`.
+:::
 
 ### `GET /v1/events` acepta el filtro `number_alias`
 
@@ -86,9 +107,13 @@ permanecen **a nivel raíz** y no se vieron afectadas por el cambio de ruta.
 
 ## Compatibilidad
 
-Pre-producción: el cambio es incompatible sin capa de transición. Las rutas
-planas devuelven 404 de inmediato. Migra toda llamada a la ruta anidada y empieza
-a leer `number_alias` del envelope para las llamadas por id.
+Pre-producción: el cambio rompió la compatibilidad sin capa de transición. Las
+rutas planas devolvieron 404 de inmediato **entre el 2026-06-22 y el
+2026-06-25** — desde entonces volvieron como forma corta válida para el número
+principal ([detalles](/es/changelog/2026-06-25-flat-main-routes/)). Migra las
+llamadas de números extra a la ruta anidada (`/v1/numbers/{alias}/…`) y
+empieza a leer `number_alias` del envelope para las llamadas por id — esto
+aplica sin importar qué nivel de ruta (plana o anidada) uses.
 
 ## Referencias
 

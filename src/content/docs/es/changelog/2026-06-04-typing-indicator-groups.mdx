@@ -9,7 +9,17 @@ description: "POST /v1/typing-indicator ahora acepta to.group_id para grupos de 
 
 ### Soporte de grupos en el indicador de escritura
 
-`POST /v1/typing-indicator` ahora acepta `{"group_id": "grp_…"}` como destinatario, además del `{"number": "…"}` ya existente. `contact_id` no es compatible con indicadores de escritura.
+`POST /v1/typing-indicator` ahora acepta `{"group_id": "grp_…"}` como destinatario, además del `{"number": "…"}` ya existente.
+
+| Campo `to` | Ejemplo | Cuándo usar |
+| ---------- | ------- | ----------- |
+| `number`   | `{"number": "+5511999999999"}` | Conversación 1:1 |
+| `group_id` | `{"group_id": "grp_…"}` | Grupo de WhatsApp |
+| `contact_id` | `{"contact_id": "ct_…"}` | Conversación 1:1 vía ID de contacto TN |
+
+`contact_id` también es compatible — las tres formas de `to` (`number`,
+`group_id`, `contact_id`) son válidas para el indicador de escritura, el mismo
+modelo polimórfico usado en el envío de mensajes.
 
 **Nuevos códigos de error:**
 - `group_not_found` (HTTP 422) — el `group_id` proporcionado no pertenece a este organization.

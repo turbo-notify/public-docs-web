@@ -22,9 +22,15 @@ GET /v1/groups/{group_id}/picture
 | Estado | Resposta |
 | ------ | -------- |
 | `organization_storage` | 302 com URL **pré-assinada** do BYO Storage (R2/S3/Supabase) — nunca a object key crua |
-| `pending_upload` | 200 com `picture.kind = "pending"` (upload em andamento) |
+| `pending_upload` | 404 `group_picture_unavailable` (upload ainda em andamento) |
 | `upload_failed` | 200 com `picture.kind = "unavailable"`, `reason = "upload_failed"` |
 | `unavailable` | 200 com `picture.kind = "unavailable"` + `reason` + `setup_hint` (quando aplicável) |
+
+O `picture.kind = "pending"` existe no contrato compartilhado mas é
+exclusivo dos webhooks do webhook-worker — este endpoint de leitura nunca o
+retorna: qualquer estado que não seja `available`/`unavailable` no momento
+da consulta cai em `404 group_picture_unavailable` (mesmo comportamento do
+[endpoint equivalente de contato](/contacts/profile-picture/)).
 
 A foto do grupo é re-resolvida pelo pipeline de metadados do grupo: uma foto marcada como `unavailable` enquanto o storage estava ausente é **reavaliada** e enviada assim que você habilita o BYO Storage — sem necessidade de nova ação (ver [a foto fica disponível depois](/groups/lifecycle-events/#groups-picture-becomes-available)).
 
@@ -50,7 +56,7 @@ A URL pré-assinada tem validade limitada (R2: 1h por padrão).
     "kind": "unavailable",
     "reason": "no_storage",
     "setup_hint": {
-      "setup_url": "https://dashboard.turbonotify.com/settings/integrations/storage",
+      "setup_url": "https://dashboard.turbonotify.com/storage",
       "docs_url": "https://docs.turbonotify.com/general/byo-storage-setup/",
       "message": "Configure object storage to serve group pictures."
     }

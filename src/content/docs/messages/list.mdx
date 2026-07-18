@@ -1,0 +1,215 @@
+---
+title: Listar mensagens
+description: Endpoint GET /v1/numbers/{alias}/messages — lista paginada por cursor das mensagens de um número, mais recentes primeiro.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+Liste as mensagens (enviadas e recebidas) de um número, paginadas por cursor, mais recentes primeiro. Cada item é um resumo — para o corpo completo de uma mensagem específica, use [Consultar mensagem](/messages/get/).
+
+Use `GET /v1/messages` para o número principal. Para números extras, use `GET /v1/numbers/{alias}/messages`, onde `{alias}` é o `number_alias` presente no envelope do webhook/polling.
+
+**Escopo obrigatório:** `messages:read`
+
+## Parâmetros de consulta
+
+| Parâmetro | Tipo | Descrição |
+| --------- | ---- | --------- |
+| `cursor` | string | Token opaco retornado em `cursor` pela página anterior. Ausente = primeira página. |
+| `limit` | int | Quantidade de itens por página. Intervalo: 1–200. Padrão: 50. |
+
+## Listar mensagens
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="listar-mensagens.sh"
+    curl -X GET \
+      "https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/messages?limit=20" \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="listar-mensagens.js"
+    const response = await fetch(
+      'https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/messages?limit=20',
+      {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer SUA_CHAVE' }
+      }
+    );
+
+    const { data, cursor, has_more } = await response.json();
+    console.log(data);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="listar_mensagens.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/messages"
+    headers = {"Authorization": "Bearer SUA_CHAVE"}
+    params = {"limit": 20}
+
+    response = requests.get(url, headers=headers, params=params)
+    result = response.json()
+    print(result["data"])
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="listar_mensagens.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest(
+            "GET",
+            "https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/messages?limit=20",
+            nil,
+        )
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="listar-mensagens.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/messages?limit=20';
+
+    $options = [
+        'http' => [
+            'header' => ['Authorization: Bearer SUA_CHAVE'],
+            'method' => 'GET'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response['data']);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="ListarMensagens.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var response = await client.GetAsync(
+        "https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/messages?limit=20"
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="ListarMensagens.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class ListarMensagens {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create(
+                    "https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/messages?limit=20"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .GET()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+## Resposta (200)
+
+<ApiResponse
+  status={200}
+  body={{
+    data: [
+      {
+        id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
+        number_alias: 'main',
+        direction: 'outbound',
+        content_type: 'text',
+        preview: 'Olá, seu pedido foi confirmado!',
+        at: '2026-06-01T10:00:05-03:00',
+        status: { state: 'delivered', at: '2026-06-01T10:01:00-03:00' },
+      },
+      {
+        id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f71',
+        number_alias: 'main',
+        direction: 'inbound',
+        content_type: 'image',
+        preview: 'Foto do produto',
+        at: '2026-06-01T09:58:00-03:00',
+        status: { state: 'delivered', at: '2026-06-01T09:58:00-03:00' },
+      },
+    ],
+    cursor: 'eyJpZCI6Im1zZ18wMSJ9',
+    has_more: true,
+  }}
+/>
+
+## Campos da resposta
+
+| Campo | Tipo | Descrição |
+| ----- | ---- | --------- |
+| `data` | array | Página de mensagens, mais recentes primeiro |
+| `cursor` | string\|null | Token opaco para a próxima página; `null` quando não há mais itens |
+| `has_more` | boolean | `true` se há mais páginas disponíveis |
+| `data[].id` | string | Identificador público da mensagem (`msg_` + 32 hex) |
+| `data[].number_alias` | string | Handle do número ao qual a mensagem pertence — `"main"` ou o alias de um número extra |
+| `data[].direction` | string | `outbound` (enviada) ou `inbound` (recebida) |
+| `data[].content_type` | string | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, etc. |
+| `data[].preview` | string | Recorte grapheme-aware do conteúdo (mesmo valor de `GET /v1/numbers/{alias}/messages/{id}`) |
+| `data[].at` | string | ISO 8601 — momento **estável de ocorrência** da mensagem (outbound: envio real; inbound: recebimento). Não avança conforme a mensagem progride `sent → delivered → read`. |
+| `data[].status` | object | `{state, at}` — estado atual de entrega e o timestamp dessa transição |
+
+:::note[Sem `mentions` na listagem]
+Diferente de [Consultar mensagem](/messages/get/), os itens desta lista
+**nunca** carregam o campo `mentions` — é um resumo deliberadamente enxuto
+(ADR 2026-06-22). Para ver as menções de uma mensagem específica, consulte
+`GET /v1/numbers/{alias}/messages/{id}`.
+:::
+
+## Ordenação e paginação
+
+- Os itens vêm ordenados pela ordem interna de criação (mais recente
+  primeiro) — não estritamente por `at`. Para a maioria das mensagens os
+  dois coincidem; para envios outbound, `at` (o momento real de envio)
+  pode ficar alguns instantes atrás da ordem de criação por causa do
+  espaçamento anti-ban (veja [Limites de uso](/messages/rate-limits/)). A
+  página é sempre completa e sem lacunas.
+- A paginação usa `cursor` — passe o valor retornado como `cursor` na
+  próxima chamada até `has_more` ser `false`.
+- Mensagens fora da [janela de leitura por retenção](/usage/quota/#janela-de-leitura-por-retenção-read-window)
+  do seu tier são **filtradas** — elas simplesmente não aparecem na página
+  (diferente de `GET .../messages/{id}`, que retorna 404 para uma mensagem
+  fora da janela).
+
+## Erros possíveis
+
+| Status | Código de erro        | Descrição                                           |
+| :----: | ---------------------- | ---------------------------------------------------- |
+| `403`  | `not_authorized`       | A chave de acesso está inválida ou ausente.          |
+| `403`  | `insufficient_scope`   | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
+| `404`  | `number_not_found`     | O alias informado na URL não corresponde a nenhum número cadastrado. |
+| `500`  | `internal_error`       | Erro interno inesperado no servidor.                 |
+
+Veja também: [Consultar mensagem](/messages/get/) · [Polling de eventos](/messages/polling/).

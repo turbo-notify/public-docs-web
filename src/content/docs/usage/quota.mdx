@@ -207,9 +207,11 @@ os únicos estados que passam sem restrição):
 />
 
 `details.status` é um destes valores: `trialing` (permitido, não gera este
-erro), `trial_expired` (trial encerrado sem plano pago), `past_due`,
-`pending`, `terminated`, `canceled` (após o fim do período já pago) ou
-`missing` (organization sem nenhuma assinatura).
+erro), `trial_expired` (trial encerrado sem plano pago), `past_due` ou
+`canceled` (após o fim do período já pago) — ou `missing` (organization sem
+nenhuma assinatura; cobre também os status internos `pending`/`terminated`,
+que são filtrados na camada de repositório e colapsam para `missing`, nunca
+aparecendo verbatim neste campo).
 
 ### 402 — feature indisponível no plano
 

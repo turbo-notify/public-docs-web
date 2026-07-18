@@ -1,20 +1,65 @@
 ---
 title: Contact Errors
-description: Error codes for the number-scoped contact endpoints under /v1/numbers/{alias}/contacts. Translation pending; see the canonical PT-BR version.
+description: Error codes returned by the /v1/numbers/{alias}/contacts/* endpoints and recommended actions.
+sidebar:
+  order: 6
 ---
 
-> This page is being translated. See the PT-BR (canonical) version: [/contacts/errors/](/contacts/errors/).
+import ApiResponse from '@components/ApiResponse.astro';
 
-Errors returned by the number-scoped contact endpoints
-(`GET /v1/numbers/{alias}/contacts...`).
+## Error table
 
-| Code | HTTP | Meaning |
-| ---- | ---- | ------- |
-| `contact_not_found` | 422 / 404 | The `contact_id` does not exist under this `{alias}`. |
-| `contacts_not_enabled` | 422 | Contacts feature not configured on this deployment. |
-| `number_not_found` | 404 | The `{alias}` is not a number of this organization. |
+| HTTP | `error` | When |
+| ---- | ------- | ---- |
+| 400  | `invalid_phone_number` | The `phone` filter is not in E.164 format |
+| 400  | `invalid_contact_id` | `contact_id` does not match `^ct_[0-9a-f]{32}$` |
+| 400  | `invalid_cursor` | Opaque cursor is corrupted |
+| 402  | `contact_quota_exceeded` | The cycle's distinct-contacts quota was reached |
+| 404  | `contact_not_found` | Invalid id, or belongs to another organization |
+| 404  | `contact_picture_unavailable` | No picture available for this contact |
+| 429  | `refresh_rate_limited` | Refresh-per-minute limit exceeded |
 
-Note: a contact id accessed under the **wrong** `{alias}` returns **404** — ids are
-globally unique but not alone-addressable (the `{alias}` or flat route is required).
-For the primary number the flat routes (`/v1/contacts/{id}` etc.) are also available;
-for extra numbers always use the nested form with the correct `{alias}`.
+A contact id accessed under the **wrong** `{alias}` also surfaces as
+**`contact_not_found`** (404) — ids are globally unique but not
+alone-addressable (see [number-nested routes](/en/changelog/2026-06-22-number-scoped-routes/)).
+For the primary number the flat routes (`/v1/contacts/{id}` etc.) are also
+available as a shorthand; for extra numbers always use the nested form with
+the correct `{alias}`.
+
+## 402 response example
+
+Returned by the send pipeline (`ContactQuotaGuardStep`) when the organization
+tries to reach, via Turbo Notify, a contact that becomes **counted this
+cycle** (`counted_this_cycle`) — a **new** contact OR a **returning** contact
+already counted this cycle — and the cycle's distinct-contacts quota is
+already exhausted.
+
+<ApiResponse status={402}>
+```json
+{
+  "error": "contact_quota_exceeded",
+  "message": "Distinct-contacts quota exceeded for tier FREE (100/100 this cycle)",
+  "details": {
+    "quota": 100,
+    "used": 100,
+    "resets_at": "2026-08-01T00:00:00Z",
+    "tier": "FREE"
+  }
+}
+```
+</ApiResponse>
+
+**Recommended action:** upgrade the plan. Unlike 429, a 402 carries no
+`Retry-After` — the error is structural (the evaluated billing cycle needs to
+close, at `resets_at`, or the tier needs to go up).
+
+## 402 vs 429 — when each appears
+
+| | 402 Payment Required | 429 Too Many Requests |
+| - | --------------------- | ---------------------- |
+| Semantics | Structural — "upgrade the plan" | Temporal — "retry later" |
+| Header | — | `Retry-After: <seconds>` |
+| Reset | At the end of the evaluated billing cycle (`resets_at`), or upgrade | In seconds/minutes |
+| When | Cycle quota | Burst protection |
+
+See also: [Usage & Quota](/en/usage/quota/).

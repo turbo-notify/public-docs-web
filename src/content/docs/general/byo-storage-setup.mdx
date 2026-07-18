@@ -56,7 +56,7 @@ Crie um usuário IAM (AWS), API token (Cloudflare R2) ou service role (Supabase)
 
 ### 3. Configure no dashboard
 
-Acesse <DashboardLink path="/settings/integrations/storage">Configurações → Integrações → Object Storage</DashboardLink> e preencha:
+Acesse <DashboardLink path="/storage">Armazenamento</DashboardLink> e preencha:
 
 | Campo | Valor |
 |-------|-------|
@@ -69,7 +69,7 @@ Acesse <DashboardLink path="/settings/integrations/storage">Configurações → 
 
 ### 4. Valide a conexão
 
-Após salvar, clique em **Testar conexão**. O Turbo Notify realiza um `PutObject` temporário seguido de `DeleteObject` para verificar as permissões. O resultado aparece como:
+Após salvar, clique em **Testar conexão**. O Turbo Notify verifica o bucket (`HEAD`), grava um objeto temporário (`PUT`), lê-o de volta (`GET`) e o remove (`DELETE`) para validar as 4 permissões necessárias (`ListBucket`/`PutObject`/`GetObject`/`DeleteObject`). O resultado aparece como:
 
 - **Conectado** — integração ativa, mídias passam a ser armazenadas imediatamente.
 - **Falha** — verifique credenciais, nome do bucket e permissões.
@@ -102,10 +102,6 @@ Mídias recebidas **antes** da ativação do BYO Storage permanecem com `kind: "
 
 ## Solução de problemas
 
-### `storage_required` (412)
-
-Ao enviar mídia com `s3_object_key` sem storage configurado, a API retorna `412 Precondition Failed`. Configure e ative o BYO Storage antes de usar esse campo.
-
 ### `kind: "unavailable"` com `reason: "upload_failed"`
 
 O upload falhou após retentativas. Possíveis causas:
@@ -114,7 +110,7 @@ O upload falhou após retentativas. Possíveis causas:
 - Bucket deletado ou com política de acesso alterada.
 - Quota do bucket atingida (verifique no console do provider).
 
-Acesse <DashboardLink path="/settings/integrations/storage">Configurações → Integrações → Object Storage</DashboardLink> e clique em **Testar conexão** para diagnosticar.
+Acesse <DashboardLink path="/storage">Armazenamento</DashboardLink> e clique em **Testar conexão** para diagnosticar.
 
 ### `kind: "unavailable"` com `reason: "storage_circuit_open"`
 
@@ -128,12 +124,12 @@ O upload está em andamento. Aguarde alguns segundos e consulte `GET /v1/numbers
 
 - Credenciais são armazenadas encriptadas (AES-256-GCM) — nunca em texto claro.
 - O Turbo Notify nunca expõe credenciais em logs ou responses.
-- URLs pré-assinadas têm validade configurável (padrão: 1 hora).
+- URLs pré-assinadas têm validade configurável (padrão: 15 minutos; configurável até 1 hora).
 - Recomendamos política de acesso **least-privilege** — escopo restrito ao bucket do Turbo Notify.
 
 ## Relacionado
 
 - [Recuperar mensagem](/messages/get/) — campos de mídia com discriminated union por `kind`.
 - [Webhooks — Armazenamento e mídia](/messages/webhook/#armazenamento-e-mídia) — eventos `storage.degraded` e `storage.recovered`.
-- [Envio de mídia](/messages/send-media/) — campo `s3_object_key` para mídia outbound.
+- [Envio de mídia](/messages/send-media/) — envio de mídia outbound por URL pública.
 - [Foto de perfil](/contacts/profile-picture/) — redirect para URL pré-assinada.

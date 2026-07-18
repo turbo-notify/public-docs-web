@@ -292,7 +292,7 @@ Para mensagens `reacted`:
     "mime_type": "image/jpeg",
     "size_bytes": 184320,
     "setup_hint": {
-      "setup_url": "https://dashboard.turbonotify.com/settings/integrations/storage",
+      "setup_url": "https://dashboard.turbonotify.com/storage",
       "docs_url": "https://docs.turbonotify.com/general/byo-storage-setup/",
       "message": "Configure BYO Object Storage to receive media."
     }
@@ -302,7 +302,7 @@ Para mensagens `reacted`:
   "channel": "whatsapp",
   "origin": "native",
   "at": "2026-06-01T10:00:00-03:00",
-  "status": { "state": "received", "at": "2026-06-01T10:00:00-03:00" }
+  "status": { "state": "delivered", "at": "2026-06-01T10:00:00-03:00" }
 }
 ```
 
@@ -330,7 +330,7 @@ Para mensagens `reacted`:
   "channel": "whatsapp",
   "origin": "native",
   "at": "2026-06-01T10:00:00-03:00",
-  "status": { "state": "received", "at": "2026-06-01T10:00:00-03:00" }
+  "status": { "state": "delivered", "at": "2026-06-01T10:00:00-03:00" }
 }
 ```
 
@@ -359,7 +359,7 @@ Para mensagens `reacted`:
   "channel": "whatsapp",
   "origin": "native",
   "at": "2026-06-01T10:00:00-03:00",
-  "status": { "state": "received", "at": "2026-06-01T10:00:00-03:00" }
+  "status": { "state": "delivered", "at": "2026-06-01T10:00:00-03:00" }
 }
 ```
 
@@ -417,7 +417,7 @@ identificável contra `mentions`).
   "channel": "whatsapp",
   "origin": "native",
   "at": "2026-06-01T10:00:00-03:00",
-  "status": { "state": "received", "at": "2026-06-01T10:00:00-03:00" }
+  "status": { "state": "delivered", "at": "2026-06-01T10:00:00-03:00" }
 }
 ```
 
@@ -437,7 +437,7 @@ identificável contra `mentions`).
   "channel": "whatsapp",
   "origin": "native",
   "at": "2026-06-01T10:00:00-03:00",
-  "status": { "state": "received", "at": "2026-06-01T10:00:00-03:00" }
+  "status": { "state": "delivered", "at": "2026-06-01T10:00:00-03:00" }
 }
 ```
 
@@ -447,7 +447,7 @@ Os campos de mídia aparecem **diretamente** no objeto específico (`image`, `vi
 
 ### `kind: "available"`
 
-Mídia disponível para download. Requer <DashboardLink path="/settings/integrations/storage">Object Storage configurado</DashboardLink>.
+Mídia disponível para download. Requer <DashboardLink path="/storage">Object Storage configurado</DashboardLink>.
 
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
@@ -485,7 +485,7 @@ O campo `status` contém o estado atual de entrega:
 
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
-| `state` | string | Estado atual: `sent`, `delivered`, `read`, `received`, `failed` |
+| `state` | string | Estado atual: `sent`, `delivered`, `read`, `failed` (outbound); `delivered`, `read` (inbound) |
 | `at` | string | ISO 8601 — timestamp do **estado atual de entrega**; **avança** a cada transição (`sent → delivered → read`). Não confundir com o `at` no nível raiz, que é o momento estável de ocorrência da mensagem. |
 | `error` | `object \| null` | Erro estruturado da falha — presente apenas quando `state: "failed"`, `null` caso contrário. **Mesmo shape** do `data.error` dos webhooks `*.failed`. |
 | `error.code` | `string` | Código estável legível por máquina — faça branch neste valor. |
@@ -509,7 +509,7 @@ O campo do conteúdo completo (`text`, `image`, `location`, etc.) pode ser `null
 
 ## Sobre `kind`
 
-Para receber mídia inbound com `kind: "available"`, configure a <DashboardLink path="/settings/integrations/storage">integração de Object Storage</DashboardLink> no dashboard. Sem essa configuração, o Turbo Notify não tem onde armazenar a mídia e retorna `kind: "unavailable"` com `reason: "no_storage"`.
+Para receber mídia inbound com `kind: "available"`, configure a <DashboardLink path="/storage">integração de Object Storage</DashboardLink> no dashboard. Sem essa configuração, o Turbo Notify não tem onde armazenar a mídia e retorna `kind: "unavailable"` com `reason: "no_storage"`.
 
 Quando o Object Storage está configurado, o Turbo Notify copia automaticamente cada mídia recebida para o seu bucket e retorna uma URL pré-assinada com validade configurável. O acesso à mídia expira conforme o `expires_at` — você pode obter uma nova URL consultando a mensagem novamente.
 
@@ -521,5 +521,6 @@ Quando o Object Storage está configurado, o Turbo Notify copia automaticamente 
 | `403` | `not_authorized` | A chave de acesso está inválida ou ausente. |
 | `403` | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
 | `404` | `not_found` | Mensagem não encontrada ou pertence a outro organization. |
+| `404` | `message_not_found` | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `429` | `rate_limit_exceeded` | Limite de requisições ultrapassado. |
 | `500` | `internal_error` | Erro interno inesperado no servidor. |

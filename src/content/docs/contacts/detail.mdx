@@ -60,6 +60,7 @@ contact = r.json()
 ```json
 {
   "id": "ct_a1b2c3d4e5f6789012345678901234ab",
+  "number_alias": "main",
   "phone_number": "+5571999294756",
   "name": "João Silva",
   "is_self": false,
@@ -78,12 +79,17 @@ contact = r.json()
 }
 ```
 
-O `phone_number` é o **E.164 completo** (sem máscara) — o mesmo número já
+O `number_alias` (logo após `id`) identifica o número TN a que este contato
+pertence — `"main"` ou o alias de um número extra (o mesmo telefone
+alcançado por dois números diferentes gera dois contatos distintos). O
+`phone_number` é o **E.164 completo** (sem máscara) — o mesmo número já
 exposto em `message.from`/`message.to` (ADR 2026-06-02). O campo `name` é o
 push name do contato no WhatsApp (coerente com o triplo `{id, name, number}`
 dos eventos `contact.*`). `picture` é uma união discriminada por `kind`
-(`available` | `pending` | `unavailable`), espelhando o bloco de mídia dos
+(`available` | `unavailable`), espelhando o bloco de mídia dos
 eventos; quando `kind` é `available`, o próprio bloco carrega `fetched_at`.
+A variante `pending` existe no contrato compartilhado mas é exclusiva dos
+webhooks do webhook-worker — este endpoint de leitura nunca a retorna.
 </ApiResponse>
 
 ## Erros

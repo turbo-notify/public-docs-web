@@ -342,7 +342,10 @@ Saiba mais sobre os números extra em [Números Extras](/numbers/add/).
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
 | `404`  | `message_not_found`     | O `message_id` não foi encontrado.                 |
-| `422`  | `sender_not_authorized` | O alias na URL não está ativo na conta.            |
+| `422`  | `no_active_session`     | A organização não tem sessão WhatsApp conectada.   |
+| `422`  | `sender_disconnected`   | O número extra do alias na URL está desconectado.  |
+| `422`  | `sender_not_found`      | O alias/número informado não corresponde a nenhum remetente da conta. |
+| `422`  | `session_not_connected` | A sessão do remetente não está conectada no momento do envio. |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.               |
 | `503`  | `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.        |
 

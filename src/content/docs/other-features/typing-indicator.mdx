@@ -432,13 +432,16 @@ aceite assíncrono e **nenhum evento de webhook** é entregue para essas operaç
 | Status | Código de erro          | Descrição                                          |
 | :----: | ----------------------- | -------------------------------------------------- |
 | `400`  | `invalid_json`          | O JSON da requisição está malformado ou inválido.  |
+| `400`  | `contact_not_found`     | O `contact_id` informado em `to` não pertence ao organization.  |
+| `400`  | `contacts_not_enabled`  | Envio por `contact_id` não está configurado nesta instância. |
+| `400`  | `groups_not_enabled`    | Suporte a grupos não está habilitado nesta instância. |
 | `402`  | `feature_not_available` | O recurso não está disponível no plano contratado. |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
-| `422`  | `contact_not_found`     | O `contact_id` informado em `to` não pertence ao organization.  |
-| `422`  | `contacts_not_enabled`  | Envio por `contact_id` não está configurado nesta instância. |
-| `422`  | `group_not_found`       | O `group_id` informado em `to` não foi encontrado. |
-| `422`  | `groups_not_enabled`    | Suporte a grupos não está habilitado nesta instância. |
-| `422`  | `sender_not_authorized` | O número remetente (alias do path) não está conectado/apto a enviar. |
+| `404`  | `group_not_found`       | O `group_id` informado em `to` não foi encontrado. |
+| `422`  | `no_active_session`     | A organização não tem sessão WhatsApp conectada.   |
+| `422`  | `sender_disconnected`   | O número extra do alias na URL está desconectado.  |
+| `422`  | `sender_not_found`      | O alias/número informado não corresponde a nenhum remetente da conta. |
+| `422`  | `session_not_connected` | A sessão do remetente não está conectada no momento do envio. |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.               |
 | `503`  | `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.        |

@@ -9,7 +9,17 @@ description: "POST /v1/typing-indicator now accepts to.group_id for WhatsApp gro
 
 ### Group support in typing indicator
 
-`POST /v1/typing-indicator` now accepts `{"group_id": "grp_…"}` as a recipient, in addition to the existing `{"number": "…"}`. `contact_id` is not supported for typing indicators.
+`POST /v1/typing-indicator` now accepts `{"group_id": "grp_…"}` as a recipient, in addition to the existing `{"number": "…"}`.
+
+| `to` field | Example | When to use |
+| ---------- | ------- | ----------- |
+| `number`   | `{"number": "+5511999999999"}` | 1:1 conversation |
+| `group_id` | `{"group_id": "grp_…"}` | WhatsApp group |
+| `contact_id` | `{"contact_id": "ct_…"}` | 1:1 conversation via a TN contact ID |
+
+`contact_id` is also supported — all three `to` forms (`number`, `group_id`,
+`contact_id`) are valid for the typing indicator, the same polymorphic model
+used by message sending.
 
 **New error codes:**
 - `group_not_found` (HTTP 422) — the supplied `group_id` does not belong to this organization.

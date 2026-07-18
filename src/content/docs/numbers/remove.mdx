@@ -134,18 +134,33 @@ Acesse a página de <DashboardLink path="/numbers">Números Extras</DashboardLin
 <ApiResponse
   status={200}
   body={{
-    number: '+5511988888888',
-    alias: 'clinica_tal',
+    scheduled_deletion_at: '2025-07-16T10:00:00Z',
+    refund_eligible: true,
+    refund_amount_cents: 0,
+    messages_sent: 3,
   }}
 />
 
+A resposta descreve o **resultado da exclusão**, não o número em si:
+
+| Campo | Tipo | Descrição |
+| ----- | ---- | --------- |
+| `scheduled_deletion_at` | string | Timestamp ISO 8601 de quando a exclusão (soft-delete) acontece. |
+| `refund_eligible` | boolean | `true` quando o número se qualifica para reembolso imediato (janela de 72h, poucas mensagens enviadas) — nesse caso a exclusão é **imediata** e `scheduled_deletion_at` é o momento atual. `false` quando a exclusão só ocorre no fim do ciclo de cobrança atual. |
+| `refund_amount_cents` | integer | Valor reembolsado em centavos (0 quando `refund_eligible` é `false`). |
+| `messages_sent` | integer | Total de mensagens já enviadas por este número — usado para determinar elegibilidade de reembolso. |
+
+A chamada é **idempotente**: repetir a requisição para um número já agendado
+para exclusão retorna o mesmo agendamento (sem gerar um novo reembolso).
+
 ## Erros possíveis
 
-| Status | Código de erro           | Descrição                                           |
-| :----: | ------------------------ | --------------------------------------------------- |
+| Status | Código de erro                 | Descrição                                           |
+| :----: | -------------------------------- | --------------------------------------------------- |
+| `400`  | `invalid_status_for_deletion`   | O número está `connected` — desconecte antes de agendar a exclusão. |
 | `402`  | `feature_not_available`  | O plano atual não suporta números extras.           |
 | `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.         |
 | `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
-| `404`  | `not_found`              | O alias informado não foi encontrado na conta.      |
+| `404`  | `extra_number_not_found` | O alias informado não foi encontrado na conta.      |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                |
 | `503`  | `whatsapp_unavailable`   | O WhatsApp está temporariamente fora do ar.         |

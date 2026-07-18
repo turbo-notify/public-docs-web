@@ -431,13 +431,19 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 | Status | Código de erro          | Descrição                                         |
 | :----: | ----------------------- | ------------------------------------------------- |
 | `400`  | `invalid_json`          | O JSON da requisição está malformado ou inválido. |
+| `400`  | `contact_not_found`     | O `contact_id` informado não pertence ao organization.  |
+| `400`  | `contacts_not_enabled`  | Envio por `contact_id` não configurado.           |
+| `400`  | `not_group_member`      | Sua linha não é mais participante do `group_id` informado — veja [Envio para grupo](#envio-para-grupo). |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.       |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
-| `422`  | `sender_not_authorized` | O alias na URL não está ativo na conta.           |
+| `422`  | `no_active_session`     | A organização não tem sessão WhatsApp conectada.  |
+| `422`  | `sender_disconnected`   | O número extra do alias na URL está desconectado. |
+| `422`  | `sender_not_found`      | O alias/número informado não corresponde a nenhum remetente da conta. |
+| `422`  | `session_not_connected` | A sessão do remetente não está conectada no momento do envio. |
+| `422`  | `extra_number_not_connected` | O número extra do alias na URL está registrado mas sua conexão companion-device não está ativa no momento. |
+| `422`  | `group_not_owned_by_number` | O `group_id` informado pertence a outro número da conta, não ao alias do path. |
 | `402`  | `feature_not_available` | Envio para grupo (`to.group_id`) requer plano `BUSINESS` ou superior — veja [Envio para grupo](#envio-para-grupo). |
 | `429`  | `rate_limit_exceeded`   | Limite de envio do plano ultrapassado.            |
-| `422`  | `contact_not_found`     | O `contact_id` informado não pertence ao organization.  |
-| `422`  | `contacts_not_enabled`  | Envio por `contact_id` não configurado.           |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.              |
 | `503`  | `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.       |
 
@@ -837,7 +843,7 @@ enviou — útil para correlacionar entregas inbound e outbound no mesmo grupo.
 :::caution[Organization precisa estar no grupo]
 A TN só envia para grupos onde sua linha (primary ou extra) é
 participante. Tentar enviar para um `group_id` em que você não está
-mais retorna 422 `not_group_member`. Re-entre no grupo via WhatsApp
+mais retorna 400 `not_group_member`. Re-entre no grupo via WhatsApp
 (o webhook `group.joined` confirma) e tente novamente.
 :::
 

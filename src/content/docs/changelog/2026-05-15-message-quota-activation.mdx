@@ -10,6 +10,17 @@ import ExternalLink from '@components/ExternalLink.astro';
 **Data:** 2026-05-15
 **Status:** Aplicado
 
+:::note[Atualização 2026-07-04]
+A partir de 2026-07-04 (veja [Quotas ancoradas no ciclo de
+faturamento](/changelog/2026-07-04-evaluated-cycle-quotas/)), o mecanismo de
+enforcement descrito nesta entrada deixou de ser uma janela rolling de 30
+dias e passou a medir contra o **ciclo de faturamento avaliado** da
+organization (`cycle_start`/`cycle_end`, ancorado na assinatura — não mais
+fixo em 30 dias). Os números de cada tier na tabela abaixo **permanecem
+corretos**, apenas a unidade do período mudou. Veja [Quota e uso](/usage/quota/)
+para o comportamento atual.
+:::
+
 ## Constatação da auditoria
 
 Uma auditoria interna em abril/2026 revelou um gap entre documentação e implementação: o quota mensal de mensagens por tier (`messages_{TIER}`) estava definido em `rate-sync.toml` e havia um `tier_rate_limit.py` guard, **mas nenhuma rota wired** a esse guard. O pipeline real usava apenas um limiter global `messages_per_month` (50.000/mês compartilhado entre todos os organizations).

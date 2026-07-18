@@ -8,11 +8,23 @@ sidebar:
 **Date:** 2026-06-22
 **Status:** Applied
 
-:::caution[Route change — breaking]
-This is a **breaking route change**. Every call to messages, contacts and groups
-must migrate to the number-nested path (`/v1/numbers/{alias}/…`). The old flat
-routes (`/v1/messages`, `/v1/contacts`, `/v1/groups` and their sub-routes) now
-return **404**.
+:::note[2026-06-25 update]
+The flat routes described as returning "404" in this entry were
+**reintroduced** three days later as a valid direct-access shorthand for the
+main number — see [Flat routes for the main number](/en/changelog/2026-06-25-flat-main-routes/).
+Today `/v1/messages`, `/v1/contacts` and `/v1/groups` (+ sub-routes) **never
+return 404** for being flat: they work as equivalents of
+`/v1/numbers/main/…`, with an identical response. The 404 described below was
+real only during the window between 2026-06-22 and 2026-06-25.
+:::
+
+:::caution[Route change — breaking change on 2026-06-22]
+This was a **breaking route change**. Every call to messages, contacts and
+groups had to migrate to the number-nested path (`/v1/numbers/{alias}/…`).
+Between 2026-06-22 and 2026-06-25, the old flat routes (`/v1/messages`,
+`/v1/contacts`, `/v1/groups` and their sub-routes) returned **404** — since
+2026-06-25 they work again as a shorthand for the main number (see the note
+above).
 :::
 
 ## What changed
@@ -24,8 +36,8 @@ organization. The API expresses this **structurally**: the routes live below the
 number route, identified by `{alias}` (`main` for the primary number or the alias
 of an extra number).
 
-| Before (flat — now 404) | Now (number-nested) |
-| ----------------------- | ------------------- |
+| Before (flat route, nesting required as of 2026-06-22) | Now (number-nested) |
+| -------------------------------------------------------- | ------------------- |
 | `POST /v1/messages` | `POST /v1/numbers/{alias}/messages` |
 | — (no public list existed) | `GET /v1/numbers/{alias}/messages` (cursor list — **new**) |
 | `GET /v1/messages/{id}` | `GET /v1/numbers/{alias}/messages/{id}` |
@@ -74,8 +86,16 @@ produces **two independent sends**.
 The `contact.quota.warning` and `contact.quota.exceeded` events now carry the
 **`number_alias` field in the envelope** (immediately below `organization_id`),
 identifying the number whose contact quota was reached. The event `data` is
-unchanged. `number_alias` stays **omitted** only on `storage.*` and the
-message-quota events (`message.quota.*`).
+unchanged. `number_alias` stays **omitted** only on `storage.*` and, at this
+time (2026-06-22), also on the message-quota events (`message.quota.*`) — the
+message quota was still organization-wide.
+
+:::note[2026-07-02 update]
+[ADR 2026-07-02 — Per-Number Message Quota](/reference/decisions/2026-07-02-per-number-message-quota/)
+made the message quota **per-number** too. Since then, `message.quota.warning`
+and `message.quota.exceeded` **also carry `number_alias`** in the envelope —
+the omission rule narrows to **`storage.*` only**, matching `contact.quota.*`.
+:::
 
 ### `GET /v1/events` accepts the `number_alias` filter
 
@@ -86,9 +106,13 @@ surfaces (`GET /v1/usage`, `GET /v1/usage/messages`, `GET /v1/events`,
 
 ## Compatibility
 
-Pre-production: the change is breaking with no transition layer. Flat routes
-return 404 immediately. Migrate every call to the nested path and start reading
-`number_alias` from the envelope for by-id calls.
+Pre-production: the change broke compatibility with no transition layer. Flat
+routes returned 404 immediately **between 2026-06-22 and 2026-06-25** — since
+then they're back as a valid shorthand for the main number
+([details](/en/changelog/2026-06-25-flat-main-routes/)). Migrate extra-number
+calls to the nested path (`/v1/numbers/{alias}/…`) and start reading
+`number_alias` from the envelope for by-id calls — this holds regardless of
+which route tier (flat or nested) you use.
 
 ## References
 

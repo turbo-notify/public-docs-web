@@ -8,12 +8,23 @@ sidebar:
 **Data:** 2026-06-22
 **Status:** Aplicado
 
-:::caution[Mudança de rota — quebra de compatibilidade]
-Esta é uma **mudança de rota** que quebra a compatibilidade. Toda chamada a
-mensagens, contatos e grupos precisa migrar para o caminho aninhado abaixo do
-número (`/v1/numbers/{alias}/…`). As rotas planas antigas
-(`/v1/messages`, `/v1/contacts`, `/v1/groups` e suas sub-rotas) passam a
-retornar **404**.
+:::note[Atualização 2026-06-25]
+As rotas planas mencionadas como "404" nesta entrada foram **reintroduzidas**
+três dias depois como um tier de acesso direto válido ao número principal —
+veja [Rotas flat para o número principal](/changelog/2026-06-25-flat-main-routes/).
+Hoje `/v1/messages`, `/v1/contacts` e `/v1/groups` (+ sub-rotas) **nunca
+retornam 404** por serem flat: funcionam como equivalentes de
+`/v1/numbers/main/…`, com resposta idêntica. O 404 descrito abaixo foi real
+apenas na janela entre 2026-06-22 e 2026-06-25.
+:::
+
+:::caution[Mudança de rota — quebra de compatibilidade em 2026-06-22]
+Esta foi uma **mudança de rota** que quebrou a compatibilidade. Toda chamada a
+mensagens, contatos e grupos precisou migrar para o caminho aninhado abaixo do
+número (`/v1/numbers/{alias}/…`). Entre 2026-06-22 e 2026-06-25, as rotas
+planas antigas (`/v1/messages`, `/v1/contacts`, `/v1/groups` e suas
+sub-rotas) retornavam **404** — desde 2026-06-25 elas voltaram a funcionar
+como forma curta para o número principal (veja a nota acima).
 :::
 
 ## O que mudou
@@ -25,7 +36,7 @@ sua organização. Isso é expresso de forma **estrutural** na API: as rotas
 residem abaixo da rota do número, identificado pelo `{alias}` (`main` para o
 número principal ou o alias de um número extra).
 
-| Antes (plano — agora 404) | Agora (aninhado por número) |
+| Antes (rota plana, aninhamento obrigatório em 2026-06-22) | Agora (aninhado por número) |
 | ------------------------- | --------------------------- |
 | `POST /v1/messages` | `POST /v1/numbers/{alias}/messages` |
 | — (não havia lista pública) | `GET /v1/numbers/{alias}/messages` (lista por cursor — **novo**) |
@@ -75,8 +86,16 @@ produz **dois envios independentes**.
 Os eventos `contact.quota.warning` e `contact.quota.exceeded` passam a carregar
 o campo **`number_alias` no envelope** (logo abaixo de `organization_id`),
 identificando o número cuja quota de contatos foi atingida. O `data` do evento
-permanece inalterado. `number_alias` continua **omitido** apenas em `storage.*` e
-nos eventos de quota de mensagem (`message.quota.*`).
+permanece inalterado. `number_alias` continua **omitido** apenas em `storage.*` e,
+neste momento (2026-06-22), também nos eventos de quota de mensagem
+(`message.quota.*`) — a cota de mensagem ainda era por organização.
+
+:::note[Atualização 2026-07-02]
+A [ADR 2026-07-02 — Per-Number Message Quota](/reference/decisions/2026-07-02-per-number-message-quota/)
+tornou a cota de mensagem **por número** também. Desde então, `message.quota.warning`
+e `message.quota.exceeded` **também carregam `number_alias`** no envelope — a regra
+de omissão estreita para **somente `storage.*`**, igual à de `contact.quota.*`.
+:::
 
 ### `GET /v1/events` aceita o filtro `number_alias`
 
@@ -87,9 +106,13 @@ permanecem **no nível raiz** e não foram afetadas pela mudança de rota.
 
 ## Compatibilidade
 
-Pré-produção: a mudança quebra a compatibilidade sem camada de transição. As
-rotas planas retornam 404 imediatamente. Migre todas as chamadas para o caminho
-aninhado e passe a ler o `number_alias` do envelope para chamadas por id.
+Pré-produção: a mudança quebrou a compatibilidade sem camada de transição.
+As rotas planas retornaram 404 imediatamente **entre 2026-06-22 e
+2026-06-25** — desde então voltaram como forma curta válida para o número
+principal ([detalhes](/changelog/2026-06-25-flat-main-routes/)). Migre
+chamadas de números extras para o caminho aninhado (`/v1/numbers/{alias}/…`)
+e passe a ler o `number_alias` do envelope para chamadas por id — isso vale
+independentemente de qual tier de rota (plana ou aninhada) você usa.
 
 ## Referências
 

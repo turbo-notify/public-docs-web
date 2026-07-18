@@ -207,9 +207,11 @@ only statuses that pass unrestricted):
 />
 
 `details.status` is one of: `trialing` (allowed, does not raise this error),
-`trial_expired` (trial ended with no paid plan), `past_due`, `pending`,
-`terminated`, `canceled` (past the already-paid period), or `missing` (the
-organization has no subscription at all).
+`trial_expired` (trial ended with no paid plan), `past_due`, or `canceled`
+(past the already-paid period) — or `missing` (the organization has no
+subscription at all; this also covers the internal `pending`/`terminated`
+statuses, which are filtered out at the repository layer and collapse into
+`missing`, never appearing verbatim in this field).
 
 ### 402 — feature not available on this plan
 

@@ -137,10 +137,15 @@ Para ativar (conectar) um número extra que está inativo, faça uma requisiçã
 <ApiResponse
   status={200}
   body={{
-    status: 'connected',
-    at: '2025-07-16T10:01:00Z',
+    status: 'connecting',
+    at: '',
   }}
 />
+
+A resposta confirma apenas que a **transição foi aceita** — o número entra
+em estado `connecting` (`at` vem vazio nesta chamada). O status final
+(`connected` ou `failed`) chega via o webhook `number.connected` /
+`number.connect.failed`, ou consultando o [Status dos Números Extras](/numbers/status/).
 
 ## Desativação
 
@@ -262,18 +267,42 @@ Para desativar (desconectar) um número extra que está ativo, faça uma requisi
 <ApiResponse
   status={200}
   body={{
-    status: 'disconnected',
-    at: '2025-07-16T10:05:00Z',
+    status: 'disconnecting',
+    at: '',
   }}
 />
 
+`disconnecting` é um literal de **confirmação de aceite** exclusivo desta
+resposta — diferente de `connecting`, ele não é um dos valores da
+[Tabela de status](/numbers/status/#tabela-de-status) e não aparece em
+`GET /v1/numbers/{alias}` (que, logo após esta chamada, ainda mostra o
+status anterior até o worker concluir a desconexão). O status final
+(`disconnected`) chega via o webhook `number.disconnected`, ou consultando
+o [Status dos Números Extras](/numbers/status/).
+
 ## Erros possíveis
 
-| Status | Código de erro     | Descrição                                                     |
-| :----: | ------------------ | ------------------------------------------------------------- |
-| `400`  | `invalid_json`     | O JSON da requisição está malformado ou inválido.             |
-| `403`  | `not_authorized`   | A chave de acesso está inválida ou ausente.                   |
-| `403`  | `insufficient_scope` | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
-| `409`  | `invalid_status`   | O número já está no status solicitado.                        |
-| `422`  | `number_not_found` | O alias informado não corresponde a nenhum número cadastrado. |
-| `500`  | `internal_error`   | Erro interno inesperado no servidor.                          |
+### Ativação (`POST /v1/numbers/{alias}/connect`)
+
+| Status | Código de erro              | Descrição                                                     |
+| :----: | ---------------------------- | ------------------------------------------------------------- |
+| `402`  | `feature_not_available`      | O plano atual não suporta números extras.                     |
+| `403`  | `no_device_link`             | O número extra não tem um device link associado (estado inconsistente). |
+| `403`  | `extra_number_not_paired`    | O número extra ainda não concluiu o pareamento — chame `POST /v1/numbers/{alias}/pair` primeiro. |
+| `404`  | `extra_number_not_found`     | O alias informado não corresponde a nenhum número cadastrado. |
+| `409`  | `already_connected`          | O número extra já está conectado.                              |
+| `409`  | `already_connecting`         | Já existe uma tentativa de conexão em andamento.                |
+| `500`  | `internal_error`             | Erro interno inesperado no servidor.                           |
+
+### Desativação (`POST /v1/numbers/{alias}/disconnect`)
+
+| Status | Código de erro          | Descrição                                                     |
+| :----: | ------------------------ | ------------------------------------------------------------- |
+| `402`  | `feature_not_available`  | O plano atual não suporta números extras.                     |
+| `404`  | `extra_number_not_found` | O alias informado não corresponde a nenhum número cadastrado. |
+| `422`  | `no_active_session`      | O número extra já não está conectado (nada a desconectar).    |
+| `500`  | `internal_error`         | Erro interno inesperado no servidor.                           |
+
+Ambas as rotas também retornam `403 not_authorized` (chave inválida/ausente)
+e `403 insufficient_scope` (falta o escopo `numbers:write`, resposta inclui
+`required_scope`) como qualquer outro endpoint autenticado.

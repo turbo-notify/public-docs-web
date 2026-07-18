@@ -33,18 +33,21 @@ Contatos são escopados por número. Para o **número principal**, use as rotas 
 
 1. **Discovery** — primeira mensagem `(organization, phone)` cria o `Contact` com `source` apropriado.
 2. **Enrichment** — pipeline assíncrono enriquece com `name`, `profile_picture`. Falhas são fail-open: o contato existe mesmo sem enriquecimento.
-3. **Quota** — cada contato distinto **contactado via Turbo Notify** dentro da janela deslizante (30 dias) consome um slot do quota mensal de contatos — **novo ou recorrente**. Re-mensagear alguém cujo envio anterior já saiu da janela consome um slot novamente; re-mensagear as mesmas pessoas dentro da janela **não é mais grátis**.
+3. **Quota** — cada contato distinto **contactado via Turbo Notify** dentro do **ciclo de faturamento avaliado** da organização (`cycle_start` até `cycle_end`, não mais uma janela rolling de 30 dias — ADR 2026-07-04) consome um slot da quota de contatos do ciclo — **novo ou recorrente**. Re-mensagear alguém já contado neste ciclo consome um slot novamente; a quota só reseta em `resets_at` (fim do ciclo), nunca antes.
 
 ## Tier de quota
 
-| Tier | Contatos distintos/30d | Mensagens/30d |
-| ---- | ----------------------:| -------------:|
+| Tier | Contatos distintos/ciclo | Mensagens/ciclo |
+| ---- | ------------------------:| ----------------:|
 | free     | 100      | 1.000      |
 | solo     | 1.000    | 10.000     |
 | business | 5.000    | 50.000     |
 | custom   | 50.000+  | 500.000+   |
 
-A razão 10:1 (mensagens/contato) reflete o uso médio em produção. Customizações por organization via `plan_overrides`.
+A razão 10:1 (mensagens/contato) reflete o uso médio em produção. Ambas as
+quotas são **por número** (cada número da organização tem sua própria
+franquia). Customizações por organization via `plan_overrides`, aplicadas
+por número.
 
 ## Origens (source)
 

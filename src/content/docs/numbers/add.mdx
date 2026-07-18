@@ -170,21 +170,47 @@ Também é possível cadastrar números extras de forma programática pela API.
   </TabItem>
 </Tabs>
 
-A resposta conterá o código de pareamento que deve ser inserido no WhatsApp do aparelho.
+O cadastro (`POST /v1/numbers`) e o pareamento (obtenção do código a ser
+inserido no WhatsApp) são **operações separadas**. A resposta do cadastro
+confirma apenas a criação do número — o `status` sempre nasce `"pending"` e
+não há código de pareamento inline:
 
 <ApiResponse
-  status={200}
+  status={201}
   body={{
-    code: 'AAAA-BBBB',
+    alias: 'vendas_sp',
+    phone_number: '+5511988888888',
+    status: 'pending',
+    created_at: '2025-07-16T10:00:00Z',
+    description: null,
   }}
 />
+
+## Obtendo o código de pareamento
+
+Depois de criar o número, chame `POST /v1/numbers/{alias}/pair` para
+disparar a geração do código e obtê-lo:
+
+<ApiResponse
+  status={202}
+  body={{
+    alias: 'vendas_sp',
+    status: 'pairing',
+  }}
+/>
+
+Números extras sempre pareiam por **código de vinculação** (`pairing_code`)
+— QR code é exclusivo do número principal. O código em si é entregue de
+forma assíncrona — consulte [Status dos Números Extras](/numbers/status/),
+cujo bloco `pairing` traz `{method, data, expires_at}` enquanto `status` é
+`"pairing"`.
 
 ## Usabilidade
 
 - Cada número extra deve pertencer a um aparelho com WhatsApp ativo.
-- O código de pareamento tem validade limitada. Caso expire, será necessário refazer a solicitação.
-- Você pode definir um alias para o número extra durante o cadastro, facilitando o uso no envio de mensagens via campo `from`.
-- Após o pareamento, o número ficará com status `pending` até que a vinculação seja confirmada.
+- O código de pareamento tem validade limitada. Caso expire, será necessário refazer a solicitação de pareamento.
+- Você pode definir um alias para o número extra durante o cadastro, facilitando o uso no envio de mensagens via URL (`/v1/numbers/{alias}/...`).
+- O número nasce com status `pending` e só avança para `pairing` após a chamada de pareamento.
 
 ## Status
 
@@ -197,10 +223,11 @@ Veja os principais erros que podem ocorrer no cadastro de números extras:
 | Status | Código de erro           | Descrição                                              |
 | :----: | ------------------------ | ------------------------------------------------------ |
 | `400`  | `invalid_json`           | O JSON da requisição está malformado ou inválido.      |
+| `400`  | `reserved_alias`         | O alias `"main"` é reservado para o número principal e não pode ser usado em um número extra. |
 | `402`  | `feature_not_available`  | O plano atual não suporta números extras.              |
 | `402`  | `extra_numbers_limit_reached` | A organization já atingiu o teto de números extras do tier (BUSINESS 300 / CUSTOM 1.000). A resposta inclui `details.limit` e `details.current`. |
 | `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.            |
 | `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
-| `409`  | `number_already_exists`  | O número informado já está cadastrado na conta.        |
+| `409`  | `number_already_exists`  | O alias ou o número informado já está cadastrado na conta. |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                   |
 | `503`  | `whatsapp_unavailable`   | O WhatsApp está temporariamente fora do ar.            |

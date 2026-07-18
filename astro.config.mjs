@@ -146,6 +146,11 @@ export default defineConfig({
                   translations: { en: 'Send Media', es: 'Envío de medios' },
                 },
                 {
+                  slug: 'messages/list',
+                  label: 'Listar',
+                  translations: { en: 'List', es: 'Listar' },
+                },
+                {
                   slug: 'messages/get',
                   label: 'Consultar',
                   translations: { en: 'Get', es: 'Consultar' },
@@ -164,6 +169,11 @@ export default defineConfig({
                   slug: 'messages/reactions',
                   label: 'Reações',
                   translations: { en: 'Reactions', es: 'Reacciones' },
+                },
+                {
+                  slug: 'messages/edit-delete',
+                  label: 'Editar e deletar',
+                  translations: { en: 'Edit & Delete', es: 'Editar y eliminar' },
                 },
                 {
                   slug: 'messages/polling',
@@ -253,6 +263,13 @@ export default defineConfig({
           translations: { en: 'Usage', es: 'Uso' },
           items: [
             { slug: 'usage/quota', label: 'Quota', translations: { en: 'Quota', es: 'Quota' } },
+          ],
+        },
+        {
+          label: 'Organização',
+          translations: { en: 'Organization', es: 'Organización' },
+          items: [
+            { slug: 'organizations/overview', label: 'Visão geral', translations: { en: 'Overview', es: 'Visión General' } },
           ],
         },
         {

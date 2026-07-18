@@ -224,4 +224,5 @@ Veja [Quota e Uso](/usage/quota/) para a tabela completa de features por tier.
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.                                    |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:read`.                         |
 | `404`  | `not_found`             | A mensagem não foi encontrada (ou está fora da janela de retenção do tier).    |
+| `404`  | `message_not_found`     | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.                                           |

@@ -1,0 +1,313 @@
+---
+title: Organização
+description: Endpoints GET /v1/organizations e GET /v1/organizations/{id} — dados da sua própria organização no Turbo Notify.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+O Turbo Notify é **single-organization por chave de API**: cada chave pertence a exatamente uma organização, e estes dois endpoints só permitem ler os dados da **sua própria** organização — não há um diretório de organizações de terceiros.
+
+**Escopo obrigatório:** `organizations:read` (selecionável na criação da chave de API no dashboard).
+
+## Listar organização
+
+`GET /v1/organizations` retorna sempre uma coleção de **um único item** — a
+organização autenticada — no formato de lista padrão da API (`data`,
+`cursor`, `has_more`). `cursor` é sempre `null` e `has_more` é sempre
+`false`; não há paginação real aqui.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="listar-organizacao.sh"
+    curl -X GET \
+      https://api.turbonotify.com/v1/organizations \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="listar-organizacao.js"
+    const response = await fetch('https://api.turbonotify.com/v1/organizations', {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer SUA_CHAVE' }
+    });
+
+    const { data } = await response.json();
+    console.log(data[0]);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="listar_organizacao.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/organizations"
+    headers = {"Authorization": "Bearer SUA_CHAVE"}
+
+    response = requests.get(url, headers=headers)
+    result = response.json()
+    print(result["data"][0])
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="listar_organizacao.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/v1/organizations", nil)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="listar-organizacao.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/organizations';
+
+    $options = [
+        'http' => [
+            'header' => ['Authorization: Bearer SUA_CHAVE'],
+            'method' => 'GET'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response['data'][0]);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="ListarOrganizacao.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var response = await client.GetAsync("https://api.turbonotify.com/v1/organizations");
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="ListarOrganizacao.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class ListarOrganizacao {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/organizations"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .GET()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+### Resposta (200)
+
+<ApiResponse
+  status={200}
+  body={{
+    data: [
+      {
+        id: 'org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+        name: 'Clínica Alpha',
+        plan: 'business',
+        locale: 'pt-BR',
+        timezone: 'America/Sao_Paulo',
+        suspended_at: null,
+        created_at: '2026-03-01T09:00:00Z',
+        updated_at: '2026-06-20T14:30:00Z',
+      },
+    ],
+    cursor: null,
+    has_more: false,
+  }}
+/>
+
+## Detalhe da organização
+
+`GET /v1/organizations/{organization_id}` retorna o mesmo objeto, sem o
+envelope de lista. O `{organization_id}` deve ser o `org_{hex32}` da
+**própria** organização autenticada — qualquer outro valor (mesmo que seja
+um `org_` válido de outra organização) retorna `404`, nunca vaza dados de
+terceiros.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="detalhe-organizacao.sh"
+    curl -X GET \
+      https://api.turbonotify.com/v1/organizations/org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4 \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="detalhe-organizacao.js"
+    const organizationId = 'org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4';
+    const response = await fetch(
+      `https://api.turbonotify.com/v1/organizations/${organizationId}`,
+      {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer SUA_CHAVE' }
+      }
+    );
+
+    const organization = await response.json();
+    console.log(organization);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="detalhe_organizacao.py"
+    import requests
+
+    organization_id = "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
+    url = f"https://api.turbonotify.com/v1/organizations/{organization_id}"
+    headers = {"Authorization": "Bearer SUA_CHAVE"}
+
+    response = requests.get(url, headers=headers)
+    organization = response.json()
+    print(organization)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="detalhe_organizacao.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        organizationID := "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
+        req, _ := http.NewRequest("GET",
+            "https://api.turbonotify.com/v1/organizations/"+organizationID, nil)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="detalhe-organizacao.php"
+    <?php
+    $organizationId = 'org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4';
+    $url = "https://api.turbonotify.com/v1/organizations/{$organizationId}";
+
+    $options = [
+        'http' => [
+            'header' => ['Authorization: Bearer SUA_CHAVE'],
+            'method' => 'GET'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="DetalheOrganizacao.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var organizationId = "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4";
+    var response = await client.GetAsync(
+        $"https://api.turbonotify.com/v1/organizations/{organizationId}"
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="DetalheOrganizacao.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class DetalheOrganizacao {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+            var organizationId = "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4";
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create(
+                    "https://api.turbonotify.com/v1/organizations/" + organizationId))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .GET()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+### Resposta (200)
+
+<ApiResponse
+  status={200}
+  body={{
+    id: 'org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+    name: 'Clínica Alpha',
+    plan: 'business',
+    locale: 'pt-BR',
+    timezone: 'America/Sao_Paulo',
+    suspended_at: null,
+    created_at: '2026-03-01T09:00:00Z',
+    updated_at: '2026-06-20T14:30:00Z',
+  }}
+/>
+
+## Campos da resposta
+
+| Campo | Tipo | Descrição |
+| ----- | ---- | --------- |
+| `id` | string | Identificador público da organização (`org_` + 32 hex) |
+| `name` | string | Nome cadastrado da organização |
+| `plan` | string | Identificador do plano contratado (ex.: `free`, `solo`, `business`, `custom`) |
+| `locale` | string | Locale configurado (ex.: `pt-BR`, `en`) |
+| `timezone` | string | Timezone IANA usado para exibir `created_at`/`updated_at` com offset em outras superfícies (ex.: `America/Sao_Paulo`) |
+| `suspended_at` | string\|null | Timestamp ISO 8601 de suspensão; `null` quando a organização está ativa |
+| `created_at` | string | Timestamp ISO 8601 de criação da organização |
+| `updated_at` | string | Timestamp ISO 8601 da última atualização dos dados cadastrais |
+
+Apenas campos seguros para exposição pública aparecem aqui — flags
+administrativas de anti-ban e overrides de billing nunca são retornados por
+este endpoint.
+
+## Erros possíveis
+
+| Status | Código de erro           | Descrição                                              |
+| :----: | ------------------------- | -------------------------------------------------------- |
+| `403`  | `not_authorized`          | A chave de acesso está inválida ou ausente.              |
+| `403`  | `insufficient_scope`      | A chave de acesso não possui o escopo `organizations:read` (resposta inclui `required_scope`). |
+| `404`  | `organization_not_found`  | *(apenas detalhe)* O `{organization_id}` informado não corresponde à organização autenticada. |
+| `500`  | `internal_error`          | Erro interno inesperado no servidor.                     |
+
+Veja também: [Chave de acesso](/general/access-key/) · [Números](/numbers/add/).

@@ -14,30 +14,31 @@ import ApiResponse from '@components/ApiResponse.astro';
 | 400  | `invalid_phone_number` | Filtro `phone` não está em E.164 |
 | 400  | `invalid_contact_id` | `contact_id` não bate com `^ct_[0-9a-f]{32}$` |
 | 400  | `invalid_cursor` | Cursor opaco corrompido |
-| 402  | `contact_quota_exceeded` | Quota mensal de contatos distintos atingida |
+| 402  | `contact_quota_exceeded` | Quota de contatos distintos do ciclo atingida |
 | 404  | `contact_not_found` | ID inválido ou de outro organization |
 | 404  | `contact_picture_unavailable` | Sem foto disponível para este contato |
-| 429  | `rate_limit_exceeded` | Limite de refresh por minuto |
+| 429  | `refresh_rate_limited` | Limite de refresh por minuto |
 
 ## Exemplo de resposta 402
 
-Retornado pelo `SendMessageUseCase` quando o organization tenta contatar via Turbo Notify um contato que passa a ser **contado na janela atual** (`counted_this_window`) — um contato **novo** OU um contato **recorrente** cujo envio anterior ficou fora da janela — e a quota de contatos distintos já está esgotada.
+Retornado pelo pipeline de envio (`ContactQuotaGuardStep`) quando a organização tenta contatar via Turbo Notify um contato que passa a ser **contado no ciclo atual** (`counted_this_cycle`) — um contato **novo** OU um contato **recorrente** já contado neste ciclo — e a quota de contatos distintos do ciclo já está esgotada.
 
 <ApiResponse status={402}>
 ```json
 {
   "error": "contact_quota_exceeded",
+  "message": "Distinct-contacts quota exceeded for tier FREE (100/100 this cycle)",
   "details": {
     "quota": 100,
     "used": 100,
-    "resets_at": "2026-06-14T00:00:00Z",
-    "tier": "free"
+    "resets_at": "2026-08-01T00:00:00Z",
+    "tier": "FREE"
   }
 }
 ```
 </ApiResponse>
 
-**Ação recomendada:** upgrade plan. Diferentemente de 429, 402 não tem `Retry-After` — o erro é estrutural (a janela de 30 dias precisa rolar ou o tier precisa subir).
+**Ação recomendada:** upgrade plan. Diferentemente de 429, 402 não tem `Retry-After` — o erro é estrutural (o ciclo de faturamento avaliado precisa fechar, em `resets_at`, ou o tier precisa subir).
 
 ## Diferença 402 vs 429
 
@@ -45,7 +46,7 @@ Retornado pelo `SendMessageUseCase` quando o organization tenta contatar via Tur
 | - | -------------------- | --------------------- |
 | Semântica | Estrutural — "upgrade plan" | Temporal — "retry depois" |
 | Header | — | `Retry-After: <segundos>` |
-| Reset | Em até 30 dias (janela rolling) ou upgrade | Em segundos/minutos |
-| Quando | Quota mensal | Burst protection |
+| Reset | No fim do ciclo de faturamento avaliado (`resets_at`) ou upgrade | Em segundos/minutos |
+| Quando | Quota do ciclo | Burst protection |
 
 Veja também: [Quota e uso](/usage/quota/).

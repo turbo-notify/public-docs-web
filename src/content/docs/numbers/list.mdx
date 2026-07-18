@@ -127,6 +127,15 @@ Liste todos os números extras vinculados à sua conta para consultar alias, nú
   body={{
     data: [
       {
+        contact_id: 'ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+        name: 'Turbo Notify',
+        type: 'main',
+        alias: 'main',
+        number: '5511973117056',
+        description: null,
+        status: { status: 'connected', at: '2025-07-16T09:00:00Z', reason: null },
+      },
+      {
         contact_id: 'ct_c7abb1f5ee9640bf86a0a20290810ae9',
         name: 'Condomínio Alpha',
         type: 'extra',
@@ -142,7 +151,7 @@ Liste todos os números extras vinculados à sua conta para consultar alias, nú
         alias: 'condominio_2',
         number: '5511999999998',
         description: null,
-        status: { status: 'connected', at: '2025-07-18T14:22:00Z', reason: null },
+        status: { status: 'connecting', at: '2025-07-18T14:22:00Z', reason: null },
       },
       {
         contact_id: null,
@@ -159,6 +168,10 @@ Liste todos os números extras vinculados à sua conta para consultar alias, nú
   }}
 />
 
+`GET /v1/numbers` sempre retorna **todos** os números vivos da organização —
+o **principal primeiro**, seguido pelos extras em ordem de criação. Não é
+uma rota exclusiva de números extras.
+
 **Escopo obrigatório:** `numbers:read`
 
 ## Campos da resposta
@@ -170,14 +183,14 @@ Liste todos os números extras vinculados à sua conta para consultar alias, nú
 | `has_more` | boolean | `true` se há mais páginas disponíveis |
 | `data[].contact_id` | string\|null | Identificador público (`ct_…`) do contato próprio do número; `null` enquanto não resolvido |
 | `data[].name` | string\|null | Nome da conta WhatsApp do número (capturado na conexão); `null` enquanto não houver conexão estabelecida |
-| `data[].type` | string | Sempre `"extra"` para números extras |
-| `data[].alias` | string | Identificador único do número extra na conta |
+| `data[].type` | string | `"main"` para o número principal (sempre o primeiro item) ou `"extra"` para números extras |
+| `data[].alias` | string | Identificador único do número na conta (`"main"` para o principal) |
 | `data[].number` | string | Número de telefone em dígitos E.164 (sem `+`) |
 | `data[].description` | string\|null | Descrição livre definida pelo usuário |
 | `data[].status` | object | `{status, at, reason?}` — estado atual do número |
-| `data[].status.status` | string | `active`, `inactive`, `pending`, `pairing`, `failed` ou `revoked` |
+| `data[].status.status` | string | `pending`, `pairing`, `inactive`, `connecting`, `connected`, `disconnected`, `reconnecting`, `failed`, `revoked` ou `pending_deletion` — veja [Tabela de status](/numbers/status/#tabela-de-status) |
 | `data[].status.at` | string | Timestamp ISO 8601 da última mudança de status |
-| `data[].status.reason` | string\|null | Motivo de falha quando `status = "failed"`; `null` caso contrário |
+| `data[].status.reason` | string\|null | Reservado para o motivo de falha — **hoje sempre `null`**, independente do `status` (inclusive em `"failed"`); a rota ainda não popula este campo. |
 
 ## Erros possíveis
 

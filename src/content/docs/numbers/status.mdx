@@ -141,12 +141,23 @@ Para verificar o status de um número extra específico, faça uma requisição 
     number: '5511999999997',
     status: 'connected',
     at: '2025-07-16T10:01:00Z',
-    description: 'Avisos do condomínio 1',
+    description: null,
     scheduled_deletion_at: null,
     reason: null,
     pairing: null,
   }}
 />
+
+:::note[`description`, `scheduled_deletion_at` e `reason` sempre `null` aqui]
+Diferente de [Listagem](/numbers/list/), que retorna a `description` real
+cadastrada, este endpoint (`GET /v1/numbers/{alias}`) hoje retorna
+`description`, `scheduled_deletion_at` **e `reason`** sempre como `null`,
+independente do valor real — nenhum motivo de falha é populado hoje, mesmo
+quando `status: "failed"`. Quando o número está com `status:
+"pending_deletion"`, o timestamp da exclusão agendada aparece no campo `at`
+(não em `scheduled_deletion_at`). Para a descrição cadastrada, consulte
+[Listagem](/numbers/list/).
+:::
 
 ## Campos da resposta
 
@@ -154,14 +165,14 @@ Para verificar o status de um número extra específico, faça uma requisição 
 | ----- | ---- | --------- |
 | `contact_id` | string\|null | Identificador público (`ct_…`) do contato próprio do número; `null` enquanto não resolvido |
 | `name` | string\|null | Nome da conta WhatsApp do número (capturado na conexão); `null` enquanto não houver conexão estabelecida |
-| `type` | string | Sempre `"extra"` para números extras |
+| `type` | string | Sempre `"extra"` neste endpoint (números extras) — para o principal use `GET /v1/numbers/main` |
 | `alias` | string | Identificador único do número extra na conta |
 | `number` | string | Número de telefone em dígitos E.164 (sem `+`) |
-| `status` | string | Estado atual — veja tabela abaixo |
-| `at` | string | Timestamp ISO 8601 da última mudança de status |
-| `description` | string\|null | Descrição livre definida pelo usuário |
-| `scheduled_deletion_at` | string\|null | Timestamp ISO 8601 da exclusão programada; `null` se não agendado |
-| `reason` | string\|null | Motivo de falha quando `status = "failed"`; `null` caso contrário |
+| `status` | string | Estado atual — veja [Tabela de status](#tabela-de-status) |
+| `at` | string | Timestamp ISO 8601 da última mudança de status; quando `status = "pending_deletion"`, é o momento da exclusão agendada |
+| `description` | string\|null | Sempre `null` neste endpoint hoje — veja nota acima |
+| `scheduled_deletion_at` | string\|null | Sempre `null` neste endpoint hoje — veja nota acima |
+| `reason` | string\|null | Reservado para o motivo de falha — **hoje sempre `null`**, veja a nota acima |
 | `pairing` | object\|null | Informações de pareamento — presente apenas durante o processo de vinculação |
 
 ### Bloco de pareamento (`pairing`)
@@ -176,18 +187,25 @@ Presente quando `status` é `pairing` e o código ainda está válido:
 
 ## Tabela de status
 
-| Status     | Descrição                                                        |
-| ---------- | ---------------------------------------------------------------- |
-| `pending`  | Número cadastrado; aguardando início do pareamento.              |
-| `pairing`  | Código de pareamento gerado; aguardando inserção no WhatsApp.    |
-| `active`   | O número está vinculado e pronto para envio de mensagens.        |
-| `inactive` | O número foi desativado manualmente e não pode enviar mensagens. |
-| `failed`   | A vinculação falhou. Verifique o motivo abaixo.                  |
-| `revoked`  | O dispositivo foi desvinculado pelo WhatsApp.                    |
+| Status              | Descrição                                                                 |
+| -------------------- | -------------------------------------------------------------------------- |
+| `pending`            | Número cadastrado; aguardando início do pareamento.                       |
+| `pairing`            | Código de pareamento gerado; aguardando inserção no WhatsApp.             |
+| `inactive`           | Autenticação obtida, mas a conexão ainda não foi estabelecida.            |
+| `connecting`         | Conexão sendo estabelecida (`POST .../connect` aceito).                   |
+| `connected`          | O número está vinculado e pronto para envio de mensagens.                 |
+| `disconnected`       | Conexão perdida ou desativada; a autenticação é preservada para reconectar. |
+| `reconnecting`       | Reconexão automática em andamento após uma queda.                         |
+| `failed`             | A vinculação falhou. Verifique o motivo abaixo.                           |
+| `revoked`            | O dispositivo foi desvinculado pelo WhatsApp.                             |
+| `pending_deletion`   | Exclusão agendada (`DELETE /v1/numbers/{alias}`) — sobrepõe qualquer outro status até a exclusão. |
 
 ## Motivos de falha
 
-Quando o status é `failed`, o campo `reason` indica o motivo:
+O campo `reason` foi projetado para indicar o motivo quando `status` é
+`failed`, mas **ainda não está implementado** — a rota sempre retorna
+`reason: null`, mesmo em `status: "failed"` (veja a nota acima). Os valores
+abaixo descrevem a intenção original e **ainda não são emitidos** pela API:
 
 | Motivo                  | Descrição                                                     |
 | ----------------------- | ------------------------------------------------------------- |
@@ -201,5 +219,5 @@ Quando o status é `failed`, o campo `reason` indica o motivo:
 | `402`  | `feature_not_available` | O plano atual não suporta números extras.           |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.         |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `numbers:read` (resposta inclui `required_scope`). |
-| `404`  | `not_found`             | O alias informado não foi encontrado na conta.      |
+| `404`  | `extra_number_not_found` | O alias informado não foi encontrado na conta.     |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.                |

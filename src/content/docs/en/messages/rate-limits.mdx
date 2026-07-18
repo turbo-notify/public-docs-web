@@ -58,7 +58,7 @@ The [contact refresh](/en/contacts/refresh/) endpoint (`POST .../contacts/{conta
 | `BUSINESS` | 120 |
 | `CUSTOM`   | 600 |
 
-Exceeding this limit returns `429 rate_limit_exceeded` with a `Retry-After` header.
+Exceeding this limit returns `429 refresh_rate_limited` with a `Retry-After` header.
 
 ## Burst protection (operational, same across every tier)
 
@@ -94,8 +94,9 @@ To avoid issues, follow the responsible-usage recommendations in [Abuse Preventi
 | Status | Error code               | Description                                                              |
 | :----: | ------------------------- | -------------------------------------------------------------------------- |
 | `429`  | `send_rate_spacing`      | Sent before the tier's minimum interval between messages, on the same number. |
-| `429`  | `rate_limit_exceeded`    | Contact refresh limit exceeded.                                            |
-| `429`  | `too_many_requests`      | Requests-per-minute limit exceeded.                                        |
+| `429`  | `refresh_rate_limited`   | Contact refresh limit exceeded.                                            |
+| `429`  | `messages_per_minute_limit_exceeded` | Burst protection: 10,000 sends/minute per replica exceeded (see [above](#burst-protection-operational-same-across-every-tier)). |
+| `429`  | `recipients_per_day_limit_exceeded`  | Burst protection: 2,000 distinct recipients/day exceeded (see [above](#burst-protection-operational-same-across-every-tier)). |
 | `503`  | `service_unavailable`    | Service temporarily unavailable due to overload.                          |
 
 For **quota** errors (`402 contact_quota_exceeded`, `429 messages_quota_exceeded`, `402 feature_not_available`), see [Usage & Quota](/en/usage/quota/#errors).

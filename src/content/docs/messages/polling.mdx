@@ -29,6 +29,7 @@ GET /v1/events
 | --------- | ---- | --------- |
 | `types[]` | string[] | Filtrar por tipos de evento (OR). Ex: `types[]=message.received&types[]=message.sent` |
 | `type` | string | Filtrar por um tipo de evento com suporte a wildcard. Ex: `type=message.*` |
+| `request_id` | string | Filtrar pelos eventos gerados por uma única requisição assíncrona (`req_…`). Útil para correlacionar o resultado de um `POST` (envio, edição, reação, …) usando o `X-Request-ID` retornado no header da resposta. Ex: `request_id=req_01993c5a1b24d3e9f01a2b3c4d5e6f70` |
 | `number_alias` | string | Filtrar pelos eventos de um único número (`"main"` ou o alias de um número extra). Ausente = todos os números da organização. Apenas eventos sem número único (`storage.*`) são excluídos quando este filtro é informado; `message.quota.*` passou a ser por número (ADR 2026-07-02) e é filtrável. |
 | `starting_after` | string | Cursor para paginação progressiva. Passe o `id` do último item da página anterior. |
 | `ending_before` | string | Cursor para paginação retroativa. Passe o `id` do primeiro item da página atual. |

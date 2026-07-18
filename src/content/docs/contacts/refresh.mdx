@@ -31,7 +31,7 @@ Refresh é mais caro que leitura — usa o WhatsApp Gateway e é throttled por t
 | business | 120 |
 | custom   | 600 |
 
-Estourar o limite retorna `429 rate_limit_exceeded` com `Retry-After`.
+Estourar o limite retorna `429 refresh_rate_limited` com `Retry-After`.
 
 ## Exemplo
 
@@ -48,7 +48,7 @@ const res = await fetch(`https://api.turbonotify.com/v1/contacts/${id}/refresh`,
   method: "POST",
   headers: { Authorization: `Bearer ${process.env.TURBO_API_KEY}` },
 });
-const { accepted_at } = await res.json();
+const { status } = await res.json();
 ```
 </TabItem>
 <TabItem label="Python">
@@ -66,11 +66,15 @@ r = httpx.post(
 <ApiResponse status={202}>
 ```json
 {
-  "accepted_at": "2026-05-15T12:00:00Z"
+  "status": "queued"
 }
 ```
 </ApiResponse>
 
-Quando o enriquecimento concluir, os webhooks `contact.name_changed` ou `contact.picture_changed` podem ser emitidos (se houver mudança).
+A resposta é um envelope mínimo — apenas confirma o enfileiramento. Não há
+`request_id` nem timestamp no corpo. Quando o enriquecimento concluir, os
+webhooks `contact.name_changed` ou `contact.picture_changed` podem ser
+emitidos (se houver mudança), ou consulte `GET /v1/contacts/{contact_id}`
+novamente para ver o resultado.
 
 Veja [eventos de contato](/webhooks/contact-events/).

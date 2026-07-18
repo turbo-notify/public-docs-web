@@ -18,8 +18,13 @@ sidebar:
 | ---------- | ------- | ----------- |
 | `number`   | `{"number": "+5511999999999"}` | Conversa 1:1 |
 | `group_id` | `{"group_id": "grp_…"}` | Grupo do WhatsApp |
+| `contact_id` | `{"contact_id": "ct_…"}` | Conversa 1:1 via ID de contato TN |
 
-O campo `contact_id` **não** é suportado no endpoint de typing indicator.
+O campo `contact_id` também é suportado — as três formas de `to` (`number`,
+`group_id`, `contact_id`) valem para o typing indicator, o mesmo modelo
+polimórfico usado no envio de mensagens. Veja [Aviso de
+Digitação](/other-features/typing-indicator/) para a lista completa e
+atualizada das variantes de `to`.
 
 ### Exemplo — grupo
 

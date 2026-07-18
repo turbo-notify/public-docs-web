@@ -5,7 +5,6 @@ description: Como enviar imagens, áudios, vídeos, documentos e figurinhas pelo
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
-import DashboardLink from '@components/DashboardLink.astro';
 
 Mídia (imagens, áudios, vídeos, documentos e figurinhas) é enviada
 pelo mesmo endpoint `POST /v1/messages` usado para texto. Os campos de
@@ -365,61 +364,17 @@ de documento também aceita [menções `@<numero>`](/messages/send/#menções-me
 Stickers devem ser WebP animados (formato exigido pelo WhatsApp) e
 respeitar o limite de 500 KB.
 
-## Modalidade — objeto no seu bucket (BYO Storage)
-
-Se você já possui o arquivo no seu BYO Object Storage, informe `s3_object_key`
-em vez de `url`. O Turbo Notify acessa o arquivo diretamente usando as
-credenciais que você configurou no dashboard.
-
-:::caution[BYO Storage obrigatório]
-O campo `s3_object_key` exige que o <DashboardLink path="/settings/integrations/storage">Object Storage</DashboardLink>
-esteja configurado e ativo. Sem integração ativa, a requisição retorna
-`412 Precondition Failed` com código `storage_required`.
-:::
-
-```json title="Exemplo — imagem por s3_object_key"
-{
-  "to": {"number": "+5511999999999"},
-  "content": {
-    "s3_object_key": "media/fotos/produto-42.jpg",
-    "mime_type": "image/jpeg",
-    "caption": "Foto do produto"
-  }
-}
-```
-
-:::note
-Quando `s3_object_key` é usado sem `image_url` (ou equivalente de outro tipo), o Turbo Notify infere a variante de mídia a partir do `mime_type`. Forneça sempre `mime_type` nesse cenário.
-:::
-
-### Erro 412 — storage_required
-
-Quando `s3_object_key` é informado mas nenhum Object Storage está configurado:
-
-```json title="412 storage_required"
-{
-  "error": "storage_required",
-  "message": "This request requires BYO Object Storage to be configured. Set up S3, Cloudflare R2, or Supabase Storage in your dashboard.",
-  "setup_hint": {
-    "setup_url": "https://dashboard.turbonotify.com/settings/integrations/storage",
-    "docs_url": "https://docs.turbonotify.com/general/byo-storage-setup/",
-    "message": "Configure object storage (S3, Cloudflare R2, or Supabase Storage — free tiers available) to receive media. Visit your dashboard or read the docs."
-  }
-}
-```
-
 ## Esquema de campos (todos os tipos)
 
-Os campos de mídia ficam dentro do objeto `content`. O campo âncora (ex.: `image_url`) determina a variante.
+Os campos de mídia ficam dentro do objeto `content`. O campo âncora (ex.: `image_url`) determina a variante — todo envio de mídia é feito por URL pública; não existe modalidade de envio direto por chave de objeto do seu BYO Storage.
 
 | Campo em `content` | Tipo | Obrigatório | Notas |
 |---|---|---|---|
-| `image_url` | URL | condicional | Campo âncora para imagens; URL pública HTTPS; exclusivo com `s3_object_key` |
-| `video_url` | URL | condicional | Campo âncora para vídeos; URL pública HTTPS; exclusivo com `s3_object_key` |
-| `audio_url` | URL | condicional | Campo âncora para áudios; URL pública HTTPS; exclusivo com `s3_object_key` |
-| `document_url` | URL | condicional | Campo âncora para documentos; URL pública HTTPS; exclusivo com `s3_object_key` |
-| `sticker_url` | URL | condicional | Campo âncora para figurinhas; URL pública HTTPS; exclusivo com `s3_object_key` |
-| `s3_object_key` | string | condicional | Chave do objeto no seu BYO Storage; exclusivo com os campos `*_url`. Exige storage configurado. |
+| `image_url` | URL | condicional | Campo âncora para imagens; URL pública HTTPS |
+| `video_url` | URL | condicional | Campo âncora para vídeos; URL pública HTTPS |
+| `audio_url` | URL | condicional | Campo âncora para áudios; URL pública HTTPS |
+| `document_url` | URL | condicional | Campo âncora para documentos; URL pública HTTPS |
+| `sticker_url` | URL | condicional | Campo âncora para figurinhas; URL pública HTTPS |
 | `mime_type` | string | não | recomendado; o worker pode inferir do `Content-Type` da resposta |
 | `caption` | string | parcial | aceito em `image`, `video`, `document`; **não aceito** em `audio` e `sticker` (retorna `422`). Aceita tokens de [menção `@<numero>`](/messages/send/#menções-mentions) — detecção implícita, mesmas regras do `text` |
 | `filename` | string | não | apenas em `document`; aparece como nome do anexo no chat |
