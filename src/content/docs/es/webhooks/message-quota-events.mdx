@@ -7,8 +7,8 @@ sidebar:
 
 Eventos relacionados con la **cuota de mensajes por número**, medida contra el
 **ciclo de facturación evaluado** de la organización (`cycle_start`/`cycle_end`
-— ya no una ventana rolling de 30 días). Límites por tier: `FREE`=1k,
-`SOLO`=10k, `BUSINESS`=50k, `CUSTOM`=500k+ **por número, por ciclo**.
+— ya no una ventana rolling de 30 días). Límites por tier: `FREE`=300,
+`SOLO`=1.8k, `BUSINESS`=50k, `CUSTOM`=500k **por número, por ciclo**.
 
 Desde la ADR 2026-07-02 la cuota de mensajes es **por número** — reflejando la
 cuota de contactos: cada número vinculado (`main` o el alias de un número
@@ -57,8 +57,8 @@ alcanzó — `"main"` para el número principal o el alias de un número extra. 
   "created_at": "2026-05-15T12:00:00Z",
   "data": {
     "threshold_bps": 80,
-    "used": 800,
-    "quota": 1000,
+    "used": 240,
+    "quota": 300,
     "cycle_start": "2026-06-01T00:00:00Z",
     "cycle_end": "2026-07-01T00:00:00Z",
     "resets_at": "2026-07-01T00:00:00Z",
@@ -79,8 +79,8 @@ alcanzó — `"main"` para el número principal o el alias de un número extra. 
   "number_alias": "main",
   "created_at": "2026-05-15T12:00:00Z",
   "data": {
-    "quota": 1000,
-    "used": 1000,
+    "quota": 300,
+    "used": 300,
     "cycle_start": "2026-06-01T00:00:00Z",
     "cycle_end": "2026-07-01T00:00:00Z",
     "resets_at": "2026-07-01T00:00:00Z",

@@ -7,8 +7,8 @@ sidebar:
 
 Events related to the **per-number message quota**, measured against the
 organization's **evaluated billing cycle** (`cycle_start`/`cycle_end` — no
-longer a rolling 30-day window). Per-tier limits: `FREE`=1k, `SOLO`=10k,
-`BUSINESS`=50k, `CUSTOM`=500k+ **per number, per cycle**.
+longer a rolling 30-day window). Per-tier limits: `FREE`=300, `SOLO`=1.8k,
+`BUSINESS`=50k, `CUSTOM`=500k **per number, per cycle**.
 
 As of ADR 2026-07-02 the message quota is **per number** — mirroring the
 contact quota: each linked number (`main` or an extra-number alias) has its
@@ -57,8 +57,8 @@ carries the quota fields `threshold_bps` (only on `warning`), `used`, `quota`,
   "created_at": "2026-05-15T12:00:00Z",
   "data": {
     "threshold_bps": 80,
-    "used": 800,
-    "quota": 1000,
+    "used": 240,
+    "quota": 300,
     "cycle_start": "2026-06-01T00:00:00Z",
     "cycle_end": "2026-07-01T00:00:00Z",
     "resets_at": "2026-07-01T00:00:00Z",
@@ -79,8 +79,8 @@ carries the quota fields `threshold_bps` (only on `warning`), `used`, `quota`,
   "number_alias": "main",
   "created_at": "2026-05-15T12:00:00Z",
   "data": {
-    "quota": 1000,
-    "used": 1000,
+    "quota": 300,
+    "used": 300,
     "cycle_start": "2026-06-01T00:00:00Z",
     "cycle_end": "2026-07-01T00:00:00Z",
     "resets_at": "2026-07-01T00:00:00Z",

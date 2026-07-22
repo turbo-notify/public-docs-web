@@ -7,8 +7,8 @@ sidebar:
 
 Eventos relacionados à **quota de mensagens por número**, medida contra o
 **ciclo de faturamento avaliado** da organization (`cycle_start`/`cycle_end` —
-não mais uma janela rolling de 30 dias). Limites por tier: `FREE`=1k,
-`SOLO`=10k, `BUSINESS`=50k, `CUSTOM`=500k+ **por número, por ciclo**.
+não mais uma janela rolling de 30 dias). Limites por tier: `FREE`=300,
+`SOLO`=1.8k, `BUSINESS`=50k, `CUSTOM`=500k **por número, por ciclo**.
 
 Desde a ADR 2026-07-02 a quota de mensagens é **por número** — espelhando a quota de contatos: cada número vinculado (`main` ou alias extra) tem sua própria franquia, e uma organization com N números tem N× a franquia do tier. Estes eventos identificam o número afetado via **`number_alias` no envelope** (não em `data`). Apenas mensagens enviadas **via Turbo Notify** (`origin: "tn"`) consomem a quota.
 
@@ -40,8 +40,8 @@ Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_ali
   "created_at": "2026-05-15T12:00:00Z",
   "data": {
     "threshold_bps": 80,
-    "used": 800,
-    "quota": 1000,
+    "used": 240,
+    "quota": 300,
     "cycle_start": "2026-06-01T00:00:00Z",
     "cycle_end": "2026-07-01T00:00:00Z",
     "resets_at": "2026-07-01T00:00:00Z",
@@ -62,8 +62,8 @@ Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_ali
   "number_alias": "main",
   "created_at": "2026-05-15T12:00:00Z",
   "data": {
-    "quota": 1000,
-    "used": 1000,
+    "quota": 300,
+    "used": 300,
     "cycle_start": "2026-06-01T00:00:00Z",
     "cycle_end": "2026-07-01T00:00:00Z",
     "resets_at": "2026-07-01T00:00:00Z",

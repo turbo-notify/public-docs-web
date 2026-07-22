@@ -34,13 +34,12 @@ móvel que decai dia a dia.
 
 | Tier       | Mensagens/ciclo | Contatos distintos/ciclo | Números extras (máx.) |
 | ---------- | --------------: | -----------------------: | ---------------------:|
-| `FREE`     | 1.000           | 100                       | 0                      |
-| `SOLO`     | 10.000          | 1.000                     | 0                      |
-| `BUSINESS` | 50.000          | 5.000                     | 300                    |
-| `CUSTOM`   | 500.000+        | 50.000+                   | 1.000                  |
+| `FREE`     | 300             | 2                         | 0                      |
+| `SOLO`     | 1.800           | 100                       | 0                      |
+| `BUSINESS` | 50.000          | 5.000                     | 1.000                  |
+| `CUSTOM`   | 500.000         | 50.000                    | 1.000                  |
 
-A razão 10:1 (mensagens/contato) reflete o uso médio de ~10 mensagens por
-contato por ciclo. Overrides de organization (`messages_quota_override` /
+Overrides de organization (`messages_quota_override` /
 `contacts_quota_override`) substituem o teto do tier quando definidos — aplicados
 **por número**, do mesmo jeito que o teto do tier.
 
@@ -95,23 +94,23 @@ uma entrada por número **vivo** (main + extras), com o detalhamento
   body={{
     messages: {
       used: 1234,
-      quota: 10000,
-      remaining: 8766,
+      quota: 1800,
+      remaining: 566,
       resets_at: '2026-07-01T00:00:00Z',
       tier: 'SOLO',
     },
     contacts: {
       used: 87,
-      quota: 1000,
-      remaining: 913,
+      quota: 100,
+      remaining: 13,
       resets_at: '2026-07-01T00:00:00Z',
       tier: 'SOLO',
     },
     numbers: [
       {
         alias: 'main',
-        messages: { used: 600, quota: 5000, remaining: 4400 },
-        contacts: { used: 40, quota: 500, remaining: 460 },
+        messages: { used: 1234, quota: 1800, remaining: 566 },
+        contacts: { used: 87, quota: 100, remaining: 13 },
       },
     ],
   }}
@@ -128,13 +127,13 @@ quota sem pagar o custo do roll-up de contatos:
   body={{
     messages: {
       used: 1234,
-      quota: 10000,
-      remaining: 8766,
+      quota: 1800,
+      remaining: 566,
       resets_at: '2026-07-01T00:00:00Z',
       tier: 'SOLO',
     },
     numbers: [
-      { alias: 'main', messages: { used: 600, quota: 5000, remaining: 4400 } },
+      { alias: 'main', messages: { used: 1234, quota: 1800, remaining: 566 } },
     ],
   }}
 />
@@ -153,8 +152,8 @@ Ambos retornam o mesmo shape — o snapshot do ciclo avaliado **daquele número*
   status={200}
   body={{
     used: 1234,
-    quota: 10000,
-    remaining: 8766,
+    quota: 1800,
+    remaining: 566,
     cycle_start: '2026-06-01T00:00:00Z',
     cycle_end: '2026-07-01T00:00:00Z',
     resets_at: '2026-07-01T00:00:00Z',
@@ -233,15 +232,15 @@ indisponível em FREE/SOLO — veja [Números extras](/numbers/add/)).
 ### 402 — limite de números extras atingido
 
 Retornado por `POST /v1/numbers` quando a organization já tem
-`max_extra_numbers` números extras vivos para o tier (BUSINESS 300 / CUSTOM
+`max_extra_numbers` números extras vivos para o tier (BUSINESS 1.000 / CUSTOM
 1.000; FREE/SOLO não têm acesso a números extras):
 
 <ApiResponse
   status={402}
   body={{
     error: 'extra_numbers_limit_reached',
-    message: 'Extra numbers limit reached for the current plan (300/300).',
-    details: { limit: 300, current: 300 },
+    message: 'Extra numbers limit reached for the current plan (1000/1000).',
+    details: { limit: 1000, current: 1000 },
   }}
 />
 
@@ -254,8 +253,8 @@ contagem atual de números extras vivos da organization.
   status={402}
   body={{
     error: 'contact_quota_exceeded',
-    message: 'Distinct-contacts quota exceeded for tier BUSINESS (100/100 this cycle)',
-    details: { quota: 100, used: 100, resets_at: '2026-07-01T00:00:00Z', tier: 'BUSINESS' },
+    message: 'Distinct-contacts quota exceeded for tier BUSINESS (5000/5000 this cycle)',
+    details: { quota: 5000, used: 5000, resets_at: '2026-07-01T00:00:00Z', tier: 'BUSINESS' },
   }}
 />
 

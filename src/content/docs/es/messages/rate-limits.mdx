@@ -30,10 +30,10 @@ Cada mensaje enviado vía API respeta un intervalo mínimo desde el envío anter
 
 | Tier       | Intervalo mínimo entre envíos | Equivalente en mensajes/min |
 | ---------- | -------------------------------:| -----------------------------:|
-| `FREE`     | 5s | 12 msg/min |
-| `SOLO`     | 3s | 20 msg/min |
-| `BUSINESS` | 2s | 30 msg/min |
-| `CUSTOM`   | 1s | 60 msg/min |
+| `FREE`     | 6s | 10 msg/min |
+| `SOLO`     | 1.2s | 50 msg/min |
+| `BUSINESS` | 0.6s | 100 msg/min |
+| `CUSTOM`   | 0.4s | 150 msg/min |
 
 Enviar antes del intervalo mínimo desde el último envío exitoso **en ese número** devuelve `429` con el código `send_rate_spacing` y el header `Retry-After` (en segundos — el tiempo restante hasta el próximo envío permitido):
 

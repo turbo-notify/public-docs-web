@@ -30,10 +30,10 @@ Every message sent via the API respects a minimum interval since the previous se
 
 | Tier       | Minimum interval between sends | Equivalent messages/min |
 | ---------- | -------------------------------:| -------------------------:|
-| `FREE`     | 5s | 12 msg/min |
-| `SOLO`     | 3s | 20 msg/min |
-| `BUSINESS` | 2s | 30 msg/min |
-| `CUSTOM`   | 1s | 60 msg/min |
+| `FREE`     | 6s | 10 msg/min |
+| `SOLO`     | 1.2s | 50 msg/min |
+| `BUSINESS` | 0.6s | 100 msg/min |
+| `CUSTOM`   | 0.4s | 150 msg/min |
 
 Sending before the minimum interval since the last successful send **on that number** returns `429` with the code `send_rate_spacing` and a `Retry-After` header (in seconds — the time left until the next send is allowed):
 

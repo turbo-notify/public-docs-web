@@ -21,6 +21,14 @@ corretos**, apenas a unidade do período mudou. Veja [Quota e uso](/usage/quota/
 para o comportamento atual.
 :::
 
+:::note[Atualização 2026-07-21]
+A ADR 2026-07-21 (catálogo de planos gerenciável) revisou os limites por tier:
+os valores de `free`/`solo` na tabela abaixo mudaram e o número extra passou a
+custar R$ 49,90/mês. Os números históricos abaixo são preservados como registro
+do que valia em 2026-05-15 — para os limites vigentes, veja [Quota e
+uso](/usage/quota/).
+:::
+
 ## Constatação da auditoria
 
 Uma auditoria interna em abril/2026 revelou um gap entre documentação e implementação: o quota mensal de mensagens por tier (`messages_{TIER}`) estava definido em `rate-sync.toml` e havia um `tier_rate_limit.py` guard, **mas nenhuma rota wired** a esse guard. O pipeline real usava apenas um limiter global `messages_per_month` (50.000/mês compartilhado entre todos os organizations).
