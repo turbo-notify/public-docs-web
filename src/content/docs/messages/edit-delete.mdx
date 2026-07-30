@@ -326,6 +326,13 @@ WhatsApp. O corpo da requisição é **vazio**.
 O resultado real chega via webhook `message.deleted` (sucesso) ou
 `message.delete.failed` (falha, com objeto `error`).
 
+Após uma exclusão bem-sucedida, `GET /v1/numbers/{alias}/messages/{id}` deixa
+de retornar o texto/preview (campo vazio) tanto para quem apagou quanto para
+todo destinatário da mensagem. Se a mensagem original era de mídia (imagem,
+vídeo, áudio, documento ou figurinha), o bloco de mídia correspondente passa
+a `{"kind": "unavailable", "reason": "deleted"}` em ambos os lados — a mídia
+não fica mais acessível via URL assinada.
+
 ## Erros possíveis
 
 Os dois endpoints compartilham o mesmo conjunto de erros:

@@ -474,7 +474,7 @@ Mídia não está disponível. O campo `reason` indica a causa.
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `kind` | string | `"unavailable"` |
-| `reason` | string | `no_storage` — nenhum Object Storage configurado; `storage_circuit_open` — circuit breaker aberto no recebimento; `upload_failed` — storage saudável, mas este item não pôde ser persistido. O motivo é gravado no recebimento e lido literalmente. |
+| `reason` | string | `no_storage` — nenhum Object Storage configurado; `storage_circuit_open` — circuit breaker aberto no recebimento; `upload_failed` — storage saudável, mas este item não pôde ser persistido; `deleted` — a mensagem foi apagada/revogada depois que a mídia já havia sido armazenada. O motivo é gravado no momento do evento (recebimento ou exclusão) e lido literalmente. |
 | `mime_type` | `string \| null` | Tipo MIME detectado |
 | `size_bytes` | `integer \| null` | Tamanho do arquivo em bytes |
 | `setup_hint` | `object \| null` | Presente quando `reason` é `no_storage` ou `storage_circuit_open`. Contém `setup_url`, `docs_url` e `message`. |
