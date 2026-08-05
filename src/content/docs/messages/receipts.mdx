@@ -5,7 +5,6 @@ description: Consulte o histórico de transições de status de entrega (recibos
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
-import ExternalLink from '@components/ExternalLink.astro';
 
 Após uma mensagem ser enviada, o WhatsApp retorna confirmações de entrega e leitura. O histórico de recibos registra essas confirmações — `delivered` (entregue no dispositivo) e `read` (lida pelo destinatário) — em ordem cronológica crescente.
 
@@ -15,7 +14,7 @@ Para listar o histórico de recibos de uma mensagem, faça uma requisição `GET
 
 **Endpoint:** `GET /v1/numbers/{alias}/messages/{message_id}/receipts`
 
-**Autenticação:** Bearer token com escopo `messages:read`
+**Escopo obrigatório:** `messages:read`
 
 **Parâmetros de caminho:**
 
@@ -187,7 +186,7 @@ O campo `contact_id` aparece apenas para participantes cujo contato já esteja r
 | `receipts`               | array   | Lista de transições de status, em ordem cronológica crescente.     |
 | `receipts[].from`            | object  | Parte que emitiu o recibo. Omitido em recibos legados (pré-2026-06) e quando nenhuma informação de identidade está disponível (e.g. recibos de dispositivo vinculado). |
 | `receipts[].from.contact_id` | string  | Identificador público do contato (`ct_{hex32}`). Omitido quando não disponível. |
-| `receipts[].from.name`       | string  | Nome de exibição do WhatsApp (PII — propriedade do organization). Omitido quando não disponível. |
+| `receipts[].from.name`       | string  | Nome de exibição do WhatsApp (PII — propriedade da organização). Omitido quando não disponível. |
 | `receipts[].from.number`     | string  | Número E.164 sem `+` de quem confirmou o recibo. Omitido para recibos de dispositivo vinculado (LID) onde o número do confirmador não está disponível. |
 | `receipts[].status`      | string  | Status atingido nesta transição (`delivered` ou `read`).           |
 | `receipts[].at`          | string  | Timestamp ISO 8601 de quando o status foi registrado.              |
@@ -203,7 +202,7 @@ O campo `contact_id` aparece apenas para participantes cujo contato já esteja r
 
 ## Exige plano BUSINESS ou superior
 
-O histórico detalhado de recibos (`GET .../messages/{id}/receipts`) requer a feature `read_receipts`, disponível a partir do tier `BUSINESS`. Organizations em `FREE`/`SOLO` recebem:
+O histórico detalhado de recibos (`GET .../messages/{id}/receipts`) requer a feature `read_receipts`, disponível a partir do tier `BUSINESS`. Organizações em `FREE`/`SOLO` recebem:
 
 <ApiResponse
   status={402}
@@ -212,17 +211,17 @@ O histórico detalhado de recibos (`GET .../messages/{id}/receipts`) requer a fe
   }}
 />
 
-Este gate cobre as duas rotas montadas (aninhada `/v1/numbers/{alias}/messages/{id}/receipts` e a rota plana `/v1/messages/{id}/receipts` do número principal) — ambas compartilham o mesmo use case, então ambas ficam bloqueadas juntas. O gate **não** afeta o status geral da mensagem: [`GET .../messages/{id}/status`](/messages/status/) continua disponível em **todos** os tiers, inclusive `FREE`/`SOLO` — apenas o histórico **detalhado**, transição a transição, exige BUSINESS+.
+Essa restrição vale para as duas rotas (a aninhada `/v1/numbers/{alias}/messages/{id}/receipts` e a rota plana `/v1/messages/{id}/receipts` do número principal) — as duas são bloqueadas juntas. A restrição **não** afeta o status geral da mensagem: [`GET .../messages/{id}/status`](/messages/status/) continua disponível em **todos** os tiers, inclusive `FREE`/`SOLO` — apenas o histórico **detalhado**, transição a transição, exige BUSINESS+.
 
-Veja [Quota e Uso](/usage/quota/) para a tabela completa de features por tier.
+Veja [Quota e uso](/usage/quota/) para os limites e restrições de cada plano.
 
 ## Erros possíveis
 
 | Status | Código de erro          | Descrição                                                                    |
 | :----: | ------------------------ | ------------------------------------------------------------------------------ |
-| `402`  | `feature_not_available` | Organization em plano `FREE`/`SOLO` — histórico de recibos exige `BUSINESS`+.  |
+| `402`  | `feature_not_available` | Organização em plano `FREE`/`SOLO` — histórico de recibos exige `BUSINESS`+.   |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.                                    |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:read`.                         |
-| `404`  | `not_found`             | A mensagem não foi encontrada (ou está fora da janela de retenção do tier).    |
+| `404`  | `not_found`             | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de leitura por retenção](/messages/retention/) do tier — a janela **também** se aplica aqui, e os três casos devolvem a mesma resposta. |
 | `404`  | `message_not_found`     | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.                                           |

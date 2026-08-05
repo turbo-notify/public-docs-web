@@ -1,5 +1,5 @@
 ---
-title: Reações nas mensagens
+title: Enviar reação
 description: Adicione ou remova reações em mensagens específicas para interações mais expressivas no WhatsApp.
 ---
 
@@ -10,6 +10,8 @@ O recurso de reação permite que sua aplicação envie ou remova reações em m
 
 O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há campo `to` no corpo, pois o destinatário é inferido da mensagem original.
 
+Esta página cobre o **envio** e a remoção de reações. Para listar as reações ativas de uma mensagem, veja [Consultar reações](/messages/reactions/).
+
 ## Adicionar uma reação
 
 `POST /v1/messages/{message_id}/react` — adiciona uma reação à mensagem identificada por `{message_id}` (formato `msg_{hex32}`). Esta rota opera sobre o número principal. Para enviar a reação a partir de um número extra, use a forma completa `POST /v1/numbers/{alias}/messages/{message_id}/react` com o alias do número no path.
@@ -18,7 +20,7 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há cam
   <TabItem label="cURL">
     ```bash title="reaction.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/messages/msg_abc123/react \
+      https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -29,7 +31,7 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há cam
   <TabItem label="Node">
     ```js title="reaction.js"
     const response = await fetch(
-      'https://api.turbonotify.com/v1/messages/msg_abc123/react',
+      'https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react',
       {
         method: 'POST',
         headers: {
@@ -47,7 +49,7 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há cam
     ```python title="reaction.py"
     import requests
 
-    url = "https://api.turbonotify.com/v1/messages/msg_abc123/react"
+    url = "https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react"
     headers = {
         "Authorization": "Bearer SUA_CHAVE",
         "Content-Type": "application/json"
@@ -72,7 +74,7 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há cam
         payload := strings.NewReader(`{"reaction": "🎉"}`)
         req, _ := http.NewRequest(
             "POST",
-            "https://api.turbonotify.com/v1/messages/msg_abc123/react",
+            "https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react",
             payload,
         )
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
@@ -86,7 +88,7 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há cam
   <TabItem label="PHP">
     ```php title="reaction.php"
     <?php
-    $url = 'https://api.turbonotify.com/v1/messages/msg_abc123/react';
+    $url = 'https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react';
     $data = ['reaction' => '🎉'];
 
     $options = [
@@ -119,7 +121,7 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há cam
     var content = new StringContent(json, Encoding.UTF8, "application/json");
 
     var response = await client.PostAsync(
-        "https://api.turbonotify.com/v1/messages/msg_abc123/react", content);
+        "https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react", content);
     Console.WriteLine((int)response.StatusCode); // 202
     ```
   </TabItem>
@@ -132,11 +134,13 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há cam
         public static void main(String[] args) throws Exception {
             var client = HttpClient.newHttpClient();
 
-            var json = """{"reaction": "🎉"}""";
+            var json = """
+                {"reaction": "🎉"}
+                """;
 
             var request = HttpRequest.newBuilder()
                 .uri(URI.create(
-                    "https://api.turbonotify.com/v1/messages/msg_abc123/react"))
+                    "https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react"))
                 .header("Authorization", "Bearer SUA_CHAVE")
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
@@ -156,8 +160,8 @@ Após enviar, o Turbo Notify retorna aceite assíncrono:
 <ApiResponse
   status={202}
   body={{
-    message_id: 'msg_abc123',
-    reaction_event_id: 'op_reaction_001',
+    message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
+    reaction_event_id: 'op_reaction_a1b2c3d4e5f6',
     status: { state: 'pending', at: '2025-07-16T10:00:00Z' },
   }}
 />
@@ -170,7 +174,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
   <TabItem label="cURL">
     ```bash title="reaction.sh"
     curl -X POST \
-      https://api.turbonotify.com/v1/messages/msg_abc123/react \
+      https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react \
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
@@ -181,7 +185,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
   <TabItem label="Node">
     ```js title="reaction.js"
     const response = await fetch(
-      'https://api.turbonotify.com/v1/messages/msg_abc123/react',
+      'https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react',
       {
         method: 'POST',
         headers: {
@@ -199,7 +203,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
     ```python title="reaction.py"
     import requests
 
-    url = "https://api.turbonotify.com/v1/messages/msg_abc123/react"
+    url = "https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react"
     headers = {
         "Authorization": "Bearer SUA_CHAVE",
         "Content-Type": "application/json"
@@ -224,7 +228,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
         payload := strings.NewReader(`{"reaction": null}`)
         req, _ := http.NewRequest(
             "POST",
-            "https://api.turbonotify.com/v1/messages/msg_abc123/react",
+            "https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react",
             payload,
         )
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
@@ -238,7 +242,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
   <TabItem label="PHP">
     ```php title="reaction.php"
     <?php
-    $url = 'https://api.turbonotify.com/v1/messages/msg_abc123/react';
+    $url = 'https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react';
     $data = ['reaction' => null];
 
     $options = [
@@ -269,7 +273,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
     var content = new StringContent(json, Encoding.UTF8, "application/json");
 
     var response = await client.PostAsync(
-        "https://api.turbonotify.com/v1/messages/msg_abc123/react", content);
+        "https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react", content);
     Console.WriteLine((int)response.StatusCode); // 202
     ```
   </TabItem>
@@ -282,11 +286,13 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
         public static void main(String[] args) throws Exception {
             var client = HttpClient.newHttpClient();
 
-            var json = """{"reaction": null}""";
+            var json = """
+                {"reaction": null}
+                """;
 
             var request = HttpRequest.newBuilder()
                 .uri(URI.create(
-                    "https://api.turbonotify.com/v1/messages/msg_abc123/react"))
+                    "https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react"))
                 .header("Authorization", "Bearer SUA_CHAVE")
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
@@ -306,8 +312,8 @@ Após enviar, o Turbo Notify retorna aceite assíncrono:
 <ApiResponse
   status={202}
   body={{
-    message_id: 'msg_abc123',
-    reaction_event_id: 'op_reaction_002',
+    message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
+    reaction_event_id: 'op_reaction_9f8e7d6c5b4a',
     status: { state: 'pending', at: '2025-07-16T10:00:05Z' },
   }}
 />
@@ -320,7 +326,7 @@ Para enviar a reação a partir de um [número extra](/numbers/add/) cadastrado 
 
 ```bash title="reaction.sh"
 curl -X POST \
-  https://api.turbonotify.com/v1/numbers/vendas-sp/messages/msg_abc123/react \
+  https://api.turbonotify.com/v1/numbers/vendas-sp/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/react \
   -H "Authorization: Bearer SUA_CHAVE" \
   -H "Content-Type: application/json" \
   -d '{
@@ -328,25 +334,25 @@ curl -X POST \
   }'
 ```
 
-Caso o alias informado na URL não estiver cadastrado como número extra ou não estiver ativo, a operação será rejeitada.
+Caso o alias informado na URL não esteja cadastrado como número extra ou não esteja ativo, a operação será rejeitada.
 
-Saiba mais sobre os números extra em [Números Extras](/numbers/add/).
+Saiba mais sobre [números extras](/numbers/add/).
 
 ## Erros possíveis
 
 | Status | Código de erro          | Descrição                                          |
 | :----: | ----------------------- | -------------------------------------------------- |
-| `400`  | `invalid_json`          | O JSON da requisição está malformado ou inválido.  |
 | `400`  | `invalid_message_id`    | O `message_id` na URL não está no formato `msg_{hex32}`. |
 | `402`  | `feature_not_available` | O recurso não está disponível no plano contratado. |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
-| `404`  | `message_not_found`     | O `message_id` não foi encontrado.                 |
+| `404`  | `not_found`             | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de leitura por retenção](/messages/retention/) do tier — a janela **também** se aplica a reagir, e os três casos devolvem a mesma resposta. |
+| `404`  | `message_not_found`     | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `422`  | `no_active_session`     | A organização não tem sessão WhatsApp conectada.   |
 | `422`  | `sender_disconnected`   | O número extra do alias na URL está desconectado.  |
 | `422`  | `sender_not_found`      | O alias/número informado não corresponde a nenhum remetente da conta. |
 | `422`  | `session_not_connected` | A sessão do remetente não está conectada no momento do envio. |
+| `422`  | `validation_error`      | O corpo da requisição está malformado ou não passou na validação de schema. A resposta inclui `details.errors` com a lista de campos inválidos. |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.               |
-| `503`  | `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.        |
 
-Para entender mais sobre o erro `message_not_found`, consulte a documentação sobre [Retenção](/messages/retention/).
+Os dois códigos `404` são distintos: `not_found` significa "não existe, não é sua, ou já saiu da janela de retenção do seu tier", enquanto `message_not_found` significa "existe, mas você a endereçou pelo número errado" — nesse caso, repita a chamada com o alias correto no path.

@@ -52,10 +52,10 @@ Upgrading your tier does **not** recover messages that already passed the 12-mon
 
 For messages with media (image, video, audio, document, sticker), the durability of the **bytes** is independent of the read-window above:
 
-- **With [BYO Object Storage](/en/general/byo-storage-setup/) configured**: the bytes are copied to your bucket as soon as the message is received. They stay available for as long as your bucket retains the object — fully under your control, even after the message leaves the read-window.
-- **Without BYO Storage**: only metadata (mime type, size, hash, caption) is persisted. Bytes are NOT proxied or stored by Turbo Notify. The `media.kind` field returns `"unavailable"` with a `setup_hint` envelope nudging you toward configuration.
+- **With [BYO Object Storage](/general/byo-storage-setup/) configured**: the bytes are copied to your bucket as soon as the message is received. They stay available for as long as your bucket retains the object — fully under your control, even after the message leaves the read-window.
+- **Without BYO Storage**: only metadata (mime type, size, hash, caption) is persisted. Bytes are NOT proxied or stored by Turbo Notify. The media block (`image`/`video`/`audio`/`document`/`sticker` — there is no generic `media` sub-object) returns `kind: "unavailable"` with a `setup_hint` envelope nudging you toward configuration.
 
-This behavior is canonical since 2026-05-26 — there is no longer a 24h window via the WhatsApp CDN. Details in [BYO Object Storage](/en/general/byo-storage-setup/).
+This behavior is canonical since 2026-05-26 — there is no longer a 24h window via the WhatsApp CDN. Details in [BYO Object Storage](/general/byo-storage-setup/).
 
 ## Practical implications
 
@@ -67,4 +67,4 @@ This behavior is canonical since 2026-05-26 — there is no longer a 24h window 
 
 ## Status lookup
 
-To check a message's status within the retention window, see the [Status](/en/messages/status/) documentation.
+To check a message's status within the retention window, see the [Status](/messages/status/) documentation (PT-BR — translation pending for this page).

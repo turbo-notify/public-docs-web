@@ -148,8 +148,8 @@ Use `GET /v1/messages/{id}` para o número principal. Para números extras, use 
     direction: 'outbound',
     channel: 'whatsapp',
     origin: 'tn',
-    at: '2026-06-01T10:00:05-03:00',
-    status: { state: 'delivered', at: '2026-06-01T10:01:00-03:00' },
+    at: '2026-06-01T13:00:05Z',
+    status: { state: 'delivered', at: '2026-06-01T13:01:00Z' },
   }}
 />
 
@@ -168,7 +168,7 @@ Use `GET /v1/messages/{id}` para o número principal. Para números extras, use 
       caption: 'Foto do produto',
       kind: 'available',
       url: 'https://your-bucket.r2.cloudflarestorage.com/organizations/.../image.jpeg?X-Amz-...',
-      expires_at: '2026-06-01T11:00:00-03:00',
+      expires_at: '2026-06-01T14:00:00Z',
       mime_type: 'image/jpeg',
       size_bytes: 123456,
     },
@@ -176,8 +176,8 @@ Use `GET /v1/messages/{id}` para o número principal. Para números extras, use 
     direction: 'inbound',
     channel: 'whatsapp',
     origin: 'native',
-    at: '2026-06-01T10:00:00-03:00',
-    status: { state: 'read', at: '2026-06-01T10:05:00-03:00' },
+    at: '2026-06-01T13:00:00Z',
+    status: { state: 'read', at: '2026-06-01T13:05:00Z' },
   }}
 />
 
@@ -194,11 +194,11 @@ Use `GET /v1/messages/{id}` para o número principal. Para números extras, use 
 | `to` | object | Destinatário — shape direção-aware |
 | `preview` | string | Permanente — recorte grapheme-aware do conteúdo |
 | _campo específico_ | object\|string | Conteúdo completo nomeado pelo `content_type` (`text`, `image`, …). Veja a tabela abaixo. |
-| `content_type` | string | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar` |
+| `content_type` | string | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, `contact`, `interactive`. Enquetes e tipos não reconhecidos são armazenados como `text` — o `preview` preserva o texto disponível. |
 | `direction` | string | `outbound` (enviada) ou `inbound` (recebida) |
 | `channel` | string | Sempre `"whatsapp"` |
 | `origin` | string | `"tn"` (envio via Turbo Notify API) ou `"native"` (digitada no celular). Sempre presente. |
-| `at` | string | ISO 8601 com offset — momento **estável de ocorrência** da mensagem no WhatsApp (outbound: o momento real de envio; inbound: o momento de recebimento). **Não muda** conforme a mensagem avança `sent → delivered → read` — para o momento da entrega/leitura atual use `status.at`. |
+| `at` | string | ISO 8601 em UTC com sufixo `Z` e precisão de segundos (ex.: `2026-06-01T13:00:05Z`) — momento **estável de ocorrência** da mensagem no WhatsApp (outbound: o momento real de envio; inbound: o momento de recebimento). **Não muda** conforme a mensagem avança `sent → delivered → read` — para o momento da entrega/leitura atual use `status.at`. |
 | `status` | object | `{state, at}` — estado atual de entrega e o `status.at` correspondente. Diferente do `at` raiz, o `status.at` **avança** a cada transição (move para `delivered`, depois `read`). |
 | `mentions` | array | **Opcional** — presente apenas quando a mensagem menciona alguém (inbound ou outbound). Lista de contatos mencionados, itens `{contact_id?, name?, number}` (mesmo shape do `from` inbound), na ordem dos tokens no texto, sem duplicatas. Um `@<digitos>` no texto **só** é menção se o número constar aqui. Sobrevive à retenção do body. Veja [Menções (@mentions)](/messages/send/#menções-mentions). |
 
@@ -211,11 +211,12 @@ Além dos campos comuns acima, cada `content_type` expõe um campo específico c
 | `text` | `text` | Texto completo da mensagem |
 | `image` | `image` | Objeto com `caption?` e campos de mídia (`kind`, `url?`, `expires_at?`, …) diretamente |
 | `video` | `video` | Objeto com `caption?` e campos de mídia |
-| `audio` | `audio` | Objeto com campos de mídia e `transcription?` (Whisper, se configurado) |
+| `audio` | `audio` | Objeto com campos de mídia e `transcription?` (BYO Speech-to-Text, se configurado) |
 | `document` | `document` | Objeto com `filename?`, `caption?` e campos de mídia |
 | `sticker` | `sticker` | Objeto com campos de mídia |
-| `location` | `location` | Objeto com `latitude`, `longitude`, `name?`, `address?`, `url?`, `is_live`, `thumbnail_b64?` |
-| `calendar` | `calendar` | Objeto com `name`, `description?`, `start_at?`, `end_at?`, `join_link?`, `location?`, `has_reminder`, `reminder_offset_sec?` |
+| `location` | `location` | Objeto com `latitude`, `longitude`, `name?`, `address?`, `url?`, `is_live?`, `thumbnail_b64?`. `is_live` aparece **apenas quando `true`** (localização em tempo real) — nunca vem como `false`; trate a ausência da chave como "não é ao vivo". |
+| `calendar` | `calendar` | Objeto com `name`, `description?`, `start_at?`, `end_at?`, `join_link?`, `location?`, `has_reminder?`, `reminder_offset_sec?`. Em um calendário **inbound** (recebido do WhatsApp), `has_reminder` aparece **apenas quando `true`** — trate a ausência da chave como "sem lembrete". Em um calendário **outbound enviado pela API**, o body armazenado é devolvido literalmente: `"has_reminder": false` e chaves explicitamente `null` (`description`, `end_at`, `join_link`, `location`, `reminder_offset_sec`) **podem** aparecer. Trate `false`/`null`/chave ausente como equivalentes. |
+| `contact` | `contact` | Cartão vCard estruturado — mesmos campos aceitos no envio ([Enviar contato](/messages/send/#enviar-contato)): `display_name`, `phones[]`, `emails?`, `organization?`, `title?`, `address?` |
 
 Para mensagens `replied` (citações):
 
@@ -244,8 +245,8 @@ Para mensagens `reacted`:
   "direction": "outbound",
   "channel": "whatsapp",
   "origin": "tn",
-  "at": "2026-06-01T10:00:05-03:00",
-  "status": { "state": "delivered", "at": "2026-06-01T10:01:00-03:00" }
+  "at": "2026-06-01T13:00:05Z",
+  "status": { "state": "delivered", "at": "2026-06-01T13:01:00Z" }
 }
 ```
 
@@ -263,7 +264,7 @@ Para mensagens `reacted`:
     "caption": "Foto do produto",
     "kind": "available",
     "url": "https://<bucket>.s3.amazonaws.com/...?X-Amz-Signature=...",
-    "expires_at": "2026-06-01T11:00:00-03:00",
+    "expires_at": "2026-06-01T14:00:00Z",
     "mime_type": "image/jpeg",
     "size_bytes": 184320
   },
@@ -271,8 +272,8 @@ Para mensagens `reacted`:
   "direction": "inbound",
   "channel": "whatsapp",
   "origin": "native",
-  "at": "2026-06-01T10:00:00-03:00",
-  "status": { "state": "read", "at": "2026-06-01T10:05:00-03:00" }
+  "at": "2026-06-01T13:00:00Z",
+  "status": { "state": "read", "at": "2026-06-01T13:05:00Z" }
 }
 ```
 
@@ -301,8 +302,8 @@ Para mensagens `reacted`:
   "direction": "inbound",
   "channel": "whatsapp",
   "origin": "native",
-  "at": "2026-06-01T10:00:00-03:00",
-  "status": { "state": "delivered", "at": "2026-06-01T10:00:00-03:00" }
+  "at": "2026-06-01T13:00:00Z",
+  "status": { "state": "delivered", "at": "2026-06-01T13:00:00Z" }
 }
 ```
 
@@ -315,22 +316,21 @@ Para mensagens `reacted`:
   "number_alias": "main",
   "from": { "name": "João", "number": "5511999999999" },
   "to": { "alias": "main", "number": "5511973117056" },
-  "preview": "Av. Paulista, Sao Paulo, SP",
+  "preview": "Av. Paulista, Avenida Paulista, 1578, Bela Vista,",
   "location": {
     "latitude": -23.561414,
     "longitude": -46.655881,
     "name": "Av. Paulista",
     "address": "Avenida Paulista, 1578, Bela Vista, São Paulo - SP",
     "url": "https://maps.google.com/?q=-23.561414,-46.655881",
-    "is_live": false,
     "thumbnail_b64": "..."
   },
   "content_type": "location",
   "direction": "inbound",
   "channel": "whatsapp",
   "origin": "native",
-  "at": "2026-06-01T10:00:00-03:00",
-  "status": { "state": "delivered", "at": "2026-06-01T10:00:00-03:00" }
+  "at": "2026-06-01T13:00:00Z",
+  "status": { "state": "delivered", "at": "2026-06-01T13:00:00Z" }
 }
 ```
 
@@ -343,14 +343,13 @@ Para mensagens `reacted`:
   "number_alias": "main",
   "from": { "name": "João", "number": "5511999999999" },
   "to": { "alias": "main", "number": "5511973117056" },
-  "preview": "Sprint Planning — qui, 1 jun 2026 14:00",
+  "preview": "Sprint Planning — Mon, 1 Jun 2026 17:00",
   "calendar": {
     "name": "Sprint Planning",
     "description": "Planejamento da sprint 24.",
     "start_at": "2026-06-01T14:00:00-03:00",
     "end_at": "2026-06-01T15:00:00-03:00",
     "join_link": "https://meet.example.com/sprint-planning",
-    "location": null,
     "has_reminder": true,
     "reminder_offset_sec": 600
   },
@@ -358,8 +357,8 @@ Para mensagens `reacted`:
   "direction": "inbound",
   "channel": "whatsapp",
   "origin": "native",
-  "at": "2026-06-01T10:00:00-03:00",
-  "status": { "state": "delivered", "at": "2026-06-01T10:00:00-03:00" }
+  "at": "2026-06-01T13:00:00Z",
+  "status": { "state": "delivered", "at": "2026-06-01T13:00:00Z" }
 }
 ```
 
@@ -388,8 +387,8 @@ os contatos correspondentes, já resolvidos:
   "direction": "outbound",
   "channel": "whatsapp",
   "origin": "tn",
-  "at": "2026-07-03T10:00:05-03:00",
-  "status": { "state": "delivered", "at": "2026-07-03T10:01:00-03:00" }
+  "at": "2026-07-03T13:00:05Z",
+  "status": { "state": "delivered", "at": "2026-07-03T13:01:00Z" }
 }
 ```
 
@@ -416,8 +415,8 @@ identificável contra `mentions`).
   "direction": "inbound",
   "channel": "whatsapp",
   "origin": "native",
-  "at": "2026-06-01T10:00:00-03:00",
-  "status": { "state": "delivered", "at": "2026-06-01T10:00:00-03:00" }
+  "at": "2026-06-01T13:00:00Z",
+  "status": { "state": "delivered", "at": "2026-06-01T13:00:00Z" }
 }
 ```
 
@@ -436,8 +435,8 @@ identificável contra `mentions`).
   "direction": "inbound",
   "channel": "whatsapp",
   "origin": "native",
-  "at": "2026-06-01T10:00:00-03:00",
-  "status": { "state": "delivered", "at": "2026-06-01T10:00:00-03:00" }
+  "at": "2026-06-01T13:00:00Z",
+  "status": { "state": "delivered", "at": "2026-06-01T13:00:00Z" }
 }
 ```
 
@@ -485,27 +484,27 @@ O campo `status` contém o estado atual de entrega:
 
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
-| `state` | string | Estado atual: `sent`, `delivered`, `read`, `failed` (outbound); `delivered`, `read` (inbound) |
+| `state` | string | Estado atual: `pending` (aceito no `202`, ainda não enviado ao WhatsApp), `sent`, `delivered`, `read`, `failed` (outbound); `delivered`, `read` (inbound) |
 | `at` | string | ISO 8601 — timestamp do **estado atual de entrega**; **avança** a cada transição (`sent → delivered → read`). Não confundir com o `at` no nível raiz, que é o momento estável de ocorrência da mensagem. |
-| `error` | `object \| null` | Erro estruturado da falha — presente apenas quando `state: "failed"`, `null` caso contrário. **Mesmo shape** do `data.error` dos webhooks `*.failed`. |
+| `error` | `object` | Erro estruturado da falha — presente apenas quando `state: "failed"`; **ausente** (chave omitida) nos demais estados. **Mesmo shape** do `data.error` dos webhooks `*.failed`. |
 | `error.code` | `string` | Código estável legível por máquina — faça branch neste valor. |
 | `error.message` | `string` | Descrição legível da falha. |
-| `error.hint` | `string \| null` | Orientação acionável, derivada do `code`. |
+| `error.hint` | `string` | Orientação acionável, derivada do `code`. **Ausente** (chave omitida, nunca `null`) quando não há orientação para o `code`. |
 
 ## Sobre `preview`
 
 O campo `preview` é **permanente** — nunca é removido pelo ciclo de retenção (LGPD). Contém um recorte grapheme-aware do conteúdo:
 - Para `text`: primeiros ~50 caracteres do texto.
 - Para `location`: texto humanizado sem colchetes (ex: `Av. Paulista, Sao Paulo, SP`).
-- Para `calendar`: resumo sem colchetes (ex: `Sprint Planning — qui, 1 jun 2026 14:00`).
-- Para mídia: a legenda (quando disponível) ou o label do tipo em inglês (`[Image]`, `[Video]`, `[Audio]`, `[Document]`, `[Sticker]`).
+- Para `calendar`: resumo sem colchetes, com dia da semana e mês abreviados **em inglês** e o horário convertido para **UTC** (ex: `Sprint Planning — Mon, 1 Jun 2026 17:00`).
+- Para mídia: a legenda (quando disponível) ou o label do tipo em inglês (`[Image]`, `[Video]`, `[Audio]`, `[Document]`, `[Sticker]`). **Documento:** legenda → **nome do arquivo** → `[Document]`. **Áudio com transcrição é a exceção:** quando há transcrição disponível, o `preview` traz o **texto transcrito** (truncado em 50 caracteres) — `[Audio]` só aparece quando não há transcrição nem legenda.
 - Para reações: o emoji ou `""` para remoção.
 - Menções: cada token `@<numero>` presente em `mentions` conta como exatamente
   **1 caractere** no limite de ~50, e o recorte nunca corta um token no meio; um
   `@<digitos>` literal fora de `mentions` conta caractere a caractere. O valor é
   **byte-idêntico** ao `data.preview` dos webhooks/polling.
 
-O campo do conteúdo completo (`text`, `image`, `location`, etc.) pode ser `null` após o período de retenção — `preview` é o único campo que garante acesso ao conteúdo em qualquer momento.
+O campo do conteúdo completo (`text`, `image`, `location`, etc.) é **omitido** da resposta (chave ausente, nunca `null`) após o período de retenção — dentro da janela de leitura do seu tier, `preview` é o único campo que garante acesso ao conteúdo mesmo depois que o corpo completo é descartado.
 
 ## Sobre `kind`
 
@@ -520,7 +519,7 @@ Quando o Object Storage está configurado, o Turbo Notify copia automaticamente 
 | `400` | `invalid_message_id` | O identificador não corresponde ao formato `msg_` + 32 hex. |
 | `403` | `not_authorized` | A chave de acesso está inválida ou ausente. |
 | `403` | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
-| `404` | `not_found` | Mensagem não encontrada ou pertence a outro organization. |
+| `404` | `not_found` | Mensagem não encontrada, pertence a outra organização, ou está fora da [janela de leitura por retenção](/messages/retention/) do tier — mesmo shape de uma mensagem que nunca existiu. |
 | `404` | `message_not_found` | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `429` | `rate_limit_exceeded` | Limite de requisições ultrapassado. |
 | `500` | `internal_error` | Erro interno inesperado no servidor. |

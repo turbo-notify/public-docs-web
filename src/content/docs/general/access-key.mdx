@@ -25,21 +25,21 @@ Authorization: Bearer SUA_CHAVE
 
 ## Revogação
 
-Uma chave de acesso pode ser temporariamente revogada ou permanentemente excluída, conforme a necessidade de controle sobre o acesso à sua conta.
+A revogação de uma chave de acesso é **definitiva e irreversível**. Não existe desativação temporária: uma vez revogada, a chave não pode ser reativada.
 
-Para revogação temporária, basta desativar a chave pelo dashboard. Enquanto estiver desativada, qualquer tentativa de uso será bloqueada pela API, mas você pode reativá-la a qualquer momento, restabelecendo o acesso.
+Revogue a chave pelo dashboard. A partir daí, toda requisição feita com ela é bloqueada permanentemente. A chave continua aparecendo na listagem com status `revoked` — para fins de auditoria — mas não volta a funcionar.
 
-Se desejar remover o acesso de forma definitiva, exclua a chave pelo dashboard. Após a exclusão, não será mais possível recuperar ou reativar a chave, e todas as requisições feitas com ela serão permanentemente bloqueadas.
+Se você precisa de uma pausa temporária no acesso, o caminho é **gerar uma nova chave e revogar a antiga** (rotação). Como não há limite de chaves por conta, você pode criar a nova, migrar suas integrações e só então revogar a anterior — sem janela de indisponibilidade.
 
 ## Permissão
 
-Todas as chaves criadas têm permissão para enviar mensagens tanto para o número principal da conta quanto para os números extra associados. Não é possível limitar o acesso de uma chave a um número específico; todas têm acesso irrestrito aos números vinculados à conta.
+Não é possível limitar uma chave de acesso a um número específico: dentro dos escopos que ela carrega (veja [Escopos](#escopos)), toda chave alcança o número principal da conta e todos os números extras associados.
 
 Caso precise restringir o acesso a determinados números, é necessário criar contas separadas para cada número desejado. Essa limitação existe para evitar uso indevido do Turbo Notify.
 
 ## Escopos
 
-Cada chave carrega **escopos de permissão** que determinam quais operações ela pode chamar — por exemplo `messages:send`, `messages:read`, `numbers:read`, `numbers:write`, `events:read`, `contacts:read` e `groups:read`. A API distingue dois erros `403`:
+Cada chave carrega **escopos de permissão** que determinam quais operações ela pode chamar — por exemplo `messages:send`, `messages:read`, `numbers:read`, `numbers:write`, `events:read`, `contacts:read`, `groups:read` e `organizations:read`. A API distingue dois erros `403`:
 
 - `not_authorized` — a chave está ausente, inválida ou revogada.
 - `insufficient_scope` — a chave é válida, mas não possui o escopo exigido pelo endpoint. A resposta inclui o campo `required_scope` com o escopo necessário:
@@ -52,3 +52,8 @@ Cada chave carrega **escopos de permissão** que determinam quais operações el
 ```
 
 A tabela de erros de cada endpoint indica o escopo exigido pela operação.
+
+## Relacionado
+
+- [Início rápido](/general/getting-started/) — primeiro envio usando a chave.
+- [Organização](/organizations/overview/) — endpoint que exige o escopo `organizations:read`.

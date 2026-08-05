@@ -1,31 +1,31 @@
 ---
 title: Eventos de quota de mensagem
-description: Webhooks message.quota.warning e message.quota.exceeded — por número (número identificado via number_alias no envelope), emitidos quando a quota de mensagens do número cruza thresholds no ciclo de faturamento avaliado.
+description: Webhooks message.quota.warning e message.quota.exceeded — por número (número identificado via number_alias no envelope), emitidos quando a quota de mensagens do número cruza os limiares no ciclo de faturamento avaliado.
 sidebar:
   order: 2
 ---
 
 Eventos relacionados à **quota de mensagens por número**, medida contra o
-**ciclo de faturamento avaliado** da organization (`cycle_start`/`cycle_end` —
-não mais uma janela rolling de 30 dias). Limites por tier: `FREE`=300,
+**ciclo de faturamento atual** da organização (`cycle_start`/`cycle_end`).
+Limites por tier: `FREE`=300,
 `SOLO`=1.8k, `BUSINESS`=50k, `CUSTOM`=500k **por número, por ciclo**.
 
-Desde a ADR 2026-07-02 a quota de mensagens é **por número** — espelhando a quota de contatos: cada número vinculado (`main` ou alias extra) tem sua própria franquia, e uma organization com N números tem N× a franquia do tier. Estes eventos identificam o número afetado via **`number_alias` no envelope** (não em `data`). Apenas mensagens enviadas **via Turbo Notify** (`origin: "tn"`) consomem a quota.
+A quota de mensagens é **por número**, espelhando a quota de contatos: cada número vinculado (`main` ou alias extra) tem sua própria franquia, e uma conta com N números tem N× a franquia do plano. Estes eventos identificam o número afetado via **`number_alias` no envelope** (não em `data`). Apenas mensagens enviadas **via Turbo Notify** (`origin: "tn"`) consomem a quota.
 
-> **Nota (2026-05-15):** o enforcement deste quota foi ativado em 2026-05-15. Os limites já estavam documentados — a partir desta data, o código aplica os limites efetivamente. Veja [Per-Tier Message Quota Activation](/changelog/2026-05-15-message-quota-activation/) e a [auditoria em rate-limits](/messages/rate-limits/).
+Para configurar a URL do webhook, validar a assinatura e entender o envelope, veja [Webhook: configuração e envelope](/messages/webhook/).
 
 ## Eventos
 
 | Evento | Quando |
 | ------ | ------ |
-| `message.quota.warning` | Cruzou threshold 80/90/95% da quota de mensagens do número |
+| `message.quota.warning` | Cruzou o limiar de 80/90/95% da quota de mensagens do número |
 | `message.quota.exceeded` | Tentativa rejeitada por estouro (HTTP 429) |
 
 ## `number_alias` no envelope
 
-Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_alias`: o handle do número TN ("inbox") cuja quota de mensagens foi atingida — `"main"` para o número principal ou o alias de um número extra. O `data` do evento carrega os campos de quota `threshold_bps` (só em `warning`), `used`, `quota`, `cycle_start`, `cycle_end`, `resets_at`, `tier`, `channel`, `origin` — o `number_alias` fica no **envelope**, nunca dentro de `data`.
+Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_alias`: o handle do número do Turbo Notify cuja quota de mensagens foi atingida — `"main"` para o número principal ou o alias de um número extra. O `data` do evento carrega os campos de quota `threshold_bps` (só em `warning`), `used`, `quota`, `cycle_start`, `cycle_end`, `resets_at`, `tier`, `channel`, `origin` — o `number_alias` fica no **envelope**, nunca dentro de `data`.
 
-> **Ciclo avaliado (2026-07-04):** o antigo campo `window_days` foi **removido** — `used`/`quota` agora são medidos contra o ciclo de faturamento avaliado da organization, representado por `cycle_start`/`cycle_end` (ISO 8601 UTC). `resets_at` continua igual a `cycle_end`.
+`used`/`quota` são medidos contra o ciclo de faturamento avaliado da organização (`cycle_start`/`cycle_end`, ISO 8601 UTC); `resets_at` é igual a `cycle_end`.
 
 > Entre os eventos de conta, `number_alias` é omitido **apenas** em `storage.*`. Toda família `*.quota.*` (contatos e mensagens) passou a carregá-lo.
 
@@ -37,7 +37,7 @@ Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_ali
   "type": "message.quota.warning",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "number_alias": "main",
-  "created_at": "2026-05-15T12:00:00Z",
+  "created_at": "2026-06-20T12:00:00Z",
   "data": {
     "threshold_bps": 80,
     "used": 240,
@@ -60,7 +60,7 @@ Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_ali
   "type": "message.quota.exceeded",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "number_alias": "main",
-  "created_at": "2026-05-15T12:00:00Z",
+  "created_at": "2026-06-20T12:00:00Z",
   "data": {
     "quota": 300,
     "used": 300,
@@ -76,11 +76,11 @@ Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_ali
 
 ## Timestamps e correlação
 
-- Estes são eventos **sintéticos** do Turbo Notify (não refletem uma ação no WhatsApp): desde 2026-06-02 **não** carregam `at` em `data` — apenas o `created_at` do envelope (momento de emissão do evento pelo TN).
+- Estes são eventos **sintéticos** do Turbo Notify (não refletem uma ação no WhatsApp): **não** carregam `at` em `data` — apenas o `created_at` do envelope (momento de emissão do evento pelo Turbo Notify).
 - `cycle_start`/`cycle_end` são o ciclo de faturamento avaliado contra o qual `used`/`quota` foram medidos. `resets_at` é um timestamp de **valor de negócio** (quando o ciclo de quota reinicia), mantido com seu nome semântico — igual a `cycle_end` na emissão, não é o momento de ocorrência.
 - Não há `phone` no payload destes eventos. Para correlacionar com a requisição que disparou o estouro, use `GET /v1/events?request_id=req_...`.
 
 ## Ação recomendada
 
-- Faça upgrade do plano (veja tabela de tiers em [Quota e Uso](/usage/quota/)).
+- Faça upgrade do plano (veja tabela de tiers em [Quota e uso](/usage/quota/)).
 - Verifique seu dashboard em **Uso** para histograma de consumo.

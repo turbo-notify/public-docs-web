@@ -5,7 +5,7 @@ description: "Eventos webhook con number_alias en el envelope; usa el alias para
 
 > Esta página está siendo traducida. Consulte la versión canónica en PT-BR: [/messages/webhook/](/messages/webhook/).
 
-Turbo Notify entrega los eventos vía HTTP POST a tu endpoint. Cada envelope lleva `number_alias` (`main` o el alias de un número extra) justo debajo de `organization_id`, salvo en `storage.*` (toda familia `*.quota.*`, incluida `message.quota.*`, es por número desde la ADR 2026-07-02 y lo lleva).
+Turbo Notify entrega los eventos vía HTTP POST a tu endpoint. Cada envelope lleva `number_alias` (`main` o el alias de un número extra) justo debajo de `organization_id`, salvo en `storage.*` y `media.unavailable` (los eventos sin un único número dueño); toda familia `*.quota.*`, incluida `message.quota.*`, es por número desde 2026-07-02 y lo lleva.
 
 Para obtener el cuerpo completo de un mensaje, usa el `number_alias` del envelope:
 

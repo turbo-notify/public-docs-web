@@ -8,7 +8,7 @@ sidebar:
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-Solicita o reenriquecimento de um contato sob demanda (name, foto). É um **system trigger** — não é CRUD. Retorna 202 imediatamente; o enriquecimento ocorre em background.
+Solicita o reenriquecimento de um contato sob demanda (nome e foto). É um disparo de reprocessamento, não uma operação de escrita. Retorna 202 imediatamente; o enriquecimento ocorre em background.
 
 ## Endpoint
 
@@ -18,18 +18,18 @@ POST /v1/contacts/{contact_id}/refresh
 
 Para números extras: `POST /v1/numbers/{alias}/contacts/{contact_id}/refresh`
 
-**Scope:** `contacts:read`.
+**Escopo obrigatório:** `contacts:read`.
 
 ## Rate limit
 
-Refresh é mais caro que leitura — usa o WhatsApp Gateway e é throttled por tier:
+Refresh é mais caro que leitura — consulta o WhatsApp sob demanda e tem limite por tier:
 
-| Tier | Refresh/min |
-| ---- | -----------:|
-| free     | 5 |
-| solo     | 30 |
-| business | 120 |
-| custom   | 600 |
+| Tier       | Refresh/min |
+| ---------- | -----------:|
+| `FREE`     | 5   |
+| `SOLO`     | 30  |
+| `BUSINESS` | 120 |
+| `CUSTOM`   | 600 |
 
 Estourar o limite retorna `429 refresh_rate_limited` com `Retry-After`.
 
@@ -39,37 +39,117 @@ Estourar o limite retorna `429 refresh_rate_limited` com `Retry-After`.
 <TabItem label="cURL">
 ```bash
 curl -X POST "https://api.turbonotify.com/v1/contacts/ct_.../refresh" \
-  -H "Authorization: Bearer $TURBO_API_KEY"
+  -H "Authorization: Bearer SUA_CHAVE"
 ```
 </TabItem>
 <TabItem label="Node">
 ```ts
+const id = "ct_a1b2c3d4e5f6789012345678901234ab";
+
 const res = await fetch(`https://api.turbonotify.com/v1/contacts/${id}/refresh`, {
   method: "POST",
-  headers: { Authorization: `Bearer ${process.env.TURBO_API_KEY}` },
+  headers: { Authorization: "Bearer SUA_CHAVE" },
 });
 const { status } = await res.json();
 ```
 </TabItem>
 <TabItem label="Python">
 ```python
+import httpx
+
+contact_id = "ct_a1b2c3d4e5f6789012345678901234ab"
+
 r = httpx.post(
     f"https://api.turbonotify.com/v1/contacts/{contact_id}/refresh",
-    headers={"Authorization": f"Bearer {API_KEY}"},
+    headers={"Authorization": "Bearer SUA_CHAVE"},
 )
+```
+</TabItem>
+<TabItem label="Go">
+```go
+package main
+
+import (
+    "fmt"
+    "io"
+    "net/http"
+)
+
+func main() {
+    req, _ := http.NewRequest(
+        "POST",
+        "https://api.turbonotify.com/v1/contacts/ct_.../refresh",
+        nil,
+    )
+    req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+    resp, _ := http.DefaultClient.Do(req)
+    defer resp.Body.Close()
+    body, _ := io.ReadAll(resp.Body)
+    fmt.Println(string(body))
+}
+```
+</TabItem>
+<TabItem label="PHP">
+```php
+<?php
+$url = 'https://api.turbonotify.com/v1/contacts/ct_.../refresh';
+
+$options = [
+    'http' => [
+        'header' => ['Authorization: Bearer SUA_CHAVE'],
+        'method' => 'POST'
+    ]
+];
+
+$context = stream_context_create($options);
+$result = file_get_contents($url, false, $context);
+?>
+```
+</TabItem>
+<TabItem label="C#">
+```csharp
+var client = new HttpClient();
+client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+var response = await client.PostAsync(
+    "https://api.turbonotify.com/v1/contacts/ct_.../refresh",
+    null
+);
+var result = await response.Content.ReadAsStringAsync();
+Console.WriteLine(result);
+```
+</TabItem>
+<TabItem label="Java">
+```java
+import java.net.http.*;
+import java.net.URI;
+
+public class RefreshContato {
+    public static void main(String[] args) throws Exception {
+        var client = HttpClient.newHttpClient();
+
+        var request = HttpRequest.newBuilder()
+            .uri(URI.create("https://api.turbonotify.com/v1/contacts/ct_.../refresh"))
+            .header("Authorization", "Bearer SUA_CHAVE")
+            .POST(HttpRequest.BodyPublishers.noBody())
+            .build();
+
+        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.body());
+    }
+}
 ```
 </TabItem>
 </Tabs>
 
 ## Resposta (202)
 
-<ApiResponse status={202}>
-```json
-{
-  "status": "queued"
-}
-```
-</ApiResponse>
+<ApiResponse
+  status={202}
+  body={{
+    status: 'queued',
+  }}
+/>
 
 A resposta é um envelope mínimo — apenas confirma o enfileiramento. Não há
 `request_id` nem timestamp no corpo. Quando o enriquecimento concluir, os

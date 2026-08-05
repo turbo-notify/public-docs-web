@@ -6,9 +6,9 @@ description: Endpoints GET /v1/organizations e GET /v1/organizations/{id} — da
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-O Turbo Notify é **single-organization por chave de API**: cada chave pertence a exatamente uma organização, e estes dois endpoints só permitem ler os dados da **sua própria** organização — não há um diretório de organizações de terceiros.
+O Turbo Notify é **single-organization por chave de acesso**: cada chave pertence a exatamente uma organização, e estes dois endpoints só permitem ler os dados da **sua própria** organização — não há um diretório de organizações de terceiros.
 
-**Escopo obrigatório:** `organizations:read` (selecionável na criação da chave de API no dashboard).
+**Escopo obrigatório:** `organizations:read` (selecionável na criação da chave de acesso no dashboard).
 
 ## Listar organização
 
@@ -147,9 +147,17 @@ organização autenticada — no formato de lista padrão da API (`data`,
 
 `GET /v1/organizations/{organization_id}` retorna o mesmo objeto, sem o
 envelope de lista. O `{organization_id}` deve ser o `org_{hex32}` da
-**própria** organização autenticada — qualquer outro valor (mesmo que seja
-um `org_` válido de outra organização) retorna `404`, nunca vaza dados de
-terceiros.
+**própria** organização autenticada — nunca vaza dados de terceiros.
+
+A rejeição acontece em **duas etapas**, com códigos diferentes:
+
+- **`400 invalid_organization_id`** — o valor não passa no formato
+  `^org_[0-9a-f]{32}$`. Cai aqui qualquer coisa malformada: UUID com hífens,
+  hex em maiúsculas, string arbitrária, prefixo ausente. A validação de
+  formato roda **antes** da comparação com a organização autenticada.
+- **`404 organization_not_found`** — o valor é um `org_{hex32}`
+  **bem-formado**, mas não é o da organização autenticada (inclusive um
+  `org_` válido de outra organização).
 
 <Tabs>
   <TabItem label="cURL">
@@ -292,22 +300,32 @@ terceiros.
 | `name` | string | Nome cadastrado da organização |
 | `plan` | string | Identificador do plano contratado (ex.: `free`, `solo`, `business`, `custom`) |
 | `locale` | string | Locale configurado (ex.: `pt-BR`, `en`) |
-| `timezone` | string | Timezone IANA usado para exibir `created_at`/`updated_at` com offset em outras superfícies (ex.: `America/Sao_Paulo`) |
+| `timezone` | string | Timezone IANA configurado para a conta (ex.: `America/Sao_Paulo`). **Não afeta o formato dos timestamps da API** — é usado apenas para agrupar os gráficos do dashboard |
 | `suspended_at` | string\|null | Timestamp ISO 8601 de suspensão; `null` quando a organização está ativa |
 | `created_at` | string | Timestamp ISO 8601 de criação da organização |
 | `updated_at` | string | Timestamp ISO 8601 da última atualização dos dados cadastrais |
 
-Apenas campos seguros para exposição pública aparecem aqui — flags
-administrativas de anti-ban e overrides de billing nunca são retornados por
-este endpoint.
+**Todo timestamp emitido pela API** é UTC canônico, com sufixo `Z` e precisão
+de segundos (ex.: `2026-06-01T10:00:05Z`) — `created_at` e `at` em webhooks,
+polling e nas respostas de mensagem, os campos cadastrais da tabela acima e os
+campos de expiração de URL pré-assinada (`expires_at` / `url_expires_at` nos
+blocos de mídia e foto). Nos campos de evento e mensagem o formato é garantido
+por validação (`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$`), e nenhum valor com
+offset explícito chega a qualquer superfície pública — independentemente do
+`timezone` configurado na conta.
+
+Apenas campos seguros para exposição pública aparecem aqui — ajustes
+administrativos internos da organização nunca são retornados por este
+endpoint.
 
 ## Erros possíveis
 
 | Status | Código de erro           | Descrição                                              |
 | :----: | ------------------------- | -------------------------------------------------------- |
+| `400`  | `invalid_organization_id` | *(apenas detalhe)* O `{organization_id}` informado não está no formato `org_` + 32 hex minúsculos (ex.: UUID com hífens, hex em maiúsculas, string arbitrária). |
 | `403`  | `not_authorized`          | A chave de acesso está inválida ou ausente.              |
 | `403`  | `insufficient_scope`      | A chave de acesso não possui o escopo `organizations:read` (resposta inclui `required_scope`). |
-| `404`  | `organization_not_found`  | *(apenas detalhe)* O `{organization_id}` informado não corresponde à organização autenticada. |
+| `404`  | `organization_not_found`  | *(apenas detalhe)* O `{organization_id}` informado está **bem-formado**, mas não corresponde à organização autenticada. Formato inválido retorna `400 invalid_organization_id`, não este código. |
 | `500`  | `internal_error`          | Erro interno inesperado no servidor.                     |
 
 Veja também: [Chave de acesso](/general/access-key/) · [Números](/numbers/add/).

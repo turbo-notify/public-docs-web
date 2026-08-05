@@ -1,9 +1,6 @@
 ---
 title: Armazenamento próprio (BYO Storage)
 description: Configure seu próprio bucket (AWS S3, Cloudflare R2, Supabase Storage) para armazenar mídias recebidas e fotos de perfil de contatos de forma permanente.
-sidebar:
-  order: 5
-  badge: { text: 'Obrigatório para mídia', variant: 'caution' }
 ---
 
 import DashboardLink from '@components/DashboardLink.astro';
@@ -23,21 +20,21 @@ Sem BYO Storage configurado, o campo `kind` retorna `"unavailable"` com `reason:
 
 ## Provedores suportados
 
-O Turbo Notify usa a S3 HTTP API como protocolo de transporte — o mesmo protocolo suportado pelos três providers:
+O Turbo Notify usa a S3 HTTP API como protocolo de transporte — o mesmo protocolo suportado pelos três provedores:
 
-| Provider | Free tier | Notas |
+| Provedor | Free tier | Notas |
 |----------|:---------:|-------|
-| **Cloudflare R2** | Sim | Sem custo de egress; excelente para alta frequência de downloads. Consulte o site do provider para limites atuais. |
-| **Supabase Storage** | Sim | Ideal se você já usa Supabase na sua stack. Consulte o site do provider para limites atuais. |
-| **AWS S3** | Sim (Free Tier 12 meses) | Maior ecossistema de ferramentas; custo de egress applies. Consulte o site da AWS para detalhes. |
+| **Cloudflare R2** | Sim | Sem custo de egress; excelente para alta frequência de downloads. Consulte o site do provedor para limites atuais. |
+| **Supabase Storage** | Sim | Ideal se você já usa Supabase na sua stack. Consulte o site do provedor para limites atuais. |
+| **AWS S3** | Sim (Free Tier 12 meses) | Maior ecossistema de ferramentas; há custo de egress. Consulte o site da AWS para detalhes. |
 
-:::note[Pricing]
-Não citamos valores específicos pois os planos dos providers mudam. Acesse o site de cada provider para verificar os limites e preços atuais antes de escolher.
+:::note[Preços]
+Não citamos valores específicos pois os planos dos provedores mudam. Acesse o site de cada provedor para verificar os limites e preços atuais antes de escolher.
 :::
 
 ## Como configurar
 
-### 1. Crie um bucket no provider escolhido
+### 1. Crie um bucket no provedor escolhido
 
 O bucket deve ser **privado** (sem acesso público). O Turbo Notify acessa o conteúdo via credenciais IAM/API, não por URLs públicas.
 
@@ -60,12 +57,12 @@ Acesse <DashboardLink path="/storage">Armazenamento</DashboardLink> e preencha:
 
 | Campo | Valor |
 |-------|-------|
-| **Provider** | AWS S3, Cloudflare R2 ou Supabase Storage |
-| **Bucket name** | Nome do bucket criado |
-| **Region** | Região do bucket (ex: `us-east-1`, `auto` para R2) |
+| **Provedor** | AWS S3, Cloudflare R2 ou Supabase Storage |
+| **Bucket** | Nome do bucket criado |
+| **Região** | Região do bucket (ex: `us-east-1`, `auto` para R2) |
 | **Access Key ID** | Chave de acesso IAM / R2 / Supabase |
 | **Secret Access Key** | Chave secreta correspondente |
-| **Endpoint** | Apenas para R2 e Supabase (URL S3-compatible do provider) |
+| **Cloudflare Account ID** / **Supabase Project Ref** | Apenas para R2 e Supabase, respectivamente — o endpoint S3-compatible é gerado automaticamente a partir desse valor |
 
 ### 4. Valide a conexão
 
@@ -108,7 +105,7 @@ O upload falhou após retentativas. Possíveis causas:
 
 - Credenciais expiradas ou com permissões insuficientes.
 - Bucket deletado ou com política de acesso alterada.
-- Quota do bucket atingida (verifique no console do provider).
+- Quota do bucket atingida (verifique no console do provedor).
 
 Acesse <DashboardLink path="/storage">Armazenamento</DashboardLink> e clique em **Testar conexão** para diagnosticar.
 
@@ -123,13 +120,13 @@ O upload está em andamento. Aguarde alguns segundos e consulte `GET /v1/numbers
 ## Segurança
 
 - Credenciais são armazenadas encriptadas (AES-256-GCM) — nunca em texto claro.
-- O Turbo Notify nunca expõe credenciais em logs ou responses.
+- O Turbo Notify nunca expõe credenciais em logs ou respostas.
 - URLs pré-assinadas têm validade configurável (padrão: 15 minutos; configurável até 1 hora).
 - Recomendamos política de acesso **least-privilege** — escopo restrito ao bucket do Turbo Notify.
 
 ## Relacionado
 
-- [Recuperar mensagem](/messages/get/) — campos de mídia com discriminated union por `kind`.
+- [Consultar mensagem](/messages/get/) — campos de mídia com união discriminada por `kind`.
 - [Webhooks — Armazenamento e mídia](/messages/webhook/#armazenamento-e-mídia) — eventos `storage.degraded` e `storage.recovered`.
 - [Envio de mídia](/messages/send-media/) — envio de mídia outbound por URL pública.
 - [Foto de perfil](/contacts/profile-picture/) — redirect para URL pré-assinada.

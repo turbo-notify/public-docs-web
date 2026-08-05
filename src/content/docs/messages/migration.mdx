@@ -3,11 +3,9 @@ title: Guia de migração
 description: Guia de migração para mudanças incompatíveis da API Turbo Notify.
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
-
 :::note[Atualização 2026-06-25]
-As rotas flat `/v1/messages`, `/v1/contacts` e `/v1/groups` foram reintroduzidas
-como tier de acesso direto ao número principal. Se você usa apenas o número principal,
+As rotas planas `/v1/messages`, `/v1/contacts` e `/v1/groups` foram reintroduzidas
+como forma de acesso direto ao número principal. Se você usa apenas o número principal,
 estas rotas são a forma recomendada de integração.
 :::
 
@@ -21,12 +19,19 @@ Esta atualização afeta **exclusivamente mensagens de grupo** (inbound e
 outbound). Mensagens 1:1 permanecem byte-idênticas — não há ação
 necessária se você não usa grupos.
 
-:::note[Superseded em 2026-06-19]
-O campo de identificação da linha organization introduzido aqui (`member`, depois
-renomeado `inbox`) **foi removido** dos eventos e respostas `message.*`. A
-linha Turbo Notify agora é identificada pelo `number_alias` do envelope;
-resolva seu número/contato via `GET /v1/numbers/{alias}`. As menções a
-`member`/`inbox` abaixo permanecem como registro histórico desta migração.
+A linha Turbo Notify é identificada pelo `number_alias` do envelope;
+resolva seu número/contato via `GET /v1/numbers/{alias}`.
+
+:::note[O campo `member` descrito abaixo foi removido em 2026-06-19]
+Esta seção documenta o estado do payload **entre 25 de maio e 19 de junho de
+2026**: o campo `group` sibling foi removido e, no mesmo momento, um campo
+`member` foi adicionado dentro de `data` para identificar a linha Turbo
+Notify participante do grupo. Em 19 de junho de 2026 o `member` (e o
+equivalente `inbox`) foi **removido** de `data` — a mesma informação passou
+a viver no `number_alias` do envelope (já usado em todos os trechos "O que
+fazer" desta página). Se você está integrando hoje, **ignore as menções a
+`data.member`** nesta seção e use `number_alias` diretamente — veja [Visão
+geral de grupos](/groups/overview/#linha-turbo-notify-number_alias-do-envelope).
 :::
 
 ### Resumo das mudanças
@@ -36,7 +41,7 @@ resolva seu número/contato via `GET /v1/numbers/{alias}`. As menções a
 | Webhook/polling grupo inbound | `to` agora carrega `group_id` + `name` em vez de `number`/`alias` | Breaking |
 | Webhook/polling grupo outbound | `to` agora carrega `group_id` + `name` em vez de `number` | Breaking |
 | Campo `group` sibling | **Removido** — substituído por `to.group_id` | Breaking |
-| Campo `member` | **Adicionado** como sibling top-level em mensagens de grupo | Aditivo |
+| Campo `member` | **Adicionado** como sibling top-level em mensagens de grupo — **removido novamente em 2026-06-19**, substituído pelo `number_alias` do envelope (veja nota acima) | Aditivo |
 | Request `POST /v1/numbers/{alias}/messages` (grupo) | Sem mudança — já usava `to.group_id` | Sem ação |
 
 ### 1. Remoção do campo `group` sibling
@@ -65,6 +70,10 @@ do próprio campo `to`.
 }
 ```
 
+*(O `member` acima só existiu até 19 de junho de 2026 — veja a nota logo
+abaixo do resumo das mudanças. O payload atual não carrega este campo;
+use o `number_alias` do envelope.)*
+
 **O que fazer:**
 - Remova qualquer leitura de `data.group` ou `data.group.id` / `data.group.name`.
 - Substitua por `data.to.group_id` e `data.to.name`.
@@ -79,31 +88,34 @@ da linha Turbo Notify. Em vez disso, carrega o identificador e nome do grupo.
 
 | Campo | Antes | Depois |
 |---|---|---|
-| `to.number` | telefone da linha TN | **removido** |
-| `to.alias` | alias da linha TN (`"main"`) | **removido** |
-| `to.name` | nome da linha TN | **removido** |
-| `to.contact_id` | contact_id da linha TN | **removido** |
+| `to.number` | telefone da linha Turbo Notify | **removido** |
+| `to.alias` | alias da linha Turbo Notify (`"main"`) | **removido** |
+| `to.name` | nome da linha Turbo Notify | **removido** |
+| `to.contact_id` | contact_id da linha Turbo Notify | **removido** |
 | `to.group_id` | ausente | `grp_{hex32}` do grupo |
 | `to.name` | ausente | nome snapshot do grupo |
-| `member.number` | ausente | telefone da linha TN |
-| `member.alias` | ausente | alias da linha TN |
+| `member.number` | ausente | telefone da linha Turbo Notify |
+| `member.alias` | ausente | alias da linha Turbo Notify |
 
 **O que fazer:**
-- Para obter qual linha Turbo Notify recebeu a mensagem, leia o `number_alias` do envelope e resolva seu número/contato via `GET /v1/numbers/{alias}`. (Este campo foi introduzido como `member` nesta migração, renomeado `inbox` em 2026-06-01 e **removido** em 2026-06-19 — veja a nota no topo da seção.)
+- Para saber qual linha Turbo Notify recebeu a mensagem, leia o `number_alias` do envelope.
 - Para obter o grupo destinatário, leia `data.to.group_id`.
 
-### 3. Campo `member` — identificação da linha organization
+### 3. Campo `member` — identificação da linha da organização (histórico — removido em 2026-06-19)
 
-O campo `member` é adicionado como sibling top-level em **todos** os
-payloads de grupo (inbound e outbound). Ele identifica a linha Turbo Notify
-participante do grupo — o telefone (`number`) e alias (`alias`).
+Entre 25 de maio e 19 de junho de 2026, o campo `member` era adicionado como
+sibling top-level em **todos** os payloads de grupo (inbound e outbound) para
+identificar a linha Turbo Notify participante do grupo — o telefone
+(`number`) e alias (`alias`):
 
 ```json
 "member": { "alias": "main", "number": "5511973117056" }
 ```
 
-Para organizations com múltiplos números extras, `member` é a referência
-autoritativa sobre qual linha está participando do grupo.
+**Esse campo não existe mais.** Desde 19 de junho de 2026, a mesma
+informação é dada pelo `number_alias` do envelope (fora de `data`) — resolva
+o número/contato correspondente via `GET /v1/numbers/{alias}`. Não implemente
+integrações novas contra `data.member`.
 
 ### 4. Detecção de grupo — padrão canônico
 
@@ -117,7 +129,7 @@ const groupName = data.group?.name;
 const isGroup = "group_id" in data.to;
 const groupId = data.to.group_id;
 const groupName = data.to.name;
-const inboxAlias = event.number_alias; // linha organization via envelope (campo `inbox` removido em 2026-06-19)
+const inboxAlias = event.number_alias; // linha da organização via envelope (number_alias)
 ```
 
 ### Checklist de migração (grupos)
@@ -126,7 +138,7 @@ const inboxAlias = event.number_alias; // linha organization via envelope (campo
 - [ ] Substituir `data.group.id` por `data.to.group_id`
 - [ ] Substituir `data.group.name` por `data.to.name`
 - [ ] Atualizar detecção: `"group" in data` → `"group_id" in data.to`
-- [ ] Para saber qual linha TN recebeu/enviou: usar o `number_alias` do envelope e resolver via `GET /v1/numbers/{alias}` (campo `member`/`inbox` removido em 2026-06-19)
+- [ ] Para saber qual linha Turbo Notify recebeu/enviou: usar o `number_alias` do envelope e resolver via `GET /v1/numbers/{alias}`
 - [ ] Atualizar schemas JSON com `additionalProperties: false` que incluíam `group` como campo permitido
 
 ---
@@ -145,13 +157,13 @@ Esta versão da API introduz mudanças incompatíveis com versões anteriores. S
 | ---- | ------- | ---- |
 | Formato do `message_id` | Agora prefixado com `msg_` | Breaking |
 | `request_id` no corpo | Removido — use o header `X-Request-ID` | Breaking |
-| `GET /messages/{request_id}/status` | Removido — use `GET /messages/{message_id}/status` | Breaking |
+| `GET /v1/messages/{request_id}/status` | Removido — use `GET /v1/messages/{message_id}/status` | Breaking |
 | Webhook `message.received` | Campo `content` removido; adicionados `preview` e `content_type` | Breaking |
 | Webhook `message.edited` | Campo `new_text` removido; adicionado `new_preview` (depois renomeado para `preview` em 2026-05-06) | Breaking |
-| Webhook `message.edited` (2026-05-06) | Campo `new_preview` renomeado para `preview`; payloads legados continuam aceitos no read-side via migration shim | Breaking |
+| Webhook `message.edited` (2026-05-06) | Campo `new_preview` renomeado para `preview`; payloads antigos com `new_preview` continuam sendo aceitos, mas o campo emitido hoje é sempre `preview` | Breaking |
 | Typing indicator | Campo `value` renomeado para `is_typing` | Breaking |
 | `POST /numbers` | Campo `phone` renomeado para `phone_number` | Breaking |
-| `GET /numbers` | Shape da resposta mudou para Stripe-like | Breaking |
+| `GET /numbers` | Shape da resposta mudou para o envelope `{data, cursor, has_more}` | Breaking |
 
 ---
 
@@ -215,19 +227,19 @@ X-Request-ID: req_01993c5a1b24d3e9f01a2b3c4d5e6f70
 
 ## 3. Consulta de status por `request_id` removida
 
-O endpoint `GET /messages/{request_id}/status` foi removido. Use o `message_id` retornado na resposta de envio.
+O endpoint `GET /v1/messages/{request_id}/status` foi removido. Use o `message_id` retornado na resposta de envio.
 
 **Antes:**
 
 ```bash
-curl "https://api.turbonotify.com/messages/req_abc123/status" \
+curl "https://api.turbonotify.com/v1/messages/req_abc123/status" \
   -H "Authorization: Bearer SUA_CHAVE"
 ```
 
 **Depois:**
 
 ```bash
-curl "https://api.turbonotify.com/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/status" \
+curl "https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70/status" \
   -H "Authorization: Bearer SUA_CHAVE"
 ```
 
@@ -316,7 +328,7 @@ O campo `new_text` foi removido do payload do evento `message.edited`. Em seu lu
 }
 ```
 
-**Em 2026-05-06** o campo `new_preview` foi renomeado para `preview` para manter parity com `MessageSentData.preview` / `MessageReceivedData.preview`. A partir de **2026-06-01** o envelope passou a expor `organization_id` + `created_at` (em vez de `timestamp`), o `data` usa `id` (em vez de `message_id`), e o timestamp de ocorrência é o campo `at` (último, em vez de `edited_at`). O payload atual é:
+**Em 2026-05-06** o campo `new_preview` foi renomeado para `preview`, para manter paridade com o `preview` dos eventos `message.sent` e `message.received`. A partir de **2026-06-01** o envelope passou a expor `organization_id` + `created_at` (em vez de `timestamp`), o `data` usa `id` (em vez de `message_id`), e o timestamp de ocorrência é o campo `at` (último, em vez de `edited_at`). O payload atual é:
 
 ```json
 {
@@ -339,19 +351,19 @@ O campo `new_text` foi removido do payload do evento `message.edited`. Em seu lu
 }
 ```
 
-Após a edição via `POST /v1/numbers/{alias}/messages/{id}/edit`, `GET /v1/numbers/{alias}/messages/{message_id}` retorna o body já atualizado — não é mais necessário tratar o body antigo. Edits feitos diretamente no app do WhatsApp (channel-side) também passam a ser persistidos via decrypt nativo do `secretEncryptedMessage` (ver ADR `2026-05-05-message-contract-consistency` Refinement 11).
+Após a edição via `POST /v1/numbers/{alias}/messages/{id}/edit`, `GET /v1/numbers/{alias}/messages/{message_id}` retorna o body já atualizado — não é mais necessário tratar o body antigo. Edições feitas diretamente no app do WhatsApp (channel-side) também passam a ser persistidas.
 
 **O que fazer:**
 
 1. Substitua o uso de `data.new_text` por `data.preview`.
-2. Se já tinha migrado para `new_preview`, faça a substituição final por `preview`. Migration shims do servidor continuam aceitando payloads legados no read-side, mas o write-side só emite `preview`.
+2. Se já tinha migrado para `new_preview`, faça a substituição final por `preview`. Camadas de compatibilidade do servidor continuam aceitando payloads legados no read-side, mas o write-side só emite `preview`.
 3. Para o corpo completo atualizado (qualquer edição, API ou channel-side), chame `GET /v1/numbers/{alias}/messages/{message_id}`.
 
 ---
 
-## 6. Typing indicator: `value` renomeado para `is_typing`
+## 6. Indicador de digitação: `value` renomeado para `is_typing`
 
-O campo `value` no payload do typing indicator foi renomeado para `is_typing`.
+O campo `value` no payload do indicador de digitação foi renomeado para `is_typing`.
 
 **Antes:**
 
@@ -371,7 +383,7 @@ O campo `value` no payload do typing indicator foi renomeado para `is_typing`.
 }
 ```
 
-**O que fazer:** Atualize as chamadas a `POST /v1/numbers/{alias}/typing-indicator` para usar `is_typing` no lugar de `value` e o campo `to` no formato estruturado `{"number": "..."}` (ver seção "Parties Estruturados" acima).
+**O que fazer:** Atualize as chamadas a `POST /v1/numbers/{alias}/typing-indicator` para usar `is_typing` no lugar de `value` e o campo `to` no formato estruturado `{"number": "..."}` (veja [Indicador de digitação](/other-features/typing-indicator/#destinatários-disponíveis) para as formas aceitas hoje).
 
 ---
 
@@ -403,7 +415,7 @@ O campo do número de telefone ao criar um número extra foi renomeado.
 
 ## 8. `GET /numbers`: novo formato de resposta
 
-A resposta do endpoint de listagem de números mudou para o formato Stripe-like com paginação por cursor.
+A resposta do endpoint de listagem de números mudou para o envelope `{data, cursor, has_more}`.
 
 **Antes:**
 
@@ -419,24 +431,29 @@ A resposta do endpoint de listagem de números mudou para o formato Stripe-like 
 
 ```json
 {
-  "object": "list",
   "data": [
     {
+      "contact_id": "ct_c7abb1f5ee9640bf86a0a20290810ae9",
+      "name": "Vendas SP",
+      "type": "extra",
       "alias": "vendas-sp",
-      "phone_number": "+5511988887777",
-      "status": "active",
-      "number_type": "extra",
-      "created_at": "2026-04-01T10:00:00Z"
+      "number": "5511988887777",
+      "description": null,
+      "status": { "status": "connected", "at": "2026-04-01T10:00:00Z", "reason": null }
     }
   ],
+  "cursor": null,
   "has_more": false
 }
 ```
 
 **O que fazer:**
 - Acesse os números em `data` (antes: `numbers`).
-- Atualize referências ao campo `phone` para `phone_number` dentro dos objetos de número.
-- Implemente suporte à paginação usando `starting_after` e `has_more` para contas com muitos números.
+- Atualize referências ao campo `phone`: nos **itens da listagem** ele virou `number`, em **dígitos E.164 sem `+`**. O nome `phone_number` vale para o corpo **e** para a resposta de `POST /v1/numbers` (outro endpoint, veja a seção anterior), mas o `+` inicial **só** é aceito no **corpo da requisição** — a **resposta** devolve dígitos puros, sem `+` (ex.: `"5511988888888"`).
+- Troque `number_type` por `type` e trate `status` como **objeto** `{status, at, reason}`, não como a string `"active"`. Não existem `created_at` nem `phone_number` nos itens.
+- Não implemente paginação aqui: `GET /v1/numbers` não aceita nenhum query parameter e sempre devolve todos os números da conta em uma única página — `cursor` vem sempre `null` e `has_more` sempre `false`.
+
+O shape completo, campo a campo, está em [Listagem de números](/numbers/list/).
 
 ---
 
@@ -447,9 +464,11 @@ Além das mudanças incompatíveis, esta versão introduz novos recursos:
 | Recurso | Endpoint | Descrição |
 | ------- | -------- | --------- |
 | Consulta de mensagem | `GET /v1/numbers/{alias}/messages/{message_id}` | Recupere corpo completo, status e mídia por ID |
-| Envio de mídia | `POST /v1/numbers/{alias}/messages` com `content_type` + `media` | Envie imagens, áudios, vídeos, documentos e figurinhas |
-| BYO S3 | Dashboard → Settings → Integrations | Armazenamento durável para mídia recebida e enviada |
+| Envio de mídia | `POST /v1/numbers/{alias}/messages` com o campo âncora da mídia em `content` (`image_url`, `video_url`, `audio_url`, `document_url` ou `sticker_url`) | Envie imagens, áudios, vídeos, documentos e figurinhas |
+| BYO Object Storage | Dashboard → Configurações → Integrações | Armazenamento durável para mídia recebida e enviada |
 | Polling de eventos | `GET /v1/events` | Alternativa ou complemento ao webhook para processar eventos |
+
+O corpo do envio é `{to, quoted_message_id?, content}` e não aceita campos extras: o tipo de conteúdo é **inferido** do campo âncora presente em `content`, e mandar um `content_type` explícito retorna `422`. Veja [Envio de mensagens](/messages/send/) e [Envio de mídia](/messages/send-media/).
 
 Consulte as páginas de cada recurso para detalhes de uso.
 
@@ -460,10 +479,10 @@ Consulte as páginas de cada recurso para detalhes de uso.
 - [ ] Atualizar armazenamento de `message_id` para incluir o prefixo `msg_`
 - [ ] Atualizar validações de formato de `message_id` para `^msg_[0-9a-f]{32}$`
 - [ ] Ler `X-Request-ID` do header em vez de `request_id` do corpo
-- [ ] Substituir chamadas a `GET /messages/{request_id}/status` por `GET /messages/{message_id}/status`
+- [ ] Substituir chamadas a `GET /v1/messages/{request_id}/status` por `GET /v1/messages/{message_id}/status`
 - [ ] Atualizar handlers de `message.received` para usar `preview` e `content_type` em vez de `content`
 - [ ] Atualizar referências a `from` e `to` de string para objeto `{number: string}`
 - [ ] Atualizar handlers de `message.edited` para usar `preview` (anteriormente `new_text` → `new_preview` → `preview`; o nome final `preview` é o canônico desde 2026-05-06)
 - [ ] Atualizar chamadas a `POST /v1/typing-indicator` para usar `is_typing`
 - [ ] Atualizar chamadas a `POST /v1/numbers` para usar `phone_number`
-- [ ] Atualizar código de listagem de números para usar `data[]` e `has_more`
+- [ ] Atualizar código de listagem de números para ler `data[]` e os campos `type`, `number` (dígitos, sem `+`) e `status` como objeto

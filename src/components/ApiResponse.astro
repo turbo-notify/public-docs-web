@@ -1,7 +1,7 @@
 ---
 interface Props {
   status: number;
-  body: unknown;
+  body?: unknown;
   headers?: Record<string, string>;
 }
 
@@ -27,5 +27,6 @@ const bodyJson = body === null ? '<VAZIO>' : JSON.stringify(body, null, 2);
     </ul>
   )}
   <div class="api-response-divider"></div>
-  <pre class="api-response-body" set:text={bodyJson} />
+  {body !== undefined && <pre class="api-response-body" set:text={bodyJson} />}
+  {body === undefined && <slot />}
 </div>

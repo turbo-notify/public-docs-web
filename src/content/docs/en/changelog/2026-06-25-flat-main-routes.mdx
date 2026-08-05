@@ -1,9 +1,23 @@
 ---
 title: Flat routes for the primary number
-description: The routes /v1/messages, /v1/contacts and /v1/groups now point directly to the primary number, without needing to specify the alias.
+description: The routes /v1/messages, /v1/contacts and /v1/groups now point directly to the primary number, without needing to specify the alias — reverting the 404 introduced three days earlier.
 sidebar:
   order: 7
 ---
+
+**Date:** 2026-06-25
+**Status:** Applied
+
+:::note[Flat routes work again]
+Between 2026-06-22 and 2026-06-25, flat routes (`/v1/messages`, `/v1/contacts`,
+`/v1/groups` and their sub-routes) returned **404** — see [Number-nested
+routes](/en/changelog/2026-06-22-number-scoped-routes/). Starting with this
+release they work again **permanently** as a shorthand for the primary number,
+with a response identical to the nested form. They no longer return 404 for
+being flat — only if the organization has no primary number registered.
+:::
+
+## What changed
 
 From this version on, all primary-number operations can be performed
 directly without specifying the alias in the URL:
@@ -20,6 +34,18 @@ directly without specifying the alias in the URL:
 | *(and all sub-routes)* | |
 
 The `/v1/numbers/main/…` form continues to work normally and produces
-identical responses. For **extra numbers**, continue using `/v1/numbers/{alias}/…`.
+identical responses — the nested form is canonical; the flat form is a
+permanent shortcut valid only for the primary number. For **extra numbers**,
+continue using `/v1/numbers/{alias}/…` — they have no flat form.
+
+The webhook/polling envelope of an operation performed via the flat route
+carries `number_alias: "main"`, indistinguishable from an operation performed
+via the nested route.
 
 This change requires no modifications to existing integrations.
+
+## References
+
+- [Number-nested routes](/en/changelog/2026-06-22-number-scoped-routes/) — the change this entry partially reverts (the 404 on flat routes).
+- [Quick Start](/general/getting-started/) — the examples use the flat route.
+- [Sending messages](/messages/send/) · [Extra numbers](/numbers/add/)

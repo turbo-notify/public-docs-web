@@ -1,6 +1,6 @@
 ---
 title: Retenção das mensagens
-description: Janela de leitura por tier (7 a 365 dias) — mensagens fora da janela retornam 404. Retenção física de 12 meses é independente do tier.
+description: Janela de leitura por tier (7 a 365 dias), aplicada a toda operação por id — consulta, status, recibos, reações, responder, editar, apagar e reagir — e à listagem de mensagens. Retenção física de 12 meses é independente do tier.
 ---
 
 import ApiResponse from '@components/ApiResponse.astro';
@@ -20,9 +20,9 @@ Cada tier de plano define por quantos dias, a partir do envio/recebimento, uma m
 | `BUSINESS` | 90 dias           |
 | `CUSTOM`   | 365 dias          |
 
-Uma mensagem mais antiga que a janela do seu tier deixa de existir para efeitos de leitura via API — mesmo que o registro ainda exista fisicamente no banco de dados (veja [Retenção física vs. janela de leitura](#retenção-física-vs-janela-de-leitura) abaixo).
+Uma mensagem mais antiga que a janela do seu tier **deixa de existir para a API**: ela some da listagem e passa a responder **404** em **todas** as operações que a endereçam por id — não apenas na consulta de detalhe. Isso vale mesmo que o registro ainda exista fisicamente no banco de dados (veja [Retenção física vs. janela de leitura](#retenção-física-vs-janela-de-leitura) abaixo).
 
-## Comportamento ao consultar por id
+## Comportamento nas operações por id
 
 `GET /v1/numbers/{alias}/messages/{id}` (e a rota plana `GET /v1/messages/{id}` para o número principal) retorna **404** quando o `id` está fora da janela de retenção do tier — o mesmo shape de uma mensagem que nunca existiu, sem vazar a existência passada do recurso:
 
@@ -33,7 +33,20 @@ Uma mensagem mais antiga que a janela do seu tier deixa de existir para efeitos 
   }}
 />
 
-Isso vale também para os sub-recursos que dependem do id — `.../status`, `.../receipts`, `.../reactions` — que passam a retornar 404 pela mesma razão quando a mensagem-pai está fora da janela.
+Esse 404 **não é exclusivo da consulta de detalhe**. Toda rota que recebe um `{message_id}` resolve a mensagem pelo mesmo caminho compartilhado — o mesmo que aplica a janela de retenção — **antes** de executar a própria operação. Por isso a janela alcança, sem exceção, todas as operações abaixo, tanto na forma aninhada quanto na rota plana equivalente do número principal:
+
+| Operação             | Rota aninhada                                          |
+| -------------------- | ------------------------------------------------------ |
+| Consultar mensagem   | `GET /v1/numbers/{alias}/messages/{id}`                 |
+| Consultar status     | `GET /v1/numbers/{alias}/messages/{id}/status`          |
+| Histórico de recibos | `GET /v1/numbers/{alias}/messages/{id}/receipts`        |
+| Listar reações       | `GET /v1/numbers/{alias}/messages/{id}/reactions`       |
+| Responder            | `POST /v1/numbers/{alias}/messages/{id}/reply`          |
+| Editar               | `POST /v1/numbers/{alias}/messages/{id}/edit`           |
+| Apagar               | `POST /v1/numbers/{alias}/messages/{id}/delete`         |
+| Reagir               | `POST /v1/numbers/{alias}/messages/{id}/react`          |
+
+Em todas elas a resposta é o mesmo `404 not_found` — **indistinguível** de uma mensagem que nunca existiu. Na prática: você **não consegue** consultar o status, buscar recibos ou reações, responder, editar, apagar nem reagir a uma mensagem mais antiga que a janela do seu tier.
 
 ## Comportamento na listagem
 
@@ -53,7 +66,7 @@ Fazer upgrade de tier **não recupera** mensagens que já passaram pela retenç�
 Para mensagens com mídia (imagem, vídeo, áudio, documento, sticker), a durabilidade dos **bytes** é independente da janela de leitura acima:
 
 - **Com [BYO Object Storage](/general/byo-storage-setup/) configurado**: os bytes são copiados para o seu bucket assim que a mensagem é recebida. Permanecem disponíveis enquanto o seu bucket retiver o objeto — sob seu controle total, inclusive depois que a mensagem sair da janela de leitura.
-- **Sem BYO Storage**: apenas os metadados (mime, tamanho, hash, legenda) são persistidos. Os bytes NÃO são proxyados nem armazenados pelo Turbo Notify. O campo `media.kind` retorna `"unavailable"` com um `setup_hint` envelope estimulando a configuração.
+- **Sem BYO Storage**: apenas os metadados (mime, tamanho, hash, legenda) são persistidos. Os bytes NÃO são repassados nem armazenados pelo Turbo Notify. O bloco de mídia (`image`/`video`/`audio`/`document`/`sticker`) retorna `kind: "unavailable"` com um envelope `setup_hint` indicando como configurar.
 
 Esse comportamento é canônico desde 2026-05-26 — não há mais janela de 24h via CDN do WhatsApp. Detalhes em [BYO Object Storage](/general/byo-storage-setup/).
 
@@ -62,9 +75,9 @@ Esse comportamento é canônico desde 2026-05-26 — não há mais janela de 24h
 - Consulte o status da mensagem o quanto antes após o envio — não dependa da janela de leitura do tier para arquivamento de longo prazo.
 - Configure um [webhook](/messages/webhook/) para receber atualizações em tempo real e não depender exclusivamente da consulta manual.
 - Armazene no seu sistema os dados que forem relevantes para o seu negócio, como o `message_id` e o status final — a API não é um armazenamento de longo prazo para o seu histórico de conversas.
-- Operações que dependem da mensagem original, como [responder](/messages/send/) (via endpoint `POST /v1/numbers/{alias}/messages/{message_id}/reply`), também estão sujeitas à janela de leitura — respostas a mensagens fora da janela falham como se a mensagem-alvo não existisse.
-- As franquias de mensagens/contatos por ciclo são um conceito diferente da retenção — veja [Quota e Uso](/usage/quota/).
+- Operações que dependem da mensagem original — [responder](/messages/send/), [editar ou apagar](/messages/edit-delete/) e [reagir](/other-features/reaction/) — **também** estão sujeitas à janela de leitura: a mensagem-alvo é resolvida pelo mesmo caminho que aplica o filtro, então tentar qualquer uma delas em uma mensagem fora da janela retorna `404 not_found`. Se precisa manter a possibilidade de responder a uma conversa antiga, o tier contratado é o que define esse horizonte.
+- As franquias de mensagens/contatos por ciclo são um conceito diferente da retenção — veja [Quota e uso](/usage/quota/).
 
 ## Consulta de status
 
-Para verificar o status de uma mensagem dentro da janela de retenção, veja a documentação de [Status](/messages/status/).
+Para verificar o status de uma mensagem **dentro** da janela de leitura do seu tier, veja a documentação de [Status](/messages/status/). Depois que a mensagem sai da janela, esse endpoint responde `404 not_found` como qualquer outra operação por id — por isso vale consultar (ou receber via [webhook](/messages/webhook/)) e arquivar o status final o quanto antes.

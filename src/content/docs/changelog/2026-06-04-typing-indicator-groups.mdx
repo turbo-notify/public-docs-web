@@ -1,5 +1,5 @@
 ---
-title: "Aviso de digitação em grupos do WhatsApp"
+title: "Indicador de digitação em grupos do WhatsApp"
 description: "POST /v1/typing-indicator agora suporta grupos via to.group_id, além do envio individual já existente."
 sidebar:
   order: 3
@@ -18,12 +18,12 @@ sidebar:
 | ---------- | ------- | ----------- |
 | `number`   | `{"number": "+5511999999999"}` | Conversa 1:1 |
 | `group_id` | `{"group_id": "grp_…"}` | Grupo do WhatsApp |
-| `contact_id` | `{"contact_id": "ct_…"}` | Conversa 1:1 via ID de contato TN |
+| `contact_id` | `{"contact_id": "ct_…"}` | Conversa 1:1 via ID de contato do Turbo Notify |
 
 O campo `contact_id` também é suportado — as três formas de `to` (`number`,
-`group_id`, `contact_id`) valem para o typing indicator, o mesmo modelo
-polimórfico usado no envio de mensagens. Veja [Aviso de
-Digitação](/other-features/typing-indicator/) para a lista completa e
+`group_id`, `contact_id`) valem para o indicador de digitação, o mesmo modelo
+polimórfico usado no envio de mensagens. Veja [Indicador de
+digitação](/other-features/typing-indicator/) para a lista completa e
 atualizada das variantes de `to`.
 
 ### Exemplo — grupo
@@ -39,9 +39,9 @@ atualizada das variantes de `to`.
 
 | Código | HTTP | Significado |
 | ------ | ---- | ----------- |
-| `group_not_found` | 422 | O `group_id` informado não existe para este organization |
-| `groups_not_enabled` | 422 | O recurso Grupos não está habilitado nesta instância |
+| `group_not_found` | 404 | O `group_id` informado não existe para esta organização |
+| `groups_not_enabled` | 400 | O recurso Grupos não está habilitado nesta instância |
 
 ## Referências
 
-- [Aviso de Digitação](/other-features/typing-indicator/) — documentação atualizada com exemplos para grupo e para número individual.
+- [Indicador de digitação](/other-features/typing-indicator/) — documentação atualizada com exemplos para grupo e para número individual.

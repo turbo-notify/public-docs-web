@@ -5,8 +5,6 @@ sidebar:
   order: 1
 ---
 
-import ApiResponse from '@components/ApiResponse.astro';
-
 List of webhook events emitted by Turbo Notify for changes related to TN
 Contacts. You need to configure the URL and enable `contact.*` in the
 dashboard.
@@ -15,20 +13,19 @@ dashboard.
 
 | Event | When |
 | ------ | ------ |
-| `contact.created` | First observation of the `(organization, phone)` pair |
+| `contact.created` | First observation of the `(organization, number, phone)` triple — contact identity is **per number**, so the same phone reaching `main` and an extra number generates **two** `contact.created` events, one per number (see [Contacts overview](/en/contacts/overview/)) |
 | `contact.name_changed` | `name` diverged from the previous snapshot |
 | `contact.picture_changed` | WhatsApp emitted a `PictureUpdate` or a refresh detected a new hash |
 | `contact.first_messaged` | The organization sent the first outbound message to this contact (an **acquisition** signal for a new contact — observability; the quota is consumed by contacts reached in the cycle, not by this event) |
 | `contact.quota.warning` | Crossed the 80/90/95% threshold of the contact quota |
 | `contact.quota.exceeded` | A send was rejected for exhaustion (HTTP 402) |
 
-## The `data` shape: contact triple + coherence tail
+## The `data` shape: contact triple + standard context fields
 
-Since 2026-06-06 a `contact.*` event's `data` mirrors `message.*`'s `data`: the
-**contact triple** `{id, name, number}` plus the coherence tail (`direction`,
-`channel`, `origin`). `id` is the contact's own public id — the field
-previously named `contact_id` at the top of `data` was **renamed to `id`** (the
-value is still `ct_{hex32}`), just like `message.*`'s `data.id`.
+A `contact.*` event's `data` mirrors `message.*`'s `data`: the
+**contact triple** `{id, name, number}` plus the standard context fields
+(`direction`, `channel`, `origin`). `id` is the contact's own public id
+(`ct_{hex32}`), just like `message.*`'s `data.id`.
 
 ```json
 {
@@ -41,10 +38,9 @@ value is still `ct_{hex32}`), just like `message.*`'s `data.id`.
 }
 ```
 
-- `id` — the contact's public id (`ct_{hex32}`), the event's subject (formerly
-  `contact_id`).
-- `name` — the contact's WhatsApp push name (formerly `push_name`).
-- `number` — **full E.164** (formerly `phone_masked`; the mask was removed).
+- `id` — the contact's public id (`ct_{hex32}`), the event's subject.
+- `name` — the contact's WhatsApp push name.
+- `number` — **full E.164**.
 - `direction` — always `"inbound"` (the contact is observed/discovered via the
   WhatsApp channel). Absent on the synthetic quota events.
 - `channel` — always `"whatsapp"`.
@@ -81,26 +77,24 @@ events do **not** carry `direction`.
 `contact.name_changed`, `contact.picture_changed`, `contact.first_messaged`)
 and quota (`contact.quota.warning`, `contact.quota.exceeded`) — carries,
 immediately below `organization_id`, the `number_alias` field: the TN number
-("inbox") handle the contact (or the contact quota) belongs to — `"main"` for
+handle the contact (or the contact quota) belongs to — `"main"` for
 the primary number or an extra-number alias. Use it to route the observation
 to the correct inbox.
 
-The contact quota is now **per number** (ADR 2026-06-22): each number has its
+The contact quota is now **per number** since 2026-06-22: each number has its
 own distinct-contact count, so the `contact.quota.warning`/`contact.quota.exceeded`
 events identify the affected number via `number_alias` in the envelope. The
 quota event's `data` carries `threshold_bps` (only on `warning`), `used`,
 `quota`, `cycle_start`, `cycle_end`, `resets_at`, `tier`, `channel`, `origin`.
 
-> **Evaluated cycle (2026-07-04):** the former `window_days` field is
-> **retired** from both `*.quota.*` families — `used`/`quota` are now measured
-> against the organization's evaluated billing cycle, represented by
-> `cycle_start`/`cycle_end` (ISO 8601 UTC). `resets_at` still equals
-> `cycle_end`.
+> `used`/`quota` are measured against the organization's evaluated billing
+> cycle, represented by `cycle_start`/`cycle_end` (ISO 8601 UTC). `resets_at`
+> equals `cycle_end`.
 
 > `number_alias` rides the **envelope**, never `data`. Among account-wide
 > events, it's omitted only on `storage.*` (the sole event with no single
 > number). Every `*.quota.*` family — both `contact.quota.*` and
-> `message.quota.*` (per-number since ADR 2026-07-02) — carries `number_alias`.
+> `message.quota.*` (per-number since 2026-07-02) — carries `number_alias`.
 
 ## Example: `contact.created`
 
@@ -168,8 +162,7 @@ moment): here TN emitted the event 3s after the name change.
       "kind": "available",
       "url": "https://<bucket>.r2.cloudflarestorage.com/contacts/.../picture.jpg?...",
       "url_expires_at": "2026-05-15T12:15:00Z",
-      "hash": "abc123...",
-      "fetched_at": "2026-05-15T12:00:00Z"
+      "hash": "abc123..."
     },
     "direction": "inbound",
     "channel": "whatsapp",
@@ -179,12 +172,17 @@ moment): here TN emitted the event 3s after the name change.
 ```
 
 `contact.picture_changed` does **not** carry `data.at` — it's a picture
-discovery (snapshot) with no single WhatsApp action moment; `picture.fetched_at`
-indicates when the picture was downloaded, and the envelope `created_at` when
-the event was emitted.
+discovery (snapshot) with no single WhatsApp action moment; use the envelope
+`created_at` to know when the event was emitted.
+
+This event also does **not** carry `picture.fetched_at`: the discovery is made
+by hash comparison, and the URL's validity is already expressed by
+`picture.url_expires_at`. `fetched_at` only exists when reading the contact
+([`GET /v1/numbers/{alias}/contacts/{contact_id}`](/en/contacts/detail/)),
+never on this webhook.
 
 The `picture` block follows the same lifecycle as message media: when the
-picture is in your bucket (`organization_storage`) it arrives as
+picture is stored in your bucket it arrives as
 `kind: "available"` with a **presigned, time-limited URL**
 (`url_expires_at`, ~15 min) — never a WhatsApp URL. Re-download the picture via
 the GET endpoint when the URL expires. The event fires **only** when the
@@ -207,7 +205,7 @@ where `{alias}` is the `number_alias` received in this event's envelope.
     "id": "ct_...",
     "name": "João Silva",
     "number": "5571999294756",
-    "tier": "FREE",
+    "tier": "unknown",
     "direction": "inbound",
     "channel": "whatsapp",
     "origin": "tn",
@@ -215,6 +213,11 @@ where `{alias}` is the `number_alias` received in this event's envelope.
   }
 }
 ```
+
+The `tier` field is **not populated** on this event: `contact.first_messaged`
+always emits `"unknown"`. Don't use this field to infer the organization's
+plan — the real `tier` is delivered on the
+`contact.quota.warning`/`contact.quota.exceeded` events.
 
 ## Example: `contact.quota.warning`
 
@@ -239,12 +242,16 @@ where `{alias}` is the `number_alias` received in this event's envelope.
 }
 ```
 
-`threshold_bps` is an integer in basis points: `80 | 90 | 95 | 100`. Synthetic
-event — carries `channel`/`origin` but **no `direction`** (not a message flow)
-and **no `at`**; `cycle_start`/`cycle_end` are the evaluated billing cycle
-`used`/`quota` were measured against; `resets_at` is a business-value
-timestamp (when the quota cycle resets, equal to `cycle_end`), not the action
-moment.
+`threshold_bps` is an integer in basis points: `80 | 90 | 95`. Quota
+exhaustion is **not** signaled by this event with `threshold_bps: 100` — it's
+signaled by the separate `contact.quota.exceeded` event, which does **not**
+have the `threshold_bps` field. A consumer that branches on
+`threshold_bps === 100` writes dead code and misses the real exhaustion
+signal. Synthetic event — carries `channel`/`origin` but **no `direction`**
+(not a message flow) and **no `at`**; `cycle_start`/`cycle_end` are the
+evaluated billing cycle `used`/`quota` were measured against; `resets_at` is a
+business-value timestamp (when the quota cycle resets, equal to `cycle_end`),
+not the action moment.
 
 ## Example: `contact.quota.exceeded`
 
@@ -275,6 +282,3 @@ Synthetic — carries `channel`/`origin` but **no `direction`**, **no `at`** and
 
 Every event carries a unique `id` (`evt_…`). Use `id` as your deduplication
 key on your side.
-
-Internally the TN publisher uses `Nats-Msg-Id` with the format
-`{organization_id}:{contact_id}:{event_kind}` for broker-side idempotency.

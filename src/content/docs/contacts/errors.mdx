@@ -11,42 +11,40 @@ import ApiResponse from '@components/ApiResponse.astro';
 
 | HTTP | `error` | Quando |
 | ---- | ------- | ------ |
-| 400  | `invalid_phone_number` | Filtro `phone` não está em E.164 |
 | 400  | `invalid_contact_id` | `contact_id` não bate com `^ct_[0-9a-f]{32}$` |
 | 400  | `invalid_cursor` | Cursor opaco corrompido |
 | 402  | `contact_quota_exceeded` | Quota de contatos distintos do ciclo atingida |
-| 404  | `contact_not_found` | ID inválido ou de outro organization |
-| 404  | `contact_picture_unavailable` | Sem foto disponível para este contato |
+| 404  | `contact_not_found` | ID inválido ou de outra organização |
+| 404  | `contact_picture_unavailable` | Caso raro — falha ao gerar a URL pré-assinada da foto. A ausência de foto (sem storage, upload falhou, contato sem foto) **não** retorna 404: veja [Foto de perfil](/contacts/profile-picture/) |
 | 429  | `refresh_rate_limited` | Limite de refresh por minuto |
 
 ## Exemplo de resposta 402
 
-Retornado pelo pipeline de envio (`ContactQuotaGuardStep`) quando a organização tenta contatar via Turbo Notify um contato que passa a ser **contado no ciclo atual** (`counted_this_cycle`) — um contato **novo** OU um contato **recorrente** já contado neste ciclo — e a quota de contatos distintos do ciclo já está esgotada.
+Retornado ao tentar contatar via Turbo Notify um contato que passa a ser **contado no ciclo atual** — um contato **novo** OU um contato **recorrente** ainda não contado neste ciclo — e a quota de contatos distintos do ciclo já está esgotada.
 
-<ApiResponse status={402}>
-```json
-{
-  "error": "contact_quota_exceeded",
-  "message": "Distinct-contacts quota exceeded for tier SOLO (100/100 this cycle)",
-  "details": {
-    "quota": 100,
-    "used": 100,
-    "resets_at": "2026-08-01T00:00:00Z",
-    "tier": "SOLO"
-  }
-}
-```
-</ApiResponse>
+<ApiResponse
+  status={402}
+  body={{
+    error: 'contact_quota_exceeded',
+    message: 'Distinct-contacts quota exceeded for tier SOLO (100/100 this cycle)',
+    details: {
+      quota: 100,
+      used: 100,
+      resets_at: '2026-08-01T00:00:00Z',
+      tier: 'SOLO',
+    },
+  }}
+/>
 
-**Ação recomendada:** upgrade plan. Diferentemente de 429, 402 não tem `Retry-After` — o erro é estrutural (o ciclo de faturamento avaliado precisa fechar, em `resets_at`, ou o tier precisa subir).
+**Ação recomendada:** faça upgrade do plano. Diferentemente de 429, 402 não tem `Retry-After` — o erro é estrutural (o ciclo de faturamento avaliado precisa fechar, em `resets_at`, ou o tier precisa subir).
 
 ## Diferença 402 vs 429
 
 | | 402 Payment Required | 429 Too Many Requests |
 | - | -------------------- | --------------------- |
-| Semântica | Estrutural — "upgrade plan" | Temporal — "retry depois" |
+| Semântica | Estrutural — faça upgrade do plano | Temporal — tente novamente depois |
 | Header | — | `Retry-After: <segundos>` |
 | Reset | No fim do ciclo de faturamento avaliado (`resets_at`) ou upgrade | Em segundos/minutos |
-| Quando | Quota do ciclo | Burst protection |
+| Quando | Quota do ciclo | Proteção contra rajadas |
 
 Veja também: [Quota e uso](/usage/quota/).

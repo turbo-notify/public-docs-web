@@ -16,13 +16,9 @@ The send endpoint (`POST /v1/numbers/{alias}/messages`) now accepts `{"contact_i
 The phone number is resolved automatically from the TN Contacts catalog.
 
 **New error codes:**
-- `contact_not_found` (HTTP 422) — the supplied `contact_id` does not belong to this organization.
-- `contacts_not_enabled` (HTTP 422) — feature not configured on this deployment.
+- `contact_not_found` (HTTP 400) — the supplied `contact_id` does not belong to this organization.
+- `contacts_not_enabled` (HTTP 400) — feature not configured on this deployment.
 
-## Doc Fix
+## Code Example Correction
 
 Code examples incorrectly showed `"to": "+5511999999999"` (bare string). The correct format has always been `"to": {"number": "+5511999999999"}`.
-
-## Breaking Change
-
-The `to` field validation error messages have changed to reflect the third option. Clients parsing the raw error string should update.

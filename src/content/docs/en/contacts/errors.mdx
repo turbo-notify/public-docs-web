@@ -11,12 +11,11 @@ import ApiResponse from '@components/ApiResponse.astro';
 
 | HTTP | `error` | When |
 | ---- | ------- | ---- |
-| 400  | `invalid_phone_number` | The `phone` filter is not in E.164 format |
 | 400  | `invalid_contact_id` | `contact_id` does not match `^ct_[0-9a-f]{32}$` |
 | 400  | `invalid_cursor` | Opaque cursor is corrupted |
 | 402  | `contact_quota_exceeded` | The cycle's distinct-contacts quota was reached |
 | 404  | `contact_not_found` | Invalid id, or belongs to another organization |
-| 404  | `contact_picture_unavailable` | No picture available for this contact |
+| 404  | `contact_picture_unavailable` | Rare — presigned-URL generation for the picture failed on this request. The absence of a picture (no storage, upload failed, contact has no picture) does **not** return 404: see [Profile Picture](/en/contacts/profile-picture/) |
 | 429  | `refresh_rate_limited` | Refresh-per-minute limit exceeded |
 
 A contact id accessed under the **wrong** `{alias}` also surfaces as
@@ -28,11 +27,10 @@ the correct `{alias}`.
 
 ## 402 response example
 
-Returned by the send pipeline (`ContactQuotaGuardStep`) when the organization
-tries to reach, via Turbo Notify, a contact that becomes **counted this
-cycle** (`counted_this_cycle`) — a **new** contact OR a **returning** contact
-already counted this cycle — and the cycle's distinct-contacts quota is
-already exhausted.
+Returned when the organization tries to reach, via Turbo Notify, a contact
+that becomes counted for the current cycle — a **new** contact or a
+**returning** contact not yet counted this cycle — and the cycle's
+distinct-contacts quota is already exhausted.
 
 <ApiResponse status={402}>
 ```json

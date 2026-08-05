@@ -22,5 +22,5 @@ description: "POST /v1/typing-indicator ahora acepta to.group_id para grupos de 
 modelo polimórfico usado en el envío de mensajes.
 
 **Nuevos códigos de error:**
-- `group_not_found` (HTTP 422) — el `group_id` proporcionado no pertenece a este organization.
-- `groups_not_enabled` (HTTP 422) — la funcionalidad Grupos no está habilitada en esta instancia.
+- `group_not_found` (HTTP 404) — el `group_id` proporcionado no pertenece a esta organización.
+- `groups_not_enabled` (HTTP 400) — la funcionalidad Grupos no está habilitada en esta instancia.

@@ -1,14 +1,29 @@
 ---
-title: Rotas flat para o número principal
-description: As rotas /v1/messages, /v1/contacts e /v1/groups agora apontam diretamente para o número principal, sem precisar especificar o alias.
+title: Rotas planas para o número principal
+description: As rotas /v1/messages, /v1/contacts e /v1/groups voltam a apontar diretamente para o número principal, sem precisar especificar o alias — revertendo o 404 introduzido três dias antes.
 sidebar:
   order: 7
 ---
 
+**Data:** 2026-06-25
+**Status:** Aplicado
+
+:::note[Rotas planas funcionam novamente]
+Entre 2026-06-22 e 2026-06-25, as rotas planas (`/v1/messages`, `/v1/contacts`,
+`/v1/groups` e sub-rotas) retornavam **404** — veja [Rotas aninhadas por
+número](/changelog/2026-06-22-number-scoped-routes/). A partir desta versão elas
+voltam a funcionar **permanentemente** como forma curta para o número
+principal, com resposta idêntica à forma aninhada. Elas não retornam mais 404
+por serem planas — apenas se a organização não tiver número principal
+cadastrado.
+:::
+
+## O que mudou
+
 A partir desta versão, todas as operações do número principal podem ser realizadas
 diretamente sem especificar o alias na URL:
 
-| Nova rota flat | Equivalente |
+| Nova rota plana | Equivalente |
 |---|---|
 | `POST /v1/messages` | `POST /v1/numbers/main/messages` |
 | `GET  /v1/messages` | `GET  /v1/numbers/main/messages` |
@@ -20,6 +35,17 @@ diretamente sem especificar o alias na URL:
 | *(e todas as sub-rotas)* | |
 
 A forma `/v1/numbers/main/…` continua funcionando normalmente e produz respostas
-idênticas. Para **números extras**, continue usando `/v1/numbers/{alias}/…`.
+idênticas — a forma aninhada é a canônica; a forma plana é um atalho permanente
+válido apenas para o número principal. Para **números extras**, continue usando
+`/v1/numbers/{alias}/…` — eles não têm forma plana.
+
+O envelope de webhook/polling de uma operação feita pela rota plana carrega
+`number_alias: "main"`, indistinguível de uma operação feita pela rota aninhada.
 
 Esta mudança não requer nenhuma alteração em integrações existentes.
+
+## Referências
+
+- [Rotas aninhadas por número](/changelog/2026-06-22-number-scoped-routes/) — a mudança que esta entrada reverte parcialmente (o 404 das rotas planas).
+- [Início rápido](/general/getting-started/) — os exemplos usam a rota plana.
+- [Envio de mensagens](/messages/send/) · [Números extras](/numbers/add/)

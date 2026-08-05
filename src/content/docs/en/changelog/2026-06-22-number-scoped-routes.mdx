@@ -9,13 +9,8 @@ sidebar:
 **Status:** Applied
 
 :::note[2026-06-25 update]
-The flat routes described as returning "404" in this entry were
-**reintroduced** three days later as a valid direct-access shorthand for the
-main number — see [Flat routes for the main number](/en/changelog/2026-06-25-flat-main-routes/).
-Today `/v1/messages`, `/v1/contacts` and `/v1/groups` (+ sub-routes) **never
-return 404** for being flat: they work as equivalents of
-`/v1/numbers/main/…`, with an identical response. The 404 described below was
-real only during the window between 2026-06-22 and 2026-06-25.
+Flat routes work again for the main number — see
+[Flat routes for the main number](/en/changelog/2026-06-25-flat-main-routes/).
 :::
 
 :::caution[Route change — breaking change on 2026-06-22]
@@ -91,10 +86,8 @@ time (2026-06-22), also on the message-quota events (`message.quota.*`) — the
 message quota was still organization-wide.
 
 :::note[2026-07-02 update]
-[ADR 2026-07-02 — Per-Number Message Quota](/reference/decisions/2026-07-02-per-number-message-quota/)
-made the message quota **per-number** too. Since then, `message.quota.warning`
-and `message.quota.exceeded` **also carry `number_alias`** in the envelope —
-the omission rule narrows to **`storage.*` only**, matching `contact.quota.*`.
+Message quota events also became per-number — see
+[Message quota events](/webhooks/message-quota-events/).
 :::
 
 ### `GET /v1/events` accepts the `number_alias` filter

@@ -172,7 +172,7 @@ Substitui o texto de uma mensagem de texto já enviada (edição nativa do Whats
 
 | Campo | Tipo | Obrigatório | Notas |
 |---|---|---|---|
-| `text` | string | sim | 1–65.536 caracteres. Único campo aceito — corpo estrito (`extra=forbid`; qualquer outro campo retorna `422`). |
+| `text` | string | sim | 1–65.536 caracteres. Único campo aceito — corpo estrito (qualquer outro campo retorna `422`). |
 
 ### Resposta (202)
 
@@ -180,13 +180,23 @@ Substitui o texto de uma mensagem de texto já enviada (edição nativa do Whats
   status={202}
   body={{
     message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
-    status: { state: 'pending', at: '2026-06-01T10:05:01-03:00' },
+    status: { state: 'pending', at: '2026-06-01T13:05:01Z' },
   }}
 />
 
 O resultado real chega via webhook `message.edited` (sucesso) ou
 `message.edit.failed` (falha, com objeto `error`). Após a edição,
 `GET /v1/numbers/{alias}/messages/{id}` já retorna o texto atualizado.
+
+### Menções em edições
+
+O novo `text` do edit também é varrido pela detecção implícita de tokens
+`@<numero>` — as mesmas regras de [Menções (@mentions)](/messages/send/#menções-mentions).
+A edição **substitui todo o conjunto de menções** da mensagem: o `mentions`
+retornado por `GET /v1/numbers/{alias}/messages/{id}` (e o `data.mentions` do
+webhook `message.edited`) passa a refletir só os tokens presentes no texto
+**novo** — uma edição que remove todos os `@<numero>` do texto original faz
+`mentions` desaparecer da resposta.
 
 ## Deletar (revogar) mensagem
 
@@ -319,7 +329,7 @@ WhatsApp. O corpo da requisição é **vazio**.
   status={202}
   body={{
     message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
-    status: { state: 'pending', at: '2026-06-01T10:06:01-03:00' },
+    status: { state: 'pending', at: '2026-06-01T13:06:01Z' },
   }}
 />
 
@@ -339,17 +349,46 @@ Os dois endpoints compartilham o mesmo conjunto de erros:
 
 | Status | Código de erro          | Descrição                                                     |
 | :----: | ------------------------ | -------------------------------------------------------------- |
-| `400`  | `message_not_editable`   | *(apenas edit)* A mensagem ainda não foi enviada, ou seu status atual (`failed`, por exemplo) não permite edição. |
-| `400`  | `message_not_deletable`  | *(apenas delete)* A mensagem ainda não foi enviada, ou seu status atual não permite exclusão. |
+| `400`  | `message_not_editable`   | *(apenas edit)* A mensagem não foi enviada pela API do Turbo Notify (`origin: "native"`, digitada no próprio celular), ainda não foi enviada, ou seu status atual (`failed`, por exemplo) não permite edição. |
+| `400`  | `message_not_deletable`  | *(apenas delete)* A mensagem não foi enviada pela API do Turbo Notify (`origin: "native"`, digitada no próprio celular), ainda não foi enviada, ou seu status atual não permite exclusão. |
 | `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.                     |
 | `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
 | `404`  | `number_not_found`       | O alias informado na URL não corresponde a nenhum número cadastrado. |
-| `404`  | `message_not_found`      | O `message_id` não existe, não pertence ao organization, ou não pertence ao número identificado pelo alias na URL. |
+| `404`  | `not_found`              | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de leitura por retenção](/messages/retention/) do tier — a janela **também** se aplica a editar e apagar, e os três casos devolvem a mesma resposta. |
+| `404`  | `message_not_found`      | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `422`  | `session_not_connected`  | O número que originalmente enviou a mensagem não tem uma sessão WhatsApp conectada no momento. |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                            |
 
-Apenas mensagens outbound com status `sent`, `delivered` ou `read` podem ser
-editadas ou deletadas — mensagens ainda `pending`, já `failed`, ou
-mensagens inbound (recebidas), retornam `400`.
+## Quais mensagens podem ser editadas ou deletadas
+
+O status **não é o único critério**. Passar nos dois critérios garante apenas que
+a requisição é **aceita** (`202`) — não que a operação vai se concluir.
+
+São dois critérios, e ambos precisam ser satisfeitos:
+
+1. **Identificador de requisição** — a mensagem precisa ter sido gravada com o
+   identificador de requisição que estes endpoints exigem. Mensagens outbound
+   digitadas **no próprio celular** (`origin: "native"`) são gravadas sem ele e
+   por isso **nunca** são editáveis nem deletáveis — **independentemente do
+   status**. Elas falham com `400 message_not_editable` /
+   `400 message_not_deletable`.
+2. **Status** — apenas as mensagens que já estão em `sent`, `delivered` ou `read`
+   são aceitas. Mensagens ainda `pending` ou já `failed` retornam
+   `400 message_not_editable` / `400 message_not_deletable`.
+
+:::caution[Mensagem inbound (recebida): aceita com `202`, mas nunca conclui]
+Editar ou deletar uma mensagem **recebida** **não** é rejeitado de forma síncrona
+— e, ao contrário do que se poderia esperar, **não** retorna `400`. Uma mensagem
+inbound passa pelas duas validações acima (ela tem identificador de requisição e
+chega em status `delivered`), então a requisição é **aceita** e retorna
+**`202 Accepted`**, exatamente como para uma mensagem sua.
+
+A operação, porém, **não tem como se concluir**: a mensagem pertence ao
+remetente, não a você. A falha aparece apenas de forma **assíncrona**, no webhook
+`message.edit.failed` / `message.delete.failed`.
+
+Ou seja: para esse caso, **não** espere um erro no corpo da resposta — acompanhe
+o webhook `*.failed` (ou o `status` da mensagem) para saber o desfecho real.
+:::
 
 Veja também: [Consultar mensagem](/messages/get/) · [Status da mensagem](/messages/status/) · [Webhook](/messages/webhook/).

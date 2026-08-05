@@ -20,8 +20,8 @@ Cada item em `receipts[]` agora inclui um objeto `from` com a identidade da part
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `from.number` | string | Número E.164 sem `+`. Omitido para recibos de dispositivo vinculado (LID). |
-| `from.contact_id` | string | Identificador público do contato TN (`ct_{hex32}`). Omitido quando não disponível. |
-| `from.name` | string | Nome de exibição WhatsApp (PII — propriedade do organization). Omitido quando não disponível. |
+| `from.contact_id` | string | Identificador público do contato no Turbo Notify (`ct_{hex32}`). Omitido quando não disponível. |
+| `from.name` | string | Nome de exibição WhatsApp (PII — propriedade da organização). Omitido quando não disponível. |
 
 O objeto `from` inteiro é omitido em recibos legados (pré-2026-06) e quando nenhuma informação de identidade está disponível.
 
@@ -59,4 +59,4 @@ A mudança é **aditiva** — respostas anteriores sem o campo `from` permanecem
 
 ## Referências
 
-- [Histórico de Recibos](/messages/receipts/) — documentação atualizada com a estrutura completa do campo `from`.
+- [Histórico de recibos](/messages/receipts/) — documentação atualizada com a estrutura completa do campo `from`.

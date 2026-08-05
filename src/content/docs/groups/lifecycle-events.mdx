@@ -5,7 +5,7 @@ description: 10 webhooks que o Turbo Notify emite quando o estado de um grupo Wh
 
 O Turbo Notify emite 10 webhooks adicionais quando seu número entra/sai
 de grupos ou quando o estado de um grupo muda. Todos seguem o
-naming `group.{ação}` com verbo no past-participle (consistente com
+padrão `group.{ação}`, com o verbo no particípio (consistente com
 `contact.name_changed`).
 
 | Tipo | Quando |
@@ -21,15 +21,28 @@ naming `group.{ação}` com verbo no past-participle (consistente com
 | `group.participants_promoted` | Participantes foram promovidos a admin |
 | `group.participants_demoted` | Admins foram rebaixados |
 
-Desde 2026-06-06 o `data` de cada evento `group.*` espelha o `data` de
-`message.*`: o id público do grupo vem **plano no topo** como `id`
-(`grp_{hex32}`) + `name` (antes era o sibling aninhado `group: {id, name}`), mais
-o tail de coerência `direction: "inbound"` (grupos são observados pelo canal do
-WhatsApp), `channel: "whatsapp"` e `origin: "tn"`.
+O `data` de cada evento `group.*` espelha o `data` de `message.*`: o id
+público do grupo vem **plano no topo** como `id` (`grp_{hex32}`) + `name`,
+mais os campos padrão de contexto `direction: "inbound"` (grupos são
+observados pelo canal do WhatsApp), `channel: "whatsapp"` e `origin: "tn"`.
 
-> Os objetos `participants[]` e `*_by` continuam sendo **parties**
-> (`{contact_id, name, number}`) — referenciam contatos da contraparte, não o
-> sujeito do evento, então mantêm a chave `contact_id`.
+> **Os campos de ator têm duas formas — verifique qual antes de acessar.**
+> `participants[]` e alguns `*_by` são **parties** (objeto
+> `{contact_id, name, number}`, anulável); os demais `*_by` são um **telefone
+> canônico cru** (string de dígitos, ex.: `"5511999999999"`).
+>
+> - **Party** (`{contact_id, name, number}`): `participants[]`, `added_by`,
+>   `removed_by` **em `group.participants_removed`**, `promoted_by`, `demoted_by`.
+> - **String de telefone canônico**: `joined_by`, `removed_by` **em
+>   `group.left`**, e `changed_by` nos eventos `group.name_changed`,
+>   `group.description_changed` e `group.settings_changed`.
+>   `group.picture_changed` **não carrega `changed_by`** — a mudança de foto é
+>   detectada por comparação de hash, sem autor identificável.
+>
+> Atenção ao caso mais traiçoeiro: **`removed_by` muda de forma entre os dois
+> eventos que o carregam** — é party em `group.participants_removed` e string em
+> `group.left`. Nos campos que são string, `*_by.number` é `undefined`: use o
+> valor diretamente.
 
 > **Campo `at`.** Os eventos que refletem uma ação real no WhatsApp —
 > `group.name_changed`, `group.description_changed`, `group.settings_changed`,
@@ -45,8 +58,8 @@ WhatsApp), `channel: "whatsapp"` e `origin: "tn"`.
 > O primeiro exemplo (`group.joined`) mostra o **envelope completo**. Por
 > brevidade, os demais exibem apenas `type` + `data` — o envelope é idêntico:
 > todo evento `group.*` carrega `number_alias` (o handle do número/"inbox" dono
-> do grupo — grupos têm `number_id` NOT NULL) **imediatamente abaixo de
-> `organization_id`**, junto com `id`, `created_at`.
+> do grupo) **imediatamente abaixo de `organization_id`**, junto com `id`,
+> `created_at`.
 
 ### `group.joined`
 
@@ -72,7 +85,7 @@ WhatsApp), `channel: "whatsapp"` e `origin: "tn"`.
 
 - `id`/`name` são o id público (`grp_{hex32}`) e o snapshot de nome do grupo (o sujeito do evento).
 - `group.joined` **não** carrega `data.at` — é uma descoberta de snapshot, não uma ação WhatsApp com momento próprio; use o `created_at` do envelope.
-- `joined_by` é o número (digits-only) do admin que adicionou seu número, ou `null` quando o evento foi originado por sua própria criação do grupo (`creation=true`).
+- `joined_by` é o número (string de dígitos) do admin que adicionou seu número. **Omitido** (chave ausente, nunca `null`) quando o evento foi originado por sua própria criação do grupo (`creation=true`).
 
 ### `group.left`
 
@@ -92,7 +105,7 @@ WhatsApp), `channel: "whatsapp"` e `origin: "tn"`.
 }
 ```
 
-`reason` é informacional: `removed` (admin kicked), `left` (você saiu),
+`reason` é informacional: `removed` (removido por um admin), `left` (você saiu),
 `deleted` (grupo dissolvido).
 
 ### `group.name_changed`
@@ -138,8 +151,8 @@ campo `new_name` — `name` já carrega o nome novo (mesma forma de
 
 ### `group.picture_changed`
 
-Emitido **apenas** quando uma foto de grupo real chega ao seu BYO Storage
-(estado `organization_storage`). O bloco `picture` segue o mesmo ciclo de vida da mídia
+Emitido **apenas** quando uma foto de grupo real é armazenada com sucesso no seu BYO Storage.
+O bloco `picture` segue o mesmo ciclo de vida da mídia
 de mensagem: `kind: "available"` com uma URL **pré-assinada e com validade
 limitada** (`url_expires_at`, ~15 min) do seu bucket — nunca uma URL do WhatsApp.
 Re-baixe a foto via o endpoint GET quando a URL expirar.
@@ -154,10 +167,8 @@ Re-baixe a foto via o endpoint GET quando a URL expirar.
       "kind": "available",
       "url": "https://<bucket>.r2.cloudflarestorage.com/groups/.../picture.jpg?...",
       "url_expires_at": "2026-05-25T10:19:00Z",
-      "hash": "abc123...",
-      "fetched_at": "2026-05-25T10:04:00Z"
+      "hash": "abc123..."
     },
-    "changed_by": "5511999999999",
     "direction": "inbound",
     "channel": "whatsapp",
     "origin": "tn"
@@ -166,15 +177,21 @@ Re-baixe a foto via o endpoint GET quando a URL expirar.
 ```
 
 `group.picture_changed` **não** carrega `data.at` — é uma descoberta de foto
-(snapshot) sem um momento de ação WhatsApp único; o `picture.fetched_at`
-indica quando a foto foi baixada, e o `created_at` do envelope quando o evento
-foi emitido.
+(snapshot) sem um momento de ação WhatsApp único; use o `created_at` do
+envelope para saber quando o evento foi emitido.
+
+Este evento também **não** carrega `changed_by` nem `picture.fetched_at`: a
+descoberta é feita por comparação de hash, sem um autor identificável, e a
+validade da URL já é expressa por `picture.url_expires_at`. O `fetched_at`
+aparece nas três superfícies de **leitura** de grupo — `GET /v1/numbers/{alias}/groups`
+(listagem), `GET /v1/numbers/{alias}/groups/{group_id}` (detalhe) e
+`GET /v1/numbers/{alias}/groups/{group_id}/picture` —, nunca neste webhook.
 
 Guarde o `picture.hash` para detectar mudanças efetivas e re-baixar a foto
 antes que a URL pré-assinada expire (`url_expires_at`). Para ler a foto sob
 demanda use [`GET /v1/numbers/{alias}/groups/{group_id}/picture`](/groups/picture/),
-onde `{alias}` é o `number_alias` do envelope deste evento (a linha TN que
-participa do grupo).
+onde `{alias}` é o `number_alias` do envelope deste evento (a linha do Turbo
+Notify que participa do grupo).
 
 > **Pré-requisito: BYO Storage.** Este evento só dispara quando você tem uma
 > integração de Object Storage habilitada — o Turbo Notify não serve a CDN do
@@ -192,8 +209,8 @@ participa do grupo).
 
 ### `group.settings_changed`
 
-Um evento por setting que mudou (o WhatsApp pode emitir múltiplos
-changes simultâneos; cada um vira um evento).
+Um evento por setting que mudou (o WhatsApp pode emitir múltiplas
+mudanças simultâneas; cada uma vira um evento).
 
 ```json
 {
@@ -214,8 +231,8 @@ changes simultâneos; cada um vira um evento).
 ```
 
 `setting`: `announce` (apenas admins postam) | `locked` (apenas admins
-editam info) | `ephemeral` (timer em segundos para disappearing messages)
-| `parent` (group community parent).
+editam info) | `ephemeral` (temporizador em segundos para mensagens
+temporárias) | `parent` (o grupo é vinculado a uma comunidade).
 
 ### `group.participants_added`
 
@@ -229,11 +246,10 @@ Um único webhook por operação batch — todos os adicionados juntos.
     "name": "Grupo A 2.0",
     "participants": [
       { "contact_id": "ct_...", "number": "5511555555555" },
-      { "name": "Carlos", "number": "5511444444444" }
+      { "number": "5511444444444" }
     ],
     "added_by": {
       "contact_id": "ct_...",
-      "name": "Admin",
       "number": "5511999999999"
     },
     "direction": "inbound",
@@ -245,11 +261,11 @@ Um único webhook por operação batch — todos os adicionados juntos.
 ```
 
 - `participants[]` lista quem foi adicionado.
-- `added_by` é o admin que executou a ação. Pode ser `null` se a
-  resolução do JID falhou.
+- `added_by` é o admin que executou a ação. **Omitido** (chave ausente, nunca
+  `null`) quando a resolução do JID falhou.
 - `contact_id` é populado quando você já tinha o participante como
-  contato (TN não cria novos contatos para participantes vistos via
-  ciclo de vida — proteção LGPD + quota).
+  contato (o Turbo Notify não cria novos contatos para participantes vistos
+  via ciclo de vida — proteção LGPD + quota).
 
 ### `group.participants_removed`
 
@@ -269,12 +285,13 @@ Mesma forma, `demoted_by`. Não muda o participants_count.
 Quando o WhatsApp envia um payload "fat" com múltiplas mudanças
 simultâneas (ex: nome + descrição + 5 adições no mesmo update),
 o Turbo Notify emite **um webhook por mudança lógica** — permitindo
-que sua subscription filtre pelo tipo desejado sem precisar parsear
+que seu consumidor filtre pelo tipo desejado sem precisar parsear
 um envelope polimórfico.
 
 ## Idempotência
 
-Cada evento de ciclo de vida é entregue com um header `Nats-Msg-Id`
-derivado de `(organization_id, group_id, concern, unix_ms)`. Replays do
-JetStream colapsam dentro de uma janela curta — se você processou
-o evento `id` uma vez, ignore qualquer reentrega do mesmo `id`.
+O Turbo Notify adota o modelo **at-least-once** — em situações excepcionais o
+mesmo evento pode ser reentregue. Cada evento carrega `id` único (`evt_…`),
+**estável entre tentativas de entrega**: use-o como chave de deduplicação no
+seu lado (persista os `id` recebidos e ignore qualquer reentrega do mesmo
+`id`).

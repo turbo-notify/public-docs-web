@@ -9,7 +9,7 @@ import ApiResponse from '@components/ApiResponse.astro';
 
 Turbo Notify mide **dos cuotas independientes** por número vinculado (`main` o
 el alias de un número extra): mensajes outbound y contactos distintos
-contactados. Desde la ADR 2026-07-02 ambas cuotas son **por número** — cada
+contactados. Desde 2026-07-02 ambas cuotas son **por número** — cada
 número tiene su propia franquicia, así que una organización con N números
 obtiene N× la franquicia del tier.
 
@@ -19,11 +19,10 @@ cuentan.
 
 ## Ciclo evaluado — cuándo resetea la cuota
 
-La ventana de medición de ambas cuotas es el **ciclo de facturación evaluado**
-de la organización (`cycle_start` hasta `cycle_end` — la misma ventana
-`current_period_*` de la suscripción), ya no una ventana rolling de 30 días.
-`resets_at` siempre es igual a `cycle_end`: la cuota resetea en la renovación
-del ciclo, no en una ventana móvil que decae día a día.
+La ventana de medición de ambas cuotas es el **ciclo de facturación actual**
+de la organización (`cycle_start` hasta `cycle_end`, el período vigente de la
+suscripción). `resets_at` siempre es igual a `cycle_end`: la cuota resetea en
+la renovación del ciclo.
 
 - **`used`**/**`quota`** siempre se miden contra el ciclo actualmente abierto.
 - Al cerrar el ciclo (renovación de la suscripción), los contadores vuelven a
@@ -41,10 +40,8 @@ del ciclo, no en una ventana móvil que decae día a día.
 | `BUSINESS` | 50.000          | 5.000                     | 1.000                  |
 | `CUSTOM`   | 500.000         | 50.000                    | 1.000                  |
 
-Los overrides a nivel organización
-(`messages_quota_override` / `contacts_quota_override`) reemplazan el techo del
-tier cuando están definidos — aplicados **por número**, igual que el techo del
-tier.
+Tu organización puede solicitar a soporte un límite personalizado, que
+reemplaza el techo del tier por número.
 
 El campo `tier` en las respuestas de abajo siempre es uno de los 4 valores de
 arriba, en **mayúsculas** (`"FREE"`, `"SOLO"`, `"BUSINESS"`, `"CUSTOM"`).
@@ -72,7 +69,7 @@ consultar detalles — solo el **envío** outbound a un grupo está bloqueado:
   }}
 />
 
-Ver [Grupos — Visión general](/es/groups/overview/) y [Limitaciones de grupos](/es/groups/limitations/).
+Ver [Grupos — Visión general](/groups/overview/) y [Limitaciones de grupos](/groups/limitations/).
 
 ## Endpoint: uso a nivel de cuenta
 
@@ -82,7 +79,10 @@ GET /v1/usage
 
 **Scope:** cualquier API key autenticada (sin scope específico).
 
-**Cache:** `Cache-Control: max-age=60` (Redis L1 con TTL 60s).
+**Cache:** la respuesta se devuelve con `Cache-Control: no-store, no-cache,
+must-revalidate` y `Pragma: no-cache` — es decir, **no es cacheable**. No
+almacenes el cuerpo en cache; repite la llamada siempre que necesites datos
+actualizados.
 
 `GET /v1/usage` es el **roll-up de la cuenta**: `messages`/`contacts` a nivel
 raíz suman el uso de **todos los números** de la organización — `quota` es la
@@ -174,8 +174,9 @@ snapshot de **un** número, no un roll-up de varios.
 ## Ventana de lectura por retención (read-window)
 
 Además de la cuota, cada tier define durante cuántos días un mensaje sigue
-siendo **consultable** vía API — los mensajes más antiguos que esa ventana
-dejan de existir para lectura:
+siendo **accesible** vía API — los mensajes más antiguos que esa ventana
+dejan de existir para la API, tanto para lectura como para las acciones que
+dependen del id (responder, editar, borrar, reaccionar):
 
 | Tier       | Ventana de lectura |
 | ---------- | ------------------:|
@@ -184,20 +185,25 @@ dejan de existir para lectura:
 | `BUSINESS` | 90 días            |
 | `CUSTOM`   | 365 días           |
 
-- `GET /v1/numbers/{alias}/messages/{id}` de un mensaje más antiguo que la
-  ventana del tier devuelve **404** (indistinguible de "nunca existió").
 - `GET /v1/numbers/{alias}/messages` (lista por cursor) **filtra** los
   mensajes fuera de la ventana — simplemente no aparecen en ninguna página.
+- **Toda** operación que identifica un mensaje por id devuelve **404**
+  (indistinguible de "nunca existió") una vez que el mensaje es más antiguo
+  que la ventana del tier: la consulta `.../messages/{id}`, los
+  sub-recursos `.../status`, `.../receipts` y `.../reactions`, y las
+  acciones `.../reply`, `.../edit`, `.../delete` y `.../react` — tanto en las
+  rutas anidadas como en las planas.
 - Esta ventana rige la **visibilidad vía API**; la fila física sigue la
-  retención de partición fija (12 meses) independientemente del tier — ver
-  [Retención de mensajes](/es/messages/retention/) para el ciclo de vida
-  completo del contenido y los metadatos.
+  retención de partición fija (12 meses) independientemente del tier.
+
+La página canónica sobre retención es [Retención de mensajes](/es/messages/retention/)
+— consúltala para el ciclo de vida completo del contenido y los metadatos.
 
 ## Errores
 
 ### 402 — suscripción inactiva
 
-Devuelto por el pipeline de envío cuando la suscripción de la organización no
+Devuelto al intentar enviar cuando la suscripción de la organización no
 permite el uso de features (`ACTIVE` y `TRIALING` dentro del período de trial
 son los únicos estados que pasan sin restricción):
 
@@ -210,12 +216,9 @@ son los únicos estados que pasan sin restricción):
   }}
 />
 
-`details.status` es uno de estos valores: `trialing` (permitido, no genera
-este error), `trial_expired` (trial terminado sin plan pago), `past_due` o
-`canceled` (después del fin del período ya pagado) — o `missing` (la
-organización no tiene ninguna suscripción; también cubre los estados
-internos `pending`/`terminated`, filtrados en la capa de repositorio y que
-colapsan a `missing`, sin aparecer nunca verbatim en este campo).
+`details.status` es uno de estos valores: `trial_expired` (trial terminado sin
+plan pago), `past_due` (pago atrasado) o `missing` (la organización no tiene
+ninguna suscripción activa).
 
 ### 402 — feature no disponible en el plan
 
@@ -232,9 +235,11 @@ llamada); envío de mensaje o indicador de escritura a un grupo
 (`groups:messages`, BUSINESS+ — ver
 [arriba](#enviar-a-grupos-requiere-el-plan-business-o-superior)); historial
 detallado de recibos (`read_receipts`, BUSINESS+ — ver
-[Recibos](/es/messages/receipts/)); y creación de números extra
+[Recibos](/messages/receipts/)); creación de números extra
 (`extra_numbers`, no disponible en FREE/SOLO — ver
-[Números extra](/es/numbers/add/)).
+[Números extra](/numbers/add/)); y **reentrega de webhook**
+(`webhooks:retries`, BUSINESS+ — en FREE/SOLO cada evento tiene un único
+intento de entrega, sin reintento).
 
 ### 402 — límite de números extra alcanzado
 

@@ -1,6 +1,6 @@
 ---
 title: "contact_id como destinatário em POST /v1/messages"
-description: "O campo `to` agora aceita uma terceira variante `{\"contact_id\": \"ct_...\"}` para enviar mensagens resolvendo o telefone a partir do registro TN Contact."
+description: "O campo `to` agora aceita uma terceira variante `{\"contact_id\": \"ct_...\"}` para enviar mensagens resolvendo o telefone a partir do registro de contato do Turbo Notify."
 sidebar:
   order: 2
 ---
@@ -20,7 +20,7 @@ O campo `to` em `POST /v1/messages` agora aceita três formas mutuamente exclusi
 | ----- | ------- | ----------- |
 | `number` | `{"number": "+5511999999999"}` | Você tem o telefone E.164 |
 | `group_id` | `{"group_id": "grp_..."}` | Destinatário é um grupo WhatsApp |
-| `contact_id` | `{"contact_id": "ct_..."}` | Você tem o ID TN Contact |
+| `contact_id` | `{"contact_id": "ct_..."}` | Você tem o ID do contato no Turbo Notify |
 
 Nenhuma das formas anteriores foi alterada — a mudança é **aditiva**.
 
@@ -35,21 +35,21 @@ Nenhuma das formas anteriores foi alterada — a mudança é **aditiva**.
 }
 ```
 
-O Turbo Notify resolve o telefone a partir do registro `TN Contact` no momento do envio. O contato deve pertencer ao mesmo organization da chave de API usada.
+O Turbo Notify resolve o telefone a partir do registro do contato no momento do envio. O contato deve pertencer à mesma organização da chave de acesso usada.
 
 ## Novos códigos de erro
 
 | Código | HTTP | Significado |
 | ------ | ---- | ----------- |
-| `contact_not_found` | 422 | O `contact_id` informado não existe para este organization |
-| `contacts_not_enabled` | 422 | O recurso Contatos não está provisionado para este organization |
+| `contact_not_found` | 400 | O `contact_id` informado não existe para esta organização |
+| `contacts_not_enabled` | 400 | O recurso Contatos não está provisionado para esta organização |
 
 ## Por que usar `contact_id`
 
-Se o seu sistema já armazena o `ct_` dos TN Contacts (por exemplo, a partir de webhooks `contact.created`), não é necessário manter um mapeamento separado de telefone. Você passa o `contact_id` diretamente e o Turbo Notify faz a resolução internamente.
+Se o seu sistema já armazena o `ct_` dos contatos do Turbo Notify (por exemplo, a partir de webhooks `contact.created`), não é necessário manter um mapeamento separado de telefone. Você passa o `contact_id` diretamente e o Turbo Notify faz a resolução internamente.
 
 ## Referências
 
 - [Enviar mensagem](/messages/send/#envio-por-contact_id) — seção de envio por `contact_id` com exemplos em 7 linguagens.
-- [Visão geral de contatos](/contacts/overview/) — como os TN Contacts são criados e enriquecidos.
+- [Visão geral de contatos](/contacts/overview/) — como os contatos do Turbo Notify são criados e enriquecidos.
 - [Listar contatos](/contacts/list/) — recuperar `contact_id` via API.

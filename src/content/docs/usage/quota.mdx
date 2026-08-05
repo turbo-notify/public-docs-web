@@ -8,29 +8,30 @@ sidebar:
 import ApiResponse from '@components/ApiResponse.astro';
 
 O Turbo Notify mede **duas quotas independentes** por número vinculado (`main` ou
-alias extra): mensagens outbound e contatos distintos contactados. Desde a ADR
+alias extra): mensagens outbound e contatos distintos contactados. Desde
 2026-07-02 ambas as quotas são **por número** — cada número tem sua própria
-franquia, e uma organization com N números tem N× a franquia do tier.
+franquia, e uma organização com N números tem N× a franquia do tier.
 
 Apenas o que trafega **via Turbo Notify** (`origin: "tn"`) consome quota;
 mensagens enviadas direto do telefone físico (`origin: "native"`) não contam.
 
 ## Ciclo avaliado — quando a quota reseta
 
-A janela de medição das duas quotas é o **ciclo de faturamento avaliado** da
-organization (`cycle_start` até `cycle_end` — o mesmo período `current_period_*`
-da assinatura), não mais uma janela rolling de 30 dias. `resets_at` sempre
-coincide com `cycle_end`: a quota reseta na virada do ciclo, não em uma janela
-móvel que decai dia a dia.
+A janela de medição das duas quotas é o **ciclo de faturamento atual** da
+organização (`cycle_start` até `cycle_end`, o período corrente da assinatura).
+`resets_at` sempre coincide com `cycle_end`: a quota reseta na virada do
+ciclo.
 
 - **`used`**/**`quota`** são sempre medidos contra o ciclo atualmente aberto.
 - Ao fechar o ciclo (renovação da assinatura), os contadores zeram e uma nova
   janela `[cycle_start, cycle_end)` começa.
 - O `cycle_start`/`cycle_end` é o **mesmo para todos os números** da
-  organization (o ciclo é da assinatura, não do número) — só `used`/`quota`
+  organização (o ciclo é da assinatura, não do número) — só `used`/`quota`
   variam por número.
 
 ## Tabela de tiers (por número, por ciclo)
+
+Equivalência com os nomes comerciais dos planos: Gratuito = `FREE` · Lobo Solitário = `SOLO` · Empresarial = `BUSINESS` · Personalizado = `CUSTOM`.
 
 | Tier       | Mensagens/ciclo | Contatos distintos/ciclo | Números extras (máx.) |
 | ---------- | --------------: | -----------------------: | ---------------------:|
@@ -39,9 +40,8 @@ móvel que decai dia a dia.
 | `BUSINESS` | 50.000          | 5.000                     | 1.000                  |
 | `CUSTOM`   | 500.000         | 50.000                    | 1.000                  |
 
-Overrides de organization (`messages_quota_override` /
-`contacts_quota_override`) substituem o teto do tier quando definidos — aplicados
-**por número**, do mesmo jeito que o teto do tier.
+Sua organização pode solicitar ao suporte um limite personalizado, que
+substitui o teto do tier por número.
 
 O campo `tier` nas respostas abaixo é sempre um dos 4 valores acima, em
 **maiúsculas** (`"FREE"`, `"SOLO"`, `"BUSINESS"`, `"CUSTOM"`).
@@ -76,15 +76,18 @@ Veja [Grupos — Visão geral](/groups/overview/) e [Limitações de grupos](/gr
 GET /v1/usage
 ```
 
-**Scope:** qualquer API key autenticada (sem scope específico).
+**Escopo obrigatório:** nenhum — qualquer chave de acesso válida.
 
-**Cache:** `Cache-Control: max-age=60` (Redis L1 com TTL 60s).
+**Cache:** a resposta é retornada com `Cache-Control: no-store, no-cache,
+must-revalidate` e `Pragma: no-cache` — ou seja, **não é cacheável**. Não
+armazene o corpo em cache; refaça a chamada sempre que precisar de dados
+atualizados.
 
 `GET /v1/usage` é o **roll-up da conta**: `messages`/`contacts` no nível raiz
-somam o uso de **todos os números** da organization — `quota` é a **soma das
-franquias de cada número** (uma organization com 2 números em um tier de
+somam o uso de **todos os números** da organização — `quota` é a **soma das
+franquias de cada número** (uma organização com 2 números em um tier de
 100/ciclo reporta `quota: 200`). `resets_at` é o `cycle_end` avaliado da
-organization (o mesmo para todo número). A resposta também traz `numbers[]`:
+organização (o mesmo para todo número). A resposta também traz `numbers[]`:
 uma entrada por número **vivo** (main + extras), com o detalhamento
 `used`/`quota`/`remaining` de cada família — sem `resets_at`/`tier` por entrada
 (ambos já são uniformes no nível raiz).
@@ -169,8 +172,9 @@ número, não um roll-up de vários.
 ## Janela de leitura por retenção (read-window)
 
 Além da quota, cada tier define por quantos dias uma mensagem **permanece
-consultável** pela API — mensagens mais antigas que essa janela deixam de
-existir para leitura:
+endereçável** pela API — mensagens mais antigas que essa janela deixam de
+existir para a API, tanto para leitura quanto para as ações que dependem do id
+(responder, editar, apagar, reagir):
 
 | Tier       | Janela de leitura |
 | ---------- | -----------------:|
@@ -179,21 +183,25 @@ existir para leitura:
 | `BUSINESS` | 90 dias           |
 | `CUSTOM`   | 365 dias          |
 
-- `GET /v1/numbers/{alias}/messages/{id}` de uma mensagem mais antiga que a
-  janela do tier retorna **404** (indistinguível de "nunca existiu").
 - `GET /v1/numbers/{alias}/messages` (lista por cursor) **filtra** mensagens
   fora da janela — elas simplesmente não aparecem na página.
+- **Toda** operação que endereça a mensagem por id retorna **404**
+  (indistinguível de "nunca existiu") quando ela é mais antiga que a janela do
+  tier: a consulta `.../messages/{id}`, os sub-recursos `.../status`,
+  `.../receipts` e `.../reactions`, e as ações `.../reply`, `.../edit`,
+  `.../delete` e `.../react` — nas rotas aninhadas e nas planas.
 - Esta janela é sobre **visibilidade via API**; o armazenamento físico segue a
-  retenção de partição fixa (12 meses) independentemente do tier — ver
-  [Retenção das mensagens](/messages/retention/) para o ciclo de vida completo
-  do conteúdo e dos metadados.
+  retenção de partição fixa (12 meses) independentemente do tier.
+
+A página canônica sobre retenção é [Retenção das mensagens](/messages/retention/)
+— consulte-a para o ciclo de vida completo do conteúdo e dos metadados.
 
 ## Erros
 
 ### 402 — assinatura inativa
 
-Retornado pelo pipeline de envio quando a assinatura da organization não
-permite o uso de features (`ACTIVE` e `TRIALING` dentro do período de trial são
+Retornado ao tentar enviar quando a assinatura da organização não permite o
+uso de features (`ACTIVE` e `TRIALING` dentro do período de trial são
 os únicos estados que passam sem restrição):
 
 <ApiResponse
@@ -205,12 +213,13 @@ os únicos estados que passam sem restrição):
   }}
 />
 
-`details.status` é um destes valores: `trialing` (permitido, não gera este
-erro), `trial_expired` (trial encerrado sem plano pago), `past_due` ou
-`canceled` (após o fim do período já pago) — ou `missing` (organization sem
-nenhuma assinatura; cobre também os status internos `pending`/`terminated`,
-que são filtrados na camada de repositório e colapsam para `missing`, nunca
-aparecendo verbatim neste campo).
+`details.status` é um destes valores: `trial_expired` (trial encerrado sem
+plano pago), `past_due` (pagamento em atraso) ou `missing` (organização sem
+assinatura ativa).
+
+Assinaturas ativas e em trial vigente não geram este erro. Um plano com
+downgrade ou cancelamento **agendado** também continua funcionando
+normalmente até o fim do período já pago — o agendamento não bloqueia envios.
 
 ### 402 — feature indisponível no plano
 
@@ -221,17 +230,20 @@ aparecendo verbatim neste campo).
   }}
 />
 
-Hoje os gates públicos desta família são: reações (`reactions`, SOLO+); indicador
-de digitação (`typing_indicator`, SOLO+ — o gate base, toda chamada); envio de
+Hoje as restrições públicas desta família são: reações (`reactions`, SOLO+); indicador
+de digitação (`typing_indicator`, SOLO+ — a restrição base, aplicada a toda chamada); envio de
 mensagem ou indicador de digitação para grupo (`groups:messages`, BUSINESS+ — veja
 [acima](#envio-para-grupos-exige-plano-business-ou-superior)); histórico
 detalhado de recibos (`read_receipts`, BUSINESS+ — veja
-[Recibos](/messages/receipts/)); e criação de números extras (`extra_numbers`,
-indisponível em FREE/SOLO — veja [Números extras](/numbers/add/)).
+[Recibos](/messages/receipts/)); criação de números extras (`extra_numbers`,
+indisponível em FREE/SOLO — veja [Números extras](/numbers/add/)); e
+**reentrega de webhook** (`webhooks:retries`, BUSINESS+ — em `FREE`/`SOLO` cada
+evento tem **uma única tentativa** de entrega; falhou, não há retentativa, veja
+[Eventos via webhook](/messages/webhook/)).
 
 ### 402 — limite de números extras atingido
 
-Retornado por `POST /v1/numbers` quando a organization já tem
+Retornado por `POST /v1/numbers` quando a organização já tem
 `max_extra_numbers` números extras vivos para o tier (BUSINESS 1.000 / CUSTOM
 1.000; FREE/SOLO não têm acesso a números extras):
 
@@ -245,7 +257,7 @@ Retornado por `POST /v1/numbers` quando a organization já tem
 />
 
 `details.limit` é o teto `max_extra_numbers` do tier; `details.current` é a
-contagem atual de números extras vivos da organization.
+contagem atual de números extras vivos da organização.
 
 ### 402 — quota de contatos excedida
 
@@ -286,11 +298,11 @@ quota só renova em `resets_at`, que pode estar a dias de distância).
 
 ## Webhooks de quota
 
-- `contact.quota.warning` em 80/90/95% (basis points).
+- `contact.quota.warning` em 80/90/95%.
 - `contact.quota.exceeded` no estouro.
 - `message.quota.warning` em 80/90/95%.
 - `message.quota.exceeded` no estouro.
 
 Ambas as famílias carregam `cycle_start`/`cycle_end` no `data` (substituindo o
 antigo `window_days`). Veja [Eventos de quota de mensagem](/webhooks/message-quota-events/),
-[Eventos de contato](/webhooks/contact-events/) e [Limites de Mensagens](/messages/rate-limits/).
+[Eventos de contato](/webhooks/contact-events/) e [Limites de uso](/messages/rate-limits/).

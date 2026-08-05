@@ -6,15 +6,14 @@ description: Como adicionar números extras de WhatsApp à sua conta no Turbo No
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 import DashboardLink from '@components/DashboardLink.astro';
-import ExternalLink from '@components/ExternalLink.astro';
 
-Números extras permitem que você envie mensagens a partir de múltiplos números de WhatsApp, além do número principal da sua conta. Cada número extra é vinculado via código de pareamento.
+Números extras permitem que você envie mensagens a partir de múltiplos números de WhatsApp, além do número principal da sua conta. Cada número extra é vinculado ao WhatsApp por um processo de pareamento — por QR code ou código de vinculação, conforme o método escolhido.
 
 ## Cadastro pelo dashboard
 
-A forma mais simples de adicionar um número extra é pelo dashboard do Turbo Notify. Acesse a página de <DashboardLink path="/numbers">Números Extras</DashboardLink> e clique em **Adicionar número**.
+A forma mais simples de adicionar um número extra é pelo dashboard do Turbo Notify. Acesse a página de <DashboardLink path="/numbers">Números</DashboardLink> e clique em **Adicionar número**.
 
-Você deverá informar o número de telefone com código do país e aguardar o código de pareamento que será exibido na tela. Insira esse código no WhatsApp do aparelho correspondente para concluir a vinculação.
+Informe o número de telefone com código do país e um alias — o cadastro é confirmado imediatamente, sem código de pareamento nesse momento. Em seguida, abra o número recém-criado, escolha o método de pareamento (QR code ou código de vinculação) e clique em **Vincular número** para gerar o código ou QR correspondente.
 
 ## Cadastro via API
 
@@ -28,7 +27,9 @@ Também é possível cadastrar números extras de forma programática pela API.
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "phone": "+5511988888888"
+        "phone_number": "+5511988888888",
+        "alias": "vendas_sp",
+        "description": "Equipe de vendas SP"
       }'
     ```
   </TabItem>
@@ -41,7 +42,9 @@ Também é possível cadastrar números extras de forma programática pela API.
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        phone: '+5511988888888'
+        phone_number: '+5511988888888',
+        alias: 'vendas_sp',
+        description: 'Equipe de vendas SP'
       })
     });
 
@@ -59,7 +62,9 @@ Também é possível cadastrar números extras de forma programática pela API.
         "Content-Type": "application/json"
     }
     data = {
-        "phone": "+5511988888888"
+        "phone_number": "+5511988888888",
+        "alias": "vendas_sp",
+        "description": "Equipe de vendas SP"
     }
 
     response = requests.post(url, json=data, headers=headers)
@@ -79,7 +84,7 @@ Também é possível cadastrar números extras de forma programática pela API.
     )
 
     func main() {
-        payload := strings.NewReader(`{"phone": "+5511988888888"}`)
+        payload := strings.NewReader(`{"phone_number": "+5511988888888", "alias": "vendas_sp", "description": "Equipe de vendas SP"}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/numbers", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -95,7 +100,9 @@ Também é possível cadastrar números extras de forma programática pela API.
     <?php
     $url = 'https://api.turbonotify.com/v1/numbers';
     $data = [
-        'phone' => '+5511988888888'
+        'phone_number' => '+5511988888888',
+        'alias' => 'vendas_sp',
+        'description' => 'Equipe de vendas SP'
     ];
 
     $options = [
@@ -125,7 +132,9 @@ Também é possível cadastrar números extras de forma programática pela API.
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var data = new {
-        phone = "+5511988888888"
+        phone_number = "+5511988888888",
+        alias = "vendas_sp",
+        description = "Equipe de vendas SP"
     };
 
     var json = JsonSerializer.Serialize(data);
@@ -150,7 +159,9 @@ Também é possível cadastrar números extras de forma programática pela API.
 
             var json = """
                 {
-                    "phone": "+5511988888888"
+                    "phone_number": "+5511988888888",
+                    "alias": "vendas_sp",
+                    "description": "Equipe de vendas SP"
                 }
                 """;
 
@@ -170,26 +181,44 @@ Também é possível cadastrar números extras de forma programática pela API.
   </TabItem>
 </Tabs>
 
+**Escopo obrigatório:** `numbers:write`
+
 O cadastro (`POST /v1/numbers`) e o pareamento (obtenção do código a ser
-inserido no WhatsApp) são **operações separadas**. A resposta do cadastro
-confirma apenas a criação do número — o `status` sempre nasce `"pending"` e
-não há código de pareamento inline:
+inserido no WhatsApp) são **operações separadas**. `alias` é obrigatório —
+deve começar com uma letra — e `description` é opcional. A resposta do
+cadastro confirma apenas a criação do número — o `status` sempre nasce
+`"pending"` e não há código de pareamento inline:
 
 <ApiResponse
   status={201}
   body={{
     alias: 'vendas_sp',
-    phone_number: '+5511988888888',
+    phone_number: '5511988888888',
     status: 'pending',
     created_at: '2025-07-16T10:00:00Z',
-    description: null,
+    description: 'Equipe de vendas SP',
   }}
 />
+
+:::note[O `+` vale para a requisição, não para a resposta]
+Repare no `phone_number` acima: a requisição foi enviada com
+`"+5511988888888"`, mas a resposta traz `"5511988888888"`, **sem o `+`**.
+
+O `+` é removido na gravação do número. Portanto:
+
+- **Requisição** — `phone_number` **aceita** o `+` inicial (`"+5511988888888"`).
+- **Resposta** — `phone_number` **nunca** traz o `+`; são sempre dígitos E.164
+  puros (`"5511988888888"`), o mesmo formato do campo `number` em
+  [Listagem](/numbers/list/) e [Status](/numbers/status/).
+
+Se você compara o valor enviado com o valor devolvido (para deduplicar ou
+confirmar cadastro), normalize removendo o `+` antes de comparar.
+:::
 
 ## Obtendo o código de pareamento
 
 Depois de criar o número, chame `POST /v1/numbers/{alias}/pair` para
-disparar a geração do código e obtê-lo:
+disparar a geração do código:
 
 <ApiResponse
   status={202}
@@ -199,22 +228,142 @@ disparar a geração do código e obtê-lo:
   }}
 />
 
-Números extras sempre pareiam por **código de vinculação** (`pairing_code`)
-— QR code é exclusivo do número principal. O código em si é entregue de
-forma assíncrona — consulte [Status dos Números Extras](/numbers/status/),
-cujo bloco `pairing` traz `{method, data, expires_at}` enquanto `status` é
-`"pairing"`.
+Por essa rota, números extras pareiam por **código de vinculação**
+(`pairing_code`) — é o único método que a API pública gera hoje para
+números extras. O código em si é entregue de forma assíncrona — consulte
+[Status dos números extras](/numbers/status/), cujo bloco `pairing` traz
+`{method, data, expires_at}` enquanto `status` é `"pairing"`.
+
+## Cancelando o pareamento
+
+Enquanto o número estiver com `status: "pairing"`, você pode cancelar a
+solicitação em andamento e voltar o número para `"pending"`:
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/numbers/vendas_sp/cancel-pairing \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch('https://api.turbonotify.com/v1/numbers/vendas_sp/cancel-pairing', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer SUA_CHAVE' }
+    });
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/numbers/vendas_sp/cancel-pairing"
+    headers = {"Authorization": "Bearer SUA_CHAVE"}
+
+    response = requests.post(url, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/numbers/vendas_sp/cancel-pairing", nil)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/numbers/vendas_sp/cancel-pairing';
+
+    $options = [
+        'http' => [
+            'header' => ['Authorization: Bearer SUA_CHAVE'],
+            'method' => 'POST'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var response = await client.PostAsync(
+        "https://api.turbonotify.com/v1/numbers/vendas_sp/cancel-pairing",
+        null
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers/vendas_sp/cancel-pairing"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+<ApiResponse
+  status={200}
+  body={{
+    alias: 'vendas_sp',
+    status: 'pending',
+  }}
+/>
 
 ## Usabilidade
 
 - Cada número extra deve pertencer a um aparelho com WhatsApp ativo.
-- O código de pareamento tem validade limitada. Caso expire, será necessário refazer a solicitação de pareamento.
-- Você pode definir um alias para o número extra durante o cadastro, facilitando o uso no envio de mensagens via URL (`/v1/numbers/{alias}/...`).
+- O código de pareamento tem validade limitada (aproximadamente 180 segundos). Caso expire, chame `POST /v1/numbers/{alias}/pair` novamente.
+- `alias` é obrigatório no cadastro e deve começar com uma letra — use-o no envio de mensagens via URL (`/v1/numbers/{alias}/...`).
 - O número nasce com status `pending` e só avança para `pairing` após a chamada de pareamento.
 
 ## Status
 
-Após cadastrar o número extra, acompanhe o andamento da vinculação consultando o [Status dos Números Extras](/numbers/status/).
+Após cadastrar o número extra, acompanhe o andamento da vinculação consultando o [Status dos números extras](/numbers/status/).
 
 ## Erros possíveis
 
@@ -222,12 +371,12 @@ Veja os principais erros que podem ocorrer no cadastro de números extras:
 
 | Status | Código de erro           | Descrição                                              |
 | :----: | ------------------------ | ------------------------------------------------------ |
-| `400`  | `invalid_json`           | O JSON da requisição está malformado ou inválido.      |
+| `400`  | `invalid_json`           | O `alias` está vazio ou é inválido. (Um corpo de requisição malformado retorna `422 validation_error`, não este código.) |
 | `400`  | `reserved_alias`         | O alias `"main"` é reservado para o número principal e não pode ser usado em um número extra. |
+| `402`  | `subscription_inactive`  | A assinatura da organização está `past_due`, `terminated`, `pending` ou com trial expirado (resposta inclui `details.status`). |
 | `402`  | `feature_not_available`  | O plano atual não suporta números extras.              |
-| `402`  | `extra_numbers_limit_reached` | A organization já atingiu o teto de números extras do tier (BUSINESS 1.000 / CUSTOM 1.000). A resposta inclui `details.limit` e `details.current`. |
+| `402`  | `extra_numbers_limit_reached` | A organização já atingiu o teto de números extras do tier (BUSINESS 1.000 / CUSTOM 1.000). A resposta inclui `details.limit` e `details.current`. |
 | `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.            |
 | `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
 | `409`  | `number_already_exists`  | O alias ou o número informado já está cadastrado na conta. |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                   |
-| `503`  | `whatsapp_unavailable`   | O WhatsApp está temporariamente fora do ar.            |

@@ -11,11 +11,11 @@ Controle quais números extras estão ativos para envio de mensagens. Números d
 
 ## Cobrança
 
-Números extras desativados continuam sendo cobrados enquanto estiverem cadastrados. Para encerrar a cobrança, é necessário remover o número. Consulte os detalhes em [Cobrança de Números Extras](/numbers/billing/).
+Números extras desativados continuam sendo cobrados enquanto estiverem cadastrados. Para encerrar a cobrança, é necessário remover o número. Consulte os detalhes em [Cobrança de números extras](/numbers/billing/).
 
 ## Pelo dashboard
 
-Acesse a página de <DashboardLink path="/numbers">Números Extras</DashboardLink> no dashboard para ativar ou desativar números com um clique.
+Acesse a página de <DashboardLink path="/numbers">Números</DashboardLink> no dashboard para ativar ou desativar números com um clique.
 
 ## Ativação
 
@@ -144,8 +144,8 @@ Para ativar (conectar) um número extra que está inativo, faça uma requisiçã
 
 A resposta confirma apenas que a **transição foi aceita** — o número entra
 em estado `connecting` (`at` vem vazio nesta chamada). O status final
-(`connected` ou `failed`) chega via o webhook `number.connected` /
-`number.connect.failed`, ou consultando o [Status dos Números Extras](/numbers/status/).
+(`connected` ou `failed`) chega via webhook `number.connected` /
+`number.connect.failed`, ou consultando o [Status dos números extras](/numbers/status/).
 
 ## Desativação
 
@@ -276,9 +276,25 @@ Para desativar (desconectar) um número extra que está ativo, faça uma requisi
 resposta — diferente de `connecting`, ele não é um dos valores da
 [Tabela de status](/numbers/status/#tabela-de-status) e não aparece em
 `GET /v1/numbers/{alias}` (que, logo após esta chamada, ainda mostra o
-status anterior até o worker concluir a desconexão). O status final
-(`disconnected`) chega via o webhook `number.disconnected`, ou consultando
-o [Status dos Números Extras](/numbers/status/).
+status anterior até o Turbo Notify concluir a desconexão). O status final
+(`disconnected`) chega via webhook `number.disconnected`, ou consultando
+o [Status dos números extras](/numbers/status/).
+
+:::note[Ativação e desativação do número principal]
+O número principal tem suas próprias rotas, sem `{alias}` no path e com
+resposta mais simples (só `alias` e `status`, sem o campo `at`):
+
+- `POST /v1/numbers/main/connect` → `202 Accepted`, `{"alias": "main", "status": "connecting"}`
+- `POST /v1/numbers/main/disconnect` → `202 Accepted`, `{"alias": "main", "status": "disconnecting"}`
+
+Nenhuma das duas depende do plano — estão sempre disponíveis, independente
+do tier. Ambas retornam `422 no_main_number_configured` quando não há número
+principal cadastrado na conta, e `422 main_number_not_paired` quando o
+número existe mas ainda não concluiu o pareamento (pareie pelo dashboard
+primeiro). Erros adicionais: `409 already_connected`,
+`409 already_connecting` no connect; `422 no_active_session` no
+disconnect.
+:::
 
 ## Erros possíveis
 
@@ -286,8 +302,9 @@ o [Status dos Números Extras](/numbers/status/).
 
 | Status | Código de erro              | Descrição                                                     |
 | :----: | ---------------------------- | ------------------------------------------------------------- |
+| `402`  | `subscription_inactive`      | A assinatura da organização está `past_due`, `terminated`, `pending` ou com trial expirado (resposta inclui `details.status`). |
 | `402`  | `feature_not_available`      | O plano atual não suporta números extras.                     |
-| `403`  | `no_device_link`             | O número extra não tem um device link associado (estado inconsistente). |
+| `403`  | `no_device_link`             | O número extra não tem um vínculo de dispositivo ativo (estado inconsistente). |
 | `403`  | `extra_number_not_paired`    | O número extra ainda não concluiu o pareamento — chame `POST /v1/numbers/{alias}/pair` primeiro. |
 | `404`  | `extra_number_not_found`     | O alias informado não corresponde a nenhum número cadastrado. |
 | `409`  | `already_connected`          | O número extra já está conectado.                              |

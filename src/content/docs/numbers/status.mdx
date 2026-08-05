@@ -5,13 +5,12 @@ description: Como consultar o status de vinculação e funcionamento dos número
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
-import DashboardLink from '@components/DashboardLink.astro';
 
-Acompanhe o status de cada número extra cadastrado na sua conta para garantir que estejam ativos e prontos para envio.
+Acompanhe o status de cada número extra cadastrado na sua conta para garantir que esteja ativo e pronto para envio.
 
 ## Cobrança
 
-A cobrança de números extras é feita de forma proporcional ao período de uso. Para entender os valores e o ciclo de cobrança, consulte a documentação de [Cobrança de Números Extras](/numbers/billing/).
+A cobrança de números extras é feita de forma proporcional ao período de uso. Para entender os valores e o ciclo de cobrança, consulte a documentação de [Cobrança de números extras](/numbers/billing/).
 
 ## Consultar status
 
@@ -148,6 +147,26 @@ Para verificar o status de um número extra específico, faça uma requisição 
   }}
 />
 
+:::note[Status do número principal]
+O número principal tem sua própria rota de status, `GET /v1/numbers/main`
+(mesmo escopo, `numbers:read`), com uma resposta mais enxuta — sem os
+campos `description`, `scheduled_deletion_at`, `reason` e `pairing` (o
+pareamento do número principal é feito exclusivamente pelo dashboard, não
+tem contrapartida na API pública):
+
+```json
+{
+  "contact_id": "ct_c7abb1f5ee9640bf86a0a20290810ae9",
+  "name": "Laboratório Central",
+  "type": "main",
+  "alias": "main",
+  "number": "5511973117056",
+  "status": "connected",
+  "at": "2026-04-07T10:00:00Z"
+}
+```
+:::
+
 :::note[`description`, `scheduled_deletion_at` e `reason` sempre `null` aqui]
 Diferente de [Listagem](/numbers/list/), que retorna a `description` real
 cadastrada, este endpoint (`GET /v1/numbers/{alias}`) hoje retorna
@@ -157,6 +176,29 @@ quando `status: "failed"`. Quando o número está com `status:
 "pending_deletion"`, o timestamp da exclusão agendada aparece no campo `at`
 (não em `scheduled_deletion_at`). Para a descrição cadastrada, consulte
 [Listagem](/numbers/list/).
+:::
+
+:::caution[`at` não é o momento da última mudança de status]
+`at` é resolvido em três etapas, nesta ordem:
+
+1. o momento da **última conexão bem-sucedida** do número;
+2. se o número **nunca** conectou, o momento do **último desligamento**
+   registrado (a desconexão ou revogação);
+3. se nenhum dos dois existe, **string vazia** (`""`).
+
+O instante da conexão **não é sobrescrito** pelas mudanças de status
+seguintes — então um número que conectou em algum momento e hoje aparece
+como `disconnected`, `failed`, `revoked` ou `reconnecting` continua
+reportando o horário em que conectou pela última vez, e **não** o horário em
+que caiu ou falhou. Renderizar `desconectado desde {at}` exibe a hora errada.
+
+Já um número desconectado ou revogado **sem nunca ter conectado** reporta o
+momento desse desligamento — não uma string vazia. Nesse caso é
+`conectado desde {at}` que exibe o rótulo errado. Consulte o `status` antes
+de escolher o rótulo, e trate `""` antes de converter para data.
+
+A única exceção é `status: "pending_deletion"`, em que `at` traz o momento
+da exclusão agendada (veja a nota acima).
 :::
 
 ## Campos da resposta
@@ -169,7 +211,7 @@ quando `status: "failed"`. Quando o número está com `status:
 | `alias` | string | Identificador único do número extra na conta |
 | `number` | string | Número de telefone em dígitos E.164 (sem `+`) |
 | `status` | string | Estado atual — veja [Tabela de status](#tabela-de-status) |
-| `at` | string | Timestamp ISO 8601 da última mudança de status; quando `status = "pending_deletion"`, é o momento da exclusão agendada |
+| `at` | string | Timestamp ISO 8601 resolvido em três etapas: a **última conexão bem-sucedida** do número; na falta dela, o **último desligamento** registrado (desconexão ou revogação); na falta de ambos, **string vazia (`""`)**. **Não** é o momento da última mudança de status — um número que já conectou e hoje está `disconnected`, `failed`, `revoked` ou `reconnecting` continua reportando aqui o instante em que conectou pela última vez. Exceção: quando `status = "pending_deletion"`, é o momento da exclusão agendada. |
 | `description` | string\|null | Sempre `null` neste endpoint hoje — veja nota acima |
 | `scheduled_deletion_at` | string\|null | Sempre `null` neste endpoint hoje — veja nota acima |
 | `reason` | string\|null | Reservado para o motivo de falha — **hoje sempre `null`**, veja a nota acima |
@@ -182,7 +224,7 @@ Presente quando `status` é `pairing` e o código ainda está válido:
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `method` | string | Método de pareamento: `"pairing_code"` |
-| `data` | string | Código de 8 dígitos a ser inserido no WhatsApp |
+| `data` | string | Código alfanumérico de 8 caracteres a ser inserido no WhatsApp (exibido com hífen, ex.: `Z5X7-LTYL`) |
 | `expires_at` | string | Timestamp ISO 8601 de expiração do código |
 
 ## Tabela de status
@@ -209,8 +251,12 @@ abaixo descrevem a intenção original e **ainda não são emitidos** pela API:
 
 | Motivo                  | Descrição                                                     |
 | ----------------------- | ------------------------------------------------------------- |
-| `invalid_code`          | O código de pareamento inserido está incorreto ou expirado.   |
-| `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.                   |
+| `no_active_session`     | A organização não tem uma sessão ativa para parear o número extra através dela. |
+| `pair_phone_timeout`    | O WhatsApp não retornou um código de pareamento em 30s.       |
+| `pair_phone_error`      | O WhatsApp retornou um erro ao gerar o código.                |
+| `pair_qr_timeout`       | O QR code não foi gerado em 20s.                               |
+| `pair_qr_error`         | O WhatsApp retornou um erro ao gerar o QR code.                |
+| `pairing_timeout`       | O código foi gerado, mas não foi inserido dentro da janela de validade. |
 
 ## Erros possíveis
 

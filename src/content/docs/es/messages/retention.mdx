@@ -52,10 +52,10 @@ Hacer upgrade de tier **no recupera** mensajes que ya pasaron la retención fís
 
 Para mensajes con medios (imagen, video, audio, documento, sticker), la durabilidad de los **bytes** es independiente de la ventana de lectura anterior:
 
-- **Con [BYO Object Storage](/es/general/byo-storage-setup/) configurado**: los bytes se copian a tu bucket tan pronto se recibe el mensaje. Permanecen disponibles mientras tu bucket retenga el objeto — bajo tu control total, incluso después de que el mensaje salga de la ventana de lectura.
-- **Sin BYO Storage**: solo se persisten los metadatos (mime, tamaño, hash, descripción). Los bytes NO son proxyados ni almacenados por Turbo Notify. El campo `media.kind` devuelve `"unavailable"` con un envelope `setup_hint` que invita a configurar el storage.
+- **Con [BYO Object Storage](/general/byo-storage-setup/) configurado**: los bytes se copian a tu bucket tan pronto se recibe el mensaje. Permanecen disponibles mientras tu bucket retenga el objeto — bajo tu control total, incluso después de que el mensaje salga de la ventana de lectura.
+- **Sin BYO Storage**: solo se persisten los metadatos (mime, tamaño, hash, descripción). Los bytes NO son proxyados ni almacenados por Turbo Notify. El bloque de medios (`image`/`video`/`audio`/`document`/`sticker` — no existe un sub-objeto genérico `media`) devuelve `kind: "unavailable"` con un envelope `setup_hint` que invita a configurar el storage.
 
-Este comportamiento es canónico desde 2026-05-26 — ya no existe una ventana de 24h vía el CDN de WhatsApp. Detalles en [BYO Object Storage](/es/general/byo-storage-setup/).
+Este comportamiento es canónico desde 2026-05-26 — ya no existe una ventana de 24h vía el CDN de WhatsApp. Detalles en [BYO Object Storage](/general/byo-storage-setup/).
 
 ## Implicaciones prácticas
 
@@ -67,4 +67,4 @@ Este comportamiento es canónico desde 2026-05-26 — ya no existe una ventana d
 
 ## Consulta de estado
 
-Para verificar el estado de un mensaje dentro de la ventana de retención, ver la documentación de [Estado](/es/messages/status/).
+Para verificar el estado de un mensaje dentro de la ventana de retención, ver la documentación de [Estado](/messages/status/) (PT-BR — traducción pendiente para esta página).

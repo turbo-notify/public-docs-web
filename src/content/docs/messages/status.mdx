@@ -5,7 +5,6 @@ description: Acompanhe o andamento e possíveis falhas das mensagens enviadas pe
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
-import ExternalLink from '@components/ExternalLink.astro';
 
 Após enviar uma mensagem, você pode consultar o status dela a qualquer momento pela API. O status reflete o andamento do processamento e entrega no WhatsApp.
 
@@ -27,14 +26,14 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
   <TabItem label="cURL">
     ```bash title="turbo-notify.sh"
     curl -X GET \
-      https://api.turbonotify.com/v1/messages/msg_abc123/status \
+      https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/status \
       -H "Authorization: Bearer SUA_CHAVE"
     ```
   </TabItem>
   <TabItem label="Node">
     ```js title="turbo-notify.js"
     const response = await fetch(
-      'https://api.turbonotify.com/v1/messages/msg_abc123/status',
+      'https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/status',
       {
         method: 'GET',
         headers: {
@@ -51,7 +50,7 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
     ```python title="turbo_notify.py"
     import requests
 
-    url = "https://api.turbonotify.com/v1/messages/msg_abc123/status"
+    url = "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/status"
     headers = {
         "Authorization": "Bearer SUA_CHAVE"
     }
@@ -72,7 +71,7 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
     )
 
     func main() {
-        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/v1/messages/msg_abc123/status", nil)
+        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/status", nil)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         resp, _ := http.DefaultClient.Do(req)
         defer resp.Body.Close()
@@ -84,7 +83,7 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
   <TabItem label="PHP">
     ```php title="turbo-notify.php"
     <?php
-    $url = 'https://api.turbonotify.com/v1/messages/msg_abc123/status';
+    $url = 'https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/status';
 
     $options = [
         'http' => [
@@ -108,7 +107,7 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var response = await client.GetAsync(
-        "https://api.turbonotify.com/v1/messages/msg_abc123/status"
+        "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/status"
     );
     var result = await response.Content.ReadAsStringAsync();
     Console.WriteLine(result);
@@ -124,7 +123,7 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
             var client = HttpClient.newHttpClient();
 
             var request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.turbonotify.com/v1/messages/msg_abc123/status"))
+                .uri(URI.create("https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/status"))
                 .header("Authorization", "Bearer SUA_CHAVE")
                 .GET()
                 .build();
@@ -145,8 +144,8 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
 <ApiResponse
   status={200}
   body={{
-    message_id: 'msg_abc123',
-    status: { state: 'pending', at: '2025-07-16T10:00:00Z' },
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
+    status: { state: 'pending', at: '2025-07-16T10:00:00Z', error: null },
   }}
 />
 
@@ -155,8 +154,8 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
 <ApiResponse
   status={200}
   body={{
-    message_id: 'msg_abc123',
-    status: { state: 'sent', at: '2025-07-16T10:00:02Z' },
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
+    status: { state: 'sent', at: '2025-07-16T10:00:02Z', error: null },
   }}
 />
 
@@ -165,8 +164,8 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
 <ApiResponse
   status={200}
   body={{
-    message_id: 'msg_abc123',
-    status: { state: 'delivered', at: '2025-07-16T10:00:05Z' },
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
+    status: { state: 'delivered', at: '2025-07-16T10:00:05Z', error: null },
   }}
 />
 
@@ -175,8 +174,8 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
 <ApiResponse
   status={200}
   body={{
-    message_id: 'msg_abc123',
-    status: { state: 'read', at: '2025-07-16T10:01:12Z' },
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
+    status: { state: 'read', at: '2025-07-16T10:01:12Z', error: null },
   }}
 />
 
@@ -185,14 +184,13 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
 <ApiResponse
   status={200}
   body={{
-    message_id: 'msg_abc123',
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
     status: {
       state: 'failed',
       at: '2025-07-16T10:00:03Z',
       error: {
-        code: 'whatsapp_unavailable',
+        code: 'session_not_connected',
         message: 'WhatsApp session is not connected',
-        hint: null,
       },
     },
   }}
@@ -202,15 +200,15 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
 
 Quando o status é `failed`, o objeto `error` carrega os detalhes. É **o mesmo
 shape** do `data.error` dos webhooks `*.failed` (consistência evento ↔ recurso —
-veja [Webhooks](/messages/webhook/) e [Recuperar mensagem](/messages/get/)):
+veja [Webhooks](/messages/webhook/) e [Consultar mensagem](/messages/get/)):
 
 | Campo          | Descrição                                                                 |
 | -------------- | ------------------------------------------------------------------------- |
-| `error.code`   | Código estável legível por máquina — faça branch neste valor (ex.: `whatsapp_unavailable`, `media_fetch_failed`, `blocked`). |
+| `error.code`   | Código estável legível por máquina — faça branch neste valor (ex.: `session_not_connected`, `whatsapp_send_failed`, `media_fetch_failed`). |
 | `error.message`| Descrição legível da falha.                                               |
-| `error.hint`   | `string \| null` — orientação acionável para corrigir, derivada do `code`. |
+| `error.hint`   | `string` — orientação acionável para corrigir, derivada do `code`. **Ausente** (chave omitida, nunca `null`) quando não há orientação para o `code`. |
 
-Status não-`failed` (`pending`/`sent`/`delivered`/`read`) não trazem o campo `error`.
+Neste endpoint o campo `error` está **sempre presente**: vem preenchido quando `state` é `failed` e `null` nos demais estados (`pending`/`sent`/`delivered`/`read`). Já em `GET /v1/numbers/{alias}/messages/{id}`, o campo é **omitido** quando não há falha.
 
 ## Erros possíveis
 
@@ -218,14 +216,13 @@ Status não-`failed` (`pending`/`sent`/`delivered`/`read`) não trazem o campo `
 | :----: | ---------------- | ---------------------------------------------------- |
 | `403`  | `not_authorized` | A chave de acesso está inválida ou ausente.          |
 | `403`  | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
-| `404`  | `not_found`      | A mensagem não foi encontrada ou já expirou.         |
+| `404`  | `not_found`      | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de leitura por retenção](/messages/retention/) do tier — os três casos devolvem a mesma resposta. |
 | `404`  | `message_not_found` | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `500`  | `internal_error` | Erro interno inesperado no servidor.                 |
-| `503`  | `service_unavailable` | O serviço está temporariamente indisponível.    |
 
 ## Retenção
 
-As mensagens ficam disponíveis para consulta por um período limitado. Após esse prazo, o status não poderá mais ser consultado. Para detalhes, veja a documentação de [Retenção](/messages/retention/).
+A janela de leitura por tier vale **também para este endpoint**: a mensagem é resolvida pelo mesmo caminho compartilhado por toda rota que recebe um `{message_id}`, e esse caminho aplica o filtro de retenção antes de qualquer outra coisa. Uma vez que a mensagem fica mais antiga que a janela do seu tier, `GET /v1/numbers/{alias}/messages/{id}/status` passa a retornar `404 not_found` — indistinguível de uma mensagem que nunca existiu. Consulte e arquive o status final antes disso; para os prazos por tier, veja a documentação de [Retenção](/messages/retention/).
 
 ## Timestamp da transição de status
 
@@ -237,4 +234,4 @@ O momento da **transição de entrega atual** é exposto pelo campo `status.at`,
 
 ## Atualizações em tempo real
 
-Para receber atualizações automáticas sobre o status das mensagens sem precisar consultar a API repetidamente, configure um webhook. Veja como em [Respostas e Webhook](/messages/webhook/).
+Para receber atualizações automáticas sobre o status das mensagens sem precisar consultar a API repetidamente, configure um webhook. Veja como em [Eventos via webhook](/messages/webhook/).

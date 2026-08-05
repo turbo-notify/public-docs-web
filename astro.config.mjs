@@ -71,19 +71,14 @@ export default defineConfig({
               translations: { en: 'Abuse Prevention', es: 'Prevención de Abuso' },
             },
             {
+              slug: 'general/byo-storage-setup',
+              label: 'Armazenamento',
+              translations: { en: 'Storage', es: 'Almacenamiento' },
+            },
+            {
               slug: 'general/next-steps',
               label: 'Próximos passos',
               translations: { en: 'Next Steps', es: 'Próximos Pasos' },
-            },
-            {
-              slug: 'general/byo-storage-setup',
-              label: 'BYO Object Storage',
-              translations: { en: 'BYO Object Storage', es: 'BYO Object Storage' },
-              badge: {
-                text: { 'pt-BR': 'Mídia', en: 'Media', es: 'Multimedia' },
-                variant: 'default',
-                class: 'tn-badge-media',
-              },
             },
           ],
         },
@@ -167,8 +162,8 @@ export default defineConfig({
                 },
                 {
                   slug: 'messages/reactions',
-                  label: 'Reações',
-                  translations: { en: 'Reactions', es: 'Reacciones' },
+                  label: 'Consultar reações',
+                  translations: { en: 'Get Reactions', es: 'Consultar reacciones' },
                 },
                 {
                   slug: 'messages/edit-delete',
@@ -248,12 +243,12 @@ export default defineConfig({
           items: [
             {
               slug: 'other-features/reaction',
-              label: 'Reação',
-              translations: { en: 'Reactions', es: 'Reacciones' },
+              label: 'Enviar reação',
+              translations: { en: 'Send Reaction', es: 'Enviar reacción' },
             },
             {
               slug: 'other-features/typing-indicator',
-              label: 'Digitação',
+              label: 'Indicador de digitação',
               translations: { en: 'Typing Indicator', es: 'Indicador de Escritura' },
             },
           ],
@@ -273,9 +268,14 @@ export default defineConfig({
           ],
         },
         {
+          // `messages/webhook` is deliberately listed here as well as under
+          // Números → Mensagens: it is the entry point for webhook setup
+          // (URL, HMAC signature, envelope, retries), so a reader who opens
+          // the section literally named "Webhooks" must find it here.
           label: 'Webhooks',
           translations: { en: 'Webhooks', es: 'Webhooks' },
           items: [
+            { slug: 'messages/webhook', label: 'Configuração e envelope', translations: { en: 'Setup & Envelope', es: 'Configuración y envelope' } },
             { slug: 'webhooks/contact-events', label: 'Eventos de contato', translations: { en: 'Contact Events', es: 'Eventos de Contacto' } },
             { slug: 'webhooks/message-quota-events', label: 'Eventos de quota de mensagem', translations: { en: 'Message Quota Events', es: 'Eventos de Quota de Mensaje' } },
           ],
@@ -285,12 +285,12 @@ export default defineConfig({
           translations: { en: 'Changelog', es: 'Changelog' },
           items: [
             { slug: 'changelog/2026-07-04-evaluated-cycle-quotas', label: 'Quotas ancoradas no ciclo avaliado', translations: { en: 'Cycle-anchored quotas', es: 'Cuotas ancladas al ciclo evaluado' } },
-            { slug: 'changelog/2026-06-25-flat-main-routes', label: 'Rotas flat para o número principal', translations: { en: 'Flat routes for the primary number', es: 'Rutas planas para el número principal' } },
+            { slug: 'changelog/2026-06-25-flat-main-routes', label: 'Rotas planas para o número principal', translations: { en: 'Flat routes for the primary number', es: 'Rutas planas para el número principal' } },
             { slug: 'changelog/2026-06-22-number-scoped-routes', label: 'Rotas aninhadas por número', translations: { en: 'Number-nested routes', es: 'Rutas anidadas por número' } },
             { slug: 'changelog/2026-06-21-event-at-occurrence', label: 'at do evento = momento real', translations: { en: 'Event at = real moment', es: 'at del evento = momento real' } },
             { slug: 'changelog/2026-06-05-receipts-from-party', label: 'Identidade do confirmador em recibos', translations: { en: 'Party identity on receipts', es: 'Identidad del confirmador en recibos' } },
             { slug: 'changelog/2026-06-04-contact-id-recipient', label: 'contact_id como destinatário', translations: { en: 'contact_id as recipient', es: 'contact_id como destinatario' } },
-            { slug: 'changelog/2026-06-04-typing-indicator-groups', label: 'Aviso de digitação em grupos', translations: { en: 'Group typing indicator', es: 'Indicador de escritura en grupos' } },
+            { slug: 'changelog/2026-06-04-typing-indicator-groups', label: 'Indicador de digitação em grupos', translations: { en: 'Group typing indicator', es: 'Indicador de escritura en grupos' } },
             { slug: 'changelog/2026-05-15-message-quota-activation', label: 'Ativação de quota de mensagem por tier' },
           ],
         },

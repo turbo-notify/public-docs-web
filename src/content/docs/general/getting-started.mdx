@@ -9,7 +9,7 @@ import DashboardLink from '@components/DashboardLink.astro';
 
 Com o Turbo Notify, você envia notificações pelo WhatsApp de forma rápida e fácil. A integração é simples, a API é direta e o <DashboardLink path="/">dashboard</DashboardLink> permite gerenciar tudo em poucos cliques.
 
-Veja como é simples começar:
+Veja como começar:
 
 ## Criação da conta
 
@@ -22,7 +22,7 @@ Com a conta criada, acesse o dashboard e toque no menu <DashboardLink path="/api
 ## Primeira notificação
 
 Agora é só enviar sua primeira notificação! Veja abaixo exemplos práticos de envio em diferentes linguagens e tecnologias.
-Não se esqueça de substituir o valor da `SUA_CHAVE`. Para detalhes sobre autenticação, consulte a documentação [Chave de Acesso](/general/access-key/).
+Não se esqueça de substituir o valor da `SUA_CHAVE`. Para detalhes sobre autenticação, consulte a documentação [Chave de acesso](/general/access-key/).
 
 <Tabs>
   <TabItem label="cURL">
@@ -184,7 +184,7 @@ Não se esqueça de substituir o valor da `SUA_CHAVE`. Para detalhes sobre auten
 Os exemplos acima usam a **rota plana** `POST /v1/messages`, que é o atalho para o número principal. Você pode usar igualmente a forma aninhada `POST /v1/numbers/main/messages` — ambas são idênticas. Para **números extras**, use `/v1/numbers/{alias}/messages`, substituindo `{alias}` pelo alias configurado no dashboard.
 :::
 
-Após o envio, você receberá uma resposta semelhante a esta, indicando que sua mensagem foi recebida pelo Turbo Notify e em poucos instantes será enviada para o WhatsApp. Para saber mais, acesse a documentação sobre [Envio de Mensagens](/messages/send/).
+Após o envio, você receberá uma resposta semelhante a esta, indicando que sua mensagem foi recebida pelo Turbo Notify e em poucos instantes será enviada para o WhatsApp. Para saber mais, acesse a documentação sobre [Envio de mensagens](/messages/send/).
 
 <ApiResponse
   status={202}
@@ -247,11 +247,13 @@ Use `GET /v1/messages/{id}` para confirmar se a mensagem chegou ao destinatário
   </TabItem>
   <TabItem label="PHP">
     ```php title="turbo_notify.php"
+    <?php
     $ch = curl_init('https://api.turbonotify.com/v1/messages/msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4');
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer SUA_CHAVE']);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $result = json_decode(curl_exec($ch), true);
     echo $result['status']['state'];
+    ?>
     ```
   </TabItem>
   <TabItem label="C#">
@@ -311,6 +313,6 @@ Use `GET /v1/messages/{id}` para confirmar se a mensagem chegou ao destinatário
   }}
 />
 
-Para mais detalhes sobre estados e polling, veja [Status da Mensagem](/messages/get/).
+Para a lista completa de estados de entrega, veja [Status da mensagem](/messages/status/). Para acompanhar eventos sem webhook, veja [Polling de eventos](/messages/polling/).
 
 Pronto! Agora você já pode integrar o Turbo Notify à sua plataforma, ou ao seu sistema, e começar a enviar notificações. Para dominar todos os recursos, leia toda a documentação.

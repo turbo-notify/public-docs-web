@@ -17,15 +17,6 @@ Para enviar mídia a partir de um número extra, use `/v1/numbers/{alias}/messag
 `{alias}` é o alias do seu número extra. [Saiba mais](/numbers/add/).
 :::
 
-:::caution[Implementação em progresso]
-O contrato HTTP é final, mas o upload outbound de mídia para o
-WhatsApp está em finalização (gateway neonize). Requests para os 5
-tipos de mídia abaixo são aceitos pela API e geram `message_id`, mas
-o worker pode retornar `message.send.failed` com `whatsapp_send_failed`
-até o release que completa o gateway. Acompanhe o webhook
-`message.sent` para confirmar o envio.
-:::
-
 ## Tipos de mídia suportados
 
 | Variante | Campo âncora | Formatos comuns | Tamanho máximo | `caption`? | `filename`? |
@@ -375,21 +366,19 @@ Os campos de mídia ficam dentro do objeto `content`. O campo âncora (ex.: `ima
 | `audio_url` | URL | condicional | Campo âncora para áudios; URL pública HTTPS |
 | `document_url` | URL | condicional | Campo âncora para documentos; URL pública HTTPS |
 | `sticker_url` | URL | condicional | Campo âncora para figurinhas; URL pública HTTPS |
-| `mime_type` | string | não | recomendado; o worker pode inferir do `Content-Type` da resposta |
+| `mime_type` | string | não | recomendado; o Turbo Notify pode inferir do `Content-Type` da resposta |
 | `caption` | string | parcial | aceito em `image`, `video`, `document`; **não aceito** em `audio` e `sticker` (retorna `422`). Aceita tokens de [menção `@<numero>`](/messages/send/#menções-mentions) — detecção implícita, mesmas regras do `text` |
 | `filename` | string | não | apenas em `document`; aparece como nome do anexo no chat |
 
 ## Resposta
 
-```json title="response.json"
-{
-  "message_id": "msg_a1b2c3d4e5f60718293a4b5c6d7e8f90",
-  "status": {
-    "state": "pending",
-    "at": "2026-04-27T10:00:05.123456+00:00"
-  }
-}
-```
+<ApiResponse
+  status={202}
+  body={{
+    message_id: 'msg_a1b2c3d4e5f60718293a4b5c6d7e8f90',
+    status: { state: 'pending', at: '2026-04-27T10:00:05Z' },
+  }}
+/>
 
 A confirmação real chega via webhook `message.sent`. Em caso de falha
 (URL inacessível, formato não suportado, tamanho excedido) você recebe
@@ -422,11 +411,14 @@ carrega `content_type` e `preview` (mesmo shape de `message.received`):
 ```
 
 Para baixar o arquivo de uma mídia recebida, consulte
-[`GET /v1/numbers/{alias}/messages/{id}`](/messages/get/) — o body inclui `media.url`
-com URL pré-assinada do seu BYO Object Storage (quando configurado).
+[`GET /v1/numbers/{alias}/messages/{id}`](/messages/get/) — os campos de mídia
+aparecem **diretamente** no objeto específico do `content_type` (`image`, `video`,
+`audio`, `document`, `sticker`), sem sub-objeto `media`. Com BYO Object Storage
+configurado, esse objeto vem com `kind: "available"` e `url` contendo a URL
+pré-assinada de download.
 
 ## Relacionado
 
 - [Envio de mensagens](/messages/send/) — texto, localização, contato, calendário (mesmo endpoint).
 - [Webhook outbound](/messages/webhook/) — payloads de `message.sent` e `message.delivered`.
-- [Recuperar mensagem](/messages/get/) — obter o body completo, inclusive mídia.
+- [Consultar mensagem](/messages/get/) — obter o body completo, inclusive mídia.

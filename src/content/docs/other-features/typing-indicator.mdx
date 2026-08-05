@@ -1,16 +1,16 @@
 ---
-title: Aviso de digitação
+title: Indicador de digitação
 description: Controle o indicador de digitação no WhatsApp para simular uma experiência de conversa mais natural.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-O aviso de digitação permite que sua aplicação sinalize ao destinatário que uma mensagem está sendo preparada, simulando uma experiência de conversa mais natural.
+O indicador de digitação permite que sua aplicação sinalize ao destinatário que uma mensagem está sendo preparada, simulando uma experiência de conversa mais natural.
 
-## Aviso automático
+## Indicador automático
 
-O Turbo Notify gerencia automaticamente o aviso de digitação antes do envio de mensagens. Quando uma mensagem é enviada, o indicador de digitação é ativado por um breve período antes da entrega, proporcionando uma experiência mais humana sem necessidade de configuração adicional.
+O Turbo Notify gerencia automaticamente o indicador de digitação antes do envio de mensagens. Quando uma mensagem é enviada, o indicador de digitação é ativado por um breve período antes da entrega, proporcionando uma experiência mais humana sem necessidade de configuração adicional.
 
 Use os endpoints abaixo apenas quando precisar de controle manual sobre o indicador de digitação.
 
@@ -177,7 +177,7 @@ Após enviar, o Turbo Notify retorna aceite assíncrono:
 
 ## Fim da digitação
 
-Para interromper o aviso de digitação manualmente, envie a mesma requisição com `is_typing` igual a `false`.
+Para interromper o indicador de digitação manualmente, envie a mesma requisição com `is_typing` igual a `false`.
 
 <Tabs>
   <TabItem label="cURL">
@@ -338,24 +338,25 @@ Após enviar, o Turbo Notify retorna aceite assíncrono:
 
 ## Destinatários disponíveis
 
-O campo `to` aceita exatamente uma das três formas abaixo, igualmente à rota de [envio de mensagens](/messages/send/):
+O campo `to` aceita exatamente uma das três formas abaixo, assim como na rota de [envio de mensagens](/messages/send/):
 
 | Forma | Exemplo | Quando usar |
 | ----- | ------- | ----------- |
 | `number` | `{"number": "+5511999999999"}` | Número E.164 conhecido |
 | `group_id` | `{"group_id": "grp_…"}` | Grupo do WhatsApp |
-| `contact_id` | `{"contact_id": "ct_…"}` | ID do TN Contact (telefone resolvido internamente) |
+| `contact_id` | `{"contact_id": "ct_…"}` | ID do contato no Turbo Notify (telefone resolvido internamente) |
 
-## Aviso em grupos
+## Indicador de digitação em grupos
 
 Para enviar o indicador de digitação em um grupo do WhatsApp, use `to.group_id` com o identificador do grupo no lugar de `to.number`.
 
 :::note[Requer plano BUSINESS ou superior]
 Enviar indicador de digitação (assim como mensagem) para um `group_id` exige a
 feature `groups:messages`, disponível a partir do tier `BUSINESS`. Em
-`FREE`/`SOLO` você ainda **recebe** mensagens de grupo, lista grupos
-localmente pelos webhooks e consulta detalhes — apenas o **envio** outbound
-para grupo (incluindo o indicador de digitação) é bloqueado com `402`:
+`FREE`/`SOLO` você ainda **recebe** mensagens de grupo, **lista grupos**
+(`GET /v1/numbers/{alias}/groups`) e consulta detalhes normalmente — apenas o
+**envio** outbound para grupo (incluindo o indicador de digitação) é bloqueado
+com `402`:
 
 <ApiResponse
   status={402}
@@ -370,7 +371,7 @@ e [Limitações de grupos](/groups/limitations/).
 
 ```bash title="typing-group.sh"
 curl -X POST \
-  https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator \
+  https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/typing-indicator \
   -H "Authorization: Bearer SUA_CHAVE" \
   -H "Content-Type: application/json" \
   -d '{
@@ -381,13 +382,13 @@ curl -X POST \
 
 O `group_id` é o identificador do grupo no formato `grp_{hex32}`, retornado pelo endpoint de [listagem de grupos](/groups/overview/).
 
-## Aviso por contact_id
+## Indicador de digitação por contact_id
 
-Use `to.contact_id` para indicar digitação a um contato do catálogo TN sem informar o telefone diretamente. O telefone é resolvido internamente a partir do registro do contato.
+Use `to.contact_id` para indicar digitação a um contato do catálogo do Turbo Notify sem informar o telefone diretamente. O telefone é resolvido internamente a partir do registro do contato.
 
 ```bash title="typing-contact.sh"
 curl -X POST \
-  https://api.turbonotify.com/v1/numbers/{alias}/typing-indicator \
+  https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/typing-indicator \
   -H "Authorization: Bearer SUA_CHAVE" \
   -H "Content-Type: application/json" \
   -d '{
@@ -396,11 +397,11 @@ curl -X POST \
   }'
 ```
 
-## Aviso com número extra
+## Indicador de digitação com número extra
 
-O remetente do aviso de digitação é **sempre o alias do path**. Para digitar a partir de um
-[número extra](/numbers/add/) cadastrado e ativo, use a forma aninhada com o alias desse número
-no lugar de `{alias}`:
+Na forma aninhada, o remetente do indicador de digitação é **sempre o alias do path**. Para digitar
+a partir de um [número extra](/numbers/add/) cadastrado e ativo, use essa forma com o alias desse
+número no lugar de `{alias}`:
 
 ```bash title="typing.sh"
 curl -X POST \
@@ -413,26 +414,28 @@ curl -X POST \
   }'
 ```
 
-A forma plana `POST /v1/typing-indicator` é um atalho que envia **sempre** a partir do número
-principal (`main`). Um campo `from` no corpo é aceito por compatibilidade, porém **ignorado** em
-ambas as formas — o path sempre vence.
+As duas formas tratam o remetente de maneira diferente:
 
-Caso o alias informado no path não estiver cadastrado ou o número não estiver ativo, a operação
+- **Aninhada** (`POST /v1/numbers/{alias}/typing-indicator`) — o remetente é sempre o alias do path. Um campo `from` no corpo é ignorado.
+- **Plana** (`POST /v1/typing-indicator`) — envia **sempre** a partir do número principal (`main`). Um campo `from` no corpo é aceito pelo schema (não gera erro de validação) e em seguida **descartado silenciosamente**: a requisição retorna `202 Accepted` e o indicador de digitação sai do número principal, não do número informado em `from`.
+
+**Para enviar um indicador de digitação a partir de um número extra, use obrigatoriamente a forma aninhada**, com o alias do número extra no path. A forma plana não tem como direcionar o remetente — e por não sinalizar erro, um `from` no corpo produz a falsa impressão de que funcionou.
+
+Caso o alias informado no path não esteja cadastrado ou o número não esteja ativo, a operação
 será rejeitada.
 
-Saiba mais sobre os números extra em [Números Extras](/numbers/add/).
+Saiba mais sobre [números extras](/numbers/add/).
 
 ## Eventos de webhook
 
-Operações de aviso de digitação são **fire-and-forget**: o `202 Accepted` confirma apenas o
+Operações de indicador de digitação são **fire-and-forget**: o `202 Accepted` confirma apenas o
 aceite assíncrono e **nenhum evento de webhook** é entregue para essas operações.
 
 ## Erros possíveis
 
 | Status | Código de erro          | Descrição                                          |
 | :----: | ----------------------- | -------------------------------------------------- |
-| `400`  | `invalid_json`          | O JSON da requisição está malformado ou inválido.  |
-| `400`  | `contact_not_found`     | O `contact_id` informado em `to` não pertence ao organization.  |
+| `400`  | `contact_not_found`     | O `contact_id` informado em `to` não pertence a esta organização.  |
 | `400`  | `contacts_not_enabled`  | Envio por `contact_id` não está configurado nesta instância. |
 | `400`  | `groups_not_enabled`    | Suporte a grupos não está habilitado nesta instância. |
 | `402`  | `feature_not_available` | O recurso não está disponível no plano contratado. |
@@ -443,5 +446,5 @@ aceite assíncrono e **nenhum evento de webhook** é entregue para essas operaç
 | `422`  | `sender_disconnected`   | O número extra do alias na URL está desconectado.  |
 | `422`  | `sender_not_found`      | O alias/número informado não corresponde a nenhum remetente da conta. |
 | `422`  | `session_not_connected` | A sessão do remetente não está conectada no momento do envio. |
+| `422`  | `validation_error`      | O corpo da requisição está malformado ou não passou na validação de schema. A resposta inclui `details.errors` com a lista de campos inválidos. |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.               |
-| `503`  | `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.        |

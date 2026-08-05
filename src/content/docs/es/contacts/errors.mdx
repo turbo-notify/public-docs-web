@@ -11,12 +11,11 @@ import ApiResponse from '@components/ApiResponse.astro';
 
 | HTTP | `error` | Cuándo |
 | ---- | ------- | ------ |
-| 400  | `invalid_phone_number` | El filtro `phone` no está en formato E.164 |
 | 400  | `invalid_contact_id` | `contact_id` no coincide con `^ct_[0-9a-f]{32}$` |
 | 400  | `invalid_cursor` | Cursor opaco corrupto |
 | 402  | `contact_quota_exceeded` | Se alcanzó la cuota de contactos distintos del ciclo |
 | 404  | `contact_not_found` | ID inválido o de otra organización |
-| 404  | `contact_picture_unavailable` | No hay foto disponible para este contacto |
+| 404  | `contact_picture_unavailable` | Caso raro — falló la generación de la URL prefirmada de la foto en esta solicitud. La ausencia de foto (sin storage, upload fallido, contacto sin foto) **no** devuelve 404: ver [Foto de Perfil](/es/contacts/profile-picture/) |
 | 429  | `refresh_rate_limited` | Límite de refresh por minuto excedido |
 
 Un id de contacto accedido bajo el `{alias}` **equivocado** también se
@@ -27,11 +26,10 @@ forma anidada con el `{alias}` correcto.
 
 ## Ejemplo de respuesta 402
 
-Devuelto por el pipeline de envío (`ContactQuotaGuardStep`) cuando la
-organización intenta contactar, vía Turbo Notify, a un contacto que pasa a
-estar **contado en el ciclo actual** (`counted_this_cycle`) — un contacto
-**nuevo** O un contacto **recurrente** ya contado en este ciclo — y la cuota
-de contactos distintos del ciclo ya está agotada.
+Devuelto cuando la organización intenta contactar, vía Turbo Notify, a un
+contacto que pasa a estar contado en el ciclo actual — un contacto
+**nuevo** o un contacto **recurrente** aún no contado en este ciclo — y la
+cuota de contactos distintos del ciclo ya está agotada.
 
 <ApiResponse status={402}>
 ```json

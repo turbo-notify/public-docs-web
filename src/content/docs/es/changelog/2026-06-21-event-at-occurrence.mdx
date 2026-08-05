@@ -19,7 +19,7 @@ sidebar:
   `created_at` y `at` son **valores distintos**.
 - **Tres eventos dejan de llevar `at`**: `contact.picture_changed`,
   `group.picture_changed` y `group.joined` — son descubrimientos de foto/snapshot,
-  sin un único momento de acción de WhatsApp. Solo aplica el `created_at` del sobre.
+  sin un único momento de acción de WhatsApp. Solo aplica el `created_at` del envelope.
 - **Todos los webhooks de ciclo de vida de grupo ahora se entregan**:
   `group.name_changed`, `group.description_changed`, `group.settings_changed`,
   `group.participants_added`, `group.participants_removed`,

@@ -6,9 +6,9 @@ description: Limites de velocidade de envio (rate limits) por tier — envio e r
 import ApiResponse from '@components/ApiResponse.astro';
 import ExternalLink from '@components/ExternalLink.astro';
 
-> **Nota (2026-07-04):** as franquias de mensagens e contatos deixaram de ser medidas em uma janela rolling de 30 dias e passaram a medir contra o ciclo de faturamento avaliado da organization. Esses números (e os erros 402/429 de quota) agora vivem exclusivamente em [Quota e Uso](/usage/quota/) — veja também o changelog [Quotas ancoradas no ciclo avaliado](/changelog/2026-07-04-evaluated-cycle-quotas/). Esta página documenta apenas os **limites de velocidade** (rate limits), um conceito separado que não muda nesta entrega.
+> **Nota (2026-07-04):** as franquias de mensagens e contatos deixaram de ser medidas em uma janela rolling de 30 dias e passaram a medir contra o ciclo de faturamento avaliado da organização. Esses números (e os erros 402/429 de quota) agora vivem exclusivamente em [Quota e uso](/usage/quota/) — veja também o changelog [Quotas ancoradas no ciclo avaliado](/changelog/2026-07-04-evaluated-cycle-quotas/). Esta página documenta apenas os **limites de velocidade** (rate limits), um conceito separado que não muda nesta entrega.
 
-> **Nota (2026-05-15):** o limite por tier de envio agora é efetivamente aplicado em produção. Veja [Per-Tier Message Quota Activation](/changelog/2026-05-15-message-quota-activation/) para o histórico dessa migração.
+> **Nota (2026-05-15):** o limite por tier de envio agora é efetivamente aplicado em produção. Veja [Ativação de quota de mensagem por tier](/changelog/2026-05-15-message-quota-activation/) para o histórico dessa migração.
 
 ## Quotas vs. limites de taxa (rate limits)
 
@@ -20,9 +20,9 @@ O Turbo Notify aplica dois mecanismos de controle distintos — não confunda um
 | Janela | Ciclo de faturamento avaliado (`cycle_start` → `cycle_end`) | Segundos/minutos, sem memória de ciclo |
 | Reseta em | `resets_at` (fim do ciclo) | Poucos segundos depois (`Retry-After`) |
 | Erros típicos | `402 contact_quota_exceeded` · `429 messages_quota_exceeded` | `429 send_rate_spacing` · `429 rate_limit_exceeded` |
-| Documentado em | [Quota e Uso](/usage/quota/) | Esta página |
+| Documentado em | [Quota e uso](/usage/quota/) | Esta página |
 
-Esta página cobre exclusivamente os limites de **velocidade** — quão rápido você pode enviar mensagens e chamar endpoints específicos. Para as franquias de mensagens/contatos por ciclo e seus erros, veja [Quota e Uso](/usage/quota/).
+Esta página cobre exclusivamente os limites de **velocidade** — quão rápido você pode enviar mensagens e chamar endpoints específicos. Para as franquias de mensagens/contatos por ciclo e seus erros, veja [Quota e uso](/usage/quota/).
 
 ## Velocidade de envio (por tier)
 
@@ -45,11 +45,11 @@ Enviar antes do intervalo mínimo desde o último envio bem-sucedido **naquele n
   }}
 />
 
-Este limite é por **número** (principal ou extra) — cada número tem seu próprio relógio de espaçamento, então usar [números extra](/numbers/add/) aumenta a capacidade total de envio da conta.
+Este limite é por **número** (principal ou extra) — cada número tem seu próprio relógio de espaçamento, então usar [números extras](/numbers/add/) aumenta a capacidade total de envio da conta.
 
 ## Refresh de contatos (por tier)
 
-O endpoint de [refresh de contato](/contacts/refresh/) (`POST .../contacts/{contact_id}/refresh`) é mais caro que uma leitura simples — aciona o WhatsApp Gateway sob demanda — e por isso tem seu próprio limite por minuto, também escalando com o tier:
+O endpoint de [refresh de contato](/contacts/refresh/) (`POST .../contacts/{contact_id}/refresh`) é mais caro que uma leitura simples — consulta o WhatsApp sob demanda — e por isso tem seu próprio limite por minuto, também escalando com o tier:
 
 | Tier       | Refresh/min |
 | ---------- | -----------:|
@@ -60,14 +60,14 @@ O endpoint de [refresh de contato](/contacts/refresh/) (`POST .../contacts/{cont
 
 Estourar esse limite retorna `429 refresh_rate_limited` com o cabeçalho `Retry-After`.
 
-## Burst protection (operacional, igual em todos os tiers)
+## Proteção contra rajadas (operacional, igual em todos os tiers)
 
 Independente do tier contratado, o Turbo Notify aplica limites operacionais fixos para proteger a infraestrutura. Estes **não** diferenciam por plano:
 
-- **`messages_per_minute`** — 10.000 envios/minuto por réplica (proteção de burst da infraestrutura, não é uma SLA por organization).
-- **`recipients_per_day`** — 2.000 destinatários distintos/dia por organization (fairness entre contas).
+- **`messages_per_minute`** — 10.000 envios/minuto, aplicados **por organização e por número** (proteção contra rajadas da infraestrutura). É um limite **global** da conta: vale para toda a plataforma, não por conexão ou servidor.
+- **`recipients_per_day`** — 2.000 mensagens/dia para o **mesmo destinatário**, por número (proteção anti-bloqueio). Não há limite de destinatários distintos por dia: você pode alcançar quantos contatos quiser, respeitando as demais quotas do plano.
 
-## Números extra
+## Números extras
 
 Cada número extra cadastrado na conta possui seu próprio relógio de espaçamento de envio, independente do número principal. Os limites de cada número extra seguem as mesmas regras de tier da conta.
 
@@ -87,7 +87,7 @@ Esses controles são transparentes e, na maioria dos casos, não impactam o uso 
 
 O WhatsApp possui suas próprias regras e limites de uso. Mesmo que você esteja dentro dos limites do Turbo Notify, o envio excessivo, não solicitado ou considerado spam pelos destinatários pode resultar em bloqueio do seu número pelo WhatsApp.
 
-Para evitar problemas, siga as recomendações de uso responsável descritas em [Evite o Abuso](/general/abuse/) e as <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">políticas do WhatsApp</ExternalLink>.
+Para evitar problemas, siga as recomendações de uso responsável descritas em [Evite o abuso](/general/abuse/) e as <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">políticas do WhatsApp</ExternalLink>.
 
 ## Erros relacionados
 
@@ -95,16 +95,17 @@ Para evitar problemas, siga as recomendações de uso responsável descritas em 
 | :----: | ------------------------ | ------------------------------------------------------------------------- |
 | `429`  | `send_rate_spacing`      | Envio antes do intervalo mínimo entre mensagens do tier, no mesmo número. |
 | `429`  | `refresh_rate_limited`   | Limite de refresh de contato ultrapassado.                                |
-| `429`  | `messages_per_minute_limit_exceeded` | Burst protection: 10.000 envios/minuto por réplica ultrapassado (veja [acima](#burst-protection-operacional-igual-em-todos-os-tiers)). |
-| `429`  | `recipients_per_day_limit_exceeded`  | Burst protection: 2.000 destinatários distintos/dia ultrapassado (veja [acima](#burst-protection-operacional-igual-em-todos-os-tiers)). |
-| `503`  | `service_unavailable`    | Serviço temporariamente indisponível por sobrecarga.                      |
+| `429`  | `messages_per_minute_limit_exceeded` | Proteção contra rajadas: 10.000 envios/minuto ultrapassado — limite **global** da conta, aplicado por organização e por número (veja [acima](#proteção-contra-rajadas-operacional-igual-em-todos-os-tiers)). |
+| `429`  | `recipients_per_day_limit_exceeded`  | Proteção anti-bloqueio: 2.000 mensagens/dia para o mesmo destinatário, por número (veja [acima](#proteção-contra-rajadas-operacional-igual-em-todos-os-tiers)). |
+| `503`  | `internal_error`         | Serviço temporariamente indisponível. Tente novamente após alguns instantes. |
+| `503`  | `plan_lookup_failed`     | Não foi possível resolver o plano da organização no momento — a requisição não foi processada. Tente novamente. |
 
-Para os erros de **quota** (`402 contact_quota_exceeded`, `429 messages_quota_exceeded`, `402 feature_not_available`), veja [Quota e Uso](/usage/quota/#erros).
+Para os erros de **quota** (`402 contact_quota_exceeded`, `429 messages_quota_exceeded`, `402 feature_not_available`), veja [Quota e uso](/usage/quota/#erros).
 
 ## Boas práticas
 
 - Respeite o cabeçalho `Retry-After` ao receber um status `429`.
 - Distribua o envio ao longo do tempo em vez de enviar tudo de uma vez — o espaçamento mínimo do seu tier já define o ritmo sustentável.
-- Utilize [números extra](/numbers/add/) para aumentar a capacidade de envio.
+- Utilize [números extras](/numbers/add/) para aumentar a capacidade de envio.
 - Monitore os códigos de resposta da API para identificar rapidamente quando um limite é atingido.
 - Configure [webhooks](/messages/webhook/) para acompanhar o status das mensagens sem precisar consultar a API repetidamente.

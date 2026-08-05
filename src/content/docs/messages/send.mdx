@@ -17,9 +17,11 @@ inferido automaticamente pelo campo âncora presente em `content`
 `content_type` no request: ele nunca é aceito (incluí-lo retorna `422`).
 Suporta texto, localização, contato, calendário e
 mídia (`image`, `video`, `audio`, `document`, `sticker` — veja
-[Envio de Mídia](/messages/send-media/)).
+[Envio de mídia](/messages/send-media/)).
 
 Para citar (responder) uma mensagem existente — qualquer variante de conteúdo — use o endpoint dedicado `POST /v1/messages/{message_id}/reply`, onde `{message_id}` é o id público da mensagem citada (`msg_{hex32}`). O body do reply contém apenas `content`. O webhook resultante é `message.replied` (em vez de `message.sent`); veja [Webhooks](/messages/webhook/#exemplo--messagereplied-inboundoutbound).
+
+A mensagem citada precisa estar **dentro da [janela de leitura por retenção](/messages/retention/)** do seu tier: responder a uma mensagem mais antiga que a janela retorna `404 not_found` — a mesma resposta de uma mensagem inexistente.
 
 :::tip[Roteamento por número]
 - **Número principal** → `POST /v1/messages` (rota plana) **ou** `POST /v1/numbers/main/messages` — as duas formas são idênticas.
@@ -40,7 +42,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
       -d '{
         "to": {"number": "+5511999999999"},
         "content": {
-          "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+          "text": "Olá, esta é uma mensagem enviada pelo Turbo Notify!"
         }
       }'
     ```
@@ -56,7 +58,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
       body: JSON.stringify({
         to: { number: '+5511999999999' },
         content: {
-          text: 'Ola, esta e uma mensagem enviada pelo Turbo Notify!'
+          text: 'Olá, esta é uma mensagem enviada pelo Turbo Notify!'
         }
       })
     });
@@ -77,7 +79,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     data = {
         "to": {"number": "+5511999999999"},
         "content": {
-            "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+            "text": "Olá, esta é uma mensagem enviada pelo Turbo Notify!"
         }
     }
 
@@ -98,7 +100,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     )
 
     func main() {
-        payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "content": {"text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"}}`)
+        payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "content": {"text": "Olá, esta é uma mensagem enviada pelo Turbo Notify!"}}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/messages", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -116,7 +118,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     $data = [
         'to' => ['number' => '+5511999999999'],
         'content' => [
-            'text' => 'Ola, esta e uma mensagem enviada pelo Turbo Notify!'
+            'text' => 'Olá, esta é uma mensagem enviada pelo Turbo Notify!'
         ]
     ];
 
@@ -149,7 +151,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     var data = new {
         to = new { number = "+5511999999999" },
         content = new {
-            text = "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+            text = "Olá, esta é uma mensagem enviada pelo Turbo Notify!"
         }
     };
 
@@ -177,7 +179,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
                 {
                     "to": {"number": "+5511999999999"},
                     "content": {
-                        "text": "Ola, esta e uma mensagem enviada pelo Turbo Notify!"
+                        "text": "Olá, esta é uma mensagem enviada pelo Turbo Notify!"
                     }
                 }
                 """;
@@ -200,10 +202,10 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
 
 ## Menções (@mentions)
 
-Disponível desde 2026-07-03 (ADR 2026-07-03 — message mentions). Para mencionar
+Disponível desde 2026-07-03. Para mencionar
 alguém — a menção real do WhatsApp, com nome tocável e notificação no aparelho
 do mencionado — escreva o token **`@<numero>`** diretamente no `text` (ou no
-`caption` de mídia — veja [Envio de Mídia](/messages/send-media/)): `@` seguido
+`caption` de mídia — veja [Envio de mídia](/messages/send-media/)): `@` seguido
 do telefone do contato em **dígitos E.164, sem `+`**.
 
 ```json title="POST /v1/messages — texto com menção (1:1)"
@@ -248,6 +250,11 @@ quando a menção não corresponde a um contato conhecido) em
 eventos [`message.sent`/`message.replied`/`message.edited`](/messages/webhook/)
 — um `@<digitos>` literal no texto **só** é menção se constar dessa estrutura.
 
+As mesmas regras de detecção valem para `POST .../messages/{message_id}/reply`
+(o `text`/`caption` do reply) e para `POST .../messages/{message_id}/edit` (o
+novo `text` da edição substitui **todo** o conjunto de menções da mensagem —
+veja [Editar e deletar mensagens](/messages/edit-delete/#menções-em-edições)).
+
 ## Envio com número extra
 
 Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na sua conta, use o alias do número diretamente no path da URL.
@@ -262,7 +269,7 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
       -d '{
         "to": {"number": "+5511999999999"},
         "content": {
-          "text": "Mensagem enviada a partir de um numero extra."
+          "text": "Mensagem enviada a partir de um número extra."
         }
       }'
     ```
@@ -278,7 +285,7 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
       body: JSON.stringify({
         to: { number: '+5511999999999' },
         content: {
-          text: 'Mensagem enviada a partir de um numero extra.'
+          text: 'Mensagem enviada a partir de um número extra.'
         }
       })
     });
@@ -299,7 +306,7 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
     data = {
         "to": {"number": "+5511999999999"},
         "content": {
-            "text": "Mensagem enviada a partir de um numero extra."
+            "text": "Mensagem enviada a partir de um número extra."
         }
     }
 
@@ -320,7 +327,7 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
     )
 
     func main() {
-        payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "content": {"text": "Mensagem enviada a partir de um numero extra."}}`)
+        payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "content": {"text": "Mensagem enviada a partir de um número extra."}}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/numbers/vendas-sp/messages", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -338,7 +345,7 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
     $data = [
         'to' => ['number' => '+5511999999999'],
         'content' => [
-            'text' => 'Mensagem enviada a partir de um numero extra.'
+            'text' => 'Mensagem enviada a partir de um número extra.'
         ]
     ];
 
@@ -371,7 +378,7 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
     var data = new {
         to = new { number = "+5511999999999" },
         content = new {
-            text = "Mensagem enviada a partir de um numero extra."
+            text = "Mensagem enviada a partir de um número extra."
         }
     };
 
@@ -399,7 +406,7 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
                 {
                     "to": {"number": "+5511999999999"},
                     "content": {
-                        "text": "Mensagem enviada a partir de um numero extra."
+                        "text": "Mensagem enviada a partir de um número extra."
                     }
                 }
                 """;
@@ -420,9 +427,9 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
   </TabItem>
 </Tabs>
 
-Caso o alias informado na URL não estiver cadastrado como número extra ou não estiver ativo, o envio será rejeitado.
+Caso o alias informado na URL não esteja cadastrado como número extra ou não esteja ativo, o envio será rejeitado.
 
-Saiba mais sobre os números extra em [Números Extras](/numbers/add/).
+Saiba mais em [Inclusão de números extras](/numbers/add/).
 
 ## Erros possíveis
 
@@ -430,22 +437,25 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 
 | Status | Código de erro          | Descrição                                         |
 | :----: | ----------------------- | ------------------------------------------------- |
-| `400`  | `invalid_json`          | O JSON da requisição está malformado ou inválido. |
-| `400`  | `contact_not_found`     | O `contact_id` informado não pertence ao organization.  |
+| `400`  | `contact_not_found`     | O `contact_id` informado não pertence à organização.  |
 | `400`  | `contacts_not_enabled`  | Envio por `contact_id` não configurado.           |
 | `400`  | `not_group_member`      | Sua linha não é mais participante do `group_id` informado — veja [Envio para grupo](#envio-para-grupo). |
+| `402`  | `feature_not_available` | Envio para grupo (`to.group_id`) requer plano `BUSINESS` ou superior — veja [Envio para grupo](#envio-para-grupo). |
+| `402`  | `subscription_inactive` | Assinatura com pagamento pendente, encerrada ou trial expirado (`details.status`). Bloqueia todo envio até a assinatura voltar a ficar ativa. |
+| `402`  | `contact_quota_exceeded` | Franquia de contatos distintos do ciclo atual esgotada — veja [Quota e uso](/usage/quota/). |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.       |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
+| `422`  | `validation_error`      | O corpo da requisição está malformado ou não passou na validação. A resposta traz `details.errors` com os campos rejeitados. |
 | `422`  | `no_active_session`     | A organização não tem sessão WhatsApp conectada.  |
 | `422`  | `sender_disconnected`   | O número extra do alias na URL está desconectado. |
 | `422`  | `sender_not_found`      | O alias/número informado não corresponde a nenhum remetente da conta. |
 | `422`  | `session_not_connected` | A sessão do remetente não está conectada no momento do envio. |
-| `422`  | `extra_number_not_connected` | O número extra do alias na URL está registrado mas sua conexão companion-device não está ativa no momento. |
+| `422`  | `extra_number_not_connected` | O número extra do alias na URL está registrado mas sua conexão como dispositivo vinculado não está ativa no momento. |
 | `422`  | `group_not_owned_by_number` | O `group_id` informado pertence a outro número da conta, não ao alias do path. |
-| `402`  | `feature_not_available` | Envio para grupo (`to.group_id`) requer plano `BUSINESS` ou superior — veja [Envio para grupo](#envio-para-grupo). |
-| `429`  | `rate_limit_exceeded`   | Limite de envio do plano ultrapassado.            |
+| `429`  | `messages_quota_exceeded` | Franquia de mensagens do ciclo atual esgotada — veja [Quota e uso](/usage/quota/). |
+| `429`  | `send_rate_spacing`     | Envio antes do intervalo mínimo entre mensagens do seu tier — veja [Limites de uso](/messages/rate-limits/). |
+| `429`  | `rate_limit_exceeded`   | Outro limite operacional do plano foi ultrapassado — veja [Limites de uso](/messages/rate-limits/). |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.              |
-| `503`  | `whatsapp_unavailable`  | O WhatsApp está temporariamente fora do ar.       |
 
 ## Status da mensagem
 
@@ -746,13 +756,13 @@ você nunca precisa lidar com escaping vCard manualmente.
 | `content.join_link` | string | não | apenas `http://`/`https://` |
 | `content.location` | object | não | esquema `location` aninhado |
 | `content.has_reminder` | bool | não | default `false` |
-| `content.reminder_offset_sec` | int | não | segundos antes do evento; precisa `has_reminder=true` |
+| `content.reminder_offset_sec` | int | não | segundos antes do evento; só tem efeito com `has_reminder=true` — sem validação cruzada, é ignorado silenciosamente se enviado com `has_reminder=false`/omitido |
 | `content.extra_guests_allowed` | bool | não | default `false` |
 
 :::tip
 A nomenclatura interna do WhatsApp é "evento"; usamos
 `calendar` como variante de conteúdo no Turbo Notify para evitar
-ambiguidade com o termo "event" usado em webhooks (ADR 2026-04-27 — rich content rendering).
+ambiguidade com o termo "event" usado em webhooks.
 :::
 
 :::caution[Limitação de propagação — contas pessoais WhatsApp]
@@ -786,15 +796,15 @@ chega no seu webhook, abra o [Webhook Inspector](https://webhook.turbonotify.com
 ## Envio para grupo
 
 Disponível desde 2026-05-25. Para enviar a um grupo, o campo `to`
-assume a forma de objeto `{ "group_id": "grp_..." }` em vez da string
-de telefone usada em 1:1. Veja
+assume a forma de objeto `{ "group_id": "grp_..." }` em vez de
+`{ "number": "+5511999999999" }`, usada em 1:1. Veja
 [Visão geral de grupos](/groups/overview/) para detalhes do modelo.
 
 :::note[Requer plano BUSINESS ou superior]
 Enviar mensagem (ou indicador de digitação) para um `group_id` exige a
 feature `groups:messages`, disponível a partir do tier `BUSINESS`. Em
-`FREE`/`SOLO` você ainda **recebe** mensagens de grupo, lista grupos
-localmente pelos webhooks e consulta detalhes — apenas o **envio**
+`FREE`/`SOLO` você ainda **recebe** mensagens de grupo, **lista grupos**
+(`GET /v1/numbers/{alias}/groups`) e consulta detalhes — apenas o **envio**
 outbound para grupo é bloqueado com `402`:
 
 <ApiResponse
@@ -823,7 +833,7 @@ O campo `to` é polimórfico — aceita exatamente uma das três formas (sem `ki
 |---|---|
 | `{ "number": "+5511999999999" }` | Mensagem 1:1 (pessoa) |
 | `{ "group_id": "grp_..." }` | Mensagem para grupo |
-| `{ "contact_id": "ct_..." }` | Mensagem 1:1 via ID de contato TN |
+| `{ "contact_id": "ct_..." }` | Mensagem 1:1 via ID de contato Turbo Notify |
 
 - As três formas são **mutuamente exclusivas** — envie exatamente uma.
 - `group_id` é o identificador público `grp_{hex32}` recebido em
@@ -840,8 +850,8 @@ A resposta tem o shape padrão (`message_id`, `status`). O webhook
 enviou no request); o `number_alias` do envelope identifica a linha que
 enviou — útil para correlacionar entregas inbound e outbound no mesmo grupo.
 
-:::caution[Organization precisa estar no grupo]
-A TN só envia para grupos onde sua linha (primary ou extra) é
+:::caution[A sua organização precisa estar no grupo]
+O Turbo Notify só envia para grupos onde sua linha (principal ou extra) é
 participante. Tentar enviar para um `group_id` em que você não está
 mais retorna 400 `not_group_member`. Re-entre no grupo via WhatsApp
 (o webhook `group.joined` confirma) e tente novamente.
@@ -850,13 +860,12 @@ mais retorna 400 `not_group_member`. Re-entre no grupo via WhatsApp
 :::tip[Quota não é fan-out]
 Mensagem para grupo conta como **1 destinatário** no rate-limit diário,
 independente de quantos participantes o grupo tenha. Quota de contatos
-(`contact.quota.*`) não é afetada — grupos nunca materializam contatos
-(ADR 2026-05-25).
+(`contact.quota.*`) não é afetada — grupos nunca materializam contatos.
 :::
 
 ## Envio por contact_id
 
-Use `to.contact_id` para enviar a um contato do catálogo TN sem informar o telefone.
+Use `to.contact_id` para enviar a um contato do catálogo Turbo Notify sem informar o telefone.
 O número é resolvido automaticamente pelo servidor a partir da tabela de contatos.
 
 ```json
@@ -868,5 +877,6 @@ O número é resolvido automaticamente pelo servidor a partir da tabela de conta
 
 :::tip[Obtendo o contact_id]
 O `contact_id` (formato `ct_{hex32}`) é retornado em webhooks de contato
-(`contact.created`, `contact.updated`) e no endpoint `GET /v1/numbers/{alias}/contacts`.
+(`contact.created`, `contact.name_changed`, `contact.picture_changed` e
+`contact.first_messaged`) e no endpoint `GET /v1/numbers/{alias}/contacts`.
 :::

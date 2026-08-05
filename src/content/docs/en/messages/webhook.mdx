@@ -18,8 +18,9 @@ GET /v1/numbers/{alias}/messages/{id}
 
 where `{alias}` is the envelope's `number_alias` and `{id}` is the `msg_…` id.
 The webhook `data` is **byte-identical** to the equivalent `GET /v1/events`
-item. `number_alias` is omitted only on `storage.*`; every `*.quota.*` family
-(including `message.quota.*`, per-number since ADR 2026-07-02) carries it.
+item. `number_alias` is omitted only on `storage.*` and `media.unavailable`
+(the events with no single owning number); every `*.quota.*` family (including
+`message.quota.*`, per-number since 2026-07-02) carries it.
 
 When a message mentions someone (since 2026-07-03), the **body-bearing** events
 — `message.received`, `message.replied`, `message.sent`, `message.edited` —

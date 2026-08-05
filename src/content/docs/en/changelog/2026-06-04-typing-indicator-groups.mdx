@@ -22,5 +22,5 @@ description: "POST /v1/typing-indicator now accepts to.group_id for WhatsApp gro
 used by message sending.
 
 **New error codes:**
-- `group_not_found` (HTTP 422) — the supplied `group_id` does not belong to this organization.
-- `groups_not_enabled` (HTTP 422) — the Groups feature is not enabled on this deployment.
+- `group_not_found` (HTTP 404) — the supplied `group_id` does not belong to this organization.
+- `groups_not_enabled` (HTTP 400) — the Groups feature is not enabled on this deployment.

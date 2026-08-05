@@ -16,10 +16,10 @@ solicitudes que antes se aceptaban silenciosamente.
 :::
 
 :::note[Actualización 2026-07-21]
-La ADR 2026-07-21 (catálogo de planes gestionable) revisó después los límites
-por tier y el precio del número extra: el tope de números extra de BUSINESS
-pasó de 300 a **1.000**, y el número extra ahora cuesta **R$ 49,90/mes**. Los
-valores citados abajo se preservan como registro histórico — para los límites
+Los límites por tier y el precio del número extra fueron revisados
+posteriormente el 2026-07-21: el tope de números extra de BUSINESS pasó de
+300 a **1.000**, y el número extra ahora cuesta **R$ 49,90/mes**. Los valores
+citados abajo se preservan como registro histórico — para los límites
 vigentes, ver [Uso y Cuota](/es/usage/quota/).
 :::
 
@@ -28,10 +28,11 @@ vigentes, ver [Uso y Cuota](/es/usage/quota/).
 ### Las cuotas ahora se miden contra el ciclo de facturación evaluado
 
 `used`/`quota` de mensajes y de contactos ahora se miden contra el **ciclo de
-facturación evaluado** de la organización (`current_period_start` hasta
-`current_period_end` de la suscripción, avanzado en cada renovación) — ya no
-una ventana rolling de 30 días que decaía día a día. `resets_at` ahora es el
-momento real de renovación del ciclo, no un valor recalculado en cada lectura.
+facturación evaluado** de la organización — el período de facturación actual
+de la suscripción (desde su inicio hasta su fin), avanzado en cada renovación
+— ya no una ventana rolling de 30 días que decaía día a día. `resets_at` ahora
+es el momento real de renovación del ciclo, no un valor recalculado en cada
+lectura.
 
 | Campo retirado | Campos nuevos |
 | --------------- | ------------- |
@@ -83,7 +84,7 @@ independiente del tier — esta ventana es solo sobre visibilidad vía API.
 
 ### Gate de suscripción inactiva
 
-El pipeline de envío ahora bloquea con **402 `subscription_inactive`** cuando
+El envío ahora se bloquea con **402 `subscription_inactive`** cuando
 la suscripción de la organización no permite el uso de features — incluido
 cuando un **período de trial expiró** sin conversión a plan pago
 (`details.status: "trial_expired"`).
@@ -102,7 +103,7 @@ ruta anidada por número como la ruta plana del número principal) ahora
 devuelve **402 `feature_not_available`** para organizaciones en `FREE`/`SOLO`.
 El estado general del mensaje (`GET .../messages/{id}/status`) **no** se ve
 afectado por este gate — sigue disponible en todos los tiers. Ver
-[Recibos](/es/messages/receipts/).
+[Recibos](/messages/receipts/) (PT-BR — traducción pendiente para esta página).
 
 ### La configuración de webhook ahora requiere el plan SOLO o superior
 
@@ -153,6 +154,6 @@ envío.
 - [Eventos de cuota de mensajes](/es/webhooks/message-quota-events/) ·
   [Eventos de contacto](/es/webhooks/contact-events/)
 - [Retención de mensajes](/es/messages/retention/) · [Límites de mensajes](/es/messages/rate-limits/)
-- [Recibos](/es/messages/receipts/) — historial detallado de recibos, ahora BUSINESS+.
-- [Grupos — Visión general](/es/groups/overview/) · [Limitaciones de grupos](/es/groups/limitations/)
-- [Listar contactos](/contacts/list/) — parámetro `contacted_in_cycle` (renombrado de `has_messaged_in_window`; canónico en PT-BR, traducción pendiente).
+- [Recibos](/messages/receipts/) — historial detallado de recibos, ahora BUSINESS+ (página disponible por ahora solo en portugués).
+- [Grupos — Visión general](/groups/overview/) · [Limitaciones de grupos](/groups/limitations/) (páginas disponibles por ahora solo en portugués)
+- [Listar contactos](/contacts/list/) — parámetro `contacted_in_cycle` (renombrado de `has_messaged_in_window`; página disponible por ahora solo en portugués).

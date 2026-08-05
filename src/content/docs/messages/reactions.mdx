@@ -1,13 +1,14 @@
 ---
-title: Reações de mensagem
-description: Consulte as reações ativas em uma mensagem enviada ou recebida pela API Turbo Notify.
+title: Consultar reações
+description: Liste as reações ativas em uma mensagem enviada ou recebida pela API Turbo Notify.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
-import ExternalLink from '@components/ExternalLink.astro';
 
 Após uma mensagem ser enviada ou recebida, você pode consultar todas as reações ativas. Cada número de telefone pode ter no máximo uma reação ativa por mensagem — a última reação enviada substitui a anterior.
+
+Esta página cobre a **consulta** de reações. Para enviar ou remover uma reação, veja [Enviar reação](/other-features/reaction/).
 
 ## Consultar reações
 
@@ -15,7 +16,7 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
 
 **Endpoint:** `GET /v1/numbers/{alias}/messages/{message_id}/reactions`
 
-**Autenticação:** Bearer token com escopo `messages:read`
+**Escopo obrigatório:** `messages:read`
 
 **Parâmetros de caminho:**
 
@@ -186,12 +187,12 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
 | `message_id`             | string  | Identificador público da mensagem.                                       |
 | `reactions`              | array   | Lista de reações ativas (uma por número de telefone).                    |
 | `reactions[].from`       | object  | Remetente da reação.                                                     |
-| `reactions[].from.number`| string  | Telefone do reator (sem `+`).                                            |
+| `reactions[].from.number`| string  | Telefone de quem reagiu (sem `+`).                                       |
 | `reactions[].from.contact_id` | string | Identificador público do contato (`ct_{hex32}`). Omitido quando não disponível. |
 | `reactions[].from.name`  | string | Nome do remetente no WhatsApp. Omitido quando não disponível.                   |
 | `reactions[].emoji`      | string  | Emoji da reação.                                                         |
 | `reactions[].at`         | string  | Timestamp ISO 8601 de quando a reação foi registrada.                    |
-| `reactions[].direction`  | string  | `"inbound"` (reação de contato) ou `"outbound"` (reação do número do organization). |
+| `reactions[].direction`  | string  | `"inbound"` (reação de contato) ou `"outbound"` (reação do número da organização). |
 
 ## Erros possíveis
 
@@ -199,6 +200,6 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
 | :----: | ---------------- | ---------------------------------------------------- |
 | `403`  | `not_authorized`    | A chave de acesso está inválida ou ausente.                       |
 | `403`  | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read`.           |
-| `404`  | `not_found`         | A mensagem não foi encontrada.                                    |
+| `404`  | `not_found`         | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de leitura por retenção](/messages/retention/) do tier — a janela **também** se aplica aqui, e os três casos devolvem a mesma resposta. |
 | `404`  | `message_not_found` | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `500`  | `internal_error`    | Erro interno inesperado no servidor.                              |

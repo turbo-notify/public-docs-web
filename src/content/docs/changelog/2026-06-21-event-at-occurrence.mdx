@@ -19,7 +19,7 @@ sidebar:
   eventos `number.*` de ação real (`number.connected`/`disconnected`/`revoked`/`connect.failed`).
   Antes o `at` desses eventos era ~igual ao `created_at`; agora carrega o
   timestamp genuíno do WhatsApp e é, tipicamente, **anterior** ao `created_at`
-  (momento de emissão do evento pelo TN). `created_at` e `at` são **valores distintos**.
+  (momento de emissão do evento pelo Turbo Notify). `created_at` e `at` são **valores distintos**.
 - **Três eventos deixam de carregar `at`**: `contact.picture_changed`,
   `group.picture_changed` e `group.joined` — são descobertas de foto/snapshot,
   sem um momento de ação WhatsApp único. Apenas o `created_at` do envelope se aplica.
@@ -31,7 +31,7 @@ sidebar:
 - **`GET /v1/messages/{id}`**: o `at` no **nível raiz** é o **momento estável de
   ocorrência** da mensagem (outbound: o envio real; inbound: o recebimento) e
   **não muda** conforme a mensagem avança `sent → delivered → read`. O `status.at`
-  (aninhado) é o timestamp da **entrega atual** e **avança** a cada transição.
+  (aninhado) é o timestamp do **status atual** e **avança** a cada transição.
 
 ## Compatibilidade
 

@@ -45,11 +45,11 @@ Enviar antes del intervalo mínimo desde el último envío exitoso **en ese núm
   }}
 />
 
-Este límite es por **número** (principal o extra) — cada número tiene su propio reloj de espaciado, así que usar [números extra](/es/numbers/add/) aumenta la capacidad total de envío de la cuenta.
+Este límite es por **número** (principal o extra) — cada número tiene su propio reloj de espaciado, así que usar [números extra](/numbers/add/) aumenta la capacidad total de envío de la cuenta.
 
 ## Refresh de contactos (por tier)
 
-El endpoint de [refresh de contacto](/es/contacts/refresh/) (`POST .../contacts/{contact_id}/refresh`) es más costoso que una lectura simple — activa el WhatsApp Gateway bajo demanda — y por eso tiene su propio límite por minuto, también escalando con el tier:
+El endpoint de [refresh de contacto](/es/contacts/refresh/) (`POST .../contacts/{contact_id}/refresh`) es más costoso que una lectura simple — consulta WhatsApp bajo demanda — y por eso tiene su propio límite por minuto, también escalando con el tier:
 
 | Tier       | Refresh/min |
 | ---------- | -----------:|
@@ -60,12 +60,12 @@ El endpoint de [refresh de contacto](/es/contacts/refresh/) (`POST .../contacts/
 
 Exceder este límite devuelve `429 refresh_rate_limited` con el header `Retry-After`.
 
-## Burst protection (operacional, igual en todos los tiers)
+## Protección contra ráfagas (operacional, igual en todos los tiers)
 
 Independientemente del tier contratado, Turbo Notify aplica límites operacionales fijos para proteger la infraestructura. Estos **no** diferencian por plan:
 
-- **`messages_per_minute`** — 10.000 envíos/minuto por réplica (protección de burst de la infraestructura, no es un SLA por organización).
-- **`recipients_per_day`** — 2.000 destinatarios distintos/día por organización (fairness entre cuentas).
+- **`messages_per_minute`** — 10.000 envíos/minuto, aplicados **por organización y por número** (protección contra ráfagas de la infraestructura). Es un límite **global** de la cuenta: aplica a toda la plataforma, no por conexión o servidor.
+- **`recipients_per_day`** — 2.000 mensajes/día para el **mismo destinatario**, por número (protección anti-bloqueo). No hay límite de destinatarios distintos por día: puedes alcanzar tantos contactos como quieras, respetando las demás cuotas del plan.
 
 ## Números extra
 
@@ -87,7 +87,7 @@ Estos controles son transparentes y, en la mayoría de los casos, no impactan el
 
 WhatsApp tiene sus propias reglas y límites de uso. Aunque estés dentro de los límites de Turbo Notify, el envío excesivo, no solicitado o percibido como spam por los destinatarios puede resultar en el bloqueo de tu número por parte de WhatsApp.
 
-Para evitar problemas, sigue las recomendaciones de uso responsable descritas en [Prevención de Abuso](/es/general/abuse/) y las <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">políticas de WhatsApp</ExternalLink>.
+Para evitar problemas, sigue las recomendaciones de uso responsable descritas en [Prevención de Abuso](/general/abuse/) (PT-BR — traducción pendiente para esta página) y las <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">políticas de WhatsApp</ExternalLink>.
 
 ## Errores relacionados
 
@@ -95,9 +95,10 @@ Para evitar problemas, sigue las recomendaciones de uso responsable descritas en
 | :----: | ------------------------- | --------------------------------------------------------------------------- |
 | `429`  | `send_rate_spacing`      | Envío antes del intervalo mínimo entre mensajes del tier, en el mismo número. |
 | `429`  | `refresh_rate_limited`   | Límite de refresh de contacto excedido.                                     |
-| `429`  | `messages_per_minute_limit_exceeded` | Burst protection: se superaron los 10.000 envíos/minuto por réplica (ver [arriba](#burst-protection-operacional-igual-en-todos-los-tiers)). |
-| `429`  | `recipients_per_day_limit_exceeded`  | Burst protection: se superaron los 2.000 destinatarios distintos/día (ver [arriba](#burst-protection-operacional-igual-en-todos-los-tiers)). |
-| `503`  | `service_unavailable`    | Servicio temporalmente no disponible por sobrecarga.                       |
+| `429`  | `messages_per_minute_limit_exceeded` | Protección contra ráfagas: se superaron los 10.000 envíos/minuto — límite **global** de la cuenta, aplicado por organización y por número (ver [arriba](#protección-contra-ráfagas-operacional-igual-en-todos-los-tiers)). |
+| `429`  | `recipients_per_day_limit_exceeded`  | Protección anti-bloqueo: se superaron los 2.000 mensajes/día para el mismo destinatario, por número (ver [arriba](#protección-contra-ráfagas-operacional-igual-en-todos-los-tiers)). |
+| `503`  | `internal_error`        | Servicio temporalmente no disponible. Vuelve a intentar en unos instantes. |
+| `503`  | `plan_lookup_failed`     | No se pudo resolver el plan de la organización en este momento — la solicitud no fue procesada. Vuelve a intentar. |
 
 Para los errores de **cuota** (`402 contact_quota_exceeded`, `429 messages_quota_exceeded`, `402 feature_not_available`), ver [Uso y Cuota](/es/usage/quota/#errores).
 
@@ -105,6 +106,6 @@ Para los errores de **cuota** (`402 contact_quota_exceeded`, `429 messages_quota
 
 - Respeta el header `Retry-After` al recibir un status `429`.
 - Distribuye el envío a lo largo del tiempo en vez de enviar todo de una vez — el espaciado mínimo de tu tier ya define el ritmo sostenible.
-- Utiliza [números extra](/es/numbers/add/) para aumentar la capacidad de envío.
+- Utiliza [números extra](/numbers/add/) para aumentar la capacidad de envío.
 - Monitorea los códigos de respuesta de la API para identificar rápidamente cuándo se alcanza un límite.
 - Configura [webhooks](/es/messages/webhook/) para seguir el estado de los mensajes sin tener que consultar la API repetidamente.

@@ -148,8 +148,8 @@ Use `GET /v1/messages` para o número principal. Para números extras, use `GET 
         direction: 'outbound',
         content_type: 'text',
         preview: 'Olá, seu pedido foi confirmado!',
-        at: '2026-06-01T10:00:05-03:00',
-        status: { state: 'delivered', at: '2026-06-01T10:01:00-03:00' },
+        at: '2026-06-01T13:00:05Z',
+        status: { state: 'delivered', at: '2026-06-01T13:01:00Z' },
       },
       {
         id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f71',
@@ -157,8 +157,8 @@ Use `GET /v1/messages` para o número principal. Para números extras, use `GET 
         direction: 'inbound',
         content_type: 'image',
         preview: 'Foto do produto',
-        at: '2026-06-01T09:58:00-03:00',
-        status: { state: 'delivered', at: '2026-06-01T09:58:00-03:00' },
+        at: '2026-06-01T12:58:00Z',
+        status: { state: 'delivered', at: '2026-06-01T12:58:00Z' },
       },
     ],
     cursor: 'eyJpZCI6Im1zZ18wMSJ9',
@@ -179,12 +179,12 @@ Use `GET /v1/messages` para o número principal. Para números extras, use `GET 
 | `data[].content_type` | string | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, etc. |
 | `data[].preview` | string | Recorte grapheme-aware do conteúdo (mesmo valor de `GET /v1/numbers/{alias}/messages/{id}`) |
 | `data[].at` | string | ISO 8601 — momento **estável de ocorrência** da mensagem (outbound: envio real; inbound: recebimento). Não avança conforme a mensagem progride `sent → delivered → read`. |
-| `data[].status` | object | `{state, at}` — estado atual de entrega e o timestamp dessa transição |
+| `data[].status` | object | `{state, at, error}` — estado atual de entrega e o timestamp dessa transição. Nesta listagem `error` é **sempre `null`**, inclusive quando `state: "failed"`. Para obter o detalhe da falha, consulte `GET /v1/numbers/{alias}/messages/{id}/status` ou `GET /v1/numbers/{alias}/messages/{id}`. |
 
 :::note[Sem `mentions` na listagem]
 Diferente de [Consultar mensagem](/messages/get/), os itens desta lista
-**nunca** carregam o campo `mentions` — é um resumo deliberadamente enxuto
-(ADR 2026-06-22). Para ver as menções de uma mensagem específica, consulte
+**nunca** carregam o campo `mentions` — é um resumo deliberadamente enxuto.
+Para ver as menções de uma mensagem específica, consulte
 `GET /v1/numbers/{alias}/messages/{id}`.
 :::
 
@@ -198,7 +198,7 @@ Diferente de [Consultar mensagem](/messages/get/), os itens desta lista
   página é sempre completa e sem lacunas.
 - A paginação usa `cursor` — passe o valor retornado como `cursor` na
   próxima chamada até `has_more` ser `false`.
-- Mensagens fora da [janela de leitura por retenção](/usage/quota/#janela-de-leitura-por-retenção-read-window)
+- Mensagens fora da [janela de leitura por retenção](/messages/retention/)
   do seu tier são **filtradas** — elas simplesmente não aparecem na página
   (diferente de `GET .../messages/{id}`, que retorna 404 para uma mensagem
   fora da janela).

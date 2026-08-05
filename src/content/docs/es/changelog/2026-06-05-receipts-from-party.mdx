@@ -16,7 +16,7 @@ Cada elemento en `receipts[]` ahora incluye un objeto `from` con la identidad de
 | ----- | ---- | ----------- |
 | `from.number` | string | Número E.164 sin `+`. Omitido para recibos de dispositivo vinculado (LID). |
 | `from.contact_id` | string | Identificador público del contacto TN (`ct_{hex32}`). Omitido cuando no disponible. |
-| `from.name` | string | Nombre de visualización de WhatsApp (PII — propiedad del organization). Omitido cuando no disponible. |
+| `from.name` | string | Nombre de visualización de WhatsApp (PII — propiedad de la organización). Omitido cuando no disponible. |
 
 El objeto `from` completo se omite en recibos legados (pre-2026-06) y cuando no hay información de identidad disponible.
 

@@ -1,9 +1,24 @@
 ---
 title: Rutas planas para el número principal
-description: Las rutas /v1/messages, /v1/contacts y /v1/groups ahora apuntan directamente al número principal, sin necesidad de especificar el alias.
+description: Las rutas /v1/messages, /v1/contacts y /v1/groups ahora apuntan directamente al número principal, sin necesidad de especificar el alias — revirtiendo el 404 introducido tres días antes.
 sidebar:
   order: 7
 ---
+
+**Fecha:** 2026-06-25
+**Estado:** Aplicado
+
+:::note[Las rutas planas funcionan de nuevo]
+Entre el 2026-06-22 y el 2026-06-25, las rutas planas (`/v1/messages`,
+`/v1/contacts`, `/v1/groups` y sus sub-rutas) devolvían **404** — ver [Rutas
+anidadas por número](/es/changelog/2026-06-22-number-scoped-routes/). A partir
+de esta versión vuelven a funcionar **permanentemente** como forma corta para
+el número principal, con una respuesta idéntica a la forma anidada. Ya no
+devuelven 404 por ser planas — solo si la organización no tiene un número
+principal registrado.
+:::
+
+## Qué cambió
 
 A partir de esta versión, todas las operaciones del número principal pueden
 realizarse directamente sin especificar el alias en la URL:
@@ -20,6 +35,18 @@ realizarse directamente sin especificar el alias en la URL:
 | *(y todas las sub-rutas)* | |
 
 La forma `/v1/numbers/main/…` sigue funcionando con normalidad y produce
-respuestas idénticas. Para **números extras**, continúa usando `/v1/numbers/{alias}/…`.
+respuestas idénticas — la forma anidada es la canónica; la forma plana es un
+atajo permanente válido solo para el número principal. Para **números
+extras**, continúa usando `/v1/numbers/{alias}/…` — no tienen forma plana.
+
+El envelope de webhook/polling de una operación hecha por la ruta plana lleva
+`number_alias: "main"`, indistinguible de una operación hecha por la ruta
+anidada.
 
 Este cambio no requiere ninguna modificación en integraciones existentes.
+
+## Referencias
+
+- [Rutas anidadas por número](/es/changelog/2026-06-22-number-scoped-routes/) — el cambio que esta entrada revierte parcialmente (el 404 de las rutas planas).
+- [Inicio rápido](/general/getting-started/) — los ejemplos usan la ruta plana.
+- [Envío de mensajes](/messages/send/) · [Números extras](/numbers/add/)

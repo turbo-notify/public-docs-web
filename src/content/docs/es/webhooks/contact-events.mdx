@@ -5,8 +5,6 @@ sidebar:
   order: 1
 ---
 
-import ApiResponse from '@components/ApiResponse.astro';
-
 Lista de eventos webhook emitidos por Turbo Notify para cambios relacionados
 con TN Contacts. Necesitas configurar la URL y habilitar `contact.*` en el
 dashboard.
@@ -15,21 +13,20 @@ dashboard.
 
 | Evento | Cuándo |
 | ------ | ------ |
-| `contact.created` | Primera observación del par `(organización, teléfono)` |
+| `contact.created` | Primera observación del triple `(organización, número, teléfono)` — la identidad del contacto es **por número**, así que el mismo teléfono alcanzando `main` y un número extra genera **dos** eventos `contact.created`, uno por número (ver [Visión general de Contactos](/es/contacts/overview/)) |
 | `contact.name_changed` | `name` divergió del snapshot anterior |
 | `contact.picture_changed` | WhatsApp emitió un `PictureUpdate` o un refresh detectó un hash nuevo |
 | `contact.first_messaged` | La organización envió el primer mensaje outbound a este contacto (señal de **adquisición** de un contacto nuevo — observability; la cuota se consume por contactos alcanzados en el ciclo, no por este evento) |
 | `contact.quota.warning` | Cruzó el threshold 80/90/95% de la cuota de contactos |
 | `contact.quota.exceeded` | Un envío fue rechazado por agotamiento (HTTP 402) |
 
-## La estructura del `data`: trío del contacto + tail de coherencia
+## La estructura del `data`: trío del contacto + campos estándar de contexto
 
-Desde 2026-06-06 el `data` de un evento `contact.*` refleja el `data` de
-`message.*`: el **trío del contacto** `{id, name, number}` más el tail de
-coherencia (`direction`, `channel`, `origin`). El `id` es el id público del
-propio contacto — el campo antes llamado `contact_id` en el nivel superior de
-`data` fue **renombrado a `id`** (el valor sigue siendo `ct_{hex32}`), igual
-que el `data.id` de `message.*`.
+El `data` de un evento `contact.*` refleja el `data` de
+`message.*`: el **trío del contacto** `{id, name, number}` más los campos
+estándar de contexto (`direction`, `channel`, `origin`). El `id` es el id
+público del propio contacto (`ct_{hex32}`), igual que el `data.id` de
+`message.*`.
 
 ```json
 {
@@ -42,11 +39,9 @@ que el `data.id` de `message.*`.
 }
 ```
 
-- `id` — id público del contacto (`ct_{hex32}`), el sujeto del evento (antes
-  `contact_id`).
-- `name` — push name del contacto en WhatsApp (antes `push_name`).
-- `number` — **E.164 completo** (antes `phone_masked`; la máscara fue
-  eliminada).
+- `id` — id público del contacto (`ct_{hex32}`), el sujeto del evento.
+- `name` — push name del contacto en WhatsApp.
+- `number` — **E.164 completo**.
 - `direction` — siempre `"inbound"` (el contacto se observa/descubre por el
   canal de WhatsApp). Ausente en los eventos sintéticos de cuota.
 - `channel` — siempre `"whatsapp"`.
@@ -83,28 +78,26 @@ eventos sintéticos de cuota **no** llevan `direction`.
 (`contact.created`, `contact.name_changed`, `contact.picture_changed`,
 `contact.first_messaged`) como los de cuota (`contact.quota.warning`,
 `contact.quota.exceeded`) — llevan, justo debajo de `organization_id`, el
-campo `number_alias`: el handle del número TN ("inbox") al que pertenece el
+campo `number_alias`: el handle del número TN al que pertenece el
 contacto (o la cuota de contactos) — `"main"` para el número principal o el
 alias de un número extra. Úsalo para enrutar la observación al inbox
 correcto.
 
-La cuota de contactos pasó a ser **por número** (ADR 2026-06-22): cada número
+La cuota de contactos pasó a ser **por número** desde 2026-06-22: cada número
 tiene su propia contabilización de contactos distintos, así que los eventos
 `contact.quota.warning`/`contact.quota.exceeded` identifican el número
 afectado vía `number_alias` en el envelope. El `data` del evento de cuota
 lleva los campos `threshold_bps` (solo en `warning`), `used`, `quota`,
 `cycle_start`, `cycle_end`, `resets_at`, `tier`, `channel`, `origin`.
 
-> **Ciclo evaluado (2026-07-04):** el antiguo campo `window_days` fue
-> **retirado** de ambas familias `*.quota.*` — `used`/`quota` ahora se miden
-> contra el ciclo de facturación evaluado de la organización, representado por
-> `cycle_start`/`cycle_end` (ISO 8601 UTC). `resets_at` sigue siendo igual a
-> `cycle_end`.
+> `used`/`quota` se miden contra el ciclo de facturación evaluado de la
+> organización, representado por `cycle_start`/`cycle_end` (ISO 8601 UTC).
+> `resets_at` es igual a `cycle_end`.
 
 > `number_alias` va en el **envelope**, nunca dentro de `data`. Entre los
 > eventos de cuenta, el campo se omite solo en `storage.*` (el único evento sin
 > un número único). Toda familia `*.quota.*` — tanto `contact.quota.*` como
-> `message.quota.*` (por número desde la ADR 2026-07-02) — lleva
+> `message.quota.*` (por número desde 2026-07-02) — lleva
 > `number_alias`.
 
 ## Ejemplo: `contact.created`
@@ -173,8 +166,7 @@ acción en WhatsApp): aquí TN emitió el evento 3s después del cambio de nombr
       "kind": "available",
       "url": "https://<bucket>.r2.cloudflarestorage.com/contacts/.../picture.jpg?...",
       "url_expires_at": "2026-05-15T12:15:00Z",
-      "hash": "abc123...",
-      "fetched_at": "2026-05-15T12:00:00Z"
+      "hash": "abc123..."
     },
     "direction": "inbound",
     "channel": "whatsapp",
@@ -184,12 +176,17 @@ acción en WhatsApp): aquí TN emitió el evento 3s después del cambio de nombr
 ```
 
 `contact.picture_changed` **no** lleva `data.at` — es un descubrimiento de
-foto (snapshot) sin un momento de acción de WhatsApp único; `picture.fetched_at`
-indica cuándo se descargó la foto y el `created_at` del envelope cuándo se
-emitió el evento.
+foto (snapshot) sin un momento de acción de WhatsApp único; usa el
+`created_at` del envelope para saber cuándo se emitió el evento.
+
+Este evento tampoco lleva `picture.fetched_at`: el descubrimiento se hace por
+comparación de hash y la validez de la URL ya se expresa con
+`picture.url_expires_at`. El `fetched_at` solo existe al leer el contacto
+([`GET /v1/numbers/{alias}/contacts/{contact_id}`](/es/contacts/detail/)),
+nunca en este webhook.
 
 El bloque `picture` sigue el mismo ciclo de vida que la media de los mensajes:
-cuando la foto está en tu bucket (`organization_storage`) llega como
+cuando la foto está almacenada en tu bucket llega como
 `kind: "available"` con una URL **pre-firmada y de validez limitada**
 (`url_expires_at`, ~15 min) — nunca una URL de WhatsApp. Vuelve a descargar la
 foto vía el endpoint GET cuando la URL expire. El evento se dispara **solo**
@@ -212,7 +209,7 @@ donde `{alias}` es el `number_alias` recibido en el envelope de este evento.
     "id": "ct_...",
     "name": "João Silva",
     "number": "5571999294756",
-    "tier": "FREE",
+    "tier": "unknown",
     "direction": "inbound",
     "channel": "whatsapp",
     "origin": "tn",
@@ -220,6 +217,11 @@ donde `{alias}` es el `number_alias` recibido en el envelope de este evento.
   }
 }
 ```
+
+El campo `tier` **no se popula** en este evento: `contact.first_messaged`
+siempre emite `"unknown"`. No uses este campo para inferir el plan de la
+organización — el `tier` real se entrega en los eventos
+`contact.quota.warning`/`contact.quota.exceeded`.
 
 ## Ejemplo: `contact.quota.warning`
 
@@ -244,12 +246,16 @@ donde `{alias}` es el `number_alias` recibido en el envelope de este evento.
 }
 ```
 
-`threshold_bps` es un integer en basis points: `80 | 90 | 95 | 100`. Evento
-sintético — lleva `channel`/`origin` pero **sin `direction`** (no es un flujo
-de mensaje) y **sin `at`**; `cycle_start`/`cycle_end` son el ciclo de
-facturación evaluado contra el que se midieron `used`/`quota`; `resets_at` es
-un timestamp de valor de negocio (cuándo resetea el ciclo de cuota, igual a
-`cycle_end`), no el momento de la acción.
+`threshold_bps` es un integer en basis points: `80 | 90 | 95`. El agotamiento
+de la cuota **no** se señala en este evento con `threshold_bps: 100` — eso lo
+señala el evento separado `contact.quota.exceeded`, que **no tiene** el campo
+`threshold_bps`. Un consumidor que ramifica en `threshold_bps === 100` escribe
+código muerto y deja pasar la señal real de agotamiento. Evento sintético —
+lleva `channel`/`origin` pero **sin `direction`** (no es un flujo de mensaje) y
+**sin `at`**; `cycle_start`/`cycle_end` son el ciclo de facturación evaluado
+contra el que se midieron `used`/`quota`; `resets_at` es un timestamp de valor
+de negocio (cuándo resetea el ciclo de cuota, igual a `cycle_end`), no el
+momento de la acción.
 
 ## Ejemplo: `contact.quota.exceeded`
 
@@ -280,6 +286,3 @@ Sintético — lleva `channel`/`origin` pero **sin `direction`**, **sin `at`** y
 
 Cada evento lleva un `id` único (`evt_…`). Usa `id` como clave de
 deduplicación de tu lado.
-
-Internamente el publisher de TN usa `Nats-Msg-Id` con el formato
-`{organization_id}:{contact_id}:{event_kind}` para idempotencia en el broker.

@@ -9,7 +9,7 @@ import ApiResponse from '@components/ApiResponse.astro';
 
 Turbo Notify meters **two independent quotas** per linked number (`main` or an
 extra-number alias): outbound messages and distinct contacts contacted. As of
-ADR 2026-07-02 both quotas are **per number** — each number has its own
+2026-07-02 both quotas are **per number** — each number has its own
 allowance, so an organization with N numbers gets N× the tier allowance.
 
 Only traffic sent **via Turbo Notify** (`origin: "tn"`) consumes quota;
@@ -17,11 +17,10 @@ messages sent directly from the physical phone (`origin: "native"`) don't count.
 
 ## Evaluated cycle — when the quota resets
 
-The measurement window for both quotas is the organization's **evaluated
-billing cycle** (`cycle_start` through `cycle_end` — the same
-`current_period_*` window as the subscription), not a rolling 30-day window
-anymore. `resets_at` always equals `cycle_end`: the quota resets at cycle
-rollover, not on a moving window that decays day by day.
+The measurement window for both quotas is the organization's **current
+billing cycle** (`cycle_start` through `cycle_end`, the subscription's
+current period). `resets_at` always equals `cycle_end`: the quota resets at
+cycle rollover.
 
 - **`used`**/**`quota`** are always measured against the currently open cycle.
 - When the cycle closes (subscription renewal), the counters reset to zero and
@@ -39,9 +38,8 @@ rollover, not on a moving window that decays day by day.
 | `BUSINESS` | 50,000          | 5,000                     | 1,000                |
 | `CUSTOM`   | 500,000         | 50,000                    | 1,000                |
 
-Organization-level overrides (`messages_quota_override`
-/ `contacts_quota_override`) replace the tier ceiling when set — applied
-**per number**, the same way the tier ceiling is.
+Your organization can request a custom ceiling from support, which overrides
+the tier default per number.
 
 The `tier` field in the responses below is always one of the 4 values above,
 in **uppercase** (`"FREE"`, `"SOLO"`, `"BUSINESS"`, `"CUSTOM"`).
@@ -68,7 +66,7 @@ group details — only the outbound **send** to a group is blocked:
   }}
 />
 
-See [Groups — Overview](/en/groups/overview/) and [Group limitations](/en/groups/limitations/).
+See [Groups — Overview](/groups/overview/) and [Group limitations](/groups/limitations/).
 
 ## Endpoint: account-wide usage
 
@@ -78,7 +76,9 @@ GET /v1/usage
 
 **Scope:** any authenticated API key (no specific scope).
 
-**Cache:** `Cache-Control: max-age=60` (Redis L1, 60s TTL).
+**Cache:** the response is returned with `Cache-Control: no-store, no-cache,
+must-revalidate` and `Pragma: no-cache` — that is, **not cacheable**. Don't
+cache the body; make a fresh call whenever you need up-to-date data.
 
 `GET /v1/usage` is the **account roll-up**: the top-level `messages`/`contacts`
 sum the usage of **every number** in the organization — `quota` is the **sum of
@@ -169,8 +169,9 @@ number, not a multi-number roll-up.
 ## Retention read-window
 
 Beyond the quota, each tier defines how many days a message stays
-**retrievable** through the API — messages older than that window stop
-existing for reads:
+**addressable** through the API — messages older than that window stop
+existing for the API, both for reads and for the actions that depend on the
+id (reply, edit, delete, react):
 
 | Tier       | Read window |
 | ---------- | ----------:|
@@ -179,20 +180,25 @@ existing for reads:
 | `BUSINESS` | 90 days    |
 | `CUSTOM`   | 365 days   |
 
-- `GET /v1/numbers/{alias}/messages/{id}` for a message older than the tier's
-  window returns **404** (indistinguishable from "never existed").
 - `GET /v1/numbers/{alias}/messages` (cursor list) **filters out** messages
   outside the window — they simply don't appear on any page.
+- **Every** operation that addresses a message by id returns **404**
+  (indistinguishable from "never existed") once the message is older than the
+  tier's window: the `.../messages/{id}` lookup, the `.../status`,
+  `.../receipts`, and `.../reactions` sub-resources, and the `.../reply`,
+  `.../edit`, `.../delete`, and `.../react` actions — on both the nested and
+  flat routes.
 - This window governs **API visibility**; the physical row still follows the
-  fixed partition retention (12 months) regardless of tier — see
-  [Message retention](/en/messages/retention/) for the full content/metadata
-  lifecycle.
+  fixed partition retention (12 months) regardless of tier.
+
+The canonical page on retention is [Message retention](/en/messages/retention/)
+— see it for the full content/metadata lifecycle.
 
 ## Errors
 
 ### 402 — subscription inactive
 
-Returned by the send pipeline when the organization's subscription does not
+Returned when you try to send while the organization's subscription doesn't
 allow feature usage (`ACTIVE` and `TRIALING` within the trial period are the
 only statuses that pass unrestricted):
 
@@ -205,12 +211,9 @@ only statuses that pass unrestricted):
   }}
 />
 
-`details.status` is one of: `trialing` (allowed, does not raise this error),
-`trial_expired` (trial ended with no paid plan), `past_due`, or `canceled`
-(past the already-paid period) — or `missing` (the organization has no
-subscription at all; this also covers the internal `pending`/`terminated`
-statuses, which are filtered out at the repository layer and collapse into
-`missing`, never appearing verbatim in this field).
+`details.status` is one of: `trial_expired` (trial ended with no paid plan),
+`past_due` (payment overdue), or `missing` (the organization has no
+subscription at all).
 
 ### 402 — feature not available on this plan
 
@@ -225,9 +228,11 @@ Today the public gates in this family are: reactions (`reactions`, SOLO+); typin
 indicator (`typing_indicator`, SOLO+ — the base gate, every call); sending a
 message or typing indicator to a group (`groups:messages`, BUSINESS+ — see
 [above](#sending-to-groups-requires-business-or-above)); detailed receipt
-log (`read_receipts`, BUSINESS+ — see [Receipts](/en/messages/receipts/));
-and creating extra numbers (`extra_numbers`, unavailable on FREE/SOLO — see
-[Extra numbers](/en/numbers/add/)).
+log (`read_receipts`, BUSINESS+ — see [Receipts](/messages/receipts/));
+creating extra numbers (`extra_numbers`, unavailable on FREE/SOLO — see
+[Extra numbers](/numbers/add/)); and **webhook redelivery**
+(`webhooks:retries`, BUSINESS+ — on FREE/SOLO each event gets a single
+delivery attempt with no retry).
 
 ### 402 — extra-numbers limit reached
 

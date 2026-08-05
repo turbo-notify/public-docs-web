@@ -6,21 +6,19 @@ sidebar:
 ---
 
 Events related to the **per-number message quota**, measured against the
-organization's **evaluated billing cycle** (`cycle_start`/`cycle_end` — no
-longer a rolling 30-day window). Per-tier limits: `FREE`=300, `SOLO`=1.8k,
+organization's **current billing cycle** (`cycle_start`/`cycle_end`).
+Per-tier limits: `FREE`=300, `SOLO`=1.8k,
 `BUSINESS`=50k, `CUSTOM`=500k **per number, per cycle**.
 
-As of ADR 2026-07-02 the message quota is **per number** — mirroring the
+As of 2026-07-02 the message quota is **per number** — mirroring the
 contact quota: each linked number (`main` or an extra-number alias) has its
 own allowance, and an organization with N numbers gets N× the tier allowance.
 These events identify the affected number via **`number_alias` in the
 envelope** (not in `data`). Only messages sent **via Turbo Notify**
 (`origin: "tn"`) consume the quota.
 
-> **Note (2026-05-15):** enforcement of this quota was activated on 2026-05-15.
-> The limits were already documented — from this date the code actually
-> applies them. See [Per-Tier Message Quota Activation](/en/changelog/2026-05-15-message-quota-activation/)
-> and the [rate-limits audit](/en/messages/rate-limits/).
+To configure the webhook URL, validate the signature, and understand the
+envelope, see [Webhook: Setup & Envelope](/en/messages/webhook/).
 
 ## Events
 
@@ -32,16 +30,15 @@ envelope** (not in `data`). Only messages sent **via Turbo Notify**
 ## `number_alias` in the envelope
 
 Both events carry, immediately below `organization_id`, the `number_alias`
-field: the TN number ("inbox") handle whose message quota was reached —
+field: the TN number handle whose message quota was reached —
 `"main"` for the primary number or an extra-number alias. The event `data`
 carries the quota fields `threshold_bps` (only on `warning`), `used`, `quota`,
 `cycle_start`, `cycle_end`, `resets_at`, `tier`, `channel`, `origin` —
 `number_alias` rides the **envelope**, never `data`.
 
-> **Evaluated cycle (2026-07-04):** the former `window_days` field is
-> **retired** — `used`/`quota` are now measured against the organization's
-> evaluated billing cycle, represented by `cycle_start`/`cycle_end` (ISO 8601
-> UTC). `resets_at` still equals `cycle_end`.
+`used`/`quota` are measured against the organization's evaluated billing
+cycle (`cycle_start`/`cycle_end`, ISO 8601 UTC); `resets_at` equals
+`cycle_end`.
 
 > Among account-wide events, `number_alias` is omitted **only** on
 > `storage.*`. Every `*.quota.*` family (contacts and messages) now carries it.
@@ -94,7 +91,7 @@ carries the quota fields `threshold_bps` (only on `warning`), `used`, `quota`,
 ## Timestamps and correlation
 
 - These are **synthetic** Turbo Notify events (they don't reflect a WhatsApp
-  action): since 2026-06-02 they **don't** carry `at` in `data` — only the
+  action): they **don't** carry `at` in `data` — only the
   envelope `created_at` (when TN emitted the event).
 - `cycle_start`/`cycle_end` are the evaluated billing cycle `used`/`quota`
   were measured against. `resets_at` is a **business-value** timestamp (when

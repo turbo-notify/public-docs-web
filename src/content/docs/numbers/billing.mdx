@@ -1,58 +1,98 @@
 ---
 title: Cobrança de números extras
-description: Entenda como funciona a cobrança por números extras no Turbo Notify, incluindo valores, ciclos e limites do plano.
+description: Como funciona a cobrança de números extras no Turbo Notify — preço, ciclo, cálculo pro-rata por dias reais e política de remoção.
 ---
 
 import DashboardLink from '@components/DashboardLink.astro';
 
-Saiba como funciona a cobrança dos números extras cadastrados na sua conta.
+Números extras permitem enviar mensagens a partir de múltiplos números de WhatsApp na mesma conta — ideal para empresas com várias unidades, filiais ou departamentos. Esta página explica como funciona a cobrança.
 
-## O que são números extras
+## Quem pode usar números extras
 
-Números extras são números de WhatsApp adicionais vinculados à sua conta no Turbo Notify, além do número principal. Eles permitem que você envie mensagens a partir de diferentes remetentes, ideal para empresas com múltiplas unidades, filiais ou departamentos.
+Números extras estão disponíveis nos planos **Empresarial** (`BUSINESS`) e **Personalizado** (`CUSTOM`). Nos planos Gratuito (`FREE`) e Lobo Solitário (`SOLO`), adicionar um número extra retorna `402 feature_not_available` — é necessário fazer upgrade primeiro.
 
-Cada número extra ocupa uma vaga no limite do seu plano e é cobrado individualmente.
+Cada plano tem um limite máximo de números extras simultâneos: **1.000** nos planos Empresarial e Personalizado — na prática, sem limite relevante para o uso típico. Veja a tabela completa de planos em [Quota e uso](/usage/quota/).
+
+## Preço
+
+O valor mensal de um número extra no plano Empresarial é **R$ 34,90**. O plano Personalizado negocia o valor conforme o volume contratado. O valor exato para a sua conta (que pode variar por moeda/país) aparece na página de <DashboardLink path="/billing">Cobrança</DashboardLink> do dashboard.
 
 ## Como funciona a cobrança
 
-A cobrança de números extras segue estas regras:
+A cobrança de um número extra acontece **no fechamento do seu ciclo de cobrança** — não no momento em que você o adiciona.
 
-- **Cobrança por número**: cada número extra cadastrado é cobrado individualmente, independente do volume de mensagens enviadas por ele.
-- **Valor proporcional (pro-rata)**: ao adicionar ou remover um número no meio do ciclo de cobrança, o valor é calculado proporcionalmente aos dias restantes.
-- **Exemplo de valor**: em um plano com custo de R$ 49,90/mês por número extra, se você adicionar um número no dia 16 de um mês com 30 dias, será cobrado R$ 24,95 referente aos 15 dias restantes.
+- Ao adicionar um número, ele fica ativo imediatamente e **nenhuma cobrança ocorre nesse momento**.
+- Quando o ciclo fecha, o Turbo Notify cobra o valor proporcional aos dias em que o número esteve ativo — usando os dias reais do ciclo (28 a 31, conforme o mês), nunca um mês fixo de 30 dias.
+- Um número ativo desde antes do início do ciclo é cobrado pelo valor cheio do mês, sem proporcionalização.
 
-O valor exato por número extra depende do plano contratado.
+**Fórmula:**
 
-## Ciclo de cobrança
+```
+valor = valor_mensal × dias_ativos / dias_do_ciclo
+```
 
-A cobrança dos números extras segue o mesmo ciclo do seu plano principal. Você pode acompanhar os valores e o consumo de números extras na página de <DashboardLink path="/numbers">Números Extras</DashboardLink> do dashboard.
+**Exemplo:** em um ciclo de 31 dias (janeiro, por exemplo), um número extra ativado no dia 11 fica ativo por 20 dias até o fim do ciclo. A cobrança é R$ 34,90 × 20 / 31 = **R$ 22,52**.
 
-A cobrança consolidada inclui o valor do plano base mais o valor de cada número extra ativo no período.
+A cobrança de cada número extra aparece como um item separado na fatura, junto com o valor do plano base.
 
-## Limites e planos
+### Números adicionados e removidos no mesmo ciclo não são cobrados
 
-Cada plano possui um limite máximo de números extras que podem ser cadastrados simultaneamente. Ao atingir o limite, será necessário remover um número existente ou fazer upgrade do plano para adicionar novos.
+Se você adicionar um número extra e ele for **removido de imediato** antes do fechamento do ciclo atual, ele **não é cobrado** — apenas números que continuam na conta no momento do fechamento entram na fatura.
 
-Os limites por plano estão disponíveis na página de planos do Turbo Notify.
+Atenção: isso vale para a remoção imediata. Quando a remoção é **agendada** (30 dias de espera), o número continua na conta até a exclusão executar — e é cobrado pro-rata em qualquer ciclo que feche nesse meio-tempo. Veja [Removendo um número extra](#removendo-um-número-extra).
+
+## Removendo um número extra
+
+**Desconecte o número antes de removê-lo.** Um número `connected` não pode ser excluído: `DELETE /v1/numbers/{alias}` retorna `400 invalid_status_for_deletion`. Use `POST /v1/numbers/{alias}/disconnect` primeiro.
+
+Com o número já desconectado, a remoção segue um de dois caminhos, decidido automaticamente:
+
+**Remoção imediata (número pouco ou nada usado).** Se o número se qualifica como uso mínimo — menos de **72 horas** desde a primeira conexão **e** menos de **10 mensagens** enviadas (um número que nunca chegou a conectar sempre se qualifica) — ele é removido na hora, sem período de espera.
+
+**Remoção agendada (número já em uso).** Fora dessas condições, o número entra em status `pending_deletion` e a remoção definitiva é agendada para **30 dias** depois — o campo `scheduled_deletion_at` na resposta traz a data exata. Durante todo esse período você pode reverter a decisão com `POST /v1/numbers/{alias}/cancel-deletion` — o número volta ao estado normal.
+
+A resposta do `DELETE` informa qual caminho foi tomado, em `refund_eligible` (`true` = remoção imediata) e `scheduled_deletion_at`.
+
+Os dois caminhos têm efeitos diferentes na fatura:
+
+- **Remoção imediata** — o número é excluído na hora e **não entra na fatura** do ciclo em curso. Veja [Números adicionados e removidos no mesmo ciclo](#números-adicionados-e-removidos-no-mesmo-ciclo-não-são-cobrados).
+- **Remoção agendada** — o número continua na conta durante os 30 dias de espera, então **qualquer ciclo que feche nesse intervalo ainda o cobra pro-rata**, exatamente como um número apenas desconectado (veja [Pausar em vez de remover](#pausar-em-vez-de-remover) logo abaixo). A cobrança só cessa quando a exclusão é efetivamente executada.
+
+### Pausar em vez de remover
+
+Para parar de usar um número temporariamente sem perdê-lo, **desconecte** em vez de remover:
+
+- O número permanece na conta com status `disconnected` e **continua sendo cobrado normalmente** até o fim do ciclo.
+- Pode ser reconectado a qualquer momento, sem precisar recadastrar.
+- É a opção certa para pausas temporárias — a remoção é para quando você não vai mais usar o número.
+
+## Limite de números extras
+
+Ao atingir o limite do seu plano (1.000 números extras ativos), adicionar um novo número retorna:
+
+```json
+{
+  "error": "extra_numbers_limit_reached",
+  "details": { "limit": 1000, "current": 1000 }
+}
+```
+
+Remova um número existente para liberar espaço, ou fale com o time comercial se o plano Personalizado precisar de um limite maior.
 
 ## Dúvidas frequentes
 
-**Sou cobrado por números desativados?**
+**Sou cobrado por números desconectados?**
 
-Sim. Números extras desativados continuam sendo cobrados enquanto estiverem cadastrados na conta. Para encerrar a cobrança, é necessário remover o número.
-
-**O que acontece se eu remover um número no meio do mês?**
-
-A cobrança será proporcional aos dias em que o número esteve cadastrado. O valor restante será descontado na próxima fatura.
+Sim — desconectar pausa o funcionamento do número, mas não interrompe a cobrança. Para parar de ser cobrado, é necessário remover o número — e, quando a remoção é agendada, a cobrança só cessa depois que a exclusão é executada, ao fim dos 30 dias.
 
 **Posso adicionar e remover números livremente?**
 
-Sim, desde que respeite o limite do seu plano. Cada adição e remoção ajusta o valor proporcionalmente.
+Sim, respeitando o limite do plano. Cada adição gera cobrança se o número ainda estiver **na conta** no fechamento do ciclo — inclusive números apenas desconectados ou com remoção agendada. Só a remoção imediata escapa da fatura do ciclo.
 
-**Onde vejo quanto estou pagando por números extras?**
+**Onde vejo o detalhamento da cobrança dos meus números extras?**
 
-Na página de <DashboardLink path="/numbers">Números Extras</DashboardLink> do dashboard você encontra o detalhamento de cada número e o valor correspondente.
+Na página de <DashboardLink path="/billing">Cobrança</DashboardLink> do dashboard, cada fatura lista os números extras cobrados naquele período, com o número de dias ativos usado no cálculo.
 
 ## Termos
 
-O uso de números extras está sujeito aos termos de serviço do Turbo Notify e às políticas do WhatsApp. O uso indevido de números extras para envio de spam ou mensagens não solicitadas pode resultar no bloqueio da conta.
+O uso de números extras está sujeito aos termos de serviço do Turbo Notify e às políticas do WhatsApp. Uso indevido para spam ou mensagens não solicitadas pode resultar no bloqueio da conta.

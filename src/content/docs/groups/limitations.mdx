@@ -26,7 +26,7 @@ de grupo (criação, gerenciamento de membros, alteração de configurações)
 
 | Recurso | Status |
 |---|---|
-| Receber mensagens de grupos | ✅ (webhook `message.received` com sibling `group`) |
+| Receber mensagens de grupos | ✅ (webhook `message.received` com `to.group_id` + `to.name`) |
 | Enviar mensagens para grupos | ✅ (`POST /v1/numbers/{alias}/messages` com `to.group_id`) — **requer plano `BUSINESS` ou superior**, veja abaixo |
 | Enviar indicador de digitação para grupos | ✅ (`POST /v1/numbers/{alias}/typing-indicator` com `to.group_id`) — **requer plano `BUSINESS` ou superior**, veja abaixo |
 | Reagir, editar, deletar mensagens em grupo | ✅ |
@@ -38,20 +38,21 @@ de grupo (criação, gerenciamento de membros, alteração de configurações)
 
 ## Envio de mensagens para grupo exige plano BUSINESS ou superior
 
-Receber mensagens de grupo, listar grupos (via webhooks) e consultar
-detalhes funcionam em qualquer tier. Apenas o **envio** outbound para um
+Receber mensagens de grupo, listar/consultar grupos via API
+(`GET /v1/numbers/{alias}/groups`) e receber os 10 webhooks de ciclo de
+vida funcionam em qualquer tier. Apenas o **envio** outbound para um
 `group_id` — mensagem ou indicador de digitação — exige a feature
 `groups:messages`, disponível a partir do tier `BUSINESS` — em `FREE`/`SOLO`
 o envio é recusado com `402 feature_not_available`. Veja
 [Envio para grupo](/messages/send/#envio-para-grupo),
-[Aviso em grupos](/other-features/typing-indicator/#aviso-em-grupos)
+[Indicador de digitação em grupos](/other-features/typing-indicator/#indicador-de-digitação-em-grupos)
 e [Quota e uso](/usage/quota/#envio-para-grupos-exige-plano-business-ou-superior).
 
 ## Identificador público
 
-`grp_{hex32}` (32 hex chars do UUID interno). O identificador bruto do
-WhatsApp (`120363...@g.us`) **nunca** é exposto via API ou webhook —
-apenas o formato TN.
+`grp_{hex32}` (32 caracteres hexadecimais, derivado de um identificador
+interno). O identificador bruto do WhatsApp (`120363...@g.us`) **nunca** é
+exposto via API ou webhook — apenas o formato do Turbo Notify.
 
 ## Quota e rate-limit
 
@@ -62,5 +63,7 @@ independente do tamanho do grupo. Não conta na quota de contatos.
 
 Se você perder o nome de um grupo (ex: webhook caiu antes de
 ser entregue), aguarde a próxima mensagem inbound — o webhook
-`message.received` carrega o `group.name` resolvido. Alternativamente,
-consulte `GET /v1/numbers/{alias}/groups/{id}` a qualquer momento.
+`message.received` carrega `to.name` (o nome do grupo) resolvido.
+Alternativamente, consulte
+[`GET /v1/numbers/{alias}/groups/{id}`](/groups/overview/#consultando-grupos) a
+qualquer momento.

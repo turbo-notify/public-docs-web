@@ -6,21 +6,19 @@ sidebar:
 ---
 
 Eventos relacionados con la **cuota de mensajes por número**, medida contra el
-**ciclo de facturación evaluado** de la organización (`cycle_start`/`cycle_end`
-— ya no una ventana rolling de 30 días). Límites por tier: `FREE`=300,
+**ciclo de facturación actual** de la organización (`cycle_start`/`cycle_end`).
+Límites por tier: `FREE`=300,
 `SOLO`=1.8k, `BUSINESS`=50k, `CUSTOM`=500k **por número, por ciclo**.
 
-Desde la ADR 2026-07-02 la cuota de mensajes es **por número** — reflejando la
+Desde 2026-07-02 la cuota de mensajes es **por número** — reflejando la
 cuota de contactos: cada número vinculado (`main` o el alias de un número
 extra) tiene su propia franquicia, así que una organización con N números
 obtiene N× la franquicia del tier. Estos eventos identifican el número
 afectado vía **`number_alias` en el envelope** (no en `data`). Solo los
 mensajes enviados **vía Turbo Notify** (`origin: "tn"`) consumen la cuota.
 
-> **Nota (2026-05-15):** el enforcement de esta cuota se activó el 2026-05-15.
-> Los límites ya estaban documentados — desde esa fecha el código los aplica
-> efectivamente. Ver [Per-Tier Message Quota Activation](/es/changelog/2026-05-15-message-quota-activation/)
-> y la [auditoría de límites](/es/messages/rate-limits/).
+Para configurar la URL del webhook, validar la firma y entender el envelope,
+consulta [Webhook: Configuración y envelope](/es/messages/webhook/).
 
 ## Eventos
 
@@ -32,16 +30,15 @@ mensajes enviados **vía Turbo Notify** (`origin: "tn"`) consumen la cuota.
 ## `number_alias` en el envelope
 
 Ambos eventos llevan, justo debajo de `organization_id`, el campo
-`number_alias`: el handle del número TN ("inbox") cuya cuota de mensajes se
+`number_alias`: el handle del número TN cuya cuota de mensajes se
 alcanzó — `"main"` para el número principal o el alias de un número extra. El
 `data` del evento lleva los campos de cuota `threshold_bps` (solo en
 `warning`), `used`, `quota`, `cycle_start`, `cycle_end`, `resets_at`, `tier`,
 `channel`, `origin` — `number_alias` va en el **envelope**, nunca en `data`.
 
-> **Ciclo evaluado (2026-07-04):** el antiguo campo `window_days` fue
-> **retirado** — `used`/`quota` ahora se miden contra el ciclo de facturación
-> evaluado de la organización, representado por `cycle_start`/`cycle_end` (ISO
-> 8601 UTC). `resets_at` sigue siendo igual a `cycle_end`.
+`used`/`quota` se miden contra el ciclo de facturación evaluado de la
+organización (`cycle_start`/`cycle_end`, ISO 8601 UTC); `resets_at` es igual
+a `cycle_end`.
 
 > Entre los eventos de cuenta, `number_alias` se omite **solo** en
 > `storage.*`. Toda familia `*.quota.*` (contactos y mensajes) ahora lo lleva.
@@ -94,7 +91,7 @@ alcanzó — `"main"` para el número principal o el alias de un número extra. 
 ## Timestamps y correlación
 
 - Estos son eventos **sintéticos** de Turbo Notify (no reflejan una acción en
-  WhatsApp): desde 2026-06-02 **no** llevan `at` en `data` — solo el
+  WhatsApp): **no** llevan `at` en `data` — solo el
   `created_at` del envelope (momento en que TN emitió el evento).
 - `cycle_start`/`cycle_end` son el ciclo de facturación evaluado contra el que
   se midieron `used`/`quota`. `resets_at` es un timestamp de **valor de

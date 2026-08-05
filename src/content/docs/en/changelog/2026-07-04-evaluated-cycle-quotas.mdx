@@ -16,11 +16,11 @@ were previously accepted silently.
 :::
 
 :::note[Update 2026-07-21]
-ADR 2026-07-21 (manageable plan catalog) later revised the per-tier limits and
-the extra-number price: the BUSINESS extra-numbers cap went from 300 to
-**1,000**, and an extra number now costs **R$ 49.90/mo**. The values quoted
-below are preserved as a historical record — for the current limits, see
-[Usage & Quota](/en/usage/quota/).
+Per-tier limits and the extra-number price were later revised on 2026-07-21:
+the BUSINESS extra-numbers cap went from 300 to **1,000**, and an extra number
+now costs **R$ 49.90/mo**. The values quoted below are preserved as a
+historical record — for the current limits, see [Usage &
+Quota](/en/usage/quota/).
 :::
 
 ## What changed
@@ -28,11 +28,10 @@ below are preserved as a historical record — for the current limits, see
 ### Quotas now measure against the evaluated billing cycle
 
 Message and contact `used`/`quota` are now measured against the
-organization's **evaluated billing cycle** (the subscription's
-`current_period_start` through `current_period_end`, advanced at each
-renewal) — no longer a rolling 30-day window that decayed day by day.
-`resets_at` is now the real cycle-renewal moment, not a value recomputed on
-every read.
+organization's **evaluated billing cycle** — the subscription's current
+billing period (from its start to its end), advanced at each renewal — no
+longer a rolling 30-day window that decayed day by day. `resets_at` is now
+the real cycle-renewal moment, not a value recomputed on every read.
 
 | Retired field | New fields |
 | --------------- | ------------- |
@@ -83,7 +82,7 @@ this window is only about API visibility.
 
 ### Inactive-subscription gate
 
-The send pipeline now blocks with **402 `subscription_inactive`** when the
+Sending is now blocked with **402 `subscription_inactive`** when the
 organization's subscription does not allow feature usage — including when a
 **trial period has expired** with no conversion to a paid plan
 (`details.status: "trial_expired"`).
@@ -101,7 +100,8 @@ detailed receipt log (`GET .../messages/{id}/receipts`, both the per-number
 nested route and the main-number flat route) now returns **402
 `feature_not_available`** for `FREE`/`SOLO` organizations. The message's
 overall status (`GET .../messages/{id}/status`) is **not** affected by this
-gate — it stays available on every tier. See [Receipts](/en/messages/receipts/).
+gate — it stays available on every tier. See [Receipts](/messages/receipts/)
+(PT-BR — translation pending for this page).
 
 ### Webhook configuration now requires the SOLO tier or above
 
@@ -150,6 +150,6 @@ new 402 error codes (`subscription_inactive`, `feature_not_available`,
 - [Message quota events](/en/webhooks/message-quota-events/) ·
   [Contact events](/en/webhooks/contact-events/)
 - [Message retention](/en/messages/retention/) · [Rate Limits](/en/messages/rate-limits/)
-- [Receipts](/en/messages/receipts/) — detailed receipt log, now BUSINESS+.
-- [Groups — Overview](/en/groups/overview/) · [Group limitations](/en/groups/limitations/)
-- [List contacts](/contacts/list/) — `contacted_in_cycle` param (renamed from `has_messaged_in_window`; PT-BR canonical, translation pending).
+- [Receipts](/messages/receipts/) — detailed receipt log, now BUSINESS+ (page currently available in Portuguese only).
+- [Groups — Overview](/groups/overview/) · [Group limitations](/groups/limitations/) (both pages currently available in Portuguese only)
+- [List contacts](/contacts/list/) — `contacted_in_cycle` param (renamed from `has_messaged_in_window`; page currently available in Portuguese only).

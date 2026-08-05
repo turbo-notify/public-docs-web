@@ -11,11 +11,16 @@ Remova números extras que não são mais necessários para liberar vagas no seu
 
 ## Cobrança
 
-Ao remover um número extra, a cobrança será encerrada proporcionalmente ao período utilizado. Para mais detalhes, consulte a documentação de [Cobrança de Números Extras](/numbers/billing/).
+O efeito na fatura depende de qual dos dois caminhos de remoção foi tomado:
+
+- **Remoção imediata** (elegível a reembolso: menos de **72 horas** desde a primeira conexão **e** menos de **10 mensagens** enviadas) — o número é excluído na hora e **não entra na fatura** do ciclo em curso.
+- **Remoção agendada** — o número permanece na conta durante os **30 dias** de espera, então **qualquer ciclo que feche nesse intervalo ainda o cobra pro-rata**, exatamente como um número apenas desconectado. A cobrança só cessa quando a exclusão é de fato executada.
+
+O campo `refund_eligible` na resposta do `DELETE` informa qual caminho foi tomado (`true` = remoção imediata). Para mais detalhes, consulte a documentação de [Cobrança de números extras](/numbers/billing/).
 
 ## Remover pelo dashboard
 
-Acesse a página de <DashboardLink path="/numbers">Números Extras</DashboardLink> no dashboard, localize o número desejado e clique em **Remover**. Confirme a ação na caixa de diálogo.
+Acesse a página de <DashboardLink path="/numbers">Números</DashboardLink> no dashboard, localize o número desejado e clique em **Remover**. Confirme a ação na caixa de diálogo.
 
 ## Remover via API
 
@@ -141,19 +146,152 @@ Acesse a página de <DashboardLink path="/numbers">Números Extras</DashboardLin
   }}
 />
 
+**Escopo obrigatório:** `numbers:write`
+
 A resposta descreve o **resultado da exclusão**, não o número em si:
 
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `scheduled_deletion_at` | string | Timestamp ISO 8601 de quando a exclusão (soft-delete) acontece. |
-| `refund_eligible` | boolean | `true` quando o número se qualifica para reembolso imediato (janela de 72h, poucas mensagens enviadas) — nesse caso a exclusão é **imediata** e `scheduled_deletion_at` é o momento atual. `false` quando a exclusão só ocorre no fim do ciclo de cobrança atual. |
-| `refund_amount_cents` | integer | Valor reembolsado em centavos (0 quando `refund_eligible` é `false`). |
+| `refund_eligible` | boolean | `true` quando o número se qualifica para reembolso imediato (janela de 72h, poucas mensagens enviadas) — nesse caso a exclusão é **imediata** e `scheduled_deletion_at` é o momento atual. `false` quando a exclusão é agendada — nesse caso `scheduled_deletion_at` fica **30 dias** à frente. |
+| `refund_amount_cents` | integer | Valor reembolsado em centavos. **Hoje é sempre `0`**, inclusive quando `refund_eligible` é `true` — o cálculo de valores monetários de reembolso ainda não é feito pela API. |
 | `messages_sent` | integer | Total de mensagens já enviadas por este número — usado para determinar elegibilidade de reembolso. |
 
 A chamada é **idempotente**: repetir a requisição para um número já agendado
 para exclusão retorna o mesmo agendamento (sem gerar um novo reembolso).
 
+## Cancelar exclusão agendada
+
+Enquanto o número estiver em `pending_deletion` (exclusão ainda não
+executada), você pode cancelar e manter o número normalmente.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/cancel-deletion \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch('https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/cancel-deletion', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer SUA_CHAVE' }
+    });
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/cancel-deletion"
+    headers = {"Authorization": "Bearer SUA_CHAVE"}
+
+    response = requests.post(url, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/cancel-deletion", nil)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/cancel-deletion';
+
+    $options = [
+        'http' => [
+            'header' => ['Authorization: Bearer SUA_CHAVE'],
+            'method' => 'POST'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var response = await client.PostAsync(
+        "https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/cancel-deletion",
+        null
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/cancel-deletion"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+<ApiResponse
+  status={200}
+  body={{
+    status: 'pending_deletion_canceled',
+    at: '2025-07-16T10:05:00Z',
+  }}
+/>
+
+`status` aqui é um **literal de confirmação** ("a exclusão pendente foi
+cancelada"), não um dos valores da [Tabela de
+status](/numbers/status/#tabela-de-status) — mesmo padrão de
+`disconnecting` em [Ativação e
+desativação](/numbers/activation/). Para saber o status operacional atual
+do número após o cancelamento (normalmente `disconnected`, já que é
+necessário desconectar o número antes de agendar a exclusão), consulte o
+[Status dos números extras](/numbers/status/).
+
 ## Erros possíveis
+
+### Remover (`DELETE /v1/numbers/{alias}`)
 
 | Status | Código de erro                 | Descrição                                           |
 | :----: | -------------------------------- | --------------------------------------------------- |
@@ -163,4 +301,14 @@ para exclusão retorna o mesmo agendamento (sem gerar um novo reembolso).
 | `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
 | `404`  | `extra_number_not_found` | O alias informado não foi encontrado na conta.      |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                |
-| `503`  | `whatsapp_unavailable`   | O WhatsApp está temporariamente fora do ar.         |
+
+### Cancelar exclusão (`POST /v1/numbers/{alias}/cancel-deletion`)
+
+| Status | Código de erro           | Descrição                                              |
+| :----: | ------------------------- | ------------------------------------------------------ |
+| `400`  | `not_pending_deletion`   | O número não está com exclusão agendada.                |
+| `402`  | `feature_not_available`  | O plano atual não suporta números extras.               |
+| `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.              |
+| `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
+| `404`  | `extra_number_not_found` | O alias informado não foi encontrado na conta.           |
+| `500`  | `internal_error`         | Erro interno inesperado no servidor.                     |
