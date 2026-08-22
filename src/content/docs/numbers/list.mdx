@@ -151,7 +151,7 @@ Liste todos os números da sua conta — o principal e os extras — para consul
         alias: 'condominio_2',
         number: '5511999999998',
         description: null,
-        status: { status: 'connecting', at: '', reason: null },
+        status: { status: 'connecting', at: '2025-07-16T10:05:00Z', reason: null },
       },
       {
         contact_id: null,
@@ -171,26 +171,21 @@ Liste todos os números da sua conta — o principal e os extras — para consul
 `GET /v1/numbers` sempre retorna **todos** os números vivos da organização —
 o **principal primeiro**, seguido pelos extras em ordem de criação.
 
-:::caution[`status.at` não é o momento da última mudança de status]
-`status.at` é resolvido em três etapas, nesta ordem:
+:::note[`status.at` acompanha o status atual]
+`status.at` é o momento em que o número **entrou no status atual** —
+atualiza a cada transição (pareamento, conexão, queda de conexão,
+reconexão, falha, revogação). Um número `disconnected`, `failed`,
+`reconnecting` etc. reporta o instante dessa própria transição, não um
+timestamp de conexão desatualizado.
 
-1. o momento da **última conexão bem-sucedida** do número;
-2. se o número **nunca** conectou, o momento do **último desligamento**
-   registrado (a desconexão ou revogação);
-3. se nenhum dos dois existe, **string vazia** (`""`) — os dois últimos itens
-   do exemplo acima, em `connecting` e `pending`: nada carimba um horário
-   nessas transições.
+Um número recém-criado, sem link de dispositivo ainda (`status: "pending"`,
+como `condominio_3` no exemplo acima), não tem transição alguma registrada:
+`status.at` vem como **string vazia** (`""`). Trate isso antes de converter
+para data — `Date.parse("")` (JS) devolve `NaN`, e
+`datetime.fromisoformat("")` (Python) levanta `ValueError`.
 
-O instante da conexão **não é sobrescrito** pelas mudanças de status
-seguintes — um número que já conectou e hoje está `disconnected`, `failed`,
-`revoked` ou `reconnecting` continua reportando o instante em que conectou
-pela última vez, e **não** o horário em que caiu ou falhou. Já um número
-desconectado ou revogado **sem nunca ter conectado** reporta o momento desse
-desligamento, não uma string vazia — consulte `status.status` antes de
-escolher o rótulo exibido.
-
-Trate `""` antes de converter para data: `Date.parse("")` (JS) devolve
-`NaN`, e `datetime.fromisoformat("")` (Python) levanta `ValueError`.
+A exceção é `status: "pending_deletion"` (apenas números extras): `status.at`
+traz o momento da **exclusão agendada**, não uma transição de conexão.
 :::
 
 **Escopo obrigatório:** `numbers:read`
@@ -210,7 +205,7 @@ Trate `""` antes de converter para data: `Date.parse("")` (JS) devolve
 | `data[].description` | string\|null | Descrição livre definida pelo usuário |
 | `data[].status` | object | `{status, at, reason?}` — estado atual do número |
 | `data[].status.status` | string | `pending`, `pairing`, `inactive`, `connecting`, `connected`, `disconnected`, `reconnecting`, `failed`, `revoked` ou `pending_deletion` — veja [Tabela de status](/numbers/status/#tabela-de-status) |
-| `data[].status.at` | string | Timestamp ISO 8601 resolvido em três etapas: a **última conexão bem-sucedida** do número; na falta dela, o **último desligamento** registrado (desconexão ou revogação); na falta de ambos, **string vazia (`""`)**. **Não** é o momento da última mudança de status — um número que já conectou e hoje está `disconnected`, `failed`, `revoked` ou `reconnecting` continua reportando aqui o instante em que conectou pela última vez. |
+| `data[].status.at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`data[].status.status`) — atualiza a cada transição. **String vazia (`""`)** apenas quando o número ainda não tem link de dispositivo (`status: "pending"`, nenhuma transição registrada). Exceção: em `status: "pending_deletion"`, é o momento da exclusão agendada. |
 | `data[].status.reason` | string\|null | Reservado para o motivo de falha — **hoje sempre `null`**, independente do `status` (inclusive em `"failed"`); a rota ainda não popula este campo. |
 
 ## Erros possíveis

@@ -85,7 +85,7 @@ Toda requisição de webhook segue a mesma estrutura base:
 | `id`              | `string` | Identificador único do evento (`evt_…`). Use como chave de idempotência.  |
 | `type`            | `string` | Tipo do evento (ex.: `message.sent`).                                     |
 | `organization_id` | `string` | Identificador público da sua organização (`org_{hex32}`). Sempre presente.|
-| `number_alias`    | `string` | Handle do número Turbo Notify ao qual o evento pertence — `"main"` para o número principal ou o alias de um número extra. É a **string do alias**, nunca um UUID. Presente em eventos ligados a um número específico — `message.*`, `number.*`, `group.*`, todos os `contact.*` (inclusive `contact.quota.*`) e `message.quota.*` (a quota de mensagens é por número desde 2026-07-02); **omitido** em `storage.*` **e** em `media.unavailable` — os eventos que não pertencem a um número único. |
+| `number_alias`    | `string` | Handle do número Turbo Notify ao qual o evento pertence — `"main"` para o número principal ou o alias de um número extra. É a **string do alias**, nunca um UUID. Presente em eventos ligados a um número específico — `message.*`, `number.*`, `group.*`, todos os `contact.*` (inclusive `contact.quota.*`) e `message.quota.*` (a quota de mensagens é por número); **omitido** em `storage.*` **e** em `media.unavailable` — os eventos que não pertencem a um número único. |
 | `created_at`      | `string` | Momento de **emissão** do evento pelo Turbo Notify — distinto de `data.at` (momento da ação no WhatsApp). ISO 8601 em UTC com sufixo `Z` e precisão de segundos (ex.: `2026-06-01T13:00:05Z`). |
 | `data`            | `object` | Dados específicos do evento (veja [Campos da mensagem](#campos-da-mensagem)). |
 
@@ -138,7 +138,7 @@ Todos os eventos `message.*` compartilham os campos abaixo em `data`:
 
 :::note[`at` outbound também é o momento real do WhatsApp]
 Para eventos **outbound** (`message.sent`/`replied`/`edited`/`deleted` e os
-`*.failed`) e para os eventos `number.*` de ação real, `data.at` é agora o
+`*.failed`) e para os eventos `number.*` de ação real, `data.at` é o
 **momento genuíno da ação no WhatsApp** (o timestamp real de envio reportado pelo
 WhatsApp), **não** o momento em que o Turbo Notify emitiu o evento. Por isso, nos exemplos
 abaixo `data.at` é tipicamente **anterior** ao `created_at` do envelope — o evento
@@ -244,11 +244,11 @@ O `number_alias` do envelope identifica a linha Turbo Notify do evento; resolva 
 
 ### Exemplo — `message.received` (grupo)
 
-Disponível desde 2026-05-24. Quando uma mensagem chega de um **grupo WhatsApp**,
+Quando uma mensagem chega de um **grupo WhatsApp**,
 `to` carrega `group_id` + snapshot `name` em vez de `number`. A linha Turbo Notify
 que participa do grupo é identificada pelo `number_alias` do envelope.
 `from` continua sendo o participante que enviou — pessoas sempre falam, nunca grupos.
-Para mensagens 1:1 `to.group_id` é omitido — payloads pré-existentes permanecem byte-idênticos.
+Para mensagens 1:1, `to.group_id` é omitido.
 
 ```json title="message.received (grupo)"
 {
@@ -284,7 +284,7 @@ Para mensagens 1:1 `to.group_id` é omitido — payloads pré-existentes permane
 
 ### Exemplo — `message.received` com menções
 
-Disponível desde 2026-07-03. Quando o texto (ou caption) menciona alguém, o
+Quando o texto (ou caption) menciona alguém, o
 body chega com os tokens já normalizados para `@<numero>` (dígitos E.164 sem
 `+`) e `data.mentions` traz os contatos correspondentes, já resolvidos:
 
@@ -475,7 +475,7 @@ Para remover uma reação previamente enviada, envie a propriedade `reaction` co
 
 ### Exemplo — `message.replied` (inbound/outbound)
 
-Disponível desde 2026-04-28. Replies são entregues como evento dedicado. `preview` contém o preview da **nova mensagem** (o reply, não a mensagem citada). `quoted_message_id` identifica a mensagem citada no formato `msg_<hex32>`; omitido quando o alvo não pôde ser resolvido (mensagem anterior ao Turbo Notify ou expirada por retenção — use `GET /v1/numbers/{alias}/messages/{id}` para acessar `replied.message_id` e `replied.preview` nesses casos).
+Replies são entregues como evento dedicado. `preview` contém o preview da **nova mensagem** (o reply, não a mensagem citada). `quoted_message_id` identifica a mensagem citada no formato `msg_<hex32>`; omitido quando o alvo não pôde ser resolvido (mensagem anterior ao Turbo Notify ou expirada por retenção — use `GET /v1/numbers/{alias}/messages/{id}` para acessar `replied.message_id` e `replied.preview` nesses casos).
 
 ```json title="message.replied (inbound)"
 {
@@ -627,9 +627,9 @@ do evento, link da mídia, etc.), faça `GET /v1/numbers/{alias}/messages/{id}`.
 }
 ```
 
-> **Importante (2026-04-28):** respostas (mensagens que citam outra)
+> **Importante:** respostas (mensagens que citam outra)
 > são entregues como evento dedicado **`message.replied`** — nunca
-> mais como `message.received` com `content_type=reply`.
+> como `message.received` com `content_type=reply`.
 
 #### `image`
 
@@ -647,7 +647,7 @@ do evento, link da mídia, etc.), faça `GET /v1/numbers/{alias}/messages/{id}`.
 }
 ```
 
-`media` foi removido dos eventos — faça `GET /v1/numbers/{alias}/messages/{id}` para obter o bloco `image` com a URL de download.
+Eventos não incluem o bloco `media` — faça `GET /v1/numbers/{alias}/messages/{id}` para obter o bloco `image` com a URL de download.
 
 #### `video`
 
@@ -1080,7 +1080,7 @@ Quando você envia uma mensagem para um grupo via
 
 ## Mapeamento de operações assíncronas
 
-Operações da API que disparam processamento assíncrono expõem o `X-Request-ID` no header da resposta. Use `GET /v1/events?request_id=req_...` para consultar os eventos da operação e identificar o resultado pelo `id` da mensagem (`data.id`):
+Operações da API que disparam processamento assíncrono expõem o `X‑Request‑ID` no header da resposta. Use `GET /v1/events?request_id=req_...` para consultar os eventos da operação e identificar o resultado pelo `id` da mensagem (`data.id`):
 
 | Operação                   | Evento de sucesso             | Evento de falha                   |
 | -------------------------- | ----------------------------- | --------------------------------- |
@@ -1113,7 +1113,7 @@ O cronograma de reentrega acima é uma feature de plano, disponível a partir
 do tier `BUSINESS`. Organizações em `FREE`/`SOLO` recebem **exatamente
 1 tentativa** — se essa única tentativa não retornar `2xx`, o evento é
 marcado como `dead_letter` imediatamente, sem nenhuma reentrega. O header
-`X-Webhook-Max-Attempts`, presente em toda tentativa de entrega, reflete
+`X‑Webhook‑Max‑Attempts`, presente em toda tentativa de entrega, reflete
 esse limite (`1` para `FREE`/`SOLO`; `6` para `BUSINESS`/`CUSTOM`).
 
 Isso afeta apenas a **reentrega** em caso de falha — a primeira tentativa
@@ -1147,12 +1147,12 @@ Em produção, persista o `id` em uma tabela ou cache com TTL de ~72 h.
 
 ### Timestamps em reentregas
 
-O campo `created_at` (envelope) reflete o **momento de emissão do evento pelo Turbo Notify** — quando o registro do evento é criado e publicado, nunca a hora em que o webhook foi enviado ao seu endpoint. Quando presente, `at` (em `data`) reflete o **momento da ação real no WhatsApp**. Desde 2026-06-02 estes são **valores distintos**: um evento pode ser emitido algum tempo depois da ação que descreve (eventos sintéticos do Turbo Notify não têm `at`). Em reentregas, tanto `created_at` quanto `at` permanecem **inalterados** — são os mesmos valores da tentativa original.
+O campo `created_at` (envelope) reflete o **momento de emissão do evento pelo Turbo Notify** — quando o registro do evento é criado e publicado, nunca a hora em que o webhook foi enviado ao seu endpoint. Quando presente, `at` (em `data`) reflete o **momento da ação real no WhatsApp**. Estes são **valores distintos**: um evento pode ser emitido algum tempo depois da ação que descreve (eventos sintéticos do Turbo Notify não têm `at`). Em reentregas, tanto `created_at` quanto `at` permanecem **inalterados** — são os mesmos valores da tentativa original.
 
 Isso significa que, ao receber uma reentrega:
 - `created_at` é o momento de emissão; `at` (quando presente) é o momento da ação no WhatsApp — ambos fixos entre tentativas.
-- `X-Webhook-Attempt` é incrementado a cada tentativa — use-o para diagnóstico, não para lógica de negócio.
-- `X-Webhook-Timestamp` reflete a hora do **envio HTTP atual** e é usado para validação de assinatura e proteção anti-replay; **não** é o timestamp do evento.
+- `X‑Webhook‑Attempt` é incrementado a cada tentativa — use-o para diagnóstico, não para lógica de negócio.
+- `X‑Webhook‑Timestamp` reflete a hora do **envio HTTP atual** e é usado para validação de assinatura e proteção anti-replay; **não** é o timestamp do evento.
 
 ## Alternativa: polling
 

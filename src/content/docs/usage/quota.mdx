@@ -8,9 +8,9 @@ sidebar:
 import ApiResponse from '@components/ApiResponse.astro';
 
 O Turbo Notify mede **duas quotas independentes** por número vinculado (`main` ou
-alias extra): mensagens outbound e contatos distintos contactados. Desde
-2026-07-02 ambas as quotas são **por número** — cada número tem sua própria
-franquia, e uma organização com N números tem N× a franquia do tier.
+alias extra): mensagens outbound e contatos distintos contactados. Ambas as
+quotas são **por número** — cada número tem sua própria franquia, e uma
+organização com N números tem N× a franquia do tier.
 
 Apenas o que trafega **via Turbo Notify** (`origin: "tn"`) consome quota;
 mensagens enviadas direto do telefone físico (`origin: "native"`) não contam.
@@ -283,7 +283,7 @@ contagem atual de números extras vivos da organização.
 Diferente do 402 de contatos, este 429 **não** carrega `details` com
 `used`/`quota`/`resets_at` no corpo — consulte
 `GET /v1/numbers/{alias}/messages/quota` (ou `GET /v1/usage/messages`) para o
-snapshot completo e o `resets_at` real. O cabeçalho `Retry-After` aqui é um
+snapshot completo e o `resets_at` real. O cabeçalho `Retry‑After` aqui é um
 valor técnico curto (não representa "quanto falta para a quota renovar" — a
 quota só renova em `resets_at`, que pode estar a dias de distância).
 
@@ -303,6 +303,6 @@ quota só renova em `resets_at`, que pode estar a dias de distância).
 - `message.quota.warning` em 80/90/95%.
 - `message.quota.exceeded` no estouro.
 
-Ambas as famílias carregam `cycle_start`/`cycle_end` no `data` (substituindo o
-antigo `window_days`). Veja [Eventos de quota de mensagem](/webhooks/message-quota-events/),
+Ambas as famílias carregam `cycle_start`/`cycle_end` no `data`. Veja
+[Eventos de quota de mensagem](/webhooks/message-quota-events/),
 [Eventos de contato](/webhooks/contact-events/) e [Limites de uso](/messages/rate-limits/).

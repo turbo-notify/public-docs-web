@@ -178,24 +178,17 @@ quando `status: "failed"`. Quando o número está com `status:
 [Listagem](/numbers/list/).
 :::
 
-:::caution[`at` não é o momento da última mudança de status]
-`at` é resolvido em três etapas, nesta ordem:
+:::note[`at` acompanha o status atual]
+`at` é o momento em que o número **entrou no status atual** — atualiza a
+cada transição (pareamento, conexão, queda de conexão, reconexão, falha,
+revogação). Um número `disconnected`, `failed`, `reconnecting` etc. reporta
+o instante dessa própria transição, então `desconectado desde {at}` /
+`falhou em {at}` exibem o horário certo diretamente.
 
-1. o momento da **última conexão bem-sucedida** do número;
-2. se o número **nunca** conectou, o momento do **último desligamento**
-   registrado (a desconexão ou revogação);
-3. se nenhum dos dois existe, **string vazia** (`""`).
-
-O instante da conexão **não é sobrescrito** pelas mudanças de status
-seguintes — então um número que conectou em algum momento e hoje aparece
-como `disconnected`, `failed`, `revoked` ou `reconnecting` continua
-reportando o horário em que conectou pela última vez, e **não** o horário em
-que caiu ou falhou. Renderizar `desconectado desde {at}` exibe a hora errada.
-
-Já um número desconectado ou revogado **sem nunca ter conectado** reporta o
-momento desse desligamento — não uma string vazia. Nesse caso é
-`conectado desde {at}` que exibe o rótulo errado. Consulte o `status` antes
-de escolher o rótulo, e trate `""` antes de converter para data.
+Um número recém-criado, sem link de dispositivo ainda (`status: "pending"`),
+não tem transição alguma registrada: `at` vem como **string vazia** (`""`).
+Trate isso antes de converter para data — `Date.parse("")` (JS) devolve
+`NaN`, e `datetime.fromisoformat("")` (Python) levanta `ValueError`.
 
 A única exceção é `status: "pending_deletion"`, em que `at` traz o momento
 da exclusão agendada (veja a nota acima).
@@ -211,7 +204,7 @@ da exclusão agendada (veja a nota acima).
 | `alias` | string | Identificador único do número extra na conta |
 | `number` | string | Número de telefone em dígitos E.164 (sem `+`) |
 | `status` | string | Estado atual — veja [Tabela de status](#tabela-de-status) |
-| `at` | string | Timestamp ISO 8601 resolvido em três etapas: a **última conexão bem-sucedida** do número; na falta dela, o **último desligamento** registrado (desconexão ou revogação); na falta de ambos, **string vazia (`""`)**. **Não** é o momento da última mudança de status — um número que já conectou e hoje está `disconnected`, `failed`, `revoked` ou `reconnecting` continua reportando aqui o instante em que conectou pela última vez. Exceção: quando `status = "pending_deletion"`, é o momento da exclusão agendada. |
+| `at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`status`) — atualiza a cada transição. **String vazia (`""`)** apenas quando o número ainda não tem link de dispositivo (`status: "pending"`, nenhuma transição registrada). Exceção: quando `status = "pending_deletion"`, é o momento da exclusão agendada. |
 | `description` | string\|null | Sempre `null` neste endpoint hoje — veja nota acima |
 | `scheduled_deletion_at` | string\|null | Sempre `null` neste endpoint hoje — veja nota acima |
 | `reason` | string\|null | Reservado para o motivo de falha — **hoje sempre `null`**, veja a nota acima |

@@ -5,8 +5,6 @@ description: Janela de leitura por tier (7 a 365 dias), aplicada a toda operaç�
 
 import ApiResponse from '@components/ApiResponse.astro';
 
-> **Nota (2026-07-04):** a retenção deixou de ser apenas informativa e passou a ser uma **janela de leitura efetivamente aplicada** pela API, com o prazo definido pelo tier do plano contratado. Veja o changelog [Quotas ancoradas no ciclo avaliado](/changelog/2026-07-04-evaluated-cycle-quotas/).
-
 O Turbo Notify aplica uma janela de leitura por tier de plano para consulta de mensagens via API, equilibrando privacidade dos dados com a necessidade de auditoria de curto/médio prazo do seu negócio.
 
 ## Janela de leitura por tier
@@ -68,7 +66,7 @@ Para mensagens com mídia (imagem, vídeo, áudio, documento, sticker), a durabi
 - **Com [BYO Object Storage](/general/byo-storage-setup/) configurado**: os bytes são copiados para o seu bucket assim que a mensagem é recebida. Permanecem disponíveis enquanto o seu bucket retiver o objeto — sob seu controle total, inclusive depois que a mensagem sair da janela de leitura.
 - **Sem BYO Storage**: apenas os metadados (mime, tamanho, hash, legenda) são persistidos. Os bytes NÃO são repassados nem armazenados pelo Turbo Notify. O bloco de mídia (`image`/`video`/`audio`/`document`/`sticker`) retorna `kind: "unavailable"` com um envelope `setup_hint` indicando como configurar.
 
-Esse comportamento é canônico desde 2026-05-26 — não há mais janela de 24h via CDN do WhatsApp. Detalhes em [BYO Object Storage](/general/byo-storage-setup/).
+Não há uma janela separada de 24h via CDN do WhatsApp — este é o comportamento único. Detalhes em [BYO Object Storage](/general/byo-storage-setup/).
 
 ## Implicações práticas
 

@@ -6,9 +6,7 @@ description: Limites de velocidade de envio (rate limits) por tier — envio e r
 import ApiResponse from '@components/ApiResponse.astro';
 import ExternalLink from '@components/ExternalLink.astro';
 
-> **Nota (2026-07-04):** as franquias de mensagens e contatos deixaram de ser medidas em uma janela rolling de 30 dias e passaram a medir contra o ciclo de faturamento avaliado da organização. Esses números (e os erros 402/429 de quota) agora vivem exclusivamente em [Quota e uso](/usage/quota/) — veja também o changelog [Quotas ancoradas no ciclo avaliado](/changelog/2026-07-04-evaluated-cycle-quotas/). Esta página documenta apenas os **limites de velocidade** (rate limits), um conceito separado que não muda nesta entrega.
-
-> **Nota (2026-05-15):** o limite por tier de envio agora é efetivamente aplicado em produção. Veja [Ativação de quota de mensagem por tier](/changelog/2026-05-15-message-quota-activation/) para o histórico dessa migração.
+> As franquias de mensagens e contatos por ciclo de faturamento vivem exclusivamente em [Quota e uso](/usage/quota/), junto com os erros 402/429 de quota. Esta página documenta apenas os **limites de velocidade** (rate limits), um conceito separado.
 
 ## Quotas vs. limites de taxa (rate limits)
 
@@ -35,7 +33,7 @@ Cada mensagem enviada via API respeita um intervalo mínimo em relação ao envi
 | `BUSINESS` | 0.6s | 100 msg/min |
 | `CUSTOM`   | 0.4s | 150 msg/min |
 
-Enviar antes do intervalo mínimo desde o último envio bem-sucedido **naquele número** retorna `429` com o código `send_rate_spacing` e o cabeçalho `Retry-After` (em segundos — o tempo restante até o próximo envio permitido):
+Enviar antes do intervalo mínimo desde o último envio bem-sucedido **naquele número** retorna `429` com o código `send_rate_spacing` e o cabeçalho `Retry‑After` (em segundos — o tempo restante até o próximo envio permitido):
 
 <ApiResponse
   status={429}
@@ -58,7 +56,7 @@ O endpoint de [refresh de contato](/contacts/refresh/) (`POST .../contacts/{cont
 | `BUSINESS` | 120 |
 | `CUSTOM`   | 600 |
 
-Estourar esse limite retorna `429 refresh_rate_limited` com o cabeçalho `Retry-After`.
+Estourar esse limite retorna `429 refresh_rate_limited` com o cabeçalho `Retry‑After`.
 
 ## Proteção contra rajadas (operacional, igual em todos os tiers)
 
@@ -104,7 +102,7 @@ Para os erros de **quota** (`402 contact_quota_exceeded`, `429 messages_quota_ex
 
 ## Boas práticas
 
-- Respeite o cabeçalho `Retry-After` ao receber um status `429`.
+- Respeite o cabeçalho `Retry‑After` ao receber um status `429`.
 - Distribua o envio ao longo do tempo em vez de enviar tudo de uma vez — o espaçamento mínimo do seu tier já define o ritmo sustentável.
 - Utilize [números extras](/numbers/add/) para aumentar a capacidade de envio.
 - Monitore os códigos de resposta da API para identificar rapidamente quando um limite é atingido.

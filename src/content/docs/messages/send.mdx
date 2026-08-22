@@ -202,7 +202,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
 
 ## Menções (@mentions)
 
-Disponível desde 2026-07-03. Para mencionar
+Para mencionar
 alguém — a menção real do WhatsApp, com nome tocável e notificação no aparelho
 do mencionado — escreva o token **`@<numero>`** diretamente no `text` (ou no
 `caption` de mídia — veja [Envio de mídia](/messages/send-media/)): `@` seguido
@@ -481,7 +481,7 @@ Para saber por quanto tempo as mensagens ficam disponíveis para consulta e oper
 
 ## Conteúdo rico — localização, contato e calendário
 
-A partir de 2026-04-27 o `POST /v1/messages` aceita três variantes de
+`POST /v1/messages` aceita três variantes de
 conteúdo rico além de `text`. Cada variante tem um campo âncora próprio
 dentro do objeto `content` e é despachada para o WhatsApp como o tipo
 nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
@@ -795,7 +795,7 @@ chega no seu webhook, abra o [Webhook Inspector](https://webhook.turbonotify.com
 
 ## Envio para grupo
 
-Disponível desde 2026-05-25. Para enviar a um grupo, o campo `to`
+Para enviar a um grupo, o campo `to`
 assume a forma de objeto `{ "group_id": "grp_..." }` em vez de
 `{ "number": "+5511999999999" }`, usada em 1:1. Veja
 [Visão geral de grupos](/groups/overview/) para detalhes do modelo.

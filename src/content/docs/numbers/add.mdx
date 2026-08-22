@@ -9,6 +9,8 @@ import DashboardLink from '@components/DashboardLink.astro';
 
 Números extras permitem que você envie mensagens a partir de múltiplos números de WhatsApp, além do número principal da sua conta. Cada número extra é vinculado ao WhatsApp por um processo de pareamento — por QR code ou código de vinculação, conforme o método escolhido.
 
+O cadastro dispara uma cobrança pro-rata imediata, cobrindo os dias restantes do ciclo atual — veja [Cobrança de números extras](/numbers/billing/) para o valor, a fórmula e a política de reembolso. O número só é criado se a cobrança for aprovada.
+
 ## Cadastro pelo dashboard
 
 A forma mais simples de adicionar um número extra é pelo dashboard do Turbo Notify. Acesse a página de <DashboardLink path="/numbers">Números</DashboardLink> e clique em **Adicionar número**.
@@ -373,10 +375,14 @@ Veja os principais erros que podem ocorrer no cadastro de números extras:
 | :----: | ------------------------ | ------------------------------------------------------ |
 | `400`  | `invalid_json`           | O `alias` está vazio ou é inválido. (Um corpo de requisição malformado retorna `422 validation_error`, não este código.) |
 | `400`  | `reserved_alias`         | O alias `"main"` é reservado para o número principal e não pode ser usado em um número extra. |
+| `400`  | `no_payment_method`      | A organização não tem forma de pagamento cadastrada — nenhuma cobrança é tentada e nenhum número é criado. |
 | `402`  | `subscription_inactive`  | A assinatura da organização está `past_due`, `terminated`, `pending` ou com trial expirado (resposta inclui `details.status`). |
 | `402`  | `feature_not_available`  | O plano atual não suporta números extras.              |
 | `402`  | `extra_numbers_limit_reached` | A organização já atingiu o teto de números extras do tier (BUSINESS 1.000 / CUSTOM 1.000). A resposta inclui `details.limit` e `details.current`. |
+| `402`  | `payment_declined`       | A cobrança pro-rata de ativação (veja [Cobrança de números extras](/numbers/billing/)) foi recusada pela forma de pagamento — nenhum número é criado. |
+| `402`  | `payment_requires_authentication` | A forma de pagamento exige reautenticação (3DS) e não pode ser cobrada automaticamente — nenhum número é criado. |
 | `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.            |
 | `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
 | `409`  | `number_already_exists`  | O alias ou o número informado já está cadastrado na conta. |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                   |
+| `503`  | `payment_gateway_unavailable` | A cobrança de ativação não pôde ser confirmada a tempo — nenhum número é criado; tente novamente. |

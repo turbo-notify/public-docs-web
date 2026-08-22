@@ -19,27 +19,24 @@ O valor mensal de um número extra no plano Empresarial é **R$ 34,90**. O plano
 
 ## Como funciona a cobrança
 
-A cobrança de um número extra acontece **no fechamento do seu ciclo de cobrança** — não no momento em que você o adiciona.
+- **Números extras adicionados durante o ciclo** geram uma cobrança pro-rata **imediata, no momento da ativação** — cobrindo os dias restantes até o fim do ciclo atual, usando os dias reais do ciclo (28 a 31, conforme o mês), nunca um mês fixo de 30 dias. Essa cobrança é feita antes mesmo do número ficar disponível: se ela falhar (cartão recusado, sem forma de pagamento cadastrada), o número não chega a ser criado.
+- **A partir do ciclo seguinte**, se o número extra continuar ativo, ele passa a ser cobrado pelo valor cheio (sem pro-rata), na mesma fatura do plano base.
 
-- Ao adicionar um número, ele fica ativo imediatamente e **nenhuma cobrança ocorre nesse momento**.
-- Quando o ciclo fecha, o Turbo Notify cobra o valor proporcional aos dias em que o número esteve ativo — usando os dias reais do ciclo (28 a 31, conforme o mês), nunca um mês fixo de 30 dias.
-- Um número ativo desde antes do início do ciclo é cobrado pelo valor cheio do mês, sem proporcionalização.
-
-**Fórmula:**
+**Fórmula (cobrança pro-rata na ativação):**
 
 ```
-valor = valor_mensal × dias_ativos / dias_do_ciclo
+valor = valor_mensal × dias_restantes_no_ciclo / dias_do_ciclo
 ```
 
-**Exemplo:** em um ciclo de 31 dias (janeiro, por exemplo), um número extra ativado no dia 11 fica ativo por 20 dias até o fim do ciclo. A cobrança é R$ 34,90 × 20 / 31 = **R$ 22,52**.
+**Exemplo:** em um ciclo de 31 dias (janeiro, por exemplo), um número extra ativado no dia 11 tem 20 dias restantes até o fim do ciclo. A cobrança pro-rata, feita imediatamente na ativação, é R$ 34,90 × 20 / 31 = **R$ 22,52**.
 
-A cobrança de cada número extra aparece como um item separado na fatura, junto com o valor do plano base.
+A cobrança pro-rata de ativação é um lançamento avulso. A partir do ciclo seguinte, o número extra passa a compor a fatura regular de início de ciclo, junto com o plano base.
 
-### Números adicionados e removidos no mesmo ciclo não são cobrados
+### Números removidos logo após a ativação podem ser reembolsados
 
-Se você adicionar um número extra e ele for **removido de imediato** antes do fechamento do ciclo atual, ele **não é cobrado** — apenas números que continuam na conta no momento do fechamento entram na fatura.
+Se você adicionar um número extra e ele for **removido de imediato** (veja o critério em [Removendo um número extra](#removendo-um-número-extra)), a cobrança pro-rata feita na ativação é **reembolsada** — veja `refund_eligible` na resposta do `DELETE`.
 
-Atenção: isso vale para a remoção imediata. Quando a remoção é **agendada** (30 dias de espera), o número continua na conta até a exclusão executar — e é cobrado pro-rata em qualquer ciclo que feche nesse meio-tempo. Veja [Removendo um número extra](#removendo-um-número-extra).
+Quando a remoção é **agendada** (30 dias de espera), o número continua na conta e continua sendo cobrado normalmente em cada início de ciclo até a exclusão ser executada — sem reembolso da cobrança já feita.
 
 ## Removendo um número extra
 
@@ -55,14 +52,14 @@ A resposta do `DELETE` informa qual caminho foi tomado, em `refund_eligible` (`t
 
 Os dois caminhos têm efeitos diferentes na fatura:
 
-- **Remoção imediata** — o número é excluído na hora e **não entra na fatura** do ciclo em curso. Veja [Números adicionados e removidos no mesmo ciclo](#números-adicionados-e-removidos-no-mesmo-ciclo-não-são-cobrados).
-- **Remoção agendada** — o número continua na conta durante os 30 dias de espera, então **qualquer ciclo que feche nesse intervalo ainda o cobra pro-rata**, exatamente como um número apenas desconectado (veja [Pausar em vez de remover](#pausar-em-vez-de-remover) logo abaixo). A cobrança só cessa quando a exclusão é efetivamente executada.
+- **Remoção imediata** — o número é excluído na hora e a cobrança pro-rata feita na ativação é **reembolsada**. Veja [Números removidos logo após a ativação](#números-removidos-logo-após-a-ativação-podem-ser-reembolsados).
+- **Remoção agendada** — o número continua na conta durante os 30 dias de espera, então **continua sendo cobrado normalmente em cada início de ciclo** nesse intervalo, exatamente como um número apenas desconectado (veja [Pausar em vez de remover](#pausar-em-vez-de-remover) logo abaixo). A cobrança só cessa quando a exclusão é efetivamente executada.
 
 ### Pausar em vez de remover
 
 Para parar de usar um número temporariamente sem perdê-lo, **desconecte** em vez de remover:
 
-- O número permanece na conta com status `disconnected` e **continua sendo cobrado normalmente** até o fim do ciclo.
+- O número permanece na conta com status `disconnected` e **continua sendo cobrado normalmente** a cada início de ciclo, enquanto permanecer na conta.
 - Pode ser reconectado a qualquer momento, sem precisar recadastrar.
 - É a opção certa para pausas temporárias — a remoção é para quando você não vai mais usar o número.
 
@@ -83,11 +80,11 @@ Remova um número existente para liberar espaço, ou fale com o time comercial s
 
 **Sou cobrado por números desconectados?**
 
-Sim — desconectar pausa o funcionamento do número, mas não interrompe a cobrança. Para parar de ser cobrado, é necessário remover o número — e, quando a remoção é agendada, a cobrança só cessa depois que a exclusão é executada, ao fim dos 30 dias.
+Sim — desconectar pausa o funcionamento do número, mas não interrompe a cobrança: ele continua sendo cobrado a cada início de ciclo. Para parar de ser cobrado, é necessário remover o número — e, quando a remoção é agendada, a cobrança só cessa depois que a exclusão é executada, ao fim dos 30 dias.
 
 **Posso adicionar e remover números livremente?**
 
-Sim, respeitando o limite do plano. Cada adição gera cobrança se o número ainda estiver **na conta** no fechamento do ciclo — inclusive números apenas desconectados ou com remoção agendada. Só a remoção imediata escapa da fatura do ciclo.
+Sim, respeitando o limite do plano. Um número extra ativado no meio do ciclo gera uma cobrança pro-rata imediata; se ainda estiver na conta no início do ciclo seguinte, passa a ser cobrado pelo valor cheio junto com o plano base. Só a remoção imediata (uso mínimo) dá direito a reembolso da cobrança pro-rata de ativação.
 
 **Onde vejo o detalhamento da cobrança dos meus números extras?**
 

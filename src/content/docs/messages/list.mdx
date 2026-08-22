@@ -210,6 +210,7 @@ Para ver as menções de uma mensagem específica, consulte
 | `403`  | `not_authorized`       | A chave de acesso está inválida ou ausente.          |
 | `403`  | `insufficient_scope`   | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
 | `404`  | `number_not_found`     | O alias informado na URL não corresponde a nenhum número cadastrado. |
+| `422`  | `validation_error`     | Um parâmetro de consulta não passou na validação — por exemplo `limit` fora do intervalo 1–200. A resposta traz `details.errors` com os campos rejeitados. |
 | `500`  | `internal_error`       | Erro interno inesperado no servidor.                 |
 
 Veja também: [Consultar mensagem](/messages/get/) · [Polling de eventos](/messages/polling/).

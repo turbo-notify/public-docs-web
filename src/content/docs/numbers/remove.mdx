@@ -13,8 +13,8 @@ Remova números extras que não são mais necessários para liberar vagas no seu
 
 O efeito na fatura depende de qual dos dois caminhos de remoção foi tomado:
 
-- **Remoção imediata** (elegível a reembolso: menos de **72 horas** desde a primeira conexão **e** menos de **10 mensagens** enviadas) — o número é excluído na hora e **não entra na fatura** do ciclo em curso.
-- **Remoção agendada** — o número permanece na conta durante os **30 dias** de espera, então **qualquer ciclo que feche nesse intervalo ainda o cobra pro-rata**, exatamente como um número apenas desconectado. A cobrança só cessa quando a exclusão é de fato executada.
+- **Remoção imediata** (elegível a reembolso: menos de **72 horas** desde a primeira conexão **e** menos de **10 mensagens** enviadas) — o número é excluído na hora e a cobrança pro-rata feita na ativação é **estornada automaticamente**. Ele não entra na fatura do próximo ciclo.
+- **Remoção agendada** — o número permanece na conta durante os **30 dias** de espera, então **qualquer novo ciclo que comece nesse intervalo ainda o cobra pelo valor cheio de renovação**, exatamente como um número apenas desconectado. A cobrança só cessa quando a exclusão é de fato executada.
 
 O campo `refund_eligible` na resposta do `DELETE` informa qual caminho foi tomado (`true` = remoção imediata). Para mais detalhes, consulte a documentação de [Cobrança de números extras](/numbers/billing/).
 
@@ -141,7 +141,7 @@ Acesse a página de <DashboardLink path="/numbers">Números</DashboardLink> no d
   body={{
     scheduled_deletion_at: '2025-07-16T10:00:00Z',
     refund_eligible: true,
-    refund_amount_cents: 0,
+    refund_amount_cents: 2252,
     messages_sent: 3,
   }}
 />
@@ -154,7 +154,7 @@ A resposta descreve o **resultado da exclusão**, não o número em si:
 | ----- | ---- | --------- |
 | `scheduled_deletion_at` | string | Timestamp ISO 8601 de quando a exclusão (soft-delete) acontece. |
 | `refund_eligible` | boolean | `true` quando o número se qualifica para reembolso imediato (janela de 72h, poucas mensagens enviadas) — nesse caso a exclusão é **imediata** e `scheduled_deletion_at` é o momento atual. `false` quando a exclusão é agendada — nesse caso `scheduled_deletion_at` fica **30 dias** à frente. |
-| `refund_amount_cents` | integer | Valor reembolsado em centavos. **Hoje é sempre `0`**, inclusive quando `refund_eligible` é `true` — o cálculo de valores monetários de reembolso ainda não é feito pela API. |
+| `refund_amount_cents` | integer | Valor reembolsado em centavos — o mesmo valor da cobrança pro-rata feita na ativação deste número. `0` quando `refund_eligible` é `false` (nenhum reembolso é gerado nesse caminho). |
 | `messages_sent` | integer | Total de mensagens já enviadas por este número — usado para determinar elegibilidade de reembolso. |
 
 A chamada é **idempotente**: repetir a requisição para um número já agendado

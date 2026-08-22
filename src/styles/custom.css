@@ -166,11 +166,21 @@ starlight-lang-select label {
   box-shadow: none !important;
 }
 
-:root[data-theme='light'] .sidebar-pane,
-:root[data-theme='light'] .right-sidebar-panel,
-:root[data-theme='dark'] .sidebar-pane,
-:root[data-theme='dark'] .right-sidebar-panel {
-  background: transparent;
+/* Desktop-only: at <50rem, Starlight's own PageFrame.astro repurposes
+   `.sidebar-pane` as a `position: fixed` full-height mobile nav drawer
+   with an opaque `background-color: var(--sl-color-black)` — it only
+   becomes the borderless inline panel (`--sl-color-bg-sidebar`) we want
+   transparent starting at the same `min-width: 50rem` breakpoint Starlight
+   itself uses. An unscoped override here nukes that opaque drawer
+   background too, so the mobile nav renders with the page content
+   showing through behind its own links (confirmed live, round 16). */
+@media (min-width: 50rem) {
+  :root[data-theme='light'] .sidebar-pane,
+  :root[data-theme='light'] .right-sidebar-panel,
+  :root[data-theme='dark'] .sidebar-pane,
+  :root[data-theme='dark'] .right-sidebar-panel {
+    background: transparent;
+  }
 }
 
 :root[data-theme='light'] .content-panel,
@@ -611,6 +621,25 @@ starlight-lang-select label {
    Starlight's `.starlight-aside--*` (0,1,0), so no !important.
    ------------------------------------------------------------ */
 
+/* `.starlight-aside__title` is `display: flex` (icon + raw text nodes +
+   any inline `code`/`strong` as siblings) with the default `flex-wrap:
+   nowrap` — fine for Starlight's own short one-word titles ("Nota",
+   "Cuidado"), but this site's house style uses full-sentence aside
+   titles that often embed an inline `code` span (7 sites sitewide,
+   confirmed live, round 16). Without wrap, a title too wide for one row
+   squeezes every flex child onto that single row instead of moving
+   whole children to a new line — a `code` child gets compressed below
+   its own text width and force-breaks its digits/token internally
+   (e.g. `` `202` `` split into "20"/"2"), while `align-items: center`
+   then vertically centers the surviving short items against that now
+   2-line-tall child, visually reordering the sentence. `flex-wrap: wrap`
+   lets each child (icon, text run, code chip) move to a new line as a
+   whole unit instead — a no-op for the short titles this was designed
+   around, since wrap only activates once a row doesn't fit. */
+.starlight-aside__title {
+  flex-wrap: wrap;
+}
+
 /* note → info (#1366D6) */
 :root[data-theme='dark'] .starlight-aside--note {
   --sl-color-asides-text-accent: #7fb0f2;
@@ -673,4 +702,31 @@ starlight-lang-select label {
   white-space: nowrap;
   word-break: keep-all;
   overflow-wrap: normal;
+}
+
+/* ------------------------------------------------------------
+   16. Reduced Motion
+   ------------------------------------------------------------ */
+
+/* Respect users who prefer reduced motion (design-system Motion rule +
+   WCAG 2.3.3) — the same sitewide blanket rule already shipped in
+   dashboard-web/landing-web/webhook-web's globals.css. public-docs-web had
+   no equivalent: Starlight itself gates its markdown `<details>` marker
+   rotation behind `@media (prefers-reduced-motion: no-preference)`, but its
+   *sidebar* group chevron (`SidebarSublist.astro`'s `.caret`, `transition:
+   transform 0.2s ease-in-out`) does not — confirmed live via
+   `page.emulateMedia({ reducedMotion: 'reduce' })`, computed
+   `transitionDuration` stayed `0.2s`. custom.css loads after Starlight's
+   own styles, so this blanket override reaches that (and any other,
+   present or future) un-gated Starlight-internal transition without
+   patching node_modules. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

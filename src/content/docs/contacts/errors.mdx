@@ -14,9 +14,14 @@ import ApiResponse from '@components/ApiResponse.astro';
 | 400  | `invalid_contact_id` | `contact_id` não bate com `^ct_[0-9a-f]{32}$` |
 | 400  | `invalid_cursor` | Cursor opaco corrompido |
 | 402  | `contact_quota_exceeded` | Quota de contatos distintos do ciclo atingida |
+| 403  | `not_authorized` | A chave de acesso está ausente, inválida ou revogada |
+| 403  | `insufficient_scope` | A chave de acesso não possui o escopo `contacts:read` (resposta inclui `required_scope`) |
 | 404  | `contact_not_found` | ID inválido ou de outra organização |
+| 404  | `number_not_found` | O `{alias}` da rota aninhada não corresponde a nenhum número da conta (vale para `/contacts`, `/contacts/{id}`, `/contacts/quota` e demais sub-rotas) |
 | 404  | `contact_picture_unavailable` | Caso raro — falha ao gerar a URL pré-assinada da foto. A ausência de foto (sem storage, upload falhou, contato sem foto) **não** retorna 404: veja [Foto de perfil](/contacts/profile-picture/) |
+| 422  | `validation_error` | Um parâmetro de consulta não passou na validação — por exemplo `limit` fora do intervalo 1–200. A resposta traz `details.errors` com os campos rejeitados |
 | 429  | `refresh_rate_limited` | Limite de refresh por minuto |
+| 500  | `internal_error` | Erro interno inesperado no servidor |
 
 ## Exemplo de resposta 402
 
@@ -36,7 +41,7 @@ Retornado ao tentar contatar via Turbo Notify um contato que passa a ser **conta
   }}
 />
 
-**Ação recomendada:** faça upgrade do plano. Diferentemente de 429, 402 não tem `Retry-After` — o erro é estrutural (o ciclo de faturamento avaliado precisa fechar, em `resets_at`, ou o tier precisa subir).
+**Ação recomendada:** faça upgrade do plano. Diferentemente de 429, 402 não tem `Retry‑After` — o erro é estrutural (o ciclo de faturamento avaliado precisa fechar, em `resets_at`, ou o tier precisa subir).
 
 ## Diferença 402 vs 429
 

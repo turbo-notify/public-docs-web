@@ -184,7 +184,7 @@ O campo `contact_id` aparece apenas para participantes cujo contato já esteja r
 | ------------------------ | ------- | ------------------------------------------------------------------ |
 | `message_id`             | string  | Identificador público da mensagem.                                 |
 | `receipts`               | array   | Lista de transições de status, em ordem cronológica crescente.     |
-| `receipts[].from`            | object  | Parte que emitiu o recibo. Omitido em recibos legados (pré-2026-06) e quando nenhuma informação de identidade está disponível (e.g. recibos de dispositivo vinculado). |
+| `receipts[].from`            | object  | Parte que emitiu o recibo. Omitido quando nenhuma informação de identidade está disponível (e.g. recibos de dispositivo vinculado). |
 | `receipts[].from.contact_id` | string  | Identificador público do contato (`ct_{hex32}`). Omitido quando não disponível. |
 | `receipts[].from.name`       | string  | Nome de exibição do WhatsApp (PII — propriedade da organização). Omitido quando não disponível. |
 | `receipts[].from.number`     | string  | Número E.164 sem `+` de quem confirmou o recibo. Omitido para recibos de dispositivo vinculado (LID) onde o número do confirmador não está disponível. |

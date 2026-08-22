@@ -78,7 +78,7 @@ Turbo Notify ao qual o contato (ou a quota de contatos) pertence — `"main"` pa
 número principal ou o alias de um número extra. Use-o para rotear a observação ao
 inbox correto.
 
-A quota de contatos passou a ser **por número** desde 2026-06-22: cada número tem
+A quota de contatos é **por número**: cada número tem
 sua própria contagem de contatos distintos, então os eventos
 `contact.quota.warning`/`contact.quota.exceeded` identificam o número afetado via
 `number_alias` no envelope. O `data` do evento de quota carrega os campos
@@ -92,7 +92,7 @@ sua própria contagem de contatos distintos, então os eventos
 > O `number_alias` fica no **envelope**, nunca dentro de `data`. Entre os eventos
 > de conta, o campo é omitido apenas em `storage.*` (o único evento sem um número
 > único). Toda família `*.quota.*` — tanto `contact.quota.*` quanto
-> `message.quota.*` (por número desde 2026-07-02) — carrega `number_alias`.
+> `message.quota.*` (por número) — carrega `number_alias`.
 
 ## Exemplo: `contact.created`
 
