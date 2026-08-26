@@ -214,9 +214,10 @@ Além dos campos comuns acima, cada `content_type` expõe um campo específico c
 | `audio` | `audio` | Objeto com campos de mídia e `transcription?` (BYO Speech-to-Text, se configurado) |
 | `document` | `document` | Objeto com `filename?`, `caption?` e campos de mídia |
 | `sticker` | `sticker` | Objeto com campos de mídia |
-| `location` | `location` | Objeto com `latitude`, `longitude`, `name?`, `address?`, `url?`, `is_live?`, `thumbnail_b64?`. `is_live` aparece **apenas quando `true`** (localização em tempo real) — nunca vem como `false`; trate a ausência da chave como "não é ao vivo". |
-| `calendar` | `calendar` | Objeto com `name`, `description?`, `start_at?`, `end_at?`, `join_link?`, `location?`, `has_reminder?`, `reminder_offset_sec?`. Em um calendário **inbound** (recebido do WhatsApp), `has_reminder` aparece **apenas quando `true`** — trate a ausência da chave como "sem lembrete". Em um calendário **outbound enviado pela API**, o body armazenado é devolvido literalmente: `"has_reminder": false` e chaves explicitamente `null` (`description`, `end_at`, `join_link`, `location`, `reminder_offset_sec`) **podem** aparecer. Trate `false`/`null`/chave ausente como equivalentes. |
+| `location` | `location` | Objeto com `latitude`, `longitude`, `name?`, `address?`, `url?`, `is_live?`, `accuracy_m?`, `comment?`, `thumbnail_b64?`. `is_live` aparece **apenas quando `true`** (localização em tempo real) — nunca vem como `false`; trate a ausência da chave como "não é ao vivo". `accuracy_m` (precisão do GPS, em metros) e `comment` (nota de texto anexada pelo remetente) só aparecem em localizações **inbound** quando o WhatsApp os envia — não fazem parte do schema de envio. |
+| `calendar` | `calendar` | Objeto com `name`, `description?`, `start_at?`, `end_at?`, `join_link?`, `location?`, `has_reminder?`, `reminder_offset_sec?`, `extra_guests_allowed?`. Um calendário **inbound** também pode trazer `is_canceled?`/`is_scheduled_call?` (o organizador cancelou o evento / é uma chamada agendada — sinalizados pelo próprio WhatsApp, nunca enviáveis pela API). Em um calendário **inbound**, `has_reminder`/`extra_guests_allowed`/`is_canceled`/`is_scheduled_call` aparecem **apenas quando `true`** — trate a ausência da chave como "não". Em um calendário **outbound enviado pela API**, o body armazenado é devolvido literalmente: `"has_reminder": false`, `"extra_guests_allowed": false` e chaves explicitamente `null` (`description`, `end_at`, `join_link`, `location`, `reminder_offset_sec`) **podem** aparecer (`is_canceled`/`is_scheduled_call` nunca aparecem em calendários outbound). Trate `false`/`null`/chave ausente como equivalentes. |
 | `contact` | `contact` | Cartão vCard estruturado — mesmos campos aceitos no envio ([Enviar contato](/messages/send/#enviar-contato)): `display_name`, `phones[]`, `emails?`, `organization?`, `title?`, `address?` |
+| `interactive` | `interactive` | Objeto com `interactive_type` (sempre `"cta_url"`), `body`, `header?` (`{type: "text", text}`), `footer?`, `url_button: {display_text, url}` |
 
 Para mensagens `replied` (citações):
 
@@ -362,6 +363,36 @@ Para mensagens `reacted`:
 }
 ```
 
+### Exemplo — mensagem interativa (cta_url)
+
+```json title="GET /v1/numbers/{alias}/messages/{id} — interactive"
+{
+  "id": "msg_d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "from": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+  "to": { "name": "João", "number": "5511999999999" },
+  "preview": "Clique para saber mais",
+  "interactive": {
+    "interactive_type": "cta_url",
+    "body": "Clique para saber mais",
+    "footer": "Turbo Notify",
+    "url_button": {
+      "display_text": "Acessar",
+      "url": "https://turbonotify.com"
+    }
+  },
+  "content_type": "interactive",
+  "direction": "outbound",
+  "channel": "whatsapp",
+  "origin": "tn",
+  "at": "2026-06-01T13:00:05Z",
+  "status": { "state": "delivered", "at": "2026-06-01T13:01:00Z" }
+}
+```
+
+O botão `url_button` abre o link diretamente no destinatário; `header` é opcional (`{type: "text", text}`, texto-only na versão atual).
+
 ### Exemplo — mensagem com menções
 
 O texto carrega os tokens `@<numero>` normalizados; a estrutura `mentions` traz
@@ -478,6 +509,20 @@ Mídia não está disponível. O campo `reason` indica a causa.
 | `size_bytes` | `integer \| null` | Tamanho do arquivo em bytes |
 | `setup_hint` | `object \| null` | Presente quando `reason` é `no_storage` ou `storage_circuit_open`. Contém `setup_url`, `docs_url` e `message`. |
 
+### `audio.transcription`
+
+Quando **BYO Speech-to-Text** está configurado para o número, mensagens de áudio **inbound** ganham o campo `transcription` dentro do objeto `audio` — outra união discriminada por `kind` (omitida quando a transcrição não foi tentada, por exemplo áudio outbound ou STT não configurado). Mesmo shape do `data.transcription` dos webhooks/polling de `message.received`:
+
+| Campo | Tipo | Descrição |
+| ----- | ---- | --------- |
+| `kind` | string | `"available"` — transcrição concluída, ou `"unavailable"` — não disponível. |
+| `text` | string | *(apenas `available`)* Texto transcrito. |
+| `language` | `string \| null` | *(apenas `available`)* Código BCP-47 do idioma detectado/configurado, quando disponível. |
+| `reason` | string | *(apenas `unavailable`)* Um destes 5 valores: `not_configured`, `provider_error`, `timeout`, `no_adapter` ou `internal_error`. |
+| `hint` | `string \| null` | *(apenas `unavailable`)* Orientação acionável opcional. |
+
+O fluxo da mensagem nunca é bloqueado por falha de transcrição.
+
 ## Status da mensagem
 
 O campo `status` contém o estado atual de entrega:
@@ -498,6 +543,7 @@ O campo `preview` é **permanente** — nunca é removido pelo ciclo de retenç�
 - Para `location`: texto humanizado sem colchetes (ex: `Av. Paulista, Sao Paulo, SP`).
 - Para `calendar`: resumo sem colchetes, com dia da semana e mês abreviados **em inglês** e o horário convertido para **UTC** (ex: `Sprint Planning — Mon, 1 Jun 2026 17:00`).
 - Para mídia: a legenda (quando disponível) ou o label do tipo em inglês (`[Image]`, `[Video]`, `[Audio]`, `[Document]`, `[Sticker]`). **Documento:** legenda → **nome do arquivo** → `[Document]`. **Áudio com transcrição é a exceção:** quando há transcrição disponível, o `preview` traz o **texto transcrito** (truncado em 50 caracteres) — `[Audio]` só aparece quando não há transcrição nem legenda.
+- Para `interactive`: o texto do `body` da mensagem, ou `[Interactive]` quando o corpo está vazio.
 - Para reações: o emoji ou `""` para remoção.
 - Menções: cada token `@<numero>` presente em `mentions` conta como exatamente
   **1 caractere** no limite de ~50, e o recorte nunca corta um token no meio; um

@@ -153,7 +153,7 @@ A resposta descreve o **resultado da exclusão**, não o número em si:
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `scheduled_deletion_at` | string | Timestamp ISO 8601 de quando a exclusão (soft-delete) acontece. |
-| `refund_eligible` | boolean | `true` quando o número se qualifica para reembolso imediato (janela de 72h, poucas mensagens enviadas) — nesse caso a exclusão é **imediata** e `scheduled_deletion_at` é o momento atual. `false` quando a exclusão é agendada — nesse caso `scheduled_deletion_at` fica **30 dias** à frente. |
+| `refund_eligible` | boolean | `true` quando o número se qualifica para reembolso imediato (janela de 72h, poucas mensagens enviadas) — nesse caso a exclusão é **imediata** e `scheduled_deletion_at` é o momento atual. `false` quando a exclusão é agendada — nesse caso `scheduled_deletion_at` fica no **fim do ciclo de uso atual do número** (ciclo de 30 dias ancorado na primeira conexão do número, não uma contagem fixa de 30 dias a partir de agora). |
 | `refund_amount_cents` | integer | Valor reembolsado em centavos — o mesmo valor da cobrança pro-rata feita na ativação deste número. `0` quando `refund_eligible` é `false` (nenhum reembolso é gerado nesse caminho). |
 | `messages_sent` | integer | Total de mensagens já enviadas por este número — usado para determinar elegibilidade de reembolso. |
 
