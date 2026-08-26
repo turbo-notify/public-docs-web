@@ -202,7 +202,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
 
 ## Menções (@mentions)
 
-Disponível desde 2026-07-03. Para mencionar
+Para mencionar
 alguém — a menção real do WhatsApp, com nome tocável e notificação no aparelho
 do mencionado — escreva o token **`@<numero>`** diretamente no `text` (ou no
 `caption` de mídia — veja [Envio de mídia](/messages/send-media/)): `@` seguido
@@ -452,6 +452,7 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 | `422`  | `session_not_connected` | A sessão do remetente não está conectada no momento do envio. |
 | `422`  | `extra_number_not_connected` | O número extra do alias na URL está registrado mas sua conexão como dispositivo vinculado não está ativa no momento. |
 | `422`  | `group_not_owned_by_number` | O `group_id` informado pertence a outro número da conta, não ao alias do path. |
+| `422`  | `message_not_replyable` | *(apenas `POST .../messages/{message_id}/reply`)* A mensagem citada ainda não foi enviada ao WhatsApp ou já foi apagada. |
 | `429`  | `messages_quota_exceeded` | Franquia de mensagens do ciclo atual esgotada — veja [Quota e uso](/usage/quota/). |
 | `429`  | `send_rate_spacing`     | Envio antes do intervalo mínimo entre mensagens do seu tier — veja [Limites de uso](/messages/rate-limits/). |
 | `429`  | `rate_limit_exceeded`   | Outro limite operacional do plano foi ultrapassado — veja [Limites de uso](/messages/rate-limits/). |
@@ -481,7 +482,7 @@ Para saber por quanto tempo as mensagens ficam disponíveis para consulta e oper
 
 ## Conteúdo rico — localização, contato e calendário
 
-A partir de 2026-04-27 o `POST /v1/messages` aceita três variantes de
+`POST /v1/messages` aceita três variantes de
 conteúdo rico além de `text`. Cada variante tem um campo âncora próprio
 dentro do objeto `content` e é despachada para o WhatsApp como o tipo
 nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
@@ -652,6 +653,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
 | `content.phones[]` | array | sim | 1–10 itens; `number` em E.164 |
 | `content.phones[].label` | string | não | default `"Mobile"` (Mobile/Home/Work/...) |
 | `content.emails[]` | array | não | 0–10; `address` validado como email |
+| `content.emails[].label` | string | não | default `"Email"` |
 | `content.organization` | string | não | máx. 200 chars |
 | `content.title` | string | não | máx. 100 chars |
 | `content.address` | string | não | máx. 500 chars |
@@ -795,7 +797,7 @@ chega no seu webhook, abra o [Webhook Inspector](https://webhook.turbonotify.com
 
 ## Envio para grupo
 
-Disponível desde 2026-05-25. Para enviar a um grupo, o campo `to`
+Para enviar a um grupo, o campo `to`
 assume a forma de objeto `{ "group_id": "grp_..." }` em vez de
 `{ "number": "+5511999999999" }`, usada em 1:1. Veja
 [Visão geral de grupos](/groups/overview/) para detalhes do modelo.
