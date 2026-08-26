@@ -337,11 +337,25 @@ O resultado real chega via webhook `message.deleted` (sucesso) ou
 `message.delete.failed` (falha, com objeto `error`).
 
 Após uma exclusão bem-sucedida, `GET /v1/numbers/{alias}/messages/{id}` deixa
-de retornar o texto/preview (campo vazio) tanto para quem apagou quanto para
-todo destinatário da mensagem. Se a mensagem original era de mídia (imagem,
-vídeo, áudio, documento ou figurinha), o bloco de mídia correspondente passa
-a `{"kind": "unavailable", "reason": "deleted"}` em ambos os lados — a mídia
-não fica mais acessível via URL assinada.
+de retornar o conteúdo original tanto para quem apagou quanto para todo
+destinatário da mensagem. O `content_type` da mensagem **não muda** — o que
+muda é o conteúdo do campo estruturado correspondente:
+
+| `content_type` original | Campo afetado | Valor após a exclusão |
+| --- | --- | --- |
+| `text` | `text` | `""` (string vazia) |
+| `image` / `video` / `audio` / `document` / `sticker` | `image` / `video` / `audio` / `document` / `sticker` | `{"kind": "unavailable", "reason": "deleted"}` — a mídia não fica mais acessível via URL assinada |
+| `location` | `location` | `{"kind": "unavailable", "reason": "deleted"}` |
+| `calendar` | `calendar` | `{"kind": "unavailable", "reason": "deleted"}` |
+| `contact` | `contact` | `{"kind": "unavailable", "reason": "deleted"}` |
+| `interactive` | `interactive` | `{"kind": "unavailable", "reason": "deleted"}` |
+
+O mesmo objeto `{"kind": "unavailable", "reason": "deleted"}` é usado em
+todos os casos não-texto — inclusive para `location`/`calendar`/`contact`/
+`interactive`, que não carregam mídia própria — para que o cliente tenha
+**um único formato previsível** para "este conteúdo não está mais
+disponível", em vez de precisar tratar cada `content_type` de forma
+diferente.
 
 ## Erros possíveis
 
@@ -349,8 +363,8 @@ Os dois endpoints compartilham o mesmo conjunto de erros:
 
 | Status | Código de erro          | Descrição                                                     |
 | :----: | ------------------------ | -------------------------------------------------------------- |
-| `400`  | `message_not_editable`   | *(apenas edit)* A mensagem não foi enviada pela API do Turbo Notify (`origin: "native"`, digitada no próprio celular), ainda não foi enviada, ou seu status atual (`failed`, por exemplo) não permite edição. |
-| `400`  | `message_not_deletable`  | *(apenas delete)* A mensagem não foi enviada pela API do Turbo Notify (`origin: "native"`, digitada no próprio celular), ainda não foi enviada, ou seu status atual não permite exclusão. |
+| `400`  | `message_not_editable`   | *(apenas edit)* A mensagem é **inbound** (recebida de outra pessoa), foi enviada pelo próprio celular (`origin: "native"`), não é do tipo texto, ainda não foi enviada, já foi deletada, ou seu status atual (`failed`, por exemplo) não permite edição. |
+| `400`  | `message_not_deletable`  | *(apenas delete)* A mensagem é **inbound** (recebida de outra pessoa), foi enviada pelo próprio celular (`origin: "native"`), ainda não foi enviada, já foi deletada, ou seu status atual não permite exclusão. |
 | `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.                     |
 | `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
 | `404`  | `number_not_found`       | O alias informado na URL não corresponde a nenhum número cadastrado. |
@@ -361,34 +375,28 @@ Os dois endpoints compartilham o mesmo conjunto de erros:
 
 ## Quais mensagens podem ser editadas ou deletadas
 
-O status **não é o único critério**. Passar nos dois critérios garante apenas que
-a requisição é **aceita** (`202`) — não que a operação vai se concluir.
+Três critérios, e os três precisam ser satisfeitos — qualquer um que falhe é
+rejeitado **de forma síncrona**, com `400 message_not_editable` /
+`400 message_not_deletable`, antes de qualquer round-trip com o WhatsApp:
 
-São dois critérios, e ambos precisam ser satisfeitos:
-
-1. **Identificador de requisição** — a mensagem precisa ter sido gravada com o
-   identificador de requisição que estes endpoints exigem. Mensagens outbound
-   digitadas **no próprio celular** (`origin: "native"`) são gravadas sem ele e
-   por isso **nunca** são editáveis nem deletáveis — **independentemente do
-   status**. Elas falham com `400 message_not_editable` /
-   `400 message_not_deletable`.
-2. **Status** — apenas as mensagens que já estão em `sent`, `delivered` ou `read`
-   são aceitas. Mensagens ainda `pending` ou já `failed` retornam
+1. **Enviada por este número, via esta API** — a mensagem precisa ter sido
+   enviada pela API do Turbo Notify por este número (`direction: "outbound"`
+   e `origin: "tn"`). Duas mensagens ficam de fora por este critério:
+   - Mensagens **inbound** (recebidas) — mensagens que um contato/participante
+     enviou **para** você. Elas pertencem ao remetente, não a você, e o
+     WhatsApp não permite que você edite ou revogue uma mensagem que não
+     enviou.
+   - Mensagens outbound digitadas **no próprio celular** (`origin: "native"`)
+     — enviadas fora da API, direto no aparelho. O worker da Turbo Notify não
+     é o cliente que originou essa mensagem, então também não pode editá-la
+     ou revogá-la.
+2. **Tipo de conteúdo** *(apenas edit)* — o WhatsApp só suporta editar
+   mensagens de **texto**. Editar uma mensagem de mídia (imagem, vídeo,
+   áudio, documento, sticker) ou de outro tipo estruturado (localização,
+   calendário, contato, interativa) falha com `400 message_not_editable`.
+3. **Status** — apenas as mensagens que já estão em `sent`, `delivered` ou
+   `read`, e que ainda não foram deletadas, são aceitas. Mensagens ainda
+   `pending`, já `failed`, ou já deletadas retornam
    `400 message_not_editable` / `400 message_not_deletable`.
-
-:::caution[Mensagem inbound (recebida): aceita com `202`, mas nunca conclui]
-Editar ou deletar uma mensagem **recebida** **não** é rejeitado de forma síncrona
-— e, ao contrário do que se poderia esperar, **não** retorna `400`. Uma mensagem
-inbound passa pelas duas validações acima (ela tem identificador de requisição e
-chega em status `delivered`), então a requisição é **aceita** e retorna
-**`202 Accepted`**, exatamente como para uma mensagem sua.
-
-A operação, porém, **não tem como se concluir**: a mensagem pertence ao
-remetente, não a você. A falha aparece apenas de forma **assíncrona**, no webhook
-`message.edit.failed` / `message.delete.failed`.
-
-Ou seja: para esse caso, **não** espere um erro no corpo da resposta — acompanhe
-o webhook `*.failed` (ou o `status` da mensagem) para saber o desfecho real.
-:::
 
 Veja também: [Consultar mensagem](/messages/get/) · [Status da mensagem](/messages/status/) · [Webhook](/messages/webhook/).

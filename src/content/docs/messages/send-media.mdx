@@ -25,7 +25,7 @@ Para enviar mídia a partir de um número extra, use `/v1/numbers/{alias}/messag
 | `video` | `video_url` | MP4 | 100 MB | ✓ | — |
 | `audio` | `audio_url` | MP3, OGG, M4A | 16 MB | — | — |
 | `document` | `document_url` | PDF, DOCX, XLSX, etc. | 100 MB | ✓ | ✓ |
-| `sticker` | `sticker_url` | WebP animado | 500 KB | — | — |
+| `sticker` | `sticker_url` | WebP animado, exatamente 512×512px | 500 KB | — | — |
 
 `caption` **não é aceito** em `audio` e `sticker` — a API retorna
 `422` se o campo for enviado nesses tipos.
@@ -352,8 +352,9 @@ de documento também aceita [menções `@<numero>`](/messages/send/#menções-me
   </TabItem>
 </Tabs>
 
-Stickers devem ser WebP animados (formato exigido pelo WhatsApp) e
-respeitar o limite de 500 KB.
+Stickers devem ser WebP animados (formato exigido pelo WhatsApp), com
+dimensões **exatas de 512×512 pixels** — qualquer outra dimensão é
+rejeitada mesmo que o WebP seja válido — e respeitar o limite de 500 KB.
 
 ## Esquema de campos (todos os tipos)
 
