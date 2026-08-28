@@ -39,7 +39,7 @@ Caso precise restringir o acesso a determinados números, é necessário criar c
 
 ## Escopos
 
-Cada chave carrega **escopos de permissão** que determinam quais operações ela pode chamar — por exemplo `messages:send`, `messages:read`, `numbers:read`, `numbers:write`, `events:read`, `contacts:read`, `groups:read` e `organizations:read`. A API distingue dois erros `403`:
+Cada chave carrega **escopos de permissão** que determinam quais operações ela pode chamar — por exemplo `messages:send`, `messages:read`, `numbers:read`, `numbers:write`, `events:read`, `contacts:read`, `contacts:write`, `groups:read` e `organizations:read`. A API distingue dois erros `403`:
 
 - `not_authorized` — a chave está ausente, inválida ou revogada.
 - `insufficient_scope` — a chave é válida, mas não possui o escopo exigido pelo endpoint. A resposta inclui o campo `required_scope` com o escopo necessário:

@@ -8,7 +8,7 @@ sidebar:
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-Solicita o reenriquecimento de um contato sob demanda (nome e foto). É um disparo de reprocessamento, não uma operação de escrita. Retorna 202 imediatamente; o enriquecimento ocorre em background.
+Solicita o reenriquecimento de um contato sob demanda (nome e foto). Dispara uma ação real no WhatsApp (consulta de metadados) e consome o limite de refresh por tier — por isso exige o escopo de escrita, não o de leitura. Retorna 202 imediatamente; o enriquecimento ocorre em background.
 
 ## Endpoint
 
@@ -18,7 +18,7 @@ POST /v1/contacts/{contact_id}/refresh
 
 Para números extras: `POST /v1/numbers/{alias}/contacts/{contact_id}/refresh`
 
-**Escopo obrigatório:** `contacts:read`.
+**Escopo obrigatório:** `contacts:write`.
 
 ## Rate limit
 
