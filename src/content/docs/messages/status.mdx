@@ -216,13 +216,13 @@ Neste endpoint o campo `error` está **sempre presente**: vem preenchido quando 
 | :----: | ---------------- | ---------------------------------------------------- |
 | `403`  | `not_authorized` | A chave de acesso está inválida ou ausente.          |
 | `403`  | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
-| `404`  | `not_found`      | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de leitura por retenção](/messages/retention/) do tier — os três casos devolvem a mesma resposta. |
+| `404`  | `not_found`      | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de retenção de conteúdo](/messages/retention/) do plano — os três casos devolvem a mesma resposta. |
 | `404`  | `message_not_found` | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `500`  | `internal_error` | Erro interno inesperado no servidor.                 |
 
 ## Retenção
 
-A janela de leitura por tier vale **também para este endpoint**: a mensagem é resolvida pelo mesmo caminho compartilhado por toda rota que recebe um `{message_id}`, e esse caminho aplica o filtro de retenção antes de qualquer outra coisa. Uma vez que a mensagem fica mais antiga que a janela do seu tier, `GET /v1/numbers/{alias}/messages/{id}/status` passa a retornar `404 not_found` — indistinguível de uma mensagem que nunca existiu. Consulte e arquive o status final antes disso; para os prazos por tier, veja a documentação de [Retenção](/messages/retention/).
+A janela de retenção de conteúdo do plano vale **também para este endpoint**: a mensagem é resolvida pelo mesmo caminho compartilhado por toda rota que recebe um `{message_id}`, e esse caminho aplica o filtro de retenção antes de qualquer outra coisa. Uma vez que a mensagem fica mais antiga que a janela do seu plano, `GET /v1/numbers/{alias}/messages/{id}/status` passa a retornar `404 not_found` — indistinguível de uma mensagem que nunca existiu. Consulte e arquive o status final antes disso; para os prazos por plano, veja a documentação de [Retenção](/messages/retention/).
 
 ## Timestamp da transição de status
 

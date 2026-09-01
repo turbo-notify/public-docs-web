@@ -192,7 +192,7 @@ Use `GET /v1/messages/{id}` para o número principal. Para números extras, use 
 | `number_alias` | string | Handle do número Turbo Notify ao qual a mensagem pertence — `"main"` ou o alias de um número extra. Resolva seu número/contato via `GET /v1/numbers/{alias}`. |
 | `from` | object | Remetente — shape direção-aware |
 | `to` | object | Destinatário — shape direção-aware |
-| `preview` | string | Permanente — recorte grapheme-aware do conteúdo |
+| `preview` | string | Recorte grapheme-aware do conteúdo. Segue a mesma janela de retenção de conteúdo do plano — veja [Sobre `preview`](#sobre-preview) |
 | _campo específico_ | object\|string | Conteúdo completo nomeado pelo `content_type` (`text`, `image`, …). Veja a tabela abaixo. |
 | `content_type` | string | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, `contact`, `interactive`. Enquetes e tipos não reconhecidos são armazenados como `text` — o `preview` preserva o texto disponível. |
 | `direction` | string | `outbound` (enviada) ou `inbound` (recebida) |
@@ -538,7 +538,7 @@ O campo `status` contém o estado atual de entrega:
 
 ## Sobre `preview`
 
-O campo `preview` é **permanente** — nunca é removido pelo ciclo de retenção (LGPD). Contém um recorte grapheme-aware do conteúdo:
+O campo `preview` segue **exatamente a mesma janela de retenção de conteúdo** do plano da sua organização — veja [Retenção das mensagens](/messages/retention/). Ele não é permanente e não sobrevive além do horizonte de conteúdo do seu plano; é uma promessa de retenção única, não um remanescente que escapa dela. Enquanto a mensagem ainda está dentro da janela, `preview` contém um recorte grapheme-aware do conteúdo:
 - Para `text`: primeiros ~50 caracteres do texto.
 - Para `location`: texto humanizado sem colchetes (ex: `Av. Paulista, Sao Paulo, SP`).
 - Para `calendar`: resumo sem colchetes, com dia da semana e mês abreviados **em inglês** e o horário convertido para **UTC** (ex: `Sprint Planning — Mon, 1 Jun 2026 17:00`).
@@ -550,7 +550,7 @@ O campo `preview` é **permanente** — nunca é removido pelo ciclo de retenç�
   `@<digitos>` literal fora de `mentions` conta caractere a caractere. O valor é
   **byte-idêntico** ao `data.preview` dos webhooks/polling.
 
-O campo do conteúdo completo (`text`, `image`, `location`, etc.) é **omitido** da resposta (chave ausente, nunca `null`) após o período de retenção — dentro da janela de leitura do seu tier, `preview` é o único campo que garante acesso ao conteúdo mesmo depois que o corpo completo é descartado.
+Depois que a mensagem sai da janela de retenção de conteúdo do seu plano, esta consulta responde `404 not_found` para o recurso **inteiro** — `preview` não é retornado separadamente do restante do conteúdo, não há um caminho que devolva só o recorte depois desse ponto. A mesma janela redige `data.preview` (junto com o resto do conteúdo) nos payloads de webhook armazenados para reentrega e nos eventos de `GET /v1/events` (polling): consulta por id, reentrega de webhook e polling obedecem a **uma única promessa de retenção**, nunca duas.
 
 ## Sobre `kind`
 
@@ -565,7 +565,7 @@ Quando o Object Storage está configurado, o Turbo Notify copia automaticamente 
 | `400` | `invalid_message_id` | O identificador não corresponde ao formato `msg_` + 32 hex. |
 | `403` | `not_authorized` | A chave de acesso está inválida ou ausente. |
 | `403` | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
-| `404` | `not_found` | Mensagem não encontrada, pertence a outra organização, ou está fora da [janela de leitura por retenção](/messages/retention/) do tier — mesmo shape de uma mensagem que nunca existiu. |
+| `404` | `not_found` | Mensagem não encontrada, pertence a outra organização, ou está fora da [janela de retenção de conteúdo](/messages/retention/) do plano — mesmo shape de uma mensagem que nunca existiu. |
 | `404` | `message_not_found` | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `429` | `rate_limit_exceeded` | Limite de requisições ultrapassado. |
 | `500` | `internal_error` | Erro interno inesperado no servidor. |

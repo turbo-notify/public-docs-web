@@ -169,32 +169,30 @@ que só olham um campo. Estes dois endpoints (diferente de `GET /v1/usage`)
 expõem `cycle_start`/`cycle_end` explicitamente porque são o snapshot de **um**
 número, não um roll-up de vários.
 
-## Janela de leitura por retenção (read-window)
+## Janela de retenção de conteúdo
 
-Além da quota, cada tier define por quantos dias uma mensagem **permanece
-endereçável** pela API — mensagens mais antigas que essa janela deixam de
-existir para a API, tanto para leitura quanto para as ações que dependem do id
-(responder, editar, apagar, reagir):
-
-| Tier       | Janela de leitura |
-| ---------- | -----------------:|
-| `FREE`     | 7 dias            |
-| `SOLO`     | 30 dias           |
-| `BUSINESS` | 90 dias           |
-| `CUSTOM`   | 365 dias          |
+Além da quota, cada plano define por quantos dias o **conteúdo** de uma
+mensagem (texto, legenda, referência de mídia) continua acessível pela API.
+Não é apenas um filtro de leitura: passada essa janela, o Turbo Notify remove
+permanentemente o conteúdo do banco — mensagens mais antigas que a janela
+deixam de existir para a API, tanto para leitura quanto para as ações que
+dependem do id (responder, editar, apagar, reagir).
 
 - `GET /v1/numbers/{alias}/messages` (lista por cursor) **filtra** mensagens
   fora da janela — elas simplesmente não aparecem na página.
 - **Toda** operação que endereça a mensagem por id retorna **404**
   (indistinguível de "nunca existiu") quando ela é mais antiga que a janela do
-  tier: a consulta `.../messages/{id}`, os sub-recursos `.../status`,
+  plano: a consulta `.../messages/{id}`, os sub-recursos `.../status`,
   `.../receipts` e `.../reactions`, e as ações `.../reply`, `.../edit`,
   `.../delete` e `.../react` — nas rotas aninhadas e nas planas.
-- Esta janela é sobre **visibilidade via API**; o armazenamento físico segue a
-  retenção de partição fixa (12 meses) independentemente do tier.
+- Esta janela é sobre o **conteúdo**; o registro da mensagem (metadados:
+  status, timestamps, participantes) sobrevive por uma retenção fixa de 12
+  meses, igual para todo plano, independentemente da janela de conteúdo
+  escolhida.
 
-A página canônica sobre retenção é [Retenção das mensagens](/messages/retention/)
-— consulte-a para o ciclo de vida completo do conteúdo e dos metadados.
+Os valores por plano (e as opções de estender a janela no plano `BUSINESS`)
+estão na página canônica [Retenção das mensagens](/messages/retention/) —
+consulte-a para o ciclo de vida completo do conteúdo e dos metadados.
 
 ## Erros
 

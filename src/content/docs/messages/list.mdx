@@ -198,8 +198,8 @@ Para ver as menções de uma mensagem específica, consulte
   página é sempre completa e sem lacunas.
 - A paginação usa `cursor` — passe o valor retornado como `cursor` na
   próxima chamada até `has_more` ser `false`.
-- Mensagens fora da [janela de leitura por retenção](/messages/retention/)
-  do seu tier são **filtradas** — elas simplesmente não aparecem na página
+- Mensagens fora da [janela de retenção de conteúdo](/messages/retention/)
+  do seu plano são **filtradas** — elas simplesmente não aparecem na página
   (diferente de `GET .../messages/{id}`, que retorna 404 para uma mensagem
   fora da janela).
 

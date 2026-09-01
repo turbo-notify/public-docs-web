@@ -346,7 +346,7 @@ Saiba mais sobre [números extras](/numbers/add/).
 | `402`  | `feature_not_available` | O recurso não está disponível no plano contratado. |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
-| `404`  | `not_found`             | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de leitura por retenção](/messages/retention/) do tier — a janela **também** se aplica a reagir, e os três casos devolvem a mesma resposta. |
+| `404`  | `not_found`             | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de retenção de conteúdo](/messages/retention/) do plano — a janela **também** se aplica a reagir, e os três casos devolvem a mesma resposta. |
 | `404`  | `message_not_found`     | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `422`  | `message_not_reactable` | A mensagem alvo da reação ainda não foi enviada ao WhatsApp ou já foi apagada. |
 | `422`  | `no_active_session`     | A organização não tem sessão WhatsApp conectada.   |

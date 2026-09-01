@@ -352,7 +352,23 @@ Para recuperar eventos perdidos durante uma indisponibilidade do seu endpoint:
 
 ## Retenção de eventos
 
-Eventos ficam disponíveis para consulta por **30 dias**. Consultas além desse período retornam resultado vazio.
+O **registro do evento** (a linha em si — `id`, `type`, `created_at`,
+`number_alias`) fica disponível para consulta por até **90 dias**, um
+horizonte fixo da plataforma. Consultas além desse período retornam resultado
+vazio.
+
+Para a família `message.*`, os campos de **conteúdo** dentro de `data`
+(`preview`, `transcription`, quando presentes) obedecem, à parte, à mesma
+janela de retenção de conteúdo do seu plano — a mesma que governa
+`GET /v1/numbers/{alias}/messages/{id}` e a reentrega de webhook (veja
+[Retenção das mensagens](/messages/retention/)). Consulta por id, reentrega
+de webhook e polling obedecem a uma única promessa de retenção, nunca duas:
+um evento `message.*` mais antigo que a janela de conteúdo do seu plano
+continua retornável pelo polling até completar os 90 dias de retenção do
+evento em si, mas com os campos de conteúdo já **redigidos** — a linha do
+evento persiste, o conteúdo não. Numa organização `BUSINESS` no padrão de 3
+dias, por exemplo, o conteúdo de eventos `message.*` some da resposta bem
+antes dos 90 dias de retenção do evento.
 
 ## Erros possíveis
 

@@ -21,7 +21,7 @@ mídia (`image`, `video`, `audio`, `document`, `sticker` — veja
 
 Para citar (responder) uma mensagem existente — qualquer variante de conteúdo — use o endpoint dedicado `POST /v1/messages/{message_id}/reply`, onde `{message_id}` é o id público da mensagem citada (`msg_{hex32}`). O body do reply contém apenas `content`. O webhook resultante é `message.replied` (em vez de `message.sent`); veja [Webhooks](/messages/webhook/#exemplo--messagereplied-inboundoutbound).
 
-A mensagem citada precisa estar **dentro da [janela de leitura por retenção](/messages/retention/)** do seu tier: responder a uma mensagem mais antiga que a janela retorna `404 not_found` — a mesma resposta de uma mensagem inexistente.
+A mensagem citada precisa estar **dentro da [janela de retenção de conteúdo](/messages/retention/)** do seu plano: responder a uma mensagem mais antiga que a janela retorna `404 not_found` — a mesma resposta de uma mensagem inexistente.
 
 :::tip[Roteamento por número]
 - **Número principal** → `POST /v1/messages` (rota plana) **ou** `POST /v1/numbers/main/messages` — as duas formas são idênticas.

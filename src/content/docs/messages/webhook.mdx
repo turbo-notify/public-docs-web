@@ -569,7 +569,7 @@ Receipts são sempre **inbound**. `from` é quem disparou o recibo; `to` identif
 }
 ```
 
-`preview` e `content_type` são **preservados** mesmo depois que o corpo completo da mensagem original é descartado pelo ciclo de retenção (LGPD) — o `preview` é justamente o campo que sobrevive ao descarte. O que remove o acesso à mensagem é a [janela de leitura por retenção](/messages/retention/) do tier: passada a janela, consultá-la por id retorna `404 not_found`.
+`preview` segue a mesma janela de retenção de conteúdo do plano que o corpo completo da mensagem: não é permanente. Passada essa janela, `preview` e `transcription` (quando presentes) vêm com um marcador de redação em vez do conteúdo original, tanto em uma reentrega de webhook quanto em `GET /v1/events`. Consultá-la por id em `GET /v1/numbers/{alias}/messages/{id}` retorna `404 not_found` no mesmo instante. Veja [Retenção das mensagens](/messages/retention/) para o modelo completo (metadados: 12 meses fixos em todo plano; conteúdo, incluindo `preview`: FREE/SOLO 3 dias fixos, BUSINESS 3 dias por padrão com opção de 30 ou 90, CUSTOM definido em contrato).
 
 #### Recibos em grupo — um por participante
 
