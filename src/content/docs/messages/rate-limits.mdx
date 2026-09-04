@@ -1,6 +1,6 @@
 ---
 title: Limites de uso
-description: Limites de velocidade de envio (rate limits) por tier — envio e refresh de contato. As franquias de mensagens/contatos por ciclo vivem em Quota e Uso.
+description: Limites de velocidade de envio (rate limits) por tier: envio e refresh de contato. As franquias de mensagens/contatos por ciclo vivem em Quota e Uso.
 ---
 
 import ApiResponse from '@components/ApiResponse.astro';
@@ -10,7 +10,7 @@ import ExternalLink from '@components/ExternalLink.astro';
 
 ## Quotas vs. limites de taxa (rate limits)
 
-O Turbo Notify aplica dois mecanismos de controle distintos — não confunda um com o outro:
+O Turbo Notify aplica dois mecanismos de controle distintos. Não confunda um com o outro:
 
 | | Quota | Limite de taxa (rate limit) |
 | - | ----- | ---------------------------- |
@@ -20,11 +20,11 @@ O Turbo Notify aplica dois mecanismos de controle distintos — não confunda um
 | Erros típicos | `402 contact_quota_exceeded` · `429 messages_quota_exceeded` | `429 send_rate_spacing` · `429 rate_limit_exceeded` |
 | Documentado em | [Quota e uso](/usage/quota/) | Esta página |
 
-Esta página cobre exclusivamente os limites de **velocidade** — quão rápido você pode enviar mensagens e chamar endpoints específicos. Para as franquias de mensagens/contatos por ciclo e seus erros, veja [Quota e uso](/usage/quota/).
+Esta página cobre exclusivamente os limites de **velocidade**: quão rápido você pode enviar mensagens e chamar endpoints específicos. Para as franquias de mensagens/contatos por ciclo e seus erros, veja [Quota e uso](/usage/quota/).
 
 ## Velocidade de envio (por tier)
 
-Cada mensagem enviada via API respeita um intervalo mínimo em relação ao envio anterior **no mesmo número** — o espaçamento anti-ban entre envios. O intervalo é definido pelo tier do plano:
+Cada mensagem enviada via API respeita um intervalo mínimo em relação ao envio anterior **no mesmo número**: o espaçamento anti-ban entre envios. O intervalo é definido pelo tier do plano:
 
 | Tier       | Intervalo mínimo entre envios | Equivalente em mensagens/min |
 | ---------- | -----------------------------:| -----------------------------:|
@@ -33,7 +33,7 @@ Cada mensagem enviada via API respeita um intervalo mínimo em relação ao envi
 | `BUSINESS` | 0.6s | 100 msg/min |
 | `CUSTOM`   | 0.4s | 150 msg/min |
 
-Enviar antes do intervalo mínimo desde o último envio bem-sucedido **naquele número** retorna `429` com o código `send_rate_spacing` e o cabeçalho `Retry‑After` (em segundos — o tempo restante até o próximo envio permitido):
+Enviar antes do intervalo mínimo desde o último envio bem-sucedido **naquele número** retorna `429` com o código `send_rate_spacing` e o cabeçalho `Retry‑After` (em segundos: o tempo restante até o próximo envio permitido):
 
 <ApiResponse
   status={429}
@@ -43,11 +43,11 @@ Enviar antes do intervalo mínimo desde o último envio bem-sucedido **naquele n
   }}
 />
 
-Este limite é por **número** (principal ou extra) — cada número tem seu próprio relógio de espaçamento, então usar [números extras](/numbers/add/) aumenta a capacidade total de envio da conta.
+Este limite é por **número** (principal ou extra): cada número tem seu próprio relógio de espaçamento, então usar [números extras](/numbers/add/) aumenta a capacidade total de envio da conta.
 
 ## Refresh de contatos (por tier)
 
-O endpoint de [refresh de contato](/contacts/refresh/) (`POST .../contacts/{contact_id}/refresh`) é mais caro que uma leitura simples — consulta o WhatsApp sob demanda — e por isso tem seu próprio limite por minuto, também escalando com o tier:
+O endpoint de [refresh de contato](/contacts/refresh/) (`POST .../contacts/{contact_id}/refresh`) é mais caro que uma leitura simples (consulta o WhatsApp sob demanda) e por isso tem seu próprio limite por minuto, também escalando com o tier:
 
 | Tier       | Refresh/min |
 | ---------- | -----------:|
@@ -62,8 +62,8 @@ Estourar esse limite retorna `429 refresh_rate_limited` com o cabeçalho `Retry�
 
 Independente do tier contratado, o Turbo Notify aplica limites operacionais fixos para proteger a infraestrutura. Estes **não** diferenciam por plano:
 
-- **`messages_per_minute`** — 10.000 envios/minuto, aplicados **por organização e por número** (proteção contra rajadas da infraestrutura). É um limite **global** da conta: vale para toda a plataforma, não por conexão ou servidor.
-- **`recipients_per_day`** — 2.000 mensagens/dia para o **mesmo destinatário**, por número (proteção anti-bloqueio). Não há limite de destinatários distintos por dia: você pode alcançar quantos contatos quiser, respeitando as demais quotas do plano.
+- **`messages_per_minute`**: 10.000 envios/minuto, aplicados **por organização e por número** (proteção contra rajadas da infraestrutura). É um limite **global** da conta: vale para toda a plataforma, não por conexão ou servidor.
+- **`recipients_per_day`**: 2.000 mensagens/dia para o **mesmo destinatário**, por número (proteção anti-bloqueio). Não há limite de destinatários distintos por dia: você pode alcançar quantos contatos quiser, respeitando as demais quotas do plano.
 
 ## Números extras
 
@@ -93,17 +93,17 @@ Para evitar problemas, siga as recomendações de uso responsável descritas em 
 | :----: | ------------------------ | ------------------------------------------------------------------------- |
 | `429`  | `send_rate_spacing`      | Envio antes do intervalo mínimo entre mensagens do tier, no mesmo número. |
 | `429`  | `refresh_rate_limited`   | Limite de refresh de contato ultrapassado.                                |
-| `429`  | `messages_per_minute_limit_exceeded` | Proteção contra rajadas: 10.000 envios/minuto ultrapassado — limite **global** da conta, aplicado por organização e por número (veja [acima](#proteção-contra-rajadas-operacional-igual-em-todos-os-tiers)). |
+| `429`  | `messages_per_minute_limit_exceeded` | Proteção contra rajadas: 10.000 envios/minuto ultrapassado, limite **global** da conta, aplicado por organização e por número (veja [acima](#proteção-contra-rajadas-operacional-igual-em-todos-os-tiers)). |
 | `429`  | `recipients_per_day_limit_exceeded`  | Proteção anti-bloqueio: 2.000 mensagens/dia para o mesmo destinatário, por número (veja [acima](#proteção-contra-rajadas-operacional-igual-em-todos-os-tiers)). |
 | `503`  | `internal_error`         | Serviço temporariamente indisponível. Tente novamente após alguns instantes. |
-| `503`  | `plan_lookup_failed`     | Não foi possível resolver o plano da organização no momento — a requisição não foi processada. Tente novamente. |
+| `503`  | `plan_lookup_failed`     | Não foi possível resolver o plano da organização no momento. A requisição não foi processada. Tente novamente. |
 
 Para os erros de **quota** (`402 contact_quota_exceeded`, `429 messages_quota_exceeded`, `402 feature_not_available`), veja [Quota e uso](/usage/quota/#erros).
 
 ## Boas práticas
 
 - Respeite o cabeçalho `Retry‑After` ao receber um status `429`.
-- Distribua o envio ao longo do tempo em vez de enviar tudo de uma vez — o espaçamento mínimo do seu tier já define o ritmo sustentável.
+- Distribua o envio ao longo do tempo em vez de enviar tudo de uma vez: o espaçamento mínimo do seu tier já define o ritmo sustentável.
 - Utilize [números extras](/numbers/add/) para aumentar a capacidade de envio.
 - Monitore os códigos de resposta da API para identificar rapidamente quando um limite é atingido.
 - Configure [webhooks](/messages/webhook/) para acompanhar o status das mensagens sem precisar consultar a API repetidamente.

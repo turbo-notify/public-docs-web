@@ -1,6 +1,6 @@
 ---
 title: Eventos de quota de mensagem
-description: Webhooks message.quota.warning e message.quota.exceeded — por número (número identificado via number_alias no envelope), emitidos quando a quota de mensagens do número cruza os limiares no ciclo de faturamento avaliado.
+description: Webhooks message.quota.warning e message.quota.exceeded, por número (número identificado via number_alias no envelope), emitidos quando a quota de mensagens do número cruza os limiares no ciclo de faturamento avaliado.
 sidebar:
   order: 2
 ---
@@ -23,7 +23,7 @@ Para configurar a URL do webhook, validar a assinatura e entender o envelope, ve
 
 ## `number_alias` no envelope
 
-Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_alias`: o handle do número do Turbo Notify cuja quota de mensagens foi atingida — `"main"` para o número principal ou o alias de um número extra. O `data` do evento carrega os campos de quota `threshold_bps` (só em `warning`), `used`, `quota`, `cycle_start`, `cycle_end`, `resets_at`, `tier`, `channel`, `origin` — o `number_alias` fica no **envelope**, nunca dentro de `data`.
+Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_alias`: o handle do número do Turbo Notify cuja quota de mensagens foi atingida (`"main"` para o número principal ou o alias de um número extra). O `data` do evento carrega os campos de quota `threshold_bps` (só em `warning`), `used`, `quota`, `cycle_start`, `cycle_end`, `resets_at`, `tier`, `channel`, `origin`. O `number_alias` fica no **envelope**, nunca dentro de `data`.
 
 `used`/`quota` são medidos contra o ciclo de faturamento avaliado da organização (`cycle_start`/`cycle_end`, ISO 8601 UTC); `resets_at` é igual a `cycle_end`.
 
@@ -76,8 +76,8 @@ Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_ali
 
 ## Timestamps e correlação
 
-- Estes são eventos **sintéticos** do Turbo Notify (não refletem uma ação no WhatsApp): **não** carregam `at` em `data` — apenas o `created_at` do envelope (momento de emissão do evento pelo Turbo Notify).
-- `cycle_start`/`cycle_end` são o ciclo de faturamento avaliado contra o qual `used`/`quota` foram medidos. `resets_at` é um timestamp de **valor de negócio** (quando o ciclo de quota reinicia), mantido com seu nome semântico — igual a `cycle_end` na emissão, não é o momento de ocorrência.
+- Estes são eventos **sintéticos** do Turbo Notify (não refletem uma ação no WhatsApp): **não** carregam `at` em `data`, apenas o `created_at` do envelope (momento de emissão do evento pelo Turbo Notify).
+- `cycle_start`/`cycle_end` são o ciclo de faturamento avaliado contra o qual `used`/`quota` foram medidos. `resets_at` é um timestamp de **valor de negócio** (quando o ciclo de quota reinicia), mantido com seu nome semântico: igual a `cycle_end` na emissão, não é o momento de ocorrência.
 - Não há `phone` no payload destes eventos. Para correlacionar com a requisição que disparou o estouro, use `GET /v1/events?request_id=req_...`.
 
 ## Ação recomendada

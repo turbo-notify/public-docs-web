@@ -1,15 +1,15 @@
 ---
 title: Foto de perfil
-description: Endpoint GET /v1/numbers/{alias}/contacts/{contact_id}/profile-picture — 302 quando disponível, 200 com motivo quando não; comportamento depende da configuração BYO Storage.
+description: Endpoint GET /v1/numbers/{alias}/contacts/{contact_id}/profile-picture: 302 quando disponível, 200 com motivo quando não; comportamento depende da configuração BYO Storage.
 sidebar:
   order: 5
 ---
 
 import ApiResponse from '@components/ApiResponse.astro';
 
-Retorna a foto de perfil do contato. Quando a foto está disponível, a resposta é um **302 redirect** para uma URL pré-assinada; quando não está, a resposta é **200 OK** com um corpo JSON descrevendo o motivo — este endpoint **não** usa 404 para "sem foto" (veja a tabela abaixo).
+Retorna a foto de perfil do contato. Quando a foto está disponível, a resposta é um **302 redirect** para uma URL pré-assinada; quando não está, a resposta é **200 OK** com um corpo JSON descrevendo o motivo: este endpoint **não** usa 404 para "sem foto" (veja a tabela abaixo).
 
-> O 302 aponta para uma URL **pré-assinada** do seu BYO Storage (nunca a object key crua). Uma foto marcada como `unavailable` enquanto o storage estava ausente é **reavaliada** e enviada assim que você habilita o BYO Storage — o webhook [`contact.picture_changed`](/webhooks/contact-events/#exemplo-contactpicture_changed) é então emitido.
+> O 302 aponta para uma URL **pré-assinada** do seu BYO Storage (nunca a object key crua). Uma foto marcada como `unavailable` enquanto o storage estava ausente é **reavaliada** e enviada assim que você habilita o BYO Storage. O webhook [`contact.picture_changed`](/webhooks/contact-events/#exemplo-contactpicture_changed) é então emitido.
 
 ## Endpoint
 
@@ -23,16 +23,16 @@ Para números extras: `GET /v1/numbers/{alias}/contacts/{contact_id}/profile-pic
 
 ## Comportamento por `picture.kind`
 
-O corpo `picture` retornado ao cliente tem apenas dois estados possíveis — `available` (foto no seu BYO Storage) ou `unavailable` (qualquer outra situação, com a causa detalhada em `reason`, computada no momento da leitura):
+O corpo `picture` retornado ao cliente tem apenas dois estados possíveis: `available` (foto no seu BYO Storage) ou `unavailable` (qualquer outra situação, com a causa detalhada em `reason`, computada no momento da leitura):
 
 | `picture.kind` | Resposta HTTP |
 | --------------- | ------------- |
-| `available` | **302 Found** — `Location` aponta para a URL pré-assinada do BYO Storage (R2/S3/Supabase); nunca a object key crua |
-| `unavailable` | **200 OK** — corpo JSON `{ "kind": "unavailable", "reason": ..., "setup_hint"?: ... }` (ver campo `reason` abaixo) |
+| `available` | **302 Found**: `Location` aponta para a URL pré-assinada do BYO Storage (R2/S3/Supabase); nunca a object key crua |
+| `unavailable` | **200 OK**: corpo JSON `{ "kind": "unavailable", "reason": ..., "setup_hint"?: ... }` (ver campo `reason` abaixo) |
 
-Um `404 contact_picture_unavailable` só ocorre em uma situação-limite rara: a foto já está armazenada, mas a geração da URL pré-assinada falhou nesta requisição (ex.: erro transitório do provedor). Não é o caminho usado para "contato sem foto" ou "sem storage configurado" — esses casos sempre retornam 200.
+Um `404 contact_picture_unavailable` só ocorre em uma situação-limite rara: a foto já está armazenada, mas a geração da URL pré-assinada falhou nesta requisição (ex.: erro transitório do provedor). Não é o caminho usado para "contato sem foto" ou "sem storage configurado": esses casos sempre retornam 200.
 
-## Exemplo — foto disponível
+## Exemplo: foto disponível
 
 ```bash
 curl -I "https://api.turbonotify.com/v1/contacts/ct_.../profile-picture" \
@@ -44,7 +44,7 @@ Cache-Control: no-store, no-cache, must-revalidate
 Pragma: no-cache
 ```
 
-## Exemplo — foto indisponível (sem storage)
+## Exemplo: foto indisponível (sem storage)
 
 <ApiResponse
   status={200}
@@ -55,14 +55,14 @@ Pragma: no-cache
       setup_url: 'https://dashboard.turbonotify.com/storage',
       docs_url: 'https://docs.turbonotify.com/general/byo-storage-setup/',
       message:
-        'Configure object storage (S3, Cloudflare R2, or Supabase Storage — free tiers available) to receive media. Visit your dashboard or read the docs.',
+        'Configure object storage (S3, Cloudflare R2, or Supabase Storage, free tiers available) to receive media. Visit your dashboard or read the docs.',
     },
   }}
 />
 
-O campo `reason` discrimina a causa: `no_storage` (sem storage configurado), `storage_circuit_open` (circuit breaker aberto), `upload_failed` (a tentativa de upload deste ciclo falhou — **sem retry imediato**; diferente da mídia de mensagem, que é terminal, a foto é **re-resolvida na próxima interação do contato**) ou `peer_has_none` (o contato não tem foto no WhatsApp). O `setup_hint` acompanha apenas `no_storage` e `storage_circuit_open` — para `upload_failed` e `peer_has_none` ele é omitido.
+O campo `reason` discrimina a causa: `no_storage` (sem storage configurado), `storage_circuit_open` (circuit breaker aberto), `upload_failed` (a tentativa de upload deste ciclo falhou: **sem retry imediato**; diferente da mídia de mensagem, que é terminal, a foto é **re-resolvida na próxima interação do contato**) ou `peer_has_none` (o contato não tem foto no WhatsApp). O `setup_hint` acompanha apenas `no_storage` e `storage_circuit_open`. Para `upload_failed` e `peer_has_none` ele é omitido.
 
 ## Cache
 
-- A resposta é retornada com `Cache-Control: no-store, no-cache, must-revalidate` e `Pragma: no-cache` — **não é cacheável**, inclusive o redirect `302`. Não armazene a resposta em cache; refaça a chamada sempre que precisar do estado atual. Na prática, cada leitura refaz a requisição — mas a **URL pré-assinada apontada pelo `Location`** continua válida pelo seu próprio TTL, e é ela que você deve reutilizar se quiser evitar um novo download.
-- A URL pré-assinada tem validade curta — **15 minutos por padrão** (configurável entre 1 minuto e 1 hora na sua integração de storage). Não reutilize a URL além desse prazo; refaça a chamada para obter uma nova.
+- A resposta é retornada com `Cache-Control: no-store, no-cache, must-revalidate` e `Pragma: no-cache`. **Não é cacheável**, inclusive o redirect `302`. Não armazene a resposta em cache; refaça a chamada sempre que precisar do estado atual. Na prática, cada leitura refaz a requisição, mas a **URL pré-assinada apontada pelo `Location`** continua válida pelo seu próprio TTL, e é ela que você deve reutilizar se quiser evitar um novo download.
+- A URL pré-assinada tem validade curta: **15 minutos por padrão** (configurável entre 1 minuto e 1 hora na sua integração de storage). Não reutilize a URL além desse prazo; refaça a chamada para obter uma nova.

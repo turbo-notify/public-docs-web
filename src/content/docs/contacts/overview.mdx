@@ -7,7 +7,7 @@ sidebar:
 
 Um **contato do Turbo Notify** é um registro de observabilidade passiva criado automaticamente a partir do tráfego de mensagens entre o número da organização e contatos externos. Não é um CRM. Não há sincronização de agenda. Não há endpoints de criação ou exclusão manual.
 
-Contatos são escopados por número. Para o **número principal**, use as rotas planas (`/v1/contacts`, `/v1/contacts/{id}`, `/v1/contacts/quota`, etc.) ou a forma aninhada com o alias `main` (`/v1/numbers/main/contacts`, `/v1/numbers/main/contacts/{id}`, etc.) — ambas são equivalentes. Para **números extras**, use a forma aninhada `/v1/numbers/{alias}/contacts`. O mesmo telefone alcançado por dois números diferentes gera dois contatos distintos.
+Contatos são escopados por número. Para o **número principal**, use as rotas planas (`/v1/contacts`, `/v1/contacts/{id}`, `/v1/contacts/quota`, etc.) ou a forma aninhada com o alias `main` (`/v1/numbers/main/contacts`, `/v1/numbers/main/contacts/{id}`, etc.). Ambas são equivalentes. Para **números extras**, use a forma aninhada `/v1/numbers/{alias}/contacts`. O mesmo telefone alcançado por dois números diferentes gera dois contatos distintos.
 
 ## Conceito
 
@@ -15,8 +15,8 @@ Contatos são escopados por número. Para o **número principal**, use as rotas 
 | ------- | ------------- |
 | Origem | Mensagens (`inbound` ou `outbound`), número próprio (`self`) ou menção em uma mensagem (`mention`) |
 | Criação | Automática na primeira observação `(organização, número, telefone)` |
-| Identificador | `ct_{hex32}` — Identificador público estável |
-| Escopo | Por número — o mesmo telefone alcançado por dois números da mesma organização gera **dois contatos distintos**, com `ct_` ids diferentes (e o mesmo telefone em organizações distintas também) |
+| Identificador | `ct_{hex32}`: identificador público estável |
+| Escopo | Por número: o mesmo telefone alcançado por dois números da mesma organização gera **dois contatos distintos**, com `ct_` ids diferentes (e o mesmo telefone em organizações distintas também) |
 | Persistência | Sem TTL; persiste após `deleted_at` (soft delete histórico) |
 
 ## Ciclo de vida
@@ -29,9 +29,9 @@ Contatos são escopados por número. Para o **número principal**, use as rotas 
 [Self] number.connected ───────────┘                 Webhook: contact.created
 ```
 
-1. **Descoberta** — a primeira observação de `(organização, número, telefone)` cria o contato com o `source` apropriado.
-2. **Enriquecimento** — pipeline assíncrono enriquece com `name`, `profile_picture`. Falhas são fail-open: o contato existe mesmo sem enriquecimento.
-3. **Quota** — cada contato distinto contactado via Turbo Notify dentro do ciclo de faturamento atual (`cycle_start` até `cycle_end`) consome um slot da quota — seja um contato novo ou recorrente. A quota só reseta em `resets_at`.
+1. **Descoberta**: a primeira observação de `(organização, número, telefone)` cria o contato com o `source` apropriado.
+2. **Enriquecimento**: pipeline assíncrono enriquece com `name`, `profile_picture`. Falhas são fail-open: o contato existe mesmo sem enriquecimento.
+3. **Quota**: cada contato distinto contactado via Turbo Notify dentro do ciclo de faturamento atual (`cycle_start` até `cycle_end`) consome um slot da quota, seja um contato novo ou recorrente. A quota só reseta em `resets_at`.
 
 ## Tier de quota
 
@@ -44,19 +44,19 @@ Contatos são escopados por número. Para o **número principal**, use as rotas 
 
 Ambas as quotas são **por número** (cada número da organização tem sua própria
 franquia). Ajustes de franquia específicos por organização podem ser
-aplicados via suporte — sempre por número, nunca um teto único para a conta.
+aplicados via suporte: sempre por número, nunca um teto único para a conta.
 
 ## Origens (source)
 
-- `inbound` — primeira mensagem recebida desse telefone.
-- `outbound` — primeira mensagem enviada para esse telefone.
-- `self` — número controlado pela organização (principal ou extra). Flag `is_self=TRUE`.
-- `mention` — telefone observado pela primeira vez ao ser **mencionado** em uma mensagem. Não houve troca de mensagens com ele: o contato existe apenas como referência e **não consome quota de contatos**.
+- `inbound`: primeira mensagem recebida desse telefone.
+- `outbound`: primeira mensagem enviada para esse telefone.
+- `self`: número controlado pela organização (principal ou extra). Flag `is_self=TRUE`.
+- `mention`: telefone observado pela primeira vez ao ser **mencionado** em uma mensagem. Não houve troca de mensagens com ele: o contato existe apenas como referência e **não consome quota de contatos**.
 
 ## Fora de escopo
 
-- Não há `POST /v1/numbers/{alias}/contacts` — contatos são derivados de tráfego.
-- Não há `DELETE /v1/numbers/{alias}/contacts/{id}` — use soft delete via dashboard.
+- Não há `POST /v1/numbers/{alias}/contacts`: contatos são derivados de tráfego.
+- Não há `DELETE /v1/numbers/{alias}/contacts/{id}`: use soft delete via dashboard.
 - Não há sincronização de agenda do WhatsApp.
 
 ## Próximos passos

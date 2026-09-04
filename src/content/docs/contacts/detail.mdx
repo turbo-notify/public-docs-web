@@ -1,6 +1,6 @@
 ---
 title: Detalhe do contato
-description: Endpoint GET /v1/numbers/{alias}/contacts/{contact_id} — payload completo incluindo telefone e foto de perfil.
+description: Endpoint GET /v1/numbers/{alias}/contacts/{contact_id}: payload completo incluindo telefone e foto de perfil.
 sidebar:
   order: 3
 ---
@@ -24,7 +24,7 @@ Para números extras: `GET /v1/numbers/{alias}/contacts/{contact_id}`
 
 | Parâmetro | Tipo | Formato |
 | --------- | ---- | ------- |
-| `contact_id` | string | `ct_{hex32}` — regex `^ct_[0-9a-f]{32}$` |
+| `contact_id` | string | `ct_{hex32}`: regex `^ct_[0-9a-f]{32}$` |
 
 ## Exemplo
 
@@ -162,19 +162,19 @@ public class DetalheContato {
 />
 
 O `number_alias` (logo após `id`) identifica o número do Turbo Notify a que
-este contato pertence — `"main"` ou o alias de um número extra (o mesmo
+este contato pertence: `"main"` ou o alias de um número extra (o mesmo
 telefone alcançado por dois números diferentes gera dois contatos distintos). O
-`phone_number` é o **E.164 completo** (sem máscara) — o mesmo número já
+`phone_number` é o **E.164 completo** (sem máscara), o mesmo número já
 exposto em `message.from`/`message.to`. O campo `name` é o
 push name do contato no WhatsApp (coerente com o triplo `{id, name, number}`
 dos eventos `contact.*`). `picture` é uma união discriminada por `kind`
 (`available` | `unavailable`), espelhando o bloco de mídia dos
 eventos; quando `kind` é `available`, o próprio bloco carrega `fetched_at`.
-O valor `pending` só aparece em payloads de webhook — este endpoint de
+O valor `pending` só aparece em payloads de webhook: este endpoint de
 leitura nunca o retorna.
 
 ## Erros
 
-- `404 contact_not_found` — ID inválido ou pertencente a outra organização.
+- `404 contact_not_found`: ID inválido ou pertencente a outra organização.
 
 Veja a [referência de erros](/contacts/errors/).

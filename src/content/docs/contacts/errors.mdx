@@ -18,14 +18,14 @@ import ApiResponse from '@components/ApiResponse.astro';
 | 403  | `insufficient_scope` | A chave de acesso não possui o escopo `contacts:read` (resposta inclui `required_scope`) |
 | 404  | `contact_not_found` | ID inválido ou de outra organização |
 | 404  | `number_not_found` | O `{alias}` da rota aninhada não corresponde a nenhum número da conta (vale para `/contacts`, `/contacts/{id}`, `/contacts/quota` e demais sub-rotas) |
-| 404  | `contact_picture_unavailable` | Caso raro — falha ao gerar a URL pré-assinada da foto. A ausência de foto (sem storage, upload falhou, contato sem foto) **não** retorna 404: veja [Foto de perfil](/contacts/profile-picture/) |
-| 422  | `validation_error` | Um parâmetro de consulta não passou na validação — por exemplo `limit` fora do intervalo 1–200. A resposta traz `details.errors` com os campos rejeitados |
+| 404  | `contact_picture_unavailable` | Caso raro: falha ao gerar a URL pré-assinada da foto. A ausência de foto (sem storage, upload falhou, contato sem foto) **não** retorna 404: veja [Foto de perfil](/contacts/profile-picture/) |
+| 422  | `validation_error` | Um parâmetro de consulta não passou na validação: por exemplo `limit` fora do intervalo 1–200. A resposta traz `details.errors` com os campos rejeitados |
 | 429  | `refresh_rate_limited` | Limite de refresh por minuto |
 | 500  | `internal_error` | Erro interno inesperado no servidor |
 
 ## Exemplo de resposta 402
 
-Retornado ao tentar contatar via Turbo Notify um contato que passa a ser **contado no ciclo atual** — um contato **novo** OU um contato **recorrente** ainda não contado neste ciclo — e a quota de contatos distintos do ciclo já está esgotada.
+Retornado ao tentar contatar via Turbo Notify um contato que passa a ser **contado no ciclo atual** (um contato **novo** OU um contato **recorrente** ainda não contado neste ciclo) e a quota de contatos distintos do ciclo já está esgotada.
 
 <ApiResponse
   status={402}
@@ -41,13 +41,13 @@ Retornado ao tentar contatar via Turbo Notify um contato que passa a ser **conta
   }}
 />
 
-**Ação recomendada:** faça upgrade do plano. Diferentemente de 429, 402 não tem `Retry‑After` — o erro é estrutural (o ciclo de faturamento avaliado precisa fechar, em `resets_at`, ou o tier precisa subir).
+**Ação recomendada:** faça upgrade do plano. Diferentemente de 429, 402 não tem `Retry‑After`: o erro é estrutural (o ciclo de faturamento avaliado precisa fechar, em `resets_at`, ou o tier precisa subir).
 
 ## Diferença 402 vs 429
 
 | | 402 Payment Required | 429 Too Many Requests |
 | - | -------------------- | --------------------- |
-| Semântica | Estrutural — faça upgrade do plano | Temporal — tente novamente depois |
+| Semântica | Estrutural: faça upgrade do plano | Temporal: tente novamente depois |
 | Header | — | `Retry-After: <segundos>` |
 | Reset | No fim do ciclo de faturamento avaliado (`resets_at`) ou upgrade | Em segundos/minutos |
 | Quando | Quota do ciclo | Proteção contra rajadas |

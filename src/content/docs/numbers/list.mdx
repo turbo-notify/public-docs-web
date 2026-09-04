@@ -1,12 +1,12 @@
 ---
 title: Listagem de números
-description: Como listar todos os números — principal e extras — cadastrados na sua conta do Turbo Notify.
+description: Como listar todos os números (principal e extras) cadastrados na sua conta do Turbo Notify.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-Liste todos os números da sua conta — o principal e os extras — para consultar alias, número de telefone e status de cada um em uma única chamada.
+Liste todos os números da sua conta (o principal e os extras) para consultar alias, número de telefone e status de cada um em uma única chamada.
 
 ## Listar números
 
@@ -168,11 +168,11 @@ Liste todos os números da sua conta — o principal e os extras — para consul
   }}
 />
 
-`GET /v1/numbers` sempre retorna **todos** os números vivos da organização —
+`GET /v1/numbers` sempre retorna **todos** os números vivos da organização:
 o **principal primeiro**, seguido pelos extras em ordem de criação.
 
 :::note[`status.at` acompanha o status atual]
-`status.at` é o momento em que o número **entrou no status atual** —
+`status.at` é o momento em que o número **entrou no status atual**:
 atualiza a cada transição (pareamento, conexão, queda de conexão,
 reconexão, falha, revogação). Um número `disconnected`, `failed`,
 `reconnecting` etc. reporta o instante dessa própria transição, não um
@@ -181,7 +181,7 @@ timestamp de conexão desatualizado.
 Um número recém-criado, sem link de dispositivo ainda (`status: "pending"`,
 como `condominio_3` no exemplo acima), não tem transição alguma registrada:
 `status.at` vem como **string vazia** (`""`). Trate isso antes de converter
-para data — `Date.parse("")` (JS) devolve `NaN`, e
+para data: `Date.parse("")` (JS) devolve `NaN`, e
 `datetime.fromisoformat("")` (Python) levanta `ValueError`.
 
 A exceção é `status: "pending_deletion"` (apenas números extras): `status.at`
@@ -195,30 +195,30 @@ traz o momento da **exclusão agendada**, não uma transição de conexão.
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `data` | array | Lista de números da conta (principal + extras) |
-| `cursor` | string\|null | Sempre `null` — esta rota não pagina |
-| `has_more` | boolean | Sempre `false` — esta rota devolve todos os números em uma única página |
+| `cursor` | string\|null | Sempre `null`: esta rota não pagina |
+| `has_more` | boolean | Sempre `false`: esta rota devolve todos os números em uma única página |
 | `data[].contact_id` | string\|null | Identificador público (`ct_…`) do contato próprio do número; `null` enquanto não resolvido |
 | `data[].name` | string\|null | Nome da conta WhatsApp do número (capturado na conexão); `null` enquanto não houver conexão estabelecida |
 | `data[].type` | string | `"main"` para o número principal (sempre o primeiro item) ou `"extra"` para números extras |
 | `data[].alias` | string | Identificador único do número na conta (`"main"` para o principal) |
 | `data[].number` | string | Número de telefone em dígitos E.164 (sem `+`) |
 | `data[].description` | string\|null | Descrição livre definida pelo usuário |
-| `data[].status` | object | `{status, at, reason?}` — estado atual do número |
-| `data[].status.status` | string | `pending`, `pairing`, `inactive`, `connecting`, `connected`, `disconnected`, `reconnecting`, `failed`, `revoked` ou `pending_deletion` — veja [Tabela de status](/numbers/status/#tabela-de-status) |
-| `data[].status.at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`data[].status.status`) — atualiza a cada transição. **String vazia (`""`)** apenas quando o número ainda não tem link de dispositivo (`status: "pending"`, nenhuma transição registrada). Exceção: em `status: "pending_deletion"`, é o momento da exclusão agendada. |
-| `data[].status.reason` | string\|null | Reservado para o motivo de falha — **hoje sempre `null`**, independente do `status` (inclusive em `"failed"`); a rota ainda não popula este campo. |
+| `data[].status` | object | `{status, at, reason?}`: estado atual do número |
+| `data[].status.status` | string | `pending`, `pairing`, `inactive`, `connecting`, `connected`, `disconnected`, `reconnecting`, `failed`, `revoked` ou `pending_deletion`, veja [Tabela de status](/numbers/status/#tabela-de-status) |
+| `data[].status.at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`data[].status.status`): atualiza a cada transição. **String vazia (`""`)** apenas quando o número ainda não tem link de dispositivo (`status: "pending"`, nenhuma transição registrada). Exceção: em `status: "pending_deletion"`, é o momento da exclusão agendada. |
+| `data[].status.reason` | string\|null | Reservado para o motivo de falha: **hoje sempre `null`**, independente do `status` (inclusive em `"failed"`); a rota ainda não popula este campo. |
 
 ## Erros possíveis
 
-`GET /v1/numbers` não depende do plano — o número principal sempre pode
+`GET /v1/numbers` não depende do plano: o número principal sempre pode
 ser listado, e a listagem retorna qualquer número extra que já exista na
 conta independente do plano atual.
 
 A **listagem é a única operação de números extras liberada em qualquer
-plano**. Todas as demais — [criar](/numbers/add/#erros-possíveis),
+plano**. Todas as demais ([criar](/numbers/add/#erros-possíveis),
 [consultar status](/numbers/status/#erros-possíveis),
 [conectar/desconectar](/numbers/activation/#erros-possíveis) e
-[remover](/numbers/remove/#erros-possíveis) — exigem um plano com suporte a
+[remover](/numbers/remove/#erros-possíveis)) exigem um plano com suporte a
 números extras e retornam `402 feature_not_available` caso contrário. Em uma
 conta que fez downgrade, você continua enxergando os números extras
 existentes, mas não consegue gerenciá-los.

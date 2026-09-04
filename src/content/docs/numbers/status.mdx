@@ -149,7 +149,7 @@ Para verificar o status de um número extra específico, faça uma requisição 
 
 :::note[Status do número principal]
 O número principal tem sua própria rota de status, `GET /v1/numbers/main`
-(mesmo escopo, `numbers:read`), com uma resposta mais enxuta — sem os
+(mesmo escopo, `numbers:read`), com uma resposta mais enxuta: sem os
 campos `description`, `scheduled_deletion_at`, `reason` e `pairing` (o
 pareamento do número principal é feito exclusivamente pelo dashboard, não
 tem contrapartida na API pública):
@@ -171,7 +171,7 @@ tem contrapartida na API pública):
 Diferente de [Listagem](/numbers/list/), que retorna a `description` real
 cadastrada, este endpoint (`GET /v1/numbers/{alias}`) hoje retorna
 `description`, `scheduled_deletion_at` **e `reason`** sempre como `null`,
-independente do valor real — nenhum motivo de falha é populado hoje, mesmo
+independente do valor real: nenhum motivo de falha é populado hoje, mesmo
 quando `status: "failed"`. Quando o número está com `status:
 "pending_deletion"`, o timestamp da exclusão agendada aparece no campo `at`
 (não em `scheduled_deletion_at`). Para a descrição cadastrada, consulte
@@ -179,7 +179,7 @@ quando `status: "failed"`. Quando o número está com `status:
 :::
 
 :::note[`at` acompanha o status atual]
-`at` é o momento em que o número **entrou no status atual** — atualiza a
+`at` é o momento em que o número **entrou no status atual**: atualiza a
 cada transição (pareamento, conexão, queda de conexão, reconexão, falha,
 revogação). Um número `disconnected`, `failed`, `reconnecting` etc. reporta
 o instante dessa própria transição, então `desconectado desde {at}` /
@@ -187,7 +187,7 @@ o instante dessa própria transição, então `desconectado desde {at}` /
 
 Um número recém-criado, sem link de dispositivo ainda (`status: "pending"`),
 não tem transição alguma registrada: `at` vem como **string vazia** (`""`).
-Trate isso antes de converter para data — `Date.parse("")` (JS) devolve
+Trate isso antes de converter para data: `Date.parse("")` (JS) devolve
 `NaN`, e `datetime.fromisoformat("")` (Python) levanta `ValueError`.
 
 A única exceção é `status: "pending_deletion"`, em que `at` traz o momento
@@ -200,15 +200,15 @@ da exclusão agendada (veja a nota acima).
 | ----- | ---- | --------- |
 | `contact_id` | string\|null | Identificador público (`ct_…`) do contato próprio do número; `null` enquanto não resolvido |
 | `name` | string\|null | Nome da conta WhatsApp do número (capturado na conexão); `null` enquanto não houver conexão estabelecida |
-| `type` | string | Sempre `"extra"` neste endpoint (números extras) — para o principal use `GET /v1/numbers/main` |
+| `type` | string | Sempre `"extra"` neste endpoint (números extras), para o principal use `GET /v1/numbers/main` |
 | `alias` | string | Identificador único do número extra na conta |
 | `number` | string | Número de telefone em dígitos E.164 (sem `+`) |
-| `status` | string | Estado atual — veja [Tabela de status](#tabela-de-status) |
-| `at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`status`) — atualiza a cada transição. **String vazia (`""`)** apenas quando o número ainda não tem link de dispositivo (`status: "pending"`, nenhuma transição registrada). Exceção: quando `status = "pending_deletion"`, é o momento da exclusão agendada. |
-| `description` | string\|null | Sempre `null` neste endpoint hoje — veja nota acima |
-| `scheduled_deletion_at` | string\|null | Sempre `null` neste endpoint hoje — veja nota acima |
-| `reason` | string\|null | Reservado para o motivo de falha — **hoje sempre `null`**, veja a nota acima |
-| `pairing` | object\|null | Informações de pareamento — presente apenas durante o processo de vinculação |
+| `status` | string | Estado atual, veja [Tabela de status](#tabela-de-status) |
+| `at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`status`): atualiza a cada transição. **String vazia (`""`)** apenas quando o número ainda não tem link de dispositivo (`status: "pending"`, nenhuma transição registrada). Exceção: quando `status = "pending_deletion"`, é o momento da exclusão agendada. |
+| `description` | string\|null | Sempre `null` neste endpoint hoje, veja nota acima |
+| `scheduled_deletion_at` | string\|null | Sempre `null` neste endpoint hoje, veja nota acima |
+| `reason` | string\|null | Reservado para o motivo de falha: **hoje sempre `null`**, veja a nota acima |
+| `pairing` | object\|null | Informações de pareamento: presente apenas durante o processo de vinculação |
 
 ### Bloco de pareamento (`pairing`)
 
@@ -233,12 +233,12 @@ Presente quando `status` é `pairing` e o código ainda está válido:
 | `reconnecting`       | Reconexão automática em andamento após uma queda.                         |
 | `failed`             | A vinculação falhou. Verifique o motivo abaixo.                           |
 | `revoked`            | O dispositivo foi desvinculado pelo WhatsApp.                             |
-| `pending_deletion`   | Exclusão agendada (`DELETE /v1/numbers/{alias}`) — sobrepõe qualquer outro status até a exclusão. |
+| `pending_deletion`   | Exclusão agendada (`DELETE /v1/numbers/{alias}`): sobrepõe qualquer outro status até a exclusão. |
 
 ## Motivos de falha
 
 O campo `reason` foi projetado para indicar o motivo quando `status` é
-`failed`, mas **ainda não está implementado** — a rota sempre retorna
+`failed`, mas **ainda não está implementado**: a rota sempre retorna
 `reason: null`, mesmo em `status: "failed"` (veja a nota acima). Os valores
 abaixo descrevem a intenção original e **ainda não são emitidos** pela API:
 

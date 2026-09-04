@@ -354,7 +354,7 @@ Para enviar o indicador de digitação em um grupo do WhatsApp, use `to.group_id
 Enviar indicador de digitação (assim como mensagem) para um `group_id` exige a
 feature `groups:messages`, disponível a partir do tier `BUSINESS`. Em
 `FREE`/`SOLO` você ainda **recebe** mensagens de grupo, **lista grupos**
-(`GET /v1/numbers/{alias}/groups`) e consulta detalhes normalmente — apenas o
+(`GET /v1/numbers/{alias}/groups`) e consulta detalhes normalmente. Apenas o
 **envio** outbound para grupo (incluindo o indicador de digitação) é bloqueado
 com `402`:
 
@@ -416,10 +416,10 @@ curl -X POST \
 
 As duas formas tratam o remetente de maneira diferente:
 
-- **Aninhada** (`POST /v1/numbers/{alias}/typing-indicator`) — o remetente é sempre o alias do path. Um campo `from` no corpo é ignorado.
-- **Plana** (`POST /v1/typing-indicator`) — envia **sempre** a partir do número principal (`main`). Um campo `from` no corpo é aceito pelo schema (não gera erro de validação) e em seguida **descartado silenciosamente**: a requisição retorna `202 Accepted` e o indicador de digitação sai do número principal, não do número informado em `from`.
+- **Aninhada** (`POST /v1/numbers/{alias}/typing-indicator`): o remetente é sempre o alias do path. Um campo `from` no corpo é ignorado.
+- **Plana** (`POST /v1/typing-indicator`): envia **sempre** a partir do número principal (`main`). Um campo `from` no corpo é aceito pelo schema (não gera erro de validação) e em seguida **descartado silenciosamente**: a requisição retorna `202 Accepted` e o indicador de digitação sai do número principal, não do número informado em `from`.
 
-**Para enviar um indicador de digitação a partir de um número extra, use obrigatoriamente a forma aninhada**, com o alias do número extra no path. A forma plana não tem como direcionar o remetente — e por não sinalizar erro, um `from` no corpo produz a falsa impressão de que funcionou.
+**Para enviar um indicador de digitação a partir de um número extra, use obrigatoriamente a forma aninhada**, com o alias do número extra no path. A forma plana não tem como direcionar o remetente, e por não sinalizar erro, um `from` no corpo produz a falsa impressão de que funcionou.
 
 Caso o alias informado no path não esteja cadastrado ou o número não esteja ativo, a operação
 será rejeitada.

@@ -12,8 +12,8 @@ O Turbo Notify disponibiliza uma API de eventos que permite consultar o históri
 
 O webhook é a forma principal de receber eventos em tempo real. O polling é recomendado em dois cenários:
 
-- **Sem webhook configurado** — consulte eventos regularmente para processar mensagens recebidas, confirmações de envio e demais notificações.
-- **Recuperação após falha** — após uma interrupção do seu endpoint de webhook, use o polling para buscar os eventos perdidos e reconciliar o estado do seu sistema.
+- **Sem webhook configurado**: consulte eventos regularmente para processar mensagens recebidas, confirmações de envio e demais notificações.
+- **Recuperação após falha**: após uma interrupção do seu endpoint de webhook, use o polling para buscar os eventos perdidos e reconciliar o estado do seu sistema.
 
 ## Endpoint
 
@@ -29,8 +29,8 @@ GET /v1/events
 | --------- | ---- | --------- |
 | `types[]` | string[] | Filtrar por tipos de evento (OR). Ex: `types[]=message.received&types[]=message.sent` |
 | `type` | string | Filtrar por um tipo de evento com suporte a wildcard. Ex: `type=message.*` |
-| `request_id` | string | Filtrar pelos eventos gerados por uma única requisição assíncrona (`req_…`). Útil para correlacionar o resultado de um `POST` (envio, resposta, edição ou exclusão) usando o `X-Request-ID` retornado no header da resposta. **Reações não são correlacionáveis por aqui** — o header devolvido no `POST .../react` não é um `req_…` válido; use o `message_id` da mensagem-alvo (veja [Enviar reação](/other-features/reaction/)). Ex: `request_id=req_01993c5a1b24d3e9f01a2b3c4d5e6f70` |
-| `number_alias` | string | Filtrar pelos eventos de um único número (`"main"` ou o alias de um número extra). Ausente = todos os números da organização. Apenas os eventos sem número único — `storage.*` **e** `media.unavailable` — são excluídos quando este filtro é informado; `message.quota.*` é por número e é filtrável. |
+| `request_id` | string | Filtrar pelos eventos gerados por uma única requisição assíncrona (`req_…`). Útil para correlacionar o resultado de um `POST` (envio, resposta, edição ou exclusão) usando o `X-Request-ID` retornado no header da resposta. **Reações não são correlacionáveis por aqui**: o header devolvido no `POST .../react` não é um `req_…` válido; use o `message_id` da mensagem-alvo (veja [Enviar reação](/other-features/reaction/)). Ex: `request_id=req_01993c5a1b24d3e9f01a2b3c4d5e6f70` |
+| `number_alias` | string | Filtrar pelos eventos de um único número (`"main"` ou o alias de um número extra). Ausente = todos os números da organização. Apenas os eventos sem número único (`storage.*` **e** `media.unavailable`) são excluídos quando este filtro é informado; `message.quota.*` é por número e é filtrável. |
 | `starting_after` | string | Cursor para paginação progressiva. Passe o `id` do último item da página anterior. |
 | `ending_before` | string | Cursor para paginação retroativa. Passe o `id` do primeiro item da página atual. |
 | `limit` | integer | Número de eventos por página. Intervalo: 1–100. Padrão: 25. |
@@ -87,7 +87,7 @@ Os resultados são ordenados por `created_at DESC` (mais recentes primeiro).
   }}
 />
 
-> Eventos de grupo usam `to.group_id` (formato `grp_{hex32}`) em vez de `to.number`; a linha Turbo Notify participante do grupo é identificada pelo `number_alias` do envelope (resolva seu número/contato via `GET /v1/numbers/{alias}`). Mensagens 1:1 omitem `to.group_id` — o shape pré-existente permanece byte-idêntico. Veja [Webhooks](/messages/webhook/#exemplo--messagereceived-grupo) para detalhes.
+> Eventos de grupo usam `to.group_id` (formato `grp_{hex32}`) em vez de `to.number`; a linha Turbo Notify participante do grupo é identificada pelo `number_alias` do envelope (resolva seu número/contato via `GET /v1/numbers/{alias}`). Mensagens 1:1 omitem `to.group_id`. O shape pré-existente permanece byte-idêntico. Veja [Webhooks](/messages/webhook/#exemplo-messagereceived-grupo) para detalhes.
 
 ### Envelope da lista
 
@@ -104,15 +104,15 @@ Os resultados são ordenados por `created_at DESC` (mais recentes primeiro).
 | `id` | string | Identificador único (`evt_…`). Use como chave de idempotência. |
 | `type` | string | Tipo do evento (ex.: `message.received`). |
 | `organization_id` | string | Identificador público da sua organização (`org_{hex32}`). |
-| `number_alias` | string | Handle do número Turbo Notify ao qual o evento pertence — `"main"` para o número principal ou o alias de um número extra. É a **string do alias**, nunca um UUID. Presente em eventos ligados a um número específico — `message.*`, `number.*`, `group.*` e **todos** os `contact.*` (inclusive `contact.quota.*`) e `message.quota.*` (a quota de mensagens é por número); **omitido** em `storage.*` **e** em `media.unavailable` — os eventos que não pertencem a um número único. |
+| `number_alias` | string | Handle do número Turbo Notify ao qual o evento pertence: `"main"` para o número principal ou o alias de um número extra. É a **string do alias**, nunca um UUID. Presente em eventos ligados a um número específico: `message.*`, `number.*`, `group.*` e **todos** os `contact.*` (inclusive `contact.quota.*`) e `message.quota.*` (a quota de mensagens é por número). **Omitido** em `storage.*` **e** em `media.unavailable`: os eventos que não pertencem a um número único. |
 | `created_at` | string | Momento de **emissão do evento pelo Turbo Notify** (quando o registro foi criado/publicado). ISO 8601 em UTC com sufixo `Z` e precisão de segundos (ex.: `2026-06-01T13:00:05Z`). Distinto de `data.at` (o momento da ação no WhatsApp), quando presente. |
-| `data` | object | Payload específico do evento — **idêntico** ao entregue via webhook. Quando há uma ação real no WhatsApp, `data.at` traz esse momento (valor distinto de `created_at`) — inclusive para eventos **outbound** (`message.sent`/`replied`/`edited`/`deleted` + `*.failed`) e os `number.*` de ação real, cujo `at` é o momento genuíno do WhatsApp, tipicamente anterior ao `created_at`. Eventos sintéticos não têm `at`. |
+| `data` | object | Payload específico do evento, **idêntico** ao entregue via webhook. Quando há uma ação real no WhatsApp, `data.at` traz esse momento (valor distinto de `created_at`), inclusive para eventos **outbound** (`message.sent`/`replied`/`edited`/`deleted` + `*.failed`) e os `number.*` de ação real, cujo `at` é o momento genuíno do WhatsApp, tipicamente anterior ao `created_at`. Eventos sintéticos não têm `at`. |
 
 ## Paginação por cursor
 
 A paginação é baseada em cursor, o que garante páginas estáveis mesmo enquanto novos eventos chegam. O cursor é o `id` de um evento.
 
-**Avançar para a próxima página** — passe o `id` do último evento retornado em `starting_after`:
+**Avançar para a próxima página**: passe o `id` do último evento retornado em `starting_after`:
 
 <Tabs>
   <TabItem label="cURL">
@@ -271,7 +271,7 @@ organização.
 
 ## Intervalo recomendado
 
-O endpoint de polling não tem um limitador dedicado — ele compartilha o rate limit geral de ingresso da API, **1000 requisições/segundo por organização** (`api_requests_per_second`). Ultrapassar esse teto resulta em `429 Too Many Requests` (`rate_limit_exceeded`), mas na prática ele é bem mais permissivo do que um intervalo fixo entre chamadas de polling.
+O endpoint de polling não tem um limitador dedicado: ele compartilha o rate limit geral de ingresso da API, **1000 requisições/segundo por organização** (`api_requests_per_second`). Ultrapassar esse teto resulta em `429 Too Many Requests` (`rate_limit_exceeded`), mas na prática ele é bem mais permissivo do que um intervalo fixo entre chamadas de polling.
 
 Para sistemas de alta demanda, prefira o uso de webhooks para receber eventos em tempo real e reserve o polling para reconciliação.
 
@@ -298,8 +298,8 @@ Isso permite:
 A paridade inclui o campo [`data.mentions`](/messages/webhook/#campos-da-mensagem):
 quando uma mensagem menciona alguém, os eventos
 `message.received`/`message.replied`/`message.sent`/`message.edited` retornados
-pelo polling carregam exatamente a mesma lista `mentions` — e o mesmo `preview`
-(cada token de menção conta como 1 caractere) — entregues via webhook,
+pelo polling carregam exatamente a mesma lista `mentions` e o mesmo `preview`
+(cada token de menção conta como 1 caractere), entregues via webhook,
 byte-a-byte.
 
 ## Recuperação após falha de webhook
@@ -352,20 +352,20 @@ Para recuperar eventos perdidos durante uma indisponibilidade do seu endpoint:
 
 ## Retenção de eventos
 
-O **registro do evento** (a linha em si — `id`, `type`, `created_at`,
+O **registro do evento** (a linha em si: `id`, `type`, `created_at`,
 `number_alias`) fica disponível para consulta por até **90 dias**, um
 horizonte fixo da plataforma. Consultas além desse período retornam resultado
 vazio.
 
 Para a família `message.*`, os campos de **conteúdo** dentro de `data`
 (`preview`, `transcription`, quando presentes) obedecem, à parte, à mesma
-janela de retenção de conteúdo do seu plano — a mesma que governa
+janela de retenção de conteúdo do seu plano: a mesma que governa
 `GET /v1/numbers/{alias}/messages/{id}` e a reentrega de webhook (veja
 [Retenção das mensagens](/messages/retention/)). Consulta por id, reentrega
 de webhook e polling obedecem a uma única promessa de retenção, nunca duas:
 um evento `message.*` mais antigo que a janela de conteúdo do seu plano
 continua retornável pelo polling até completar os 90 dias de retenção do
-evento em si, mas com os campos de conteúdo já **redigidos** — a linha do
+evento em si, mas com os campos de conteúdo já **redigidos**: a linha do
 evento persiste, o conteúdo não. Numa organização `BUSINESS` no padrão de 3
 dias, por exemplo, o conteúdo de eventos `message.*` some da resposta bem
 antes dos 90 dias de retenção do evento.
@@ -374,10 +374,10 @@ antes dos 90 dias de retenção do evento.
 
 | Status | Código de erro | Descrição |
 | :----: | -------------- | --------- |
-| `400` | `invalid_event_id` | O cursor fornecido em `starting_after` ou `ending_before` não é um id de evento válido (`evt_` + 32 hex). Um cursor bem formado mas inexistente não gera erro — o filtro é simplesmente ignorado. |
-| `400` | `invalid_request_id` | O `request_id` informado não é um id de requisição válido (`req_` + 32 hex). O `X-Request-ID` devolvido em respostas `GET` é um UUID de correlação, **não** um `req_…` — só o header devolvido pelos `POST` assíncronos serve como filtro aqui. |
+| `400` | `invalid_event_id` | O cursor fornecido em `starting_after` ou `ending_before` não é um id de evento válido (`evt_` + 32 hex). Um cursor bem formado mas inexistente não gera erro. O filtro é simplesmente ignorado. |
+| `400` | `invalid_request_id` | O `request_id` informado não é um id de requisição válido (`req_` + 32 hex). O `X-Request-ID` devolvido em respostas `GET` é um UUID de correlação, **não** um `req_…`. Só o header devolvido pelos `POST` assíncronos serve como filtro aqui. |
 | `403` | `not_authorized` | A chave de acesso está inválida ou ausente. |
 | `403` | `insufficient_scope` | A chave de acesso não possui o escopo `events:read` (resposta inclui `required_scope`). |
-| `422` | `validation_error` | Um parâmetro de consulta não passou na validação — por exemplo `limit` fora do intervalo 1–100 ou `created[gte]`/`created[lte]` em formato não-ISO-8601. A resposta traz `details.errors` com os campos rejeitados. |
+| `422` | `validation_error` | Um parâmetro de consulta não passou na validação (por exemplo `limit` fora do intervalo 1–100 ou `created[gte]`/`created[lte]` em formato não-ISO-8601). A resposta traz `details.errors` com os campos rejeitados. |
 | `429` | `rate_limit_exceeded` | Limite de requisições ultrapassado. Aguarde antes de tentar novamente. |
 | `500` | `internal_error` | Erro interno inesperado no servidor. |

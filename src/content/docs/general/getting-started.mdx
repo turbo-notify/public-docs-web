@@ -179,7 +179,7 @@ Não se esqueça de substituir o valor da `SUA_CHAVE`. Para detalhes sobre auten
 </Tabs>
 
 :::note[Rotas por número]
-Os exemplos acima usam a **rota plana** `POST /v1/messages`, que é o atalho para o número principal. Você pode usar igualmente a forma aninhada `POST /v1/numbers/main/messages` — ambas são idênticas. Para **números extras**, use `/v1/numbers/{alias}/messages`, substituindo `{alias}` pelo alias configurado no dashboard.
+Os exemplos acima usam a **rota plana** `POST /v1/messages`, que é o atalho para o número principal. Você pode usar igualmente a forma aninhada `POST /v1/numbers/main/messages`: ambas são idênticas. Para **números extras**, use `/v1/numbers/{alias}/messages`, substituindo `{alias}` pelo alias configurado no dashboard.
 :::
 
 Após o envio, você receberá uma resposta semelhante a esta, indicando que sua mensagem foi recebida pelo Turbo Notify e em poucos instantes será enviada para o WhatsApp. Para saber mais, acesse a documentação sobre [Envio de mensagens](/messages/send/).
@@ -313,4 +313,4 @@ Use `GET /v1/messages/{id}` para confirmar se a mensagem chegou ao destinatário
 
 Para a lista completa de estados de entrega, veja [Status da mensagem](/messages/status/). Para acompanhar eventos sem webhook, veja [Polling de eventos](/messages/polling/).
 
-Pronto! A partir daqui, os próximos passos estão em [Próximos passos](/general/next-steps/) — chave de acesso, webhooks e os demais recursos da API.
+Pronto! A partir daqui, os próximos passos estão em [Próximos passos](/general/next-steps/): chave de acesso, webhooks e os demais recursos da API.

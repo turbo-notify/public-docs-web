@@ -1,12 +1,12 @@
 ---
 title: Listar mensagens
-description: Endpoint GET /v1/numbers/{alias}/messages — lista paginada por cursor das mensagens de um número, mais recentes primeiro.
+description: Endpoint GET /v1/numbers/{alias}/messages: lista paginada por cursor das mensagens de um número, mais recentes primeiro.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-Liste as mensagens (enviadas e recebidas) de um número, paginadas por cursor, mais recentes primeiro. Cada item é um resumo — para o corpo completo de uma mensagem específica, use [Consultar mensagem](/messages/get/).
+Liste as mensagens (enviadas e recebidas) de um número, paginadas por cursor, mais recentes primeiro. Cada item é um resumo: para o corpo completo de uma mensagem específica, use [Consultar mensagem](/messages/get/).
 
 Use `GET /v1/messages` para o número principal. Para números extras, use `GET /v1/numbers/{alias}/messages`, onde `{alias}` é o `number_alias` presente no envelope do webhook/polling.
 
@@ -174,16 +174,16 @@ Use `GET /v1/messages` para o número principal. Para números extras, use `GET 
 | `cursor` | string\|null | Token opaco para a próxima página; `null` quando não há mais itens |
 | `has_more` | boolean | `true` se há mais páginas disponíveis |
 | `data[].id` | string | Identificador público da mensagem (`msg_` + 32 hex) |
-| `data[].number_alias` | string | Handle do número ao qual a mensagem pertence — `"main"` ou o alias de um número extra |
+| `data[].number_alias` | string | Handle do número ao qual a mensagem pertence: `"main"` ou o alias de um número extra |
 | `data[].direction` | string | `outbound` (enviada) ou `inbound` (recebida) |
 | `data[].content_type` | string | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, etc. |
 | `data[].preview` | string | Recorte grapheme-aware do conteúdo (mesmo valor de `GET /v1/numbers/{alias}/messages/{id}`) |
-| `data[].at` | string | ISO 8601 — momento **estável de ocorrência** da mensagem (outbound: envio real; inbound: recebimento). Não avança conforme a mensagem progride `sent → delivered → read`. |
-| `data[].status` | object | `{state, at, error}` — estado atual de entrega e o timestamp dessa transição. Nesta listagem `error` é **sempre `null`**, inclusive quando `state: "failed"`. Para obter o detalhe da falha, consulte `GET /v1/numbers/{alias}/messages/{id}/status` ou `GET /v1/numbers/{alias}/messages/{id}`. |
+| `data[].at` | string | ISO 8601: momento **estável de ocorrência** da mensagem (outbound: envio real; inbound: recebimento). Não avança conforme a mensagem progride `sent → delivered → read`. |
+| `data[].status` | object | `{state, at, error}`: estado atual de entrega e o timestamp dessa transição. Nesta listagem `error` é **sempre `null`**, inclusive quando `state: "failed"`. Para obter o detalhe da falha, consulte `GET /v1/numbers/{alias}/messages/{id}/status` ou `GET /v1/numbers/{alias}/messages/{id}`. |
 
 :::note[Sem `mentions` na listagem]
 Diferente de [Consultar mensagem](/messages/get/), os itens desta lista
-**nunca** carregam o campo `mentions` — é um resumo deliberadamente enxuto.
+**nunca** carregam o campo `mentions`: é um resumo deliberadamente enxuto.
 Para ver as menções de uma mensagem específica, consulte
 `GET /v1/numbers/{alias}/messages/{id}`.
 :::
@@ -191,15 +191,15 @@ Para ver as menções de uma mensagem específica, consulte
 ## Ordenação e paginação
 
 - Os itens vêm ordenados pela ordem interna de criação (mais recente
-  primeiro) — não estritamente por `at`. Para a maioria das mensagens os
+  primeiro): não estritamente por `at`. Para a maioria das mensagens os
   dois coincidem; para envios outbound, `at` (o momento real de envio)
   pode ficar alguns instantes atrás da ordem de criação por causa do
   espaçamento anti-ban (veja [Limites de uso](/messages/rate-limits/)). A
   página é sempre completa e sem lacunas.
-- A paginação usa `cursor` — passe o valor retornado como `cursor` na
+- A paginação usa `cursor`: passe o valor retornado como `cursor` na
   próxima chamada até `has_more` ser `false`.
 - Mensagens fora da [janela de retenção de conteúdo](/messages/retention/)
-  do seu plano são **filtradas** — elas simplesmente não aparecem na página
+  do seu plano são **filtradas**: elas simplesmente não aparecem na página
   (diferente de `GET .../messages/{id}`, que retorna 404 para uma mensagem
   fora da janela).
 
@@ -210,7 +210,7 @@ Para ver as menções de uma mensagem específica, consulte
 | `403`  | `not_authorized`       | A chave de acesso está inválida ou ausente.          |
 | `403`  | `insufficient_scope`   | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
 | `404`  | `number_not_found`     | O alias informado na URL não corresponde a nenhum número cadastrado. |
-| `422`  | `validation_error`     | Um parâmetro de consulta não passou na validação — por exemplo `limit` fora do intervalo 1–200. A resposta traz `details.errors` com os campos rejeitados. |
+| `422`  | `validation_error`     | Um parâmetro de consulta não passou na validação: por exemplo `limit` fora do intervalo 1–200. A resposta traz `details.errors` com os campos rejeitados. |
 | `500`  | `internal_error`       | Erro interno inesperado no servidor.                 |
 
 Veja também: [Consultar mensagem](/messages/get/) · [Polling de eventos](/messages/polling/).

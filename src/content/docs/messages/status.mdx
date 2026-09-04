@@ -199,14 +199,14 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
 ## Detalhes da falha
 
 Quando o status é `failed`, o objeto `error` carrega os detalhes. É **o mesmo
-shape** do `data.error` dos webhooks `*.failed` (consistência evento ↔ recurso —
+shape** do `data.error` dos webhooks `*.failed` (consistência evento ↔ recurso,
 veja [Webhooks](/messages/webhook/) e [Consultar mensagem](/messages/get/)):
 
 | Campo          | Descrição                                                                 |
 | -------------- | ------------------------------------------------------------------------- |
-| `error.code`   | Código estável legível por máquina — faça branch neste valor (ex.: `session_not_connected`, `whatsapp_send_failed`, `media_fetch_failed`). |
+| `error.code`   | Código estável legível por máquina: faça branch neste valor (ex.: `session_not_connected`, `whatsapp_send_failed`, `media_fetch_failed`). |
 | `error.message`| Descrição legível da falha.                                               |
-| `error.hint`   | `string` — orientação acionável para corrigir, derivada do `code`. **Ausente** (chave omitida, nunca `null`) quando não há orientação para o `code`. |
+| `error.hint`   | `string`: orientação acionável para corrigir, derivada do `code`. **Ausente** (chave omitida, nunca `null`) quando não há orientação para o `code`. |
 
 Neste endpoint o campo `error` está **sempre presente**: vem preenchido quando `state` é `failed` e `null` nos demais estados (`pending`/`sent`/`delivered`/`read`). Já em `GET /v1/numbers/{alias}/messages/{id}`, o campo é **omitido** quando não há falha.
 
@@ -216,21 +216,21 @@ Neste endpoint o campo `error` está **sempre presente**: vem preenchido quando 
 | :----: | ---------------- | ---------------------------------------------------- |
 | `403`  | `not_authorized` | A chave de acesso está inválida ou ausente.          |
 | `403`  | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
-| `404`  | `not_found`      | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de retenção de conteúdo](/messages/retention/) do plano — os três casos devolvem a mesma resposta. |
+| `404`  | `not_found`      | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de retenção de conteúdo](/messages/retention/) do plano: os três casos devolvem a mesma resposta. |
 | `404`  | `message_not_found` | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `500`  | `internal_error` | Erro interno inesperado no servidor.                 |
 
 ## Retenção
 
-A janela de retenção de conteúdo do plano vale **também para este endpoint**: a mensagem é resolvida pelo mesmo caminho compartilhado por toda rota que recebe um `{message_id}`, e esse caminho aplica o filtro de retenção antes de qualquer outra coisa. Uma vez que a mensagem fica mais antiga que a janela do seu plano, `GET /v1/numbers/{alias}/messages/{id}/status` passa a retornar `404 not_found` — indistinguível de uma mensagem que nunca existiu. Consulte e arquive o status final antes disso; para os prazos por plano, veja a documentação de [Retenção](/messages/retention/).
+A janela de retenção de conteúdo do plano vale **também para este endpoint**: a mensagem é resolvida pelo mesmo caminho compartilhado por toda rota que recebe um `{message_id}`, e esse caminho aplica o filtro de retenção antes de qualquer outra coisa. Uma vez que a mensagem fica mais antiga que a janela do seu plano, `GET /v1/numbers/{alias}/messages/{id}/status` passa a retornar `404 not_found`: indistinguível de uma mensagem que nunca existiu. Consulte e arquive o status final antes disso; para os prazos por plano, veja a documentação de [Retenção](/messages/retention/).
 
 ## Timestamp da transição de status
 
 O momento da **transição de entrega atual** é exposto pelo campo `status.at`, que **avança** a cada transição (`sent → delivered → read`):
 
-- Em `GET /v1/numbers/{alias}/messages/{id}/status` o objeto `status` carrega `{state, at}` — o `status.at` é o instante em que o estado atual foi atingido.
+- Em `GET /v1/numbers/{alias}/messages/{id}/status` o objeto `status` carrega `{state, at}`: o `status.at` é o instante em que o estado atual foi atingido.
 - Em `GET /v1/numbers/{alias}/messages/{id}` o mesmo `status.at` aparece dentro do objeto `status`. Não confunda com o `at` no **nível raiz** da mensagem: este é o **momento estável de ocorrência** (outbound: o envio real no WhatsApp; inbound: o recebimento) e **não muda** conforme a mensagem avança para `delivered`/`read`.
-- Nos eventos `message.sent`, `message.delivered` e `message.read` (webhook e polling via `GET /v1/events`) o instante da ação vem em `data.at` — o mesmo nome de campo em todos os eventos `message.*`.
+- Nos eventos `message.sent`, `message.delivered` e `message.read` (webhook e polling via `GET /v1/events`) o instante da ação vem em `data.at`: o mesmo nome de campo em todos os eventos `message.*`.
 
 ## Atualizações em tempo real
 

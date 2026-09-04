@@ -1,19 +1,19 @@
 ---
 title: Retenção das mensagens
-description: Dois horizontes independentes — conteúdo (texto/mídia da mensagem, por plano, 3 a 90 dias) e metadados (existência da mensagem, fixo em 12 meses). A mesma janela de conteúdo governa consulta por id, listagem e reentrega de webhook.
+description: Dois horizontes independentes, conteúdo (texto/mídia da mensagem, por plano, 3 a 90 dias) e metadados (existência da mensagem, fixo em 12 meses). A mesma janela de conteúdo governa consulta por id, listagem e reentrega de webhook.
 ---
 
 import ApiResponse from '@components/ApiResponse.astro';
 import DashboardLink from '@components/DashboardLink.astro';
 
-O Turbo Notify aplica dois horizontes de retenção independentes a cada mensagem: um para o **conteúdo** (o texto, legenda ou referência de mídia — o que permite recuperar o que foi dito) e outro, bem mais longo, para os **metadados** (o registro de que a mensagem existiu — status, timestamps, participantes). Os dois nunca são confundidos em um único número.
+O Turbo Notify aplica dois horizontes de retenção independentes a cada mensagem: um para o **conteúdo** (o texto, legenda ou referência de mídia, o que permite recuperar o que foi dito) e outro, bem mais longo, para os **metadados** (o registro de que a mensagem existiu: status, timestamps, participantes). Os dois nunca são confundidos em um único número.
 
 ## Os dois horizontes
 
-- **Retenção de conteúdo (por plano, curta):** quanto tempo `text`/`image`/`audio`/`video`/`document`/etc. (o campo específico do `content_type`) continua acessível via API. Depois desse prazo, o Turbo Notify remove permanentemente o conteúdo do banco — não é um filtro de leitura, é destruição de dado. **Esse é o horizonte mais curto que o Turbo Notify oferece, por design.**
-- **Retenção de metadados (fixa, 12 meses, todo plano):** por quanto tempo o registro da mensagem em si sobrevive — que ela existiu, qual o status final, quando foi enviada/recebida, quem participou. Esse horizonte é **igual para todo plano contratado e não é ajustável** — é uma retenção operacional do Turbo Notify (auditoria, reconciliação de cobrança, histórico de cota), não um benefício de plano. Uma mensagem fora da janela de conteúdo mas dentro dos 12 meses continua existindo como registro, só sem o conteúdo em si.
+- **Retenção de conteúdo (por plano, curta):** quanto tempo `text`/`image`/`audio`/`video`/`document`/etc. (o campo específico do `content_type`) continua acessível via API. Depois desse prazo, o Turbo Notify remove permanentemente o conteúdo do banco. Não é um filtro de leitura, é destruição de dado. **Esse é o horizonte mais curto que o Turbo Notify oferece, por design.**
+- **Retenção de metadados (fixa, 12 meses, todo plano):** por quanto tempo o registro da mensagem em si sobrevive: que ela existiu, qual o status final, quando foi enviada/recebida, quem participou. Esse horizonte é **igual para todo plano contratado e não é ajustável**: é uma retenção operacional do Turbo Notify (auditoria, reconciliação de cobrança, histórico de cota), não um benefício de plano. Uma mensagem fora da janela de conteúdo mas dentro dos 12 meses continua existindo como registro, só sem o conteúdo em si.
 
-Depois que uma mensagem sai da janela de conteúdo do seu plano, o `preview` (recorte de até ~50 caracteres, ver [Sobre `preview`](/messages/get/#sobre-preview) em [Consultar mensagem](/messages/get/)) segue a **mesma janela** que o resto do conteúdo — `GET /v1/numbers/{alias}/messages/{id}` responde `404` para o recurso inteiro, sem devolver `preview` separadamente, e a mesma janela redige `data.preview` nas reentregas de webhook armazenadas e nos eventos de polling. Não existe um caminho que ainda recupere o `preview` depois desse ponto.
+Depois que uma mensagem sai da janela de conteúdo do seu plano, o `preview` (recorte de até ~50 caracteres, ver [Sobre `preview`](/messages/get/#sobre-preview) em [Consultar mensagem](/messages/get/)) segue a **mesma janela** que o resto do conteúdo. `GET /v1/numbers/{alias}/messages/{id}` responde `404` para o recurso inteiro, sem devolver `preview` separadamente, e a mesma janela redige `data.preview` nas reentregas de webhook armazenadas e nos eventos de polling. Não existe um caminho que ainda recupere o `preview` depois desse ponto.
 
 ## Janela de retenção de conteúdo por plano
 
@@ -21,28 +21,28 @@ Depois que uma mensagem sai da janela de conteúdo do seu plano, o `preview` (re
 | ----- | --------------------:| ---------- |
 | `FREE`     | 3 dias  | Não |
 | `SOLO`     | 3 dias  | Não |
-| `BUSINESS` | 3 dias (padrão) — 30 ou 90 dias, à sua escolha | Sim, nas <DashboardLink path="/billing">configurações de cobrança do dashboard</DashboardLink> |
+| `BUSINESS` | 3 dias (padrão), com opção de 30 ou 90 dias, à sua escolha | Sim, nas <DashboardLink path="/billing">configurações de cobrança do dashboard</DashboardLink> |
 | `CUSTOM`   | Definida em contrato | Não (definida pela equipe do Turbo Notify, não self-service) |
 
-Todo plano começa com o mesmo piso de **3 dias** — inclusive `BUSINESS`, que pode estender a janela para 30 ou 90 dias quando o caso de uso exige (suporte, disputa, compliance interno). Estender a janela é uma escolha explícita da sua organização, não o padrão da plataforma: o padrão de todo plano é reter o mínimo possível.
+Todo plano começa com o mesmo piso de **3 dias**, inclusive `BUSINESS`, que pode estender a janela para 30 ou 90 dias quando o caso de uso exige (suporte, disputa, compliance interno). Estender a janela é uma escolha explícita da sua organização, não o padrão da plataforma: o padrão de todo plano é reter o mínimo possível.
 
-**Por que 3 dias, e não menos:** o piso está ancorado na própria janela de reentrega automática de webhook do Turbo Notify (72 horas). Um valor menor que isso deixaria a limpeza de conteúdo apagar o corpo de uma mensagem — e redigir o payload de webhook armazenado dela — enquanto uma tentativa de reentrega legítima para essa mesma mensagem ainda estivesse elegível para disparar, degradando silenciosamente o retry em uma entrega sem conteúdo. Três dias é o menor valor que nunca compromete o próprio mecanismo de reentrega do Turbo Notify.
+**Por que 3 dias, e não menos:** o piso está ancorado na própria janela de reentrega automática de webhook do Turbo Notify (72 horas). Um valor menor que isso deixaria a limpeza de conteúdo apagar o corpo de uma mensagem (e redigir o payload de webhook armazenado dela) enquanto uma tentativa de reentrega legítima para essa mesma mensagem ainda estivesse elegível para disparar, degradando silenciosamente o retry em uma entrega sem conteúdo. Três dias é o menor valor que nunca compromete o próprio mecanismo de reentrega do Turbo Notify.
 
-`CUSTOM` mantém uma janela fixa mais longa (definida em contrato), sem alteração por este modelo — é um valor negociado, não self-service.
+`CUSTOM` mantém uma janela fixa mais longa (definida em contrato), sem alteração por este modelo: é um valor negociado, não self-service.
 
 ## Uma única janela governa consulta e reentrega de webhook
 
-A retenção de conteúdo **não é dois conceitos disfarçados de um** — ela governa, com o mesmo número, três coisas ao mesmo tempo:
+A retenção de conteúdo **não é dois conceitos disfarçados de um**: ela governa, com o mesmo número, três coisas ao mesmo tempo:
 
 1. Se `GET /v1/numbers/{alias}/messages/{id}` ainda retorna o conteúdo completo da mensagem.
 2. Se essa mesma consulta responde `404` (janela expirada) ou `200` (dentro da janela).
 3. Se uma **tentativa de reentrega de webhook** (`message.*`) ainda carrega o conteúdo real no payload armazenado, ou já foi redigido.
 
-Você nunca vai observar conteúdo presente em um caminho e ausente no outro para a mesma mensagem — consultar a mensagem via API e reenviar a entrega de webhook dela são, na prática, duas formas de recuperar o mesmo dado que o Turbo Notify está guardando em seu nome, e ambas obedecem exatamente à mesma janela.
+Você nunca vai observar conteúdo presente em um caminho e ausente no outro para a mesma mensagem. Consultar a mensagem via API e reenviar a entrega de webhook dela são, na prática, duas formas de recuperar o mesmo dado que o Turbo Notify está guardando em seu nome, e ambas obedecem exatamente à mesma janela.
 
 ## Comportamento nas operações por id
 
-`GET /v1/numbers/{alias}/messages/{id}` (e a rota plana `GET /v1/messages/{id}` para o número principal) retorna **404** quando o `id` está fora da janela de retenção de conteúdo do seu plano — o mesmo shape de uma mensagem que nunca existiu, sem vazar a existência passada do recurso:
+`GET /v1/numbers/{alias}/messages/{id}` (e a rota plana `GET /v1/messages/{id}` para o número principal) retorna **404** quando o `id` está fora da janela de retenção de conteúdo do seu plano. É o mesmo shape de uma mensagem que nunca existiu, sem vazar a existência passada do recurso:
 
 <ApiResponse
   status={404}
@@ -51,7 +51,7 @@ Você nunca vai observar conteúdo presente em um caminho e ausente no outro par
   }}
 />
 
-Esse 404 **não é exclusivo da consulta de detalhe**. Toda rota que recebe um `{message_id}` resolve a mensagem pelo mesmo caminho compartilhado — o mesmo que aplica a janela de retenção de conteúdo — **antes** de executar a própria operação. Por isso a janela alcança, sem exceção, todas as operações abaixo, tanto na forma aninhada quanto na rota plana equivalente do número principal:
+Esse 404 **não é exclusivo da consulta de detalhe**. Toda rota que recebe um `{message_id}` resolve a mensagem pelo mesmo caminho compartilhado (o mesmo que aplica a janela de retenção de conteúdo) **antes** de executar a própria operação. Por isso a janela alcança, sem exceção, todas as operações abaixo, tanto na forma aninhada quanto na rota plana equivalente do número principal:
 
 | Operação             | Rota aninhada                                          |
 | -------------------- | ------------------------------------------------------ |
@@ -64,34 +64,34 @@ Esse 404 **não é exclusivo da consulta de detalhe**. Toda rota que recebe um `
 | Apagar               | `POST /v1/numbers/{alias}/messages/{id}/delete`         |
 | Reagir               | `POST /v1/numbers/{alias}/messages/{id}/react`          |
 
-Em todas elas a resposta é o mesmo `404 not_found` — **indistinguível** de uma mensagem que nunca existiu. Na prática: você **não consegue** consultar o status, buscar recibos ou reações, responder, editar, apagar nem reagir a uma mensagem mais antiga que a janela de conteúdo do seu plano.
+Em todas elas a resposta é o mesmo `404 not_found`: **indistinguível** de uma mensagem que nunca existiu. Na prática: você **não consegue** consultar o status, buscar recibos ou reações, responder, editar, apagar nem reagir a uma mensagem mais antiga que a janela de conteúdo do seu plano.
 
 ## Comportamento na listagem
 
-`GET /v1/numbers/{alias}/messages` (listagem por cursor) **filtra** mensagens fora da janela de retenção de conteúdo — elas simplesmente não aparecem em nenhuma página, sem afetar a paginação das mensagens que ainda estão dentro da janela.
+`GET /v1/numbers/{alias}/messages` (listagem por cursor) **filtra** mensagens fora da janela de retenção de conteúdo: elas simplesmente não aparecem em nenhuma página, sem afetar a paginação das mensagens que ainda estão dentro da janela.
 
 ## Metadados sobrevivem 12 meses, sempre
 
-Independentemente do plano contratado ou da janela de conteúdo escolhida, o **registro** da mensagem (status, timestamps, participantes, vínculo de cota/cobrança) é retido por **12 meses, de forma fixa e igual para todos os planos** — este horizonte de metadados não é configurável, não muda com upgrade/downgrade de plano, e é uma retenção operacional do Turbo Notify (auditoria, reconciliação, histórico), não um benefício de plano. Fazer upgrade de tier ou estender a retenção de conteúdo **não recupera** conteúdo que já foi removido por ter passado da janela então vigente — o horizonte de conteúdo é, por definição, mais curto ou igual ao de metadados, nunca o contrário.
+Independentemente do plano contratado ou da janela de conteúdo escolhida, o **registro** da mensagem (status, timestamps, participantes, vínculo de cota/cobrança) é retido por **12 meses, de forma fixa e igual para todos os planos**: este horizonte de metadados não é configurável, não muda com upgrade/downgrade de plano, e é uma retenção operacional do Turbo Notify (auditoria, reconciliação, histórico), não um benefício de plano. Fazer upgrade de tier ou estender a retenção de conteúdo **não recupera** conteúdo que já foi removido por ter passado da janela então vigente. O horizonte de conteúdo é, por definição, mais curto ou igual ao de metadados, nunca o contrário.
 
 ## Durabilidade de mídia (BYO Storage)
 
-Para mensagens com mídia (imagem, vídeo, áudio, documento, sticker), a durabilidade dos **bytes** é um mecanismo independente da janela de conteúdo acima — e é, ele próprio, uma escolha de privacidade deliberada do Turbo Notify, não apenas uma decisão técnica ou de custo. O Turbo Notify nunca opera um bucket compartilhado onde mídia de clientes se acumula:
+Para mensagens com mídia (imagem, vídeo, áudio, documento, sticker), a durabilidade dos **bytes** é um mecanismo independente da janela de conteúdo acima, e é, ele próprio, uma escolha de privacidade deliberada do Turbo Notify, não apenas uma decisão técnica ou de custo. O Turbo Notify nunca opera um bucket compartilhado onde mídia de clientes se acumula:
 
-- **Com [BYO Object Storage](/general/byo-storage-setup/) configurado**: os bytes são copiados para o seu bucket assim que a mensagem é recebida. Permanecem disponíveis enquanto o seu bucket retiver o objeto — sob seu controle total, inclusive depois que a mensagem sair da janela de retenção de conteúdo (a referência de mídia é destruída junto com o restante do conteúdo, mas os bytes já vivem no seu próprio bucket).
-- **Sem BYO Storage**: apenas os metadados (mime, tamanho, hash, legenda) são persistidos. Os bytes NÃO são repassados nem armazenados pelo Turbo Notify — nunca há um modo "guardamos para você enquanto isso". O bloco de mídia (`image`/`video`/`audio`/`document`/`sticker`) retorna `kind: "unavailable"` com um envelope `setup_hint` indicando como configurar.
+- **Com [BYO Object Storage](/general/byo-storage-setup/) configurado**: os bytes são copiados para o seu bucket assim que a mensagem é recebida. Permanecem disponíveis enquanto o seu bucket retiver o objeto: sob seu controle total, inclusive depois que a mensagem sair da janela de retenção de conteúdo (a referência de mídia é destruída junto com o restante do conteúdo, mas os bytes já vivem no seu próprio bucket).
+- **Sem BYO Storage**: apenas os metadados (mime, tamanho, hash, legenda) são persistidos. Os bytes NÃO são repassados nem armazenados pelo Turbo Notify. Nunca há um modo "guardamos para você enquanto isso". O bloco de mídia (`image`/`video`/`audio`/`document`/`sticker`) retorna `kind: "unavailable"` com um envelope `setup_hint` indicando como configurar.
 
-Não há uma janela separada de 24h via CDN do WhatsApp — este é o comportamento único. Detalhes em [BYO Object Storage](/general/byo-storage-setup/).
+Não há uma janela separada de 24h via CDN do WhatsApp. Este é o comportamento único. Detalhes em [BYO Object Storage](/general/byo-storage-setup/).
 
 ## Implicações práticas
 
-- Consulte o status da mensagem o quanto antes após o envio — não dependa da janela de retenção de conteúdo do plano para arquivamento de longo prazo.
+- Consulte o status da mensagem o quanto antes após o envio. Não dependa da janela de retenção de conteúdo do plano para arquivamento de longo prazo.
 - Configure um [webhook](/messages/webhook/) para receber atualizações em tempo real e não depender exclusivamente da consulta manual.
-- Armazene no seu sistema os dados que forem relevantes para o seu negócio, como o `message_id` e o status final — a API não é um armazenamento de longo prazo para o seu histórico de conversas.
-- Operações que dependem da mensagem original — [responder](/messages/send/), [editar ou apagar](/messages/edit-delete/) e [reagir](/other-features/reaction/) — **também** estão sujeitas à janela de retenção de conteúdo: a mensagem-alvo é resolvida pelo mesmo caminho que aplica o filtro, então tentar qualquer uma delas em uma mensagem fora da janela retorna `404 not_found`. Se o plano `BUSINESS` estender a janela para 30 ou 90 dias, essas operações passam a valer por esse período mais longo.
-- Se você reenvia entregas de webhook manualmente pelo dashboard, lembre-se de que uma reentrega feita depois que a janela de conteúdo expirou carrega um payload com o conteúdo redigido, não o conteúdo original — a mesma regra da consulta por id.
-- As franquias de mensagens/contatos por ciclo são um conceito diferente da retenção — veja [Quota e uso](/usage/quota/).
+- Armazene no seu sistema os dados que forem relevantes para o seu negócio, como o `message_id` e o status final. A API não é um armazenamento de longo prazo para o seu histórico de conversas.
+- Operações que dependem da mensagem original ([responder](/messages/send/), [editar ou apagar](/messages/edit-delete/) e [reagir](/other-features/reaction/)) **também** estão sujeitas à janela de retenção de conteúdo: a mensagem-alvo é resolvida pelo mesmo caminho que aplica o filtro, então tentar qualquer uma delas em uma mensagem fora da janela retorna `404 not_found`. Se o plano `BUSINESS` estender a janela para 30 ou 90 dias, essas operações passam a valer por esse período mais longo.
+- Se você reenvia entregas de webhook manualmente pelo dashboard, lembre-se de que uma reentrega feita depois que a janela de conteúdo expirou carrega um payload com o conteúdo redigido, não o conteúdo original. A mesma regra da consulta por id.
+- As franquias de mensagens/contatos por ciclo são um conceito diferente da retenção: veja [Quota e uso](/usage/quota/).
 
 ## Consulta de status
 
-Para verificar o status de uma mensagem **dentro** da janela de retenção de conteúdo do seu plano, veja a documentação de [Status](/messages/status/). Depois que a mensagem sai da janela, esse endpoint responde `404 not_found` como qualquer outra operação por id — por isso vale consultar (ou receber via [webhook](/messages/webhook/)) e arquivar o status final o quanto antes.
+Para verificar o status de uma mensagem **dentro** da janela de retenção de conteúdo do seu plano, veja a documentação de [Status](/messages/status/). Depois que a mensagem sai da janela, esse endpoint responde `404 not_found` como qualquer outra operação por id. Por isso vale consultar (ou receber via [webhook](/messages/webhook/)) e arquivar o status final o quanto antes.

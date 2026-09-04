@@ -27,9 +27,9 @@ Authorization: Bearer SUA_CHAVE
 
 A revogação de uma chave de acesso é **definitiva e irreversível**. Não existe desativação temporária: uma vez revogada, a chave não pode ser reativada.
 
-Revogue a chave pelo dashboard. A partir daí, toda requisição feita com ela é bloqueada permanentemente. A chave continua aparecendo na listagem com status `revoked` — para fins de auditoria — mas não volta a funcionar.
+Revogue a chave pelo dashboard. A partir daí, toda requisição feita com ela é bloqueada permanentemente. A chave continua aparecendo na listagem com status `revoked` (para fins de auditoria), mas não volta a funcionar.
 
-Se você precisa de uma pausa temporária no acesso, o caminho é **gerar uma nova chave e revogar a antiga** (rotação). Como não há limite de chaves por conta, você pode criar a nova, migrar suas integrações e só então revogar a anterior — sem janela de indisponibilidade.
+Se você precisa de uma pausa temporária no acesso, o caminho é **gerar uma nova chave e revogar a antiga** (rotação). Como não há limite de chaves por conta, você pode criar a nova, migrar suas integrações e só então revogar a anterior, sem janela de indisponibilidade.
 
 ## Permissão
 
@@ -39,10 +39,10 @@ Caso precise restringir o acesso a determinados números, é necessário criar c
 
 ## Escopos
 
-Cada chave carrega **escopos de permissão** que determinam quais operações ela pode chamar — por exemplo `messages:send`, `messages:read`, `numbers:read`, `numbers:write`, `events:read`, `contacts:read`, `contacts:write`, `groups:read` e `organizations:read`. A API distingue dois erros `403`:
+Cada chave carrega **escopos de permissão** que determinam quais operações ela pode chamar (por exemplo `messages:send`, `messages:read`, `numbers:read`, `numbers:write`, `events:read`, `contacts:read`, `contacts:write`, `groups:read` e `organizations:read`). A API distingue dois erros `403`:
 
-- `not_authorized` — a chave está ausente, inválida ou revogada.
-- `insufficient_scope` — a chave é válida, mas não possui o escopo exigido pelo endpoint. A resposta inclui o campo `required_scope` com o escopo necessário:
+- `not_authorized`: a chave está ausente, inválida ou revogada.
+- `insufficient_scope`: a chave é válida, mas não possui o escopo exigido pelo endpoint. A resposta inclui o campo `required_scope` com o escopo necessário:
 
 ```json
 {
@@ -55,5 +55,5 @@ A tabela de erros de cada endpoint indica o escopo exigido pela operação.
 
 ## Relacionado
 
-- [Início rápido](/general/getting-started/) — primeiro envio usando a chave.
-- [Organização](/organizations/overview/) — endpoint que exige o escopo `organizations:read`.
+- [Início rápido](/general/getting-started/): primeiro envio usando a chave.
+- [Organização](/organizations/overview/): endpoint que exige o escopo `organizations:read`.

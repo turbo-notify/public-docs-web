@@ -1,13 +1,13 @@
 ---
 title: Foto do grupo
-description: Endpoint GET /v1/numbers/{alias}/groups/{group_id}/picture — 302 redirect para URL pré-assinada quando disponível; caso contrário 200 com a união picture e reason/setup_hint.
+description: Endpoint GET /v1/numbers/{alias}/groups/{group_id}/picture, 302 redirect para URL pré-assinada quando disponível; caso contrário 200 com a união picture e reason/setup_hint.
 sidebar:
   order: 4
 ---
 
 import ApiResponse from '@components/ApiResponse.astro';
 
-Retorna a foto de um grupo do WhatsApp: redireciona (302) para uma URL **pré-assinada** quando a foto está no seu BYO Storage; caso contrário responde 200 com a união `picture` (estado + reason). O formato de resposta é o mesmo do endpoint de [foto de perfil de contato](/contacts/profile-picture/), mas o tratamento de falha ao pré-assinar **difere entre os dois** — veja [Comportamento por `picture.kind`](#comportamento-por-picturekind).
+Retorna a foto de um grupo do WhatsApp: redireciona (302) para uma URL **pré-assinada** quando a foto está no seu BYO Storage; caso contrário responde 200 com a união `picture` (estado + reason). O formato de resposta é o mesmo do endpoint de [foto de perfil de contato](/contacts/profile-picture/), mas o tratamento de falha ao pré-assinar **difere entre os dois**: veja [Comportamento por `picture.kind`](#comportamento-por-picturekind).
 
 ## Endpoint
 
@@ -19,28 +19,28 @@ GET /v1/groups/{group_id}/picture
 
 ## Comportamento por `picture.kind`
 
-O corpo `picture` retornado ao cliente tem apenas dois estados possíveis —
+O corpo `picture` retornado ao cliente tem apenas dois estados possíveis:
 `available` (foto no seu BYO Storage) ou `unavailable` (qualquer outra
 situação, com a causa detalhada em `reason`):
 
 | `picture.kind` | Resposta HTTP |
 | --------------- | ------------- |
-| `available` | **302 Found** — URL **pré-assinada** do BYO Storage (R2/S3/Supabase), nunca a object key crua |
-| `unavailable` | **200 OK** — corpo JSON `{ "kind": "unavailable", "reason": ..., "setup_hint"?: ... }` (ver campo `reason` abaixo) |
+| `available` | **302 Found**: URL **pré-assinada** do BYO Storage (R2/S3/Supabase), nunca a object key crua |
+| `unavailable` | **200 OK**: corpo JSON `{ "kind": "unavailable", "reason": ..., "setup_hint"?: ... }` (ver campo `reason` abaixo) |
 
-O valor `picture.kind = "pending"` só aparece em payloads de webhook — este
+O valor `picture.kind = "pending"` só aparece em payloads de webhook: este
 endpoint de leitura nunca o retorna.
 
 Quando a foto já está armazenada no seu BYO Storage, mas a geração da URL
 pré-assinada falha nesta requisição, este endpoint não retorna erro:
 ele degrada para `unavailable` e responde **200 OK**, com a causa no campo
-`reason` do corpo. Este endpoint nunca retorna `404` para foto indisponível —
+`reason` do corpo. Este endpoint nunca retorna `404` para foto indisponível:
 sempre responde `200` com `picture.kind: "unavailable"` e o `reason`
 correspondente.
 
 :::caution[A foto de contato se comporta de forma diferente aqui]
-Este é um ponto em que os dois endpoints **divergem**. Na mesma situação —
-falha ao pré-assinar uma foto já armazenada — o [endpoint de
+Este é um ponto em que os dois endpoints **divergem**. Na mesma situação
+(falha ao pré-assinar uma foto já armazenada), o [endpoint de
 foto de perfil de contato](/contacts/profile-picture/) realmente retorna
 **`404 contact_picture_unavailable`**, enquanto o de grupo retorna **200**
 com `kind: "unavailable"`.
@@ -49,9 +49,9 @@ Não trate os dois como equivalentes: um cliente que espera 404 do grupo
 nunca vai vê-lo, e um cliente que espera 200 do contato vai receber 404.
 :::
 
-O Turbo Notify reavalia automaticamente uma foto marcada como `unavailable` enquanto o storage estava ausente e a envia assim que você habilita o BYO Storage — sem necessidade de nova ação (ver [a foto fica disponível depois](/groups/lifecycle-events/#groups-picture-becomes-available)).
+O Turbo Notify reavalia automaticamente uma foto marcada como `unavailable` enquanto o storage estava ausente e a envia assim que você habilita o BYO Storage, sem necessidade de nova ação (ver [a foto fica disponível depois](/groups/lifecycle-events/#groups-picture-becomes-available)).
 
-## Exemplo — foto disponível
+## Exemplo: foto disponível
 
 ```bash
 curl -I "https://api.turbonotify.com/v1/groups/grp_.../picture" \
@@ -63,9 +63,9 @@ Cache-Control: no-store, no-cache, must-revalidate
 Pragma: no-cache
 ```
 
-A URL pré-assinada tem validade curta — **15 minutos por padrão** (configurável entre 1 minuto e 1 hora na sua integração de storage).
+A URL pré-assinada tem validade curta: **15 minutos por padrão** (configurável entre 1 minuto e 1 hora na sua integração de storage).
 
-## Exemplo — foto indisponível (sem storage)
+## Exemplo: foto indisponível (sem storage)
 
 <ApiResponse
   status={200}
@@ -76,12 +76,12 @@ A URL pré-assinada tem validade curta — **15 minutos por padrão** (configur�
       setup_url: 'https://dashboard.turbonotify.com/storage',
       docs_url: 'https://docs.turbonotify.com/general/byo-storage-setup/',
       message:
-        'Configure object storage (S3, Cloudflare R2, or Supabase Storage — free tiers available) to receive media. Visit your dashboard or read the docs.',
+        'Configure object storage (S3, Cloudflare R2, or Supabase Storage, free tiers available) to receive media. Visit your dashboard or read the docs.',
     },
   }}
 />
 
-O campo `reason` discrimina a causa: `no_storage` (sem storage configurado), `storage_circuit_open` (circuit breaker aberto), `upload_failed` (falha de upload neste ciclo) ou `peer_has_none` (o grupo não tem foto). O `setup_hint` acompanha apenas `no_storage` e `storage_circuit_open` — para `upload_failed` e `peer_has_none` ele é omitido. É o mesmo envelope usado por mídia e pela foto de contato.
+O campo `reason` discrimina a causa: `no_storage` (sem storage configurado), `storage_circuit_open` (circuit breaker aberto), `upload_failed` (falha de upload neste ciclo) ou `peer_has_none` (o grupo não tem foto). O `setup_hint` acompanha apenas `no_storage` e `storage_circuit_open`: para `upload_failed` e `peer_has_none` ele é omitido. É o mesmo envelope usado por mídia e pela foto de contato.
 
 ## Campo `picture` inline em `GET /v1/numbers/{alias}/groups/{group_id}`
 
@@ -89,5 +89,5 @@ O campo `picture` no payload completo do grupo reflete o mesmo estado: presigna 
 
 ## Cache
 
-- A resposta é retornada com `Cache-Control: no-store, no-cache, must-revalidate` e `Pragma: no-cache` — **não é cacheável**, inclusive o redirect `302`. Não armazene a resposta em cache; refaça a chamada sempre que precisar do estado atual. Na prática, cada leitura refaz a requisição — mas a **URL pré-assinada apontada pelo `Location`** continua válida pelo seu próprio TTL, e é ela que você deve reutilizar se quiser evitar um novo download.
-- A URL pré-assinada tem validade curta — **15 minutos por padrão** (configurável entre 1 minuto e 1 hora). Não reutilize a URL além desse prazo; refaça a chamada para obter uma nova.
+- A resposta é retornada com `Cache-Control: no-store, no-cache, must-revalidate` e `Pragma: no-cache`: **não é cacheável**, inclusive o redirect `302`. Não armazene a resposta em cache; refaça a chamada sempre que precisar do estado atual. Na prática, cada leitura refaz a requisição, mas a **URL pré-assinada apontada pelo `Location`** continua válida pelo seu próprio TTL, e é ela que você deve reutilizar se quiser evitar um novo download.
+- A URL pré-assinada tem validade curta: **15 minutos por padrão** (configurável entre 1 minuto e 1 hora). Não reutilize a URL além desse prazo; refaça a chamada para obter uma nova.

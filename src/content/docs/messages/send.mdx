@@ -13,18 +13,18 @@ O corpo de `POST /v1/numbers/{alias}/messages` (ou o atalho
 `POST /v1/messages` para o número principal) usa um objeto
 **aninhado `content`** para transportar o payload da mensagem. O tipo é
 inferido automaticamente pelo campo âncora presente em `content`
-(`text`, `image_url`, `latitude`, `start_at`, …) — **não envie** um campo
+(`text`, `image_url`, `latitude`, `start_at`, …). **Não envie** um campo
 `content_type` no request: ele nunca é aceito (incluí-lo retorna `422`).
 Suporta texto, localização, contato, calendário e
-mídia (`image`, `video`, `audio`, `document`, `sticker` — veja
+mídia (`image`, `video`, `audio`, `document`, `sticker`, veja
 [Envio de mídia](/messages/send-media/)).
 
-Para citar (responder) uma mensagem existente — qualquer variante de conteúdo — use o endpoint dedicado `POST /v1/messages/{message_id}/reply`, onde `{message_id}` é o id público da mensagem citada (`msg_{hex32}`). O body do reply contém apenas `content`. O webhook resultante é `message.replied` (em vez de `message.sent`); veja [Webhooks](/messages/webhook/#exemplo--messagereplied-inboundoutbound).
+Para citar (responder) uma mensagem existente (qualquer variante de conteúdo), use o endpoint dedicado `POST /v1/messages/{message_id}/reply`, onde `{message_id}` é o id público da mensagem citada (`msg_{hex32}`). O body do reply contém apenas `content`. O webhook resultante é `message.replied` (em vez de `message.sent`); veja [Webhooks](/messages/webhook/#exemplo-messagereplied-inboundoutbound).
 
-A mensagem citada precisa estar **dentro da [janela de retenção de conteúdo](/messages/retention/)** do seu plano: responder a uma mensagem mais antiga que a janela retorna `404 not_found` — a mesma resposta de uma mensagem inexistente.
+A mensagem citada precisa estar **dentro da [janela de retenção de conteúdo](/messages/retention/)** do seu plano: responder a uma mensagem mais antiga que a janela retorna `404 not_found`: a mesma resposta de uma mensagem inexistente.
 
 :::tip[Roteamento por número]
-- **Número principal** → `POST /v1/messages` (rota plana) **ou** `POST /v1/numbers/main/messages` — as duas formas são idênticas.
+- **Número principal** → `POST /v1/messages` (rota plana) **ou** `POST /v1/numbers/main/messages`: as duas formas são idênticas.
 - **Número extra** → `POST /v1/numbers/{alias}/messages`, onde `{alias}` é o alias configurado no dashboard. [Saiba mais](/numbers/add/).
 :::
 
@@ -203,12 +203,12 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
 ## Menções (@mentions)
 
 Para mencionar
-alguém — a menção real do WhatsApp, com nome tocável e notificação no aparelho
-do mencionado — escreva o token **`@<numero>`** diretamente no `text` (ou no
-`caption` de mídia — veja [Envio de mídia](/messages/send-media/)): `@` seguido
+alguém (a menção real do WhatsApp, com nome tocável e notificação no aparelho
+do mencionado), escreva o token **`@<numero>`** diretamente no `text` (ou no
+`caption` de mídia, veja [Envio de mídia](/messages/send-media/)): `@` seguido
 do telefone do contato em **dígitos E.164, sem `+`**.
 
-```json title="POST /v1/messages — texto com menção (1:1)"
+```json title="POST /v1/messages: texto com menção (1:1)"
 {
   "to": { "number": "+5511988887777" },
   "content": {
@@ -217,9 +217,9 @@ do telefone do contato em **dígitos E.164, sem `+`**.
 }
 ```
 
-Menções brilham em grupos — mencione um participante pelo número:
+Menções brilham em grupos. Mencione um participante pelo número:
 
-```json title="POST /v1/messages — grupo mencionando um participante"
+```json title="POST /v1/messages: grupo mencionando um participante"
 {
   "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a" },
   "content": {
@@ -228,7 +228,7 @@ Menções brilham em grupos — mencione um participante pelo número:
 }
 ```
 
-**Não existe campo `mentions` no request** — a detecção é **implícita**, pelo
+**Não existe campo `mentions` no request**: a detecção é **implícita**, pelo
 próprio texto (o mesmo modelo da inferência de tipo de conteúdo pelo campo
 âncora). Todo token válido vira uma menção real no dispositivo do destinatário.
 
@@ -236,23 +236,23 @@ próprio texto (o mesmo modelo da inferência de tipo de conteúdo pelo campo
 
 | Regra | Comportamento |
 |---|---|
-| Sintaxe | `@` + 7–15 dígitos, delimitado por fronteira de palavra — `nome@dominio.com`, `@@123`, sequências com mais de 15 dígitos e `@+55…` **não** viram menção |
-| Normalização | Números BR de 12 dígitos são normalizados para a forma canônica de 13 dígitos — o conteúdo persistido/devolvido carrega o token normalizado (ex.: `@551187650000` → `@5511987650000`) |
-| Fail-open | Dígitos inválidos ou não normalizáveis permanecem **texto puro** — o envio nunca falha por causa de uma menção |
+| Sintaxe | `@` + 7–15 dígitos, delimitado por fronteira de palavra: `nome@dominio.com`, `@@123`, sequências com mais de 15 dígitos e `@+55…` **não** viram menção |
+| Normalização | Números BR de 12 dígitos são normalizados para a forma canônica de 13 dígitos: o conteúdo persistido/devolvido carrega o token normalizado (ex.: `@551187650000` → `@5511987650000`) |
+| Fail-open | Dígitos inválidos ou não normalizáveis permanecem **texto puro**: o envio nunca falha por causa de uma menção |
 | Escopo | Funciona em 1:1 e em grupos, em `text` e em `caption` de `image`/`video`/`document` (`audio`/`sticker` não têm caption) |
-| Eco simétrico | O token `@<numero>` que você recebe em `message.received` pode ser colado de volta no envio — menciona corretamente sem transformação manual |
+| Eco simétrico | O token `@<numero>` que você recebe em `message.received` pode ser colado de volta no envio: menciona corretamente sem transformação manual |
 | Quota | Mencionar alguém **nunca** consome quota de mensagens nem de contatos |
 
 Depois do envio, a mensagem passa a carregar a estrutura `mentions`
-(lista de `{contact_id?, name?, number}` — `contact_id` e `name` são omitidos
+(lista de `{contact_id?, name?, number}`: `contact_id` e `name` são omitidos
 quando a menção não corresponde a um contato conhecido) em
 [`GET /v1/messages/{message_id}`](/messages/get/) e no `data.mentions` dos
-eventos [`message.sent`/`message.replied`/`message.edited`](/messages/webhook/)
-— um `@<digitos>` literal no texto **só** é menção se constar dessa estrutura.
+eventos [`message.sent`/`message.replied`/`message.edited`](/messages/webhook/).
+Um `@<digitos>` literal no texto **só** é menção se constar dessa estrutura.
 
 As mesmas regras de detecção valem para `POST .../messages/{message_id}/reply`
 (o `text`/`caption` do reply) e para `POST .../messages/{message_id}/edit` (o
-novo `text` da edição substitui **todo** o conjunto de menções da mensagem —
+novo `text` da edição substitui **todo** o conjunto de menções da mensagem,
 veja [Editar e deletar mensagens](/messages/edit-delete/#menções-em-edições)).
 
 ## Envio com número extra
@@ -439,10 +439,10 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 | :----: | ----------------------- | ------------------------------------------------- |
 | `400`  | `contact_not_found`     | O `contact_id` informado não pertence à organização.  |
 | `400`  | `contacts_not_enabled`  | Envio por `contact_id` não configurado.           |
-| `400`  | `not_group_member`      | Sua linha não é mais participante do `group_id` informado — veja [Envio para grupo](#envio-para-grupo). |
-| `402`  | `feature_not_available` | Envio para grupo (`to.group_id`) requer plano `BUSINESS` ou superior — veja [Envio para grupo](#envio-para-grupo). |
+| `400`  | `not_group_member`      | Sua linha não é mais participante do `group_id` informado, veja [Envio para grupo](#envio-para-grupo). |
+| `402`  | `feature_not_available` | Envio para grupo (`to.group_id`) requer plano `BUSINESS` ou superior, veja [Envio para grupo](#envio-para-grupo). |
 | `402`  | `subscription_inactive` | Assinatura com pagamento pendente, encerrada ou trial expirado (`details.status`). Bloqueia todo envio até a assinatura voltar a ficar ativa. |
-| `402`  | `contact_quota_exceeded` | Franquia de contatos distintos do ciclo atual esgotada — veja [Quota e uso](/usage/quota/). |
+| `402`  | `contact_quota_exceeded` | Franquia de contatos distintos do ciclo atual esgotada, veja [Quota e uso](/usage/quota/). |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.       |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
 | `422`  | `validation_error`      | O corpo da requisição está malformado ou não passou na validação. A resposta traz `details.errors` com os campos rejeitados. |
@@ -453,9 +453,9 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 | `422`  | `extra_number_not_connected` | O número extra do alias na URL está registrado mas sua conexão como dispositivo vinculado não está ativa no momento. |
 | `422`  | `group_not_owned_by_number` | O `group_id` informado pertence a outro número da conta, não ao alias do path. |
 | `422`  | `message_not_replyable` | *(apenas `POST .../messages/{message_id}/reply`)* A mensagem citada ainda não foi enviada ao WhatsApp ou já foi apagada. |
-| `429`  | `messages_quota_exceeded` | Franquia de mensagens do ciclo atual esgotada — veja [Quota e uso](/usage/quota/). |
-| `429`  | `send_rate_spacing`     | Envio antes do intervalo mínimo entre mensagens do seu tier — veja [Limites de uso](/messages/rate-limits/). |
-| `429`  | `rate_limit_exceeded`   | Outro limite operacional do plano foi ultrapassado — veja [Limites de uso](/messages/rate-limits/). |
+| `429`  | `messages_quota_exceeded` | Franquia de mensagens do ciclo atual esgotada, veja [Quota e uso](/usage/quota/). |
+| `429`  | `send_rate_spacing`     | Envio antes do intervalo mínimo entre mensagens do seu tier, veja [Limites de uso](/messages/rate-limits/). |
+| `429`  | `rate_limit_exceeded`   | Outro limite operacional do plano foi ultrapassado, veja [Limites de uso](/messages/rate-limits/). |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.              |
 
 ## Status da mensagem
@@ -480,7 +480,7 @@ Para saber por quanto tempo as mensagens ficam disponíveis para consulta e oper
 
 ---
 
-## Conteúdo rico — localização, contato e calendário
+## Conteúdo rico: localização, contato e calendário
 
 `POST /v1/messages` aceita três variantes de
 conteúdo rico além de `text`. Cada variante tem um campo âncora próprio
@@ -658,8 +658,8 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
 | `content.title` | string | não | máx. 100 chars |
 | `content.address` | string | não | máx. 500 chars |
 
-O Turbo Notify gera o vCard server-side a partir desses campos —
-você nunca precisa lidar com escaping vCard manualmente.
+O Turbo Notify gera o vCard server-side a partir desses campos.
+Você nunca precisa lidar com escaping vCard manualmente.
 
 ### Enviar evento de calendário
 
@@ -758,7 +758,7 @@ você nunca precisa lidar com escaping vCard manualmente.
 | `content.join_link` | string | não | apenas `http://`/`https://` |
 | `content.location` | object | não | esquema `location` aninhado |
 | `content.has_reminder` | bool | não | default `false` |
-| `content.reminder_offset_sec` | int | não | segundos antes do evento; só tem efeito com `has_reminder=true` — sem validação cruzada, é ignorado silenciosamente se enviado com `has_reminder=false`/omitido |
+| `content.reminder_offset_sec` | int | não | segundos antes do evento; só tem efeito com `has_reminder=true`: sem validação cruzada, é ignorado silenciosamente se enviado com `has_reminder=false`/omitido |
 | `content.extra_guests_allowed` | bool | não | default `false` |
 
 :::tip
@@ -767,12 +767,12 @@ A nomenclatura interna do WhatsApp é "evento"; usamos
 ambiguidade com o termo "event" usado em webhooks.
 :::
 
-:::caution[Limitação de propagação — contas pessoais WhatsApp]
+:::caution[Limitação de propagação: contas pessoais WhatsApp]
 A variante `calendar` (campo âncora `start_at`) é uma feature **WhatsApp Business** (`eventMessage`).
 Quando o destinatário é uma **conta pessoal** (não-Business), o servidor
 WhatsApp remove os timestamps (`startTime`/`endTime`) durante a entrega.
 O destinatário recebe a mensagem com todos os metadados úteis (`name`,
-`description`, `join_link`, `location`) mas **sem horário** — o webhook
+`description`, `join_link`, `location`) mas **sem horário**. O webhook
 `message.received` correspondente preserva a variante `calendar` e
 omite o campo `start_at` do body. Não há reclassificação como
 `unsupported`.
@@ -792,8 +792,8 @@ Cada tipo aparece no WhatsApp do destinatário com a UI nativa:
 salvável, **calendário** com botão "Adicionar ao calendário".
 
 Para visualizar exatamente como o evento `message.sent` correspondente
-chega no seu webhook, abra o [Webhook Inspector](https://webhook.turbonotify.com/)
-— o painel "Enriched" renderiza esses três tipos com cards dedicados.
+chega no seu webhook, abra o [Webhook Inspector](https://webhook.turbonotify.com/).
+O painel "Enriched" renderiza esses três tipos com cards dedicados.
 
 ## Envio para grupo
 
@@ -806,7 +806,7 @@ assume a forma de objeto `{ "group_id": "grp_..." }` em vez de
 Enviar mensagem (ou indicador de digitação) para um `group_id` exige a
 feature `groups:messages`, disponível a partir do tier `BUSINESS`. Em
 `FREE`/`SOLO` você ainda **recebe** mensagens de grupo, **lista grupos**
-(`GET /v1/numbers/{alias}/groups`) e consulta detalhes — apenas o **envio**
+(`GET /v1/numbers/{alias}/groups`) e consulta detalhes. Apenas o **envio**
 outbound para grupo é bloqueado com `402`:
 
 <ApiResponse
@@ -820,7 +820,7 @@ Veja [Quota e uso](/usage/quota/#envio-para-grupos-exige-plano-business-ou-super
 e [Limitações de grupos](/groups/limitations/).
 :::
 
-```json title="POST /v1/messages — grupo"
+```json title="POST /v1/messages: grupo"
 {
   "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a" },
   "content": {
@@ -829,7 +829,7 @@ e [Limitações de grupos](/groups/limitations/).
 }
 ```
 
-O campo `to` é polimórfico — aceita exatamente uma das três formas (sem `kind` nem `type`):
+O campo `to` é polimórfico. Aceita exatamente uma das três formas (sem `kind` nem `type`):
 
 | Forma de `to` | Destino |
 |---|---|
@@ -837,12 +837,12 @@ O campo `to` é polimórfico — aceita exatamente uma das três formas (sem `ki
 | `{ "group_id": "grp_..." }` | Mensagem para grupo |
 | `{ "contact_id": "ct_..." }` | Mensagem 1:1 via ID de contato Turbo Notify |
 
-- As três formas são **mutuamente exclusivas** — envie exatamente uma.
+- As três formas são **mutuamente exclusivas**. Envie exatamente uma.
 - `group_id` é o identificador público `grp_{hex32}` recebido em
   webhooks/polling de `message.received` (`to.group_id`) ou nos
   eventos de [ciclo de vida de grupo](/groups/lifecycle-events/).
 - O objeto `content` usa o mesmo schema de envios 1:1 (texto, imagem,
-  vídeo, áudio, documento, sticker, location, contact, calendar) —
+  vídeo, áudio, documento, sticker, location, contact, calendar):
   sem mudanças.
 - Para citar uma mensagem dentro do grupo, use o endpoint dedicado
   `POST /v1/numbers/{alias}/messages/{message_id}/reply`.
@@ -850,7 +850,7 @@ O campo `to` é polimórfico — aceita exatamente uma das três formas (sem `ki
 A resposta tem o shape padrão (`message_id`, `status`). O webhook
 `message.sent` correspondente usa `to.group_id` (mesmo valor que você
 enviou no request); o `number_alias` do envelope identifica a linha que
-enviou — útil para correlacionar entregas inbound e outbound no mesmo grupo.
+enviou: útil para correlacionar entregas inbound e outbound no mesmo grupo.
 
 :::caution[A sua organização precisa estar no grupo]
 O Turbo Notify só envia para grupos onde sua linha (principal ou extra) é
@@ -862,7 +862,7 @@ mais retorna 400 `not_group_member`. Re-entre no grupo via WhatsApp
 :::tip[Quota não é fan-out]
 Mensagem para grupo conta como **1 destinatário** no rate-limit diário,
 independente de quantos participantes o grupo tenha. Quota de contatos
-(`contact.quota.*`) não é afetada — grupos nunca materializam contatos.
+(`contact.quota.*`) não é afetada: grupos nunca materializam contatos.
 :::
 
 ## Envio por contact_id

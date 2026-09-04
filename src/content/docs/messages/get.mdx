@@ -132,7 +132,7 @@ Use `GET /v1/messages/{id}` para o número principal. Para números extras, use 
   </TabItem>
 </Tabs>
 
-## Resposta — mensagem de texto (outbound)
+## Resposta: mensagem de texto (outbound)
 
 <ApiResponse
   status={200}
@@ -153,7 +153,7 @@ Use `GET /v1/messages/{id}` para o número principal. Para números extras, use 
   }}
 />
 
-## Resposta — mensagem de imagem (inbound)
+## Resposta: mensagem de imagem (inbound)
 
 <ApiResponse
   status={200}
@@ -183,24 +183,24 @@ Use `GET /v1/messages/{id}` para o número principal. Para números extras, use 
 
 ## Campos da resposta
 
-`from` e `to` são objetos com forma direção-aware — o mesmo shape usado nos webhooks. A linha Turbo Notify participante é identificada pelo `number_alias`; resolva seu número/contato via `GET /v1/numbers/{alias}`.
+`from` e `to` são objetos com forma direção-aware: o mesmo shape usado nos webhooks. A linha Turbo Notify participante é identificada pelo `number_alias`; resolva seu número/contato via `GET /v1/numbers/{alias}`.
 
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `id` | string | Identificador público da mensagem (`msg_` + 32 hex) |
 | `organization_id` | string | Identificador público da sua organização (`org_{hex32}`). Sempre presente. |
-| `number_alias` | string | Handle do número Turbo Notify ao qual a mensagem pertence — `"main"` ou o alias de um número extra. Resolva seu número/contato via `GET /v1/numbers/{alias}`. |
-| `from` | object | Remetente — shape direção-aware |
-| `to` | object | Destinatário — shape direção-aware |
-| `preview` | string | Recorte grapheme-aware do conteúdo. Segue a mesma janela de retenção de conteúdo do plano — veja [Sobre `preview`](#sobre-preview) |
+| `number_alias` | string | Handle do número Turbo Notify ao qual a mensagem pertence: `"main"` ou o alias de um número extra. Resolva seu número/contato via `GET /v1/numbers/{alias}`. |
+| `from` | object | Remetente: shape direção-aware |
+| `to` | object | Destinatário: shape direção-aware |
+| `preview` | string | Recorte grapheme-aware do conteúdo. Segue a mesma janela de retenção de conteúdo do plano, veja [Sobre `preview`](#sobre-preview) |
 | _campo específico_ | object\|string | Conteúdo completo nomeado pelo `content_type` (`text`, `image`, …). Veja a tabela abaixo. |
-| `content_type` | string | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, `contact`, `interactive`. Enquetes e tipos não reconhecidos são armazenados como `text` — o `preview` preserva o texto disponível. |
+| `content_type` | string | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, `contact`, `interactive`. Enquetes e tipos não reconhecidos são armazenados como `text`. O `preview` preserva o texto disponível. |
 | `direction` | string | `outbound` (enviada) ou `inbound` (recebida) |
 | `channel` | string | Sempre `"whatsapp"` |
 | `origin` | string | `"tn"` (envio via Turbo Notify API) ou `"native"` (digitada no celular). Sempre presente. |
-| `at` | string | ISO 8601 em UTC com sufixo `Z` e precisão de segundos (ex.: `2026-06-01T13:00:05Z`) — momento **estável de ocorrência** da mensagem no WhatsApp (outbound: o momento real de envio; inbound: o momento de recebimento). **Não muda** conforme a mensagem avança `sent → delivered → read` — para o momento da entrega/leitura atual use `status.at`. |
-| `status` | object | `{state, at}` — estado atual de entrega e o `status.at` correspondente. Diferente do `at` raiz, o `status.at` **avança** a cada transição (move para `delivered`, depois `read`). |
-| `mentions` | array | **Opcional** — presente apenas quando a mensagem menciona alguém (inbound ou outbound). Lista de contatos mencionados, itens `{contact_id?, name?, number}` (mesmo shape do `from` inbound), na ordem dos tokens no texto, sem duplicatas. Um `@<digitos>` no texto **só** é menção se o número constar aqui. Sobrevive à retenção do body. Veja [Menções (@mentions)](/messages/send/#menções-mentions). |
+| `at` | string | ISO 8601 em UTC com sufixo `Z` e precisão de segundos (ex.: `2026-06-01T13:00:05Z`): momento **estável de ocorrência** da mensagem no WhatsApp (outbound: o momento real de envio; inbound: o momento de recebimento). **Não muda** conforme a mensagem avança `sent → delivered → read`. Para o momento da entrega/leitura atual, use `status.at`. |
+| `status` | object | `{state, at}`: estado atual de entrega e o `status.at` correspondente. Diferente do `at` raiz, o `status.at` **avança** a cada transição (move para `delivered`, depois `read`). |
+| `mentions` | array | **Opcional**: presente apenas quando a mensagem menciona alguém (inbound ou outbound). Lista de contatos mencionados, itens `{contact_id?, name?, number}` (mesmo shape do `from` inbound), na ordem dos tokens no texto, sem duplicatas. Um `@<digitos>` no texto **só** é menção se o número constar aqui. Sobrevive à retenção do body. Veja [Menções (@mentions)](/messages/send/#menções-mentions). |
 
 ### Campos por `content_type`
 
@@ -214,16 +214,16 @@ Além dos campos comuns acima, cada `content_type` expõe um campo específico c
 | `audio` | `audio` | Objeto com campos de mídia e `transcription?` (BYO Speech-to-Text, se configurado) |
 | `document` | `document` | Objeto com `filename?`, `caption?` e campos de mídia |
 | `sticker` | `sticker` | Objeto com campos de mídia |
-| `location` | `location` | Objeto com `latitude`, `longitude`, `name?`, `address?`, `url?`, `is_live?`, `accuracy_m?`, `comment?`, `thumbnail_b64?`. `is_live` aparece **apenas quando `true`** (localização em tempo real) — nunca vem como `false`; trate a ausência da chave como "não é ao vivo". `accuracy_m` (precisão do GPS, em metros) e `comment` (nota de texto anexada pelo remetente) só aparecem em localizações **inbound** quando o WhatsApp os envia — não fazem parte do schema de envio. |
-| `calendar` | `calendar` | Objeto com `name`, `description?`, `start_at?`, `end_at?`, `join_link?`, `location?`, `has_reminder?`, `reminder_offset_sec?`, `extra_guests_allowed?`. Um calendário **inbound** também pode trazer `is_canceled?`/`is_scheduled_call?` (o organizador cancelou o evento / é uma chamada agendada — sinalizados pelo próprio WhatsApp, nunca enviáveis pela API). Em um calendário **inbound**, `has_reminder`/`extra_guests_allowed`/`is_canceled`/`is_scheduled_call` aparecem **apenas quando `true`** — trate a ausência da chave como "não". Em um calendário **outbound enviado pela API**, o body armazenado é devolvido literalmente: `"has_reminder": false`, `"extra_guests_allowed": false` e chaves explicitamente `null` (`description`, `end_at`, `join_link`, `location`, `reminder_offset_sec`) **podem** aparecer (`is_canceled`/`is_scheduled_call` nunca aparecem em calendários outbound). Trate `false`/`null`/chave ausente como equivalentes. |
-| `contact` | `contact` | Cartão vCard estruturado — mesmos campos aceitos no envio ([Enviar contato](/messages/send/#enviar-contato)): `display_name`, `phones[]`, `emails?`, `organization?`, `title?`, `address?` |
+| `location` | `location` | Objeto com `latitude`, `longitude`, `name?`, `address?`, `url?`, `is_live?`, `accuracy_m?`, `comment?`, `thumbnail_b64?`. `is_live` aparece **apenas quando `true`** (localização em tempo real). Nunca vem como `false`; trate a ausência da chave como "não é ao vivo". `accuracy_m` (precisão do GPS, em metros) e `comment` (nota de texto anexada pelo remetente) só aparecem em localizações **inbound** quando o WhatsApp os envia. Não fazem parte do schema de envio. |
+| `calendar` | `calendar` | Objeto com `name`, `description?`, `start_at?`, `end_at?`, `join_link?`, `location?`, `has_reminder?`, `reminder_offset_sec?`, `extra_guests_allowed?`. Um calendário **inbound** também pode trazer `is_canceled?`/`is_scheduled_call?` (o organizador cancelou o evento / é uma chamada agendada: sinalizados pelo próprio WhatsApp, nunca enviáveis pela API). Em um calendário **inbound**, `has_reminder`/`extra_guests_allowed`/`is_canceled`/`is_scheduled_call` aparecem **apenas quando `true`**: trate a ausência da chave como "não". Em um calendário **outbound enviado pela API**, o body armazenado é devolvido literalmente: `"has_reminder": false`, `"extra_guests_allowed": false` e chaves explicitamente `null` (`description`, `end_at`, `join_link`, `location`, `reminder_offset_sec`) **podem** aparecer (`is_canceled`/`is_scheduled_call` nunca aparecem em calendários outbound). Trate `false`/`null`/chave ausente como equivalentes. |
+| `contact` | `contact` | Cartão vCard estruturado: mesmos campos aceitos no envio ([Enviar contato](/messages/send/#enviar-contato)): `display_name`, `phones[]`, `emails?`, `organization?`, `title?`, `address?` |
 | `interactive` | `interactive` | Objeto com `interactive_type` (sempre `"cta_url"`), `body`, `header?` (`{type: "text", text}`), `footer?`, `url_button: {display_text, url}` |
 
 Para mensagens `replied` (citações):
 
 | Campo | Tipo | Descrição |
 |---|---|---|
-| `replied` | object | `{message_id: string, preview: string}` — referência e preview da mensagem citada |
+| `replied` | object | `{message_id: string, preview: string}`: referência e preview da mensagem citada |
 
 Para mensagens `reacted`:
 
@@ -231,9 +231,9 @@ Para mensagens `reacted`:
 |---|---|---|
 | `text` | string | O emoji da reação (ex.: `"👍"`) ou `""` para remoção |
 
-### Exemplo — mensagem de texto
+### Exemplo: mensagem de texto
 
-```json title="GET /v1/numbers/{alias}/messages/{id} — text"
+```json title="GET /v1/numbers/{alias}/messages/{id}: text"
 {
   "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
@@ -251,9 +251,9 @@ Para mensagens `reacted`:
 }
 ```
 
-### Exemplo — mensagem de imagem (inbound, BYO Storage ativo)
+### Exemplo: mensagem de imagem (inbound, BYO Storage ativo)
 
-```json title="GET /v1/numbers/{alias}/messages/{id} — image (available)"
+```json title="GET /v1/numbers/{alias}/messages/{id}: image (available)"
 {
   "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f71",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
@@ -278,9 +278,9 @@ Para mensagens `reacted`:
 }
 ```
 
-### Exemplo — mensagem de imagem (sem BYO Storage)
+### Exemplo: mensagem de imagem (sem BYO Storage)
 
-```json title="GET /v1/numbers/{alias}/messages/{id} — image (unavailable)"
+```json title="GET /v1/numbers/{alias}/messages/{id}: image (unavailable)"
 {
   "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f72",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
@@ -308,9 +308,9 @@ Para mensagens `reacted`:
 }
 ```
 
-### Exemplo — mensagem de localização
+### Exemplo: mensagem de localização
 
-```json title="GET /v1/numbers/{alias}/messages/{id} — location"
+```json title="GET /v1/numbers/{alias}/messages/{id}: location"
 {
   "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f73",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
@@ -335,9 +335,9 @@ Para mensagens `reacted`:
 }
 ```
 
-### Exemplo — mensagem de calendário
+### Exemplo: mensagem de calendário
 
-```json title="GET /v1/numbers/{alias}/messages/{id} — calendar"
+```json title="GET /v1/numbers/{alias}/messages/{id}: calendar"
 {
   "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f74",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
@@ -363,9 +363,9 @@ Para mensagens `reacted`:
 }
 ```
 
-### Exemplo — mensagem interativa (cta_url)
+### Exemplo: mensagem interativa (cta_url)
 
-```json title="GET /v1/numbers/{alias}/messages/{id} — interactive"
+```json title="GET /v1/numbers/{alias}/messages/{id}: interactive"
 {
   "id": "msg_d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
@@ -393,12 +393,12 @@ Para mensagens `reacted`:
 
 O botão `url_button` abre o link diretamente no destinatário; `header` é opcional (`{type: "text", text}`, texto-only na versão atual).
 
-### Exemplo — mensagem com menções
+### Exemplo: mensagem com menções
 
 O texto carrega os tokens `@<numero>` normalizados; a estrutura `mentions` traz
 os contatos correspondentes, já resolvidos:
 
-```json title="GET /v1/numbers/{alias}/messages/{id} — text com mentions"
+```json title="GET /v1/numbers/{alias}/messages/{id}: text com mentions"
 {
   "id": "msg_c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
@@ -427,9 +427,9 @@ O campo aparece em mensagens inbound **e** outbound, e continua presente mesmo
 depois que o body expira pela retenção (o token no `preview` permanece
 identificável contra `mentions`).
 
-### Exemplo — reply (mensagem citada)
+### Exemplo: reply (mensagem citada)
 
-```json title="GET /v1/numbers/{alias}/messages/{id} — replied"
+```json title="GET /v1/numbers/{alias}/messages/{id}: replied"
 {
   "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
@@ -451,9 +451,9 @@ identificável contra `mentions`).
 }
 ```
 
-### Exemplo — reação
+### Exemplo: reação
 
-```json title="GET /v1/numbers/{alias}/messages/{id} — reacted"
+```json title="GET /v1/numbers/{alias}/messages/{id}: reacted"
 {
   "id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
@@ -473,7 +473,7 @@ identificável contra `mentions`).
 
 ## Campos de mídia
 
-Os campos de mídia aparecem **diretamente** no objeto específico (`image`, `video`, `audio`, `document`, `sticker`) — sem sub-objeto `media`. É uma **união discriminada** pelo campo `kind`:
+Os campos de mídia aparecem **diretamente** no objeto específico (`image`, `video`, `audio`, `document`, `sticker`). Sem sub-objeto `media`. É uma **união discriminada** pelo campo `kind`:
 
 ### `kind: "available"`
 
@@ -504,18 +504,18 @@ Mídia não está disponível. O campo `reason` indica a causa.
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `kind` | string | `"unavailable"` |
-| `reason` | string | `no_storage` — nenhum Object Storage configurado; `storage_circuit_open` — circuit breaker aberto no recebimento; `upload_failed` — storage saudável, mas este item não pôde ser persistido; `deleted` — a mensagem foi apagada/revogada depois que a mídia já havia sido armazenada. O motivo é gravado no momento do evento (recebimento ou exclusão) e lido literalmente. |
+| `reason` | string | `no_storage`: nenhum Object Storage configurado; `storage_circuit_open`: circuit breaker aberto no recebimento; `upload_failed`: storage saudável, mas este item não pôde ser persistido; `deleted`: a mensagem foi apagada/revogada depois que a mídia já havia sido armazenada. O motivo é gravado no momento do evento (recebimento ou exclusão) e lido literalmente. |
 | `mime_type` | `string \| null` | Tipo MIME detectado |
 | `size_bytes` | `integer \| null` | Tamanho do arquivo em bytes |
 | `setup_hint` | `object \| null` | Presente quando `reason` é `no_storage` ou `storage_circuit_open`. Contém `setup_url`, `docs_url` e `message`. |
 
 ### `audio.transcription`
 
-Quando **BYO Speech-to-Text** está configurado para o número, mensagens de áudio **inbound** ganham o campo `transcription` dentro do objeto `audio` — outra união discriminada por `kind` (omitida quando a transcrição não foi tentada, por exemplo áudio outbound ou STT não configurado). Mesmo shape do `data.transcription` dos webhooks/polling de `message.received`:
+Quando **BYO Speech-to-Text** está configurado para o número, mensagens de áudio **inbound** ganham o campo `transcription` dentro do objeto `audio`: outra união discriminada por `kind` (omitida quando a transcrição não foi tentada, por exemplo áudio outbound ou STT não configurado). Mesmo shape do `data.transcription` dos webhooks/polling de `message.received`:
 
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
-| `kind` | string | `"available"` — transcrição concluída, ou `"unavailable"` — não disponível. |
+| `kind` | string | `"available"`: transcrição concluída, ou `"unavailable"`: não disponível. |
 | `text` | string | *(apenas `available`)* Texto transcrito. |
 | `language` | `string \| null` | *(apenas `available`)* Código BCP-47 do idioma detectado/configurado, quando disponível. |
 | `reason` | string | *(apenas `unavailable`)* Um destes 5 valores: `not_configured`, `provider_error`, `timeout`, `no_adapter` ou `internal_error`. |
@@ -530,19 +530,19 @@ O campo `status` contém o estado atual de entrega:
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `state` | string | Estado atual: `pending` (aceito no `202`, ainda não enviado ao WhatsApp), `sent`, `delivered`, `read`, `failed` (outbound); `delivered`, `read` (inbound) |
-| `at` | string | ISO 8601 — timestamp do **estado atual de entrega**; **avança** a cada transição (`sent → delivered → read`). Não confundir com o `at` no nível raiz, que é o momento estável de ocorrência da mensagem. |
-| `error` | `object` | Erro estruturado da falha — presente apenas quando `state: "failed"`; **ausente** (chave omitida) nos demais estados. **Mesmo shape** do `data.error` dos webhooks `*.failed`. |
-| `error.code` | `string` | Código estável legível por máquina — faça branch neste valor. |
+| `at` | string | ISO 8601: timestamp do **estado atual de entrega**; **avança** a cada transição (`sent → delivered → read`). Não confundir com o `at` no nível raiz, que é o momento estável de ocorrência da mensagem. |
+| `error` | `object` | Erro estruturado da falha: presente apenas quando `state: "failed"`; **ausente** (chave omitida) nos demais estados. **Mesmo shape** do `data.error` dos webhooks `*.failed`. |
+| `error.code` | `string` | Código estável legível por máquina: faça branch neste valor. |
 | `error.message` | `string` | Descrição legível da falha. |
 | `error.hint` | `string` | Orientação acionável, derivada do `code`. **Ausente** (chave omitida, nunca `null`) quando não há orientação para o `code`. |
 
 ## Sobre `preview`
 
-O campo `preview` segue **exatamente a mesma janela de retenção de conteúdo** do plano da sua organização — veja [Retenção das mensagens](/messages/retention/). Ele não é permanente e não sobrevive além do horizonte de conteúdo do seu plano; é uma promessa de retenção única, não um remanescente que escapa dela. Enquanto a mensagem ainda está dentro da janela, `preview` contém um recorte grapheme-aware do conteúdo:
+O campo `preview` segue **exatamente a mesma janela de retenção de conteúdo** do plano da sua organização, veja [Retenção das mensagens](/messages/retention/). Ele não é permanente e não sobrevive além do horizonte de conteúdo do seu plano; é uma promessa de retenção única, não um remanescente que escapa dela. Enquanto a mensagem ainda está dentro da janela, `preview` contém um recorte grapheme-aware do conteúdo:
 - Para `text`: primeiros ~50 caracteres do texto.
 - Para `location`: texto humanizado sem colchetes (ex: `Av. Paulista, Sao Paulo, SP`).
 - Para `calendar`: resumo sem colchetes, com dia da semana e mês abreviados **em inglês** e o horário convertido para **UTC** (ex: `Sprint Planning — Mon, 1 Jun 2026 17:00`).
-- Para mídia: a legenda (quando disponível) ou o label do tipo em inglês (`[Image]`, `[Video]`, `[Audio]`, `[Document]`, `[Sticker]`). **Documento:** legenda → **nome do arquivo** → `[Document]`. **Áudio com transcrição é a exceção:** quando há transcrição disponível, o `preview` traz o **texto transcrito** (truncado em 50 caracteres) — `[Audio]` só aparece quando não há transcrição nem legenda.
+- Para mídia: a legenda (quando disponível) ou o label do tipo em inglês (`[Image]`, `[Video]`, `[Audio]`, `[Document]`, `[Sticker]`). **Documento:** legenda → **nome do arquivo** → `[Document]`. **Áudio com transcrição é a exceção:** quando há transcrição disponível, o `preview` traz o **texto transcrito** (truncado em 50 caracteres). `[Audio]` só aparece quando não há transcrição nem legenda.
 - Para `interactive`: o texto do `body` da mensagem, ou `[Interactive]` quando o corpo está vazio.
 - Para reações: o emoji ou `""` para remoção.
 - Menções: cada token `@<numero>` presente em `mentions` conta como exatamente
@@ -550,13 +550,13 @@ O campo `preview` segue **exatamente a mesma janela de retenção de conteúdo**
   `@<digitos>` literal fora de `mentions` conta caractere a caractere. O valor é
   **byte-idêntico** ao `data.preview` dos webhooks/polling.
 
-Depois que a mensagem sai da janela de retenção de conteúdo do seu plano, esta consulta responde `404 not_found` para o recurso **inteiro** — `preview` não é retornado separadamente do restante do conteúdo, não há um caminho que devolva só o recorte depois desse ponto. A mesma janela redige `data.preview` (junto com o resto do conteúdo) nos payloads de webhook armazenados para reentrega e nos eventos de `GET /v1/events` (polling): consulta por id, reentrega de webhook e polling obedecem a **uma única promessa de retenção**, nunca duas.
+Depois que a mensagem sai da janela de retenção de conteúdo do seu plano, esta consulta responde `404 not_found` para o recurso **inteiro**: `preview` não é retornado separadamente do restante do conteúdo, não há um caminho que devolva só o recorte depois desse ponto. A mesma janela redige `data.preview` (junto com o resto do conteúdo) nos payloads de webhook armazenados para reentrega e nos eventos de `GET /v1/events` (polling): consulta por id, reentrega de webhook e polling obedecem a **uma única promessa de retenção**, nunca duas.
 
 ## Sobre `kind`
 
 Para receber mídia inbound com `kind: "available"`, configure a <DashboardLink path="/storage">integração de Object Storage</DashboardLink> no dashboard. Sem essa configuração, o Turbo Notify não tem onde armazenar a mídia e retorna `kind: "unavailable"` com `reason: "no_storage"`.
 
-Quando o Object Storage está configurado, o Turbo Notify copia automaticamente cada mídia recebida para o seu bucket e retorna uma URL pré-assinada com validade configurável. O acesso à mídia expira conforme o `expires_at` — você pode obter uma nova URL consultando a mensagem novamente.
+Quando o Object Storage está configurado, o Turbo Notify copia automaticamente cada mídia recebida para o seu bucket e retorna uma URL pré-assinada com validade configurável. O acesso à mídia expira conforme o `expires_at`. Você pode obter uma nova URL consultando a mensagem novamente.
 
 ## Erros possíveis
 
@@ -565,7 +565,7 @@ Quando o Object Storage está configurado, o Turbo Notify copia automaticamente 
 | `400` | `invalid_message_id` | O identificador não corresponde ao formato `msg_` + 32 hex. |
 | `403` | `not_authorized` | A chave de acesso está inválida ou ausente. |
 | `403` | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
-| `404` | `not_found` | Mensagem não encontrada, pertence a outra organização, ou está fora da [janela de retenção de conteúdo](/messages/retention/) do plano — mesmo shape de uma mensagem que nunca existiu. |
+| `404` | `not_found` | Mensagem não encontrada, pertence a outra organização, ou está fora da [janela de retenção de conteúdo](/messages/retention/) do plano: mesmo shape de uma mensagem que nunca existiu. |
 | `404` | `message_not_found` | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `429` | `rate_limit_exceeded` | Limite de requisições ultrapassado. |
 | `500` | `internal_error` | Erro interno inesperado no servidor. |

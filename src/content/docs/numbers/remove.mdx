@@ -13,8 +13,8 @@ Remova números extras que não são mais necessários para liberar vagas no seu
 
 O efeito na fatura depende de qual dos dois caminhos de remoção foi tomado:
 
-- **Remoção imediata** (elegível a reembolso: menos de **72 horas** desde a primeira conexão **e** menos de **10 mensagens** enviadas) — o número é excluído na hora e a cobrança pro-rata feita na ativação é **estornada automaticamente**. Ele não entra na fatura do próximo ciclo.
-- **Remoção agendada** — o número permanece na conta durante os **30 dias** de espera, então **qualquer novo ciclo que comece nesse intervalo ainda o cobra pelo valor cheio de renovação**, exatamente como um número apenas desconectado. A cobrança só cessa quando a exclusão é de fato executada.
+- **Remoção imediata** (elegível a reembolso: menos de **72 horas** desde a primeira conexão **e** menos de **10 mensagens** enviadas): o número é excluído na hora e a cobrança pro-rata feita na ativação é **estornada automaticamente**. Ele não entra na fatura do próximo ciclo.
+- **Remoção agendada**: o número permanece na conta durante os **30 dias** de espera, então **qualquer novo ciclo que comece nesse intervalo ainda o cobra pelo valor cheio de renovação**, exatamente como um número apenas desconectado. A cobrança só cessa quando a exclusão é de fato executada.
 
 O campo `refund_eligible` na resposta do `DELETE` informa qual caminho foi tomado (`true` = remoção imediata). Para mais detalhes, consulte a documentação de [Cobrança de números extras](/numbers/billing/).
 
@@ -154,9 +154,9 @@ A resposta descreve o **resultado da exclusão**, não o número em si:
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `scheduled_deletion_at` | string | Timestamp ISO 8601 de quando a exclusão (soft-delete) acontece. |
-| `refund_eligible` | boolean | `true` quando o número se qualifica para reembolso imediato (janela de 72h, poucas mensagens enviadas) — nesse caso a exclusão é **imediata** e `scheduled_deletion_at` é o momento atual. `false` quando a exclusão é agendada — nesse caso `scheduled_deletion_at` fica no **fim do ciclo de uso atual do número** (ciclo de 30 dias ancorado na primeira conexão do número, não uma contagem fixa de 30 dias a partir de agora). |
-| `refund_amount_cents` | integer | Valor reembolsado em centavos — o mesmo valor da cobrança pro-rata feita na ativação deste número. `0` quando `refund_eligible` é `false`, ou quando `refund_status` é `not_applicable`/`failed` (ver abaixo). |
-| `messages_sent` | integer | Total de mensagens já enviadas por este número — usado para determinar elegibilidade de reembolso. |
+| `refund_eligible` | boolean | `true` quando o número se qualifica para reembolso imediato (janela de 72h, poucas mensagens enviadas): nesse caso a exclusão é **imediata** e `scheduled_deletion_at` é o momento atual. `false` quando a exclusão é agendada: nesse caso `scheduled_deletion_at` fica no **fim do ciclo de uso atual do número** (ciclo de 30 dias ancorado na primeira conexão do número, não uma contagem fixa de 30 dias a partir de agora). |
+| `refund_amount_cents` | integer | Valor reembolsado em centavos: o mesmo valor da cobrança pro-rata feita na ativação deste número. `0` quando `refund_eligible` é `false`, ou quando `refund_status` é `not_applicable`/`failed` (ver abaixo). |
+| `messages_sent` | integer | Total de mensagens já enviadas por este número, usado para determinar elegibilidade de reembolso. |
 | `refund_status` | string \| null | O resultado real da tentativa de reembolso: `succeeded` (reembolso processado; `refund_amount_cents` reflete o valor real), `not_applicable` (nenhum reembolso era devido: ou nenhuma cobrança de ativação existia para este número, ou uma requisição concorrente para o mesmo número já está processando o reembolso, caso em que o valor é ou foi reembolsado corretamente por essa outra requisição; nunca um erro), ou `failed` (havia uma cobrança real e a chamada ao gateway de pagamento falhou; a exclusão do número **não é bloqueada por isso**. Entre em contato com o suporte se `failed` aparecer, para reembolso manual). `null` quando `refund_eligible` é `false` (nenhum reembolso foi tentado). Adicionado em 2026-08-29. |
 
 A chamada é **idempotente**: repetir a requisição para um número já agendado
@@ -284,7 +284,7 @@ executada), você pode cancelar e manter o número normalmente.
 
 `status` aqui é um **literal de confirmação** ("a exclusão pendente foi
 cancelada"), não um dos valores da [Tabela de
-status](/numbers/status/#tabela-de-status) — mesmo padrão de
+status](/numbers/status/#tabela-de-status), mesmo padrão de
 `disconnecting` em [Ativação e
 desativação](/numbers/activation/). Para saber o status operacional atual
 do número após o cancelamento (normalmente `disconnected`, já que é
@@ -297,7 +297,7 @@ necessário desconectar o número antes de agendar a exclusão), consulte o
 
 | Status | Código de erro                 | Descrição                                           |
 | :----: | -------------------------------- | --------------------------------------------------- |
-| `400`  | `invalid_status_for_deletion`   | O número está `connected` — desconecte antes de agendar a exclusão. |
+| `400`  | `invalid_status_for_deletion`   | O número está `connected`. Desconecte antes de agendar a exclusão. |
 | `402`  | `feature_not_available`  | O plano atual não suporta números extras.           |
 | `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.         |
 | `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |

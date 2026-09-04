@@ -6,7 +6,7 @@ description: Liste as reações ativas em uma mensagem enviada ou recebida pela 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-Após uma mensagem ser enviada ou recebida, você pode consultar todas as reações ativas. Cada número de telefone pode ter no máximo uma reação ativa por mensagem — a última reação enviada substitui a anterior.
+Após uma mensagem ser enviada ou recebida, você pode consultar todas as reações ativas. Cada número de telefone pode ter no máximo uma reação ativa por mensagem. A última reação enviada substitui a anterior.
 
 Esta página cobre a **consulta** de reações. Para enviar ou remover uma reação, veja [Enviar reação](/other-features/reaction/).
 
@@ -200,6 +200,6 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
 | :----: | ---------------- | ---------------------------------------------------- |
 | `403`  | `not_authorized`    | A chave de acesso está inválida ou ausente.                       |
 | `403`  | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read`.           |
-| `404`  | `not_found`         | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de retenção de conteúdo](/messages/retention/) do plano — a janela **também** se aplica aqui, e os três casos devolvem a mesma resposta. |
+| `404`  | `not_found`         | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de retenção de conteúdo](/messages/retention/) do plano: a janela **também** se aplica aqui, e os três casos devolvem a mesma resposta. |
 | `404`  | `message_not_found` | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `500`  | `internal_error`    | Erro interno inesperado no servidor.                              |

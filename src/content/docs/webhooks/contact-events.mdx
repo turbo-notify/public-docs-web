@@ -1,20 +1,20 @@
 ---
 title: Eventos de contato
-description: 6 webhooks referentes aos Contatos do Turbo Notify — created, name_changed, picture_changed, first_messaged, quota.warning, quota.exceeded.
+description: 6 webhooks referentes aos Contatos do Turbo Notify: created, name_changed, picture_changed, first_messaged, quota.warning, quota.exceeded.
 sidebar:
   order: 1
 ---
 
-Lista de eventos webhook emitidos pelo Turbo Notify para mudanças em contatos. Você precisa configurar a URL do webhook e habilitar `contact.*` no dashboard — veja [Webhook: configuração e envelope](/messages/webhook/) para o passo a passo, a validação de assinatura e o formato do envelope.
+Lista de eventos webhook emitidos pelo Turbo Notify para mudanças em contatos. Você precisa configurar a URL do webhook e habilitar `contact.*` no dashboard: veja [Webhook: configuração e envelope](/messages/webhook/) para o passo a passo, a validação de assinatura e o formato do envelope.
 
 ## Tabela
 
 | Evento | Quando |
 | ------ | ------ |
-| `contact.created` | Primeira observação do trio `(organização, número, telefone)` — a identidade do contato é **por número**, então o mesmo telefone alcançando o `main` e um número extra gera **dois** eventos `contact.created`, um por número (veja [Contatos: visão geral](/contacts/overview/)) |
+| `contact.created` | Primeira observação do trio `(organização, número, telefone)`: a identidade do contato é **por número**, então o mesmo telefone alcançando o `main` e um número extra gera **dois** eventos `contact.created`, um por número (veja [Contatos: visão geral](/contacts/overview/)) |
 | `contact.name_changed` | `name` divergiu do snapshot anterior |
 | `contact.picture_changed` | WhatsApp emitiu `PictureUpdate` ou refresh detectou hash novo |
-| `contact.first_messaged` | A organização enviou a primeira mensagem outbound para este contato (sinal de **aquisição** de novo contato — observabilidade; a quota é consumida por contato contactado no ciclo de faturamento avaliado, não por este evento) |
+| `contact.first_messaged` | A organização enviou a primeira mensagem outbound para este contato (sinal de **aquisição** de novo contato, observabilidade; a quota é consumida por contato contactado no ciclo de faturamento avaliado, não por este evento) |
 | `contact.quota.warning` | Cruzou o limiar de 80/90/95% da quota de contatos do ciclo |
 | `contact.quota.exceeded` | Tentativa rejeitada por estouro (HTTP 402) |
 
@@ -36,29 +36,29 @@ próprio contato (`ct_{hex32}`), igual ao `data.id` de `message.*`.
 }
 ```
 
-- `id` — id público do contato (`ct_{hex32}`), o sujeito do evento.
-- `name` — push name do contato no WhatsApp.
-- `number` — **E.164 completo**.
-- `direction` — sempre `"inbound"` (o contato é observado/descoberto pelo canal
+- `id`: id público do contato (`ct_{hex32}`), o sujeito do evento.
+- `name`: push name do contato no WhatsApp.
+- `number`: **E.164 completo**.
+- `direction`: sempre `"inbound"` (o contato é observado/descoberto pelo canal
   do WhatsApp). Ausente nos eventos sintéticos de quota.
-- `channel` — sempre `"whatsapp"`.
-- `origin` — sempre `"tn"` (a plataforma Turbo Notify processou a descoberta).
+- `channel`: sempre `"whatsapp"`.
+- `origin`: sempre `"tn"` (a plataforma Turbo Notify processou a descoberta).
 
 > O `id` aqui é o **sujeito do evento**. O `contact_id` que aparece no objeto
-> `from`/`to` de uma **mensagem** é diferente — referencia o contato da
+> `from`/`to` de uma **mensagem** é diferente: referencia o contato da
 > contraparte e mantém a chave `contact_id`.
 
 O número completo já é exposto no `from`/`to` de toda mensagem, então mascarar
 nos eventos de contato só gerava inconsistência. O `name` (push name) continua
-sendo PII que o Turbo Notify nunca loga cru — você recebe via webhook e é responsável pelo
+sendo PII que o Turbo Notify nunca loga cru: você recebe via webhook e é responsável pelo
 armazenamento subsequente.
 
 ## `created_at` vs `at`
 
-- `created_at` (envelope) — momento de **emissão do evento pelo Turbo Notify**.
-- `at` (em `data`) — momento da **ação real no WhatsApp**.
+- `created_at` (envelope): momento de **emissão do evento pelo Turbo Notify**.
+- `at` (em `data`): momento da **ação real no WhatsApp**.
 
-São **valores distintos**. Não carregam `at` — só o `created_at` do envelope —
+São **valores distintos**. Não carregam `at` (apenas o `created_at` do envelope)
 os eventos sintéticos do Turbo Notify (`contact.created`, `contact.quota.warning`,
 `contact.quota.exceeded`) e também `contact.picture_changed` (uma descoberta de
 foto/snapshot, sem um momento de ação WhatsApp único). Carregam `at` os eventos
@@ -70,11 +70,11 @@ sintéticos de quota **não** carregam `direction`.
 
 ## `number_alias` no envelope
 
-**Todos** os eventos `contact.*` — tanto os de ciclo de vida (`contact.created`,
+**Todos** os eventos `contact.*`, tanto os de ciclo de vida (`contact.created`,
 `contact.name_changed`, `contact.picture_changed`, `contact.first_messaged`)
-quanto os de quota (`contact.quota.warning`, `contact.quota.exceeded`) — carregam,
+quanto os de quota (`contact.quota.warning`, `contact.quota.exceeded`), carregam,
 logo abaixo de `organization_id`, o campo `number_alias`: o handle do número do
-Turbo Notify ao qual o contato (ou a quota de contatos) pertence — `"main"` para o
+Turbo Notify ao qual o contato (ou a quota de contatos) pertence, `"main"` para o
 número principal ou o alias de um número extra. Use-o para rotear a observação ao
 inbox correto.
 
@@ -91,12 +91,12 @@ sua própria contagem de contatos distintos, então os eventos
 
 > O `number_alias` fica no **envelope**, nunca dentro de `data`. Entre os eventos
 > de conta, o campo é omitido apenas em `storage.*` (o único evento sem um número
-> único). Toda família `*.quota.*` — tanto `contact.quota.*` quanto
-> `message.quota.*` (por número) — carrega `number_alias`.
+> único). Toda família `*.quota.*` (tanto `contact.quota.*` quanto
+> `message.quota.*`, por número) carrega `number_alias`.
 
 ## Exemplo: `contact.created`
 
-Sintético — sem `at`, sem `source`.
+Sintético: sem `at`, sem `source`.
 
 ```json
 {
@@ -169,7 +169,7 @@ WhatsApp): aqui o Turbo Notify emitiu o evento 3 s após a alteração do nome.
 }
 ```
 
-`contact.picture_changed` **não** carrega `data.at` — é uma descoberta de foto
+`contact.picture_changed` **não** carrega `data.at`: é uma descoberta de foto
 (snapshot) sem um momento de ação WhatsApp único; use o `created_at` do
 envelope para saber quando o evento foi emitido.
 
@@ -181,7 +181,7 @@ neste webhook.
 
 O bloco `picture` segue o mesmo ciclo de vida da mídia de mensagem: quando a
 foto está armazenada no seu bucket ela vem como `kind: "available"` com
-uma URL **pré-assinada e com validade limitada** (`url_expires_at`, ~15 min) —
+uma URL **pré-assinada e com validade limitada** (`url_expires_at`, ~15 min),
 nunca uma URL do WhatsApp. Re-baixe a foto via o endpoint GET quando a URL
 expirar. O evento dispara **apenas** quando a foto chega ao seu bucket, inclusive
 quando o contato foi observado sem foto e ela fica disponível depois (basta
@@ -212,7 +212,7 @@ onde `{alias}` é o `number_alias` recebido no envelope deste evento.
 ```
 
 O campo `tier` **não é populado** neste evento: `contact.first_messaged` sempre
-emite `"unknown"`. Não use este campo para inferir o plano da organização — o
+emite `"unknown"`. Não use este campo para inferir o plano da organização: o
 `tier` real é entregue nos eventos `contact.quota.warning`/`contact.quota.exceeded`.
 
 ## Exemplo: `contact.quota.warning`
@@ -239,11 +239,11 @@ emite `"unknown"`. Não use este campo para inferir o plano da organização —
 ```
 
 `threshold_bps` é integer em basis points: `80 | 90 | 95`. O esgotamento da cota
-**não** é sinalizado por este evento com `threshold_bps: 100` — ele é sinalizado
+**não** é sinalizado por este evento com `threshold_bps: 100`: ele é sinalizado
 pelo evento separado `contact.quota.exceeded`, que **não possui** o campo
 `threshold_bps`. Um consumidor que ramifica em `threshold_bps === 100` escreve
 código morto e deixa passar o sinal real de esgotamento. Evento
-sintético — carrega `channel`/`origin` mas **sem `direction`** (não é um fluxo de
+sintético: carrega `channel`/`origin` mas **sem `direction`** (não é um fluxo de
 mensagem) e **sem `at`**; `cycle_start`/`cycle_end` são o ciclo de faturamento
 avaliado contra o qual `used`/`quota` foram medidos; `resets_at` é timestamp de
 valor de negócio (quando o ciclo de quota reinicia, igual a `cycle_end`), não o
@@ -271,7 +271,7 @@ momento da ação.
 }
 ```
 
-Sintético — carrega `channel`/`origin` mas **sem `direction`**, **sem `at`** e
+Sintético: carrega `channel`/`origin` mas **sem `direction`**, **sem `at`** e
 **sem `request_id`** em `data`; `resets_at` é mantido.
 
 ## Idempotência

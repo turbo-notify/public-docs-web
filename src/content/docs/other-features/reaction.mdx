@@ -8,13 +8,13 @@ import ApiResponse from '@components/ApiResponse.astro';
 
 O recurso de reação permite que sua aplicação envie ou remova reações em mensagens específicas, tornando as interações mais expressivas.
 
-O endpoint é roteado pelo `message_id` da mensagem-alvo na URL — não há campo `to` no corpo, pois o destinatário é inferido da mensagem original.
+O endpoint é roteado pelo `message_id` da mensagem-alvo na URL: não há campo `to` no corpo, pois o destinatário é inferido da mensagem original.
 
 Esta página cobre o **envio** e a remoção de reações. Para listar as reações ativas de uma mensagem, veja [Consultar reações](/messages/reactions/).
 
 ## Adicionar uma reação
 
-`POST /v1/messages/{message_id}/react` — adiciona uma reação à mensagem identificada por `{message_id}` (formato `msg_{hex32}`). Esta rota opera sobre o número principal. Para enviar a reação a partir de um número extra, use a forma completa `POST /v1/numbers/{alias}/messages/{message_id}/react` com o alias do número no path.
+`POST /v1/messages/{message_id}/react`: adiciona uma reação à mensagem identificada por `{message_id}` (formato `msg_{hex32}`). Esta rota opera sobre o número principal. Para enviar a reação a partir de um número extra, use a forma completa `POST /v1/numbers/{alias}/messages/{message_id}/react` com o alias do número no path.
 
 <Tabs>
   <TabItem label="cURL">
@@ -346,7 +346,7 @@ Saiba mais sobre [números extras](/numbers/add/).
 | `402`  | `feature_not_available` | O recurso não está disponível no plano contratado. |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
-| `404`  | `not_found`             | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de retenção de conteúdo](/messages/retention/) do plano — a janela **também** se aplica a reagir, e os três casos devolvem a mesma resposta. |
+| `404`  | `not_found`             | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de retenção de conteúdo](/messages/retention/) do plano (a janela **também** se aplica a reagir, e os três casos devolvem a mesma resposta). |
 | `404`  | `message_not_found`     | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
 | `422`  | `message_not_reactable` | A mensagem alvo da reação ainda não foi enviada ao WhatsApp ou já foi apagada. |
 | `422`  | `no_active_session`     | A organização não tem sessão WhatsApp conectada.   |
@@ -356,4 +356,4 @@ Saiba mais sobre [números extras](/numbers/add/).
 | `422`  | `validation_error`      | O corpo da requisição está malformado ou não passou na validação de schema. A resposta inclui `details.errors` com a lista de campos inválidos. |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.               |
 
-Os dois códigos `404` são distintos: `not_found` significa "não existe, não é sua, ou já saiu da janela de retenção do seu tier", enquanto `message_not_found` significa "existe, mas você a endereçou pelo número errado" — nesse caso, repita a chamada com o alias correto no path.
+Os dois códigos `404` são distintos: `not_found` significa "não existe, não é sua, ou já saiu da janela de retenção do seu tier", enquanto `message_not_found` significa "existe, mas você a endereçou pelo número errado". Nesse caso, repita a chamada com o alias correto no path.

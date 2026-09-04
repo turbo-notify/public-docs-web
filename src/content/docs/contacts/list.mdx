@@ -1,6 +1,6 @@
 ---
 title: Listar contatos
-description: Endpoint GET /v1/numbers/{alias}/contacts — paginação por cursor, filtros disponíveis e exemplos.
+description: Endpoint GET /v1/numbers/{alias}/contacts: paginação por cursor, filtros disponíveis e exemplos.
 sidebar:
   order: 2
 ---
@@ -35,7 +35,7 @@ Para listar contatos de um número extra, use `/v1/numbers/{alias}/contacts` ond
 | `cursor` | string | Token opaco retornado em `cursor` |
 | `phone` | string | Filtro exato por E.164 (`+5571999...`) |
 | `name` | string | Correspondência parcial sobre o nome do contato |
-| `source` | enum | `inbound \| outbound \| self \| mention` — `mention` é o contato observado pela primeira vez por ter sido **mencionado** em uma mensagem; contatos criados por menção **não** consomem quota de contatos |
+| `source` | enum | `inbound \| outbound \| self \| mention`: `mention` é o contato observado pela primeira vez por ter sido **mencionado** em uma mensagem; contatos criados por menção **não** consomem quota de contatos |
 | `contacted_in_cycle` | bool | Considera apenas contatos contactados via Turbo Notify dentro do ciclo de faturamento avaliado (novos ou recorrentes) |
 
 ## Exemplo de request
@@ -179,6 +179,6 @@ public class ListarContatos {
 Cada item é o mesmo objeto retornado por [Detalhe](/contacts/detail/). O
 `phone_number` é o **E.164 completo** (sem máscara). A entidade de contato
 mantém seus timestamps de ciclo de vida distintos
-(`created_at`/`updated_at`/`first_messaged_at`/…) — não é o eco de um evento.
+(`created_at`/`updated_at`/`first_messaged_at`/…), não é o eco de um evento.
 
 Veja também: [Detalhe](/contacts/detail/) · [Erros](/contacts/errors/).

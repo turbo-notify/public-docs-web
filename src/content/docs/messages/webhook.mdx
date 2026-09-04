@@ -1,12 +1,12 @@
 ---
 title: Eventos via webhook
-description: Como receber eventos do Turbo Notify via webhook (HTTP push) — mesmos dados do endpoint GET /events.
+description: Como receber eventos do Turbo Notify via webhook (HTTP push): mesmos dados do endpoint GET /events.
 ---
 
 import DashboardLink from '@components/DashboardLink.astro';
 import ExternalLink from '@components/ExternalLink.astro';
 
-O Turbo Notify notifica seu sistema sobre eventos — envio confirmado, entrega, leitura, mensagem recebida, reação, falha — via webhook (HTTP POST). O objeto `data` de cada evento é **idêntico** ao retornado pelo endpoint [`GET /events`](/messages/polling/).
+O Turbo Notify notifica seu sistema sobre eventos (envio confirmado, entrega, leitura, mensagem recebida, reação, falha) via webhook (HTTP POST). O objeto `data` de cada evento é **idêntico** ao retornado pelo endpoint [`GET /events`](/messages/polling/).
 
 ## Recebimento dos eventos
 
@@ -26,11 +26,11 @@ Toda requisição de webhook enviada pelo Turbo Notify inclui os cabeçalhos aba
 
 | Header | Descrição |
 |--------|-----------|
-| `X-Webhook-Signature` | `sha256=<hex>` — HMAC-SHA256 de `{X-Webhook-Timestamp}.{raw_body}` com seu segredo. |
-| `X-Webhook-Timestamp` | Unix epoch (segundos) — utilize para rejeitar entregas com mais de ~5 minutos (proteção contra replay). |
+| `X-Webhook-Signature` | `sha256=<hex>`: HMAC-SHA256 de `{X-Webhook-Timestamp}.{raw_body}` com seu segredo. |
+| `X-Webhook-Timestamp` | Unix epoch (segundos): utilize para rejeitar entregas com mais de ~5 minutos (proteção contra replay). |
 | `X-Webhook-Attempt` | Número da tentativa atual (começa em 1, incrementa a cada reentrega). |
 | `X-Webhook-Max-Attempts` | Total de tentativas que o Turbo Notify fará antes de desistir. |
-| `User-Agent` | `TurboNotify-Webhook/1.0` — útil para WAF allowlists. |
+| `User-Agent` | `TurboNotify-Webhook/1.0`: útil para WAF allowlists. |
 
 O segredo para validação está disponível no <DashboardLink path="/webhooks">Dashboard</DashboardLink>, na mesma seção onde você cadastra a URL.
 
@@ -85,8 +85,8 @@ Toda requisição de webhook segue a mesma estrutura base:
 | `id`              | `string` | Identificador único do evento (`evt_…`). Use como chave de idempotência.  |
 | `type`            | `string` | Tipo do evento (ex.: `message.sent`).                                     |
 | `organization_id` | `string` | Identificador público da sua organização (`org_{hex32}`). Sempre presente.|
-| `number_alias`    | `string` | Handle do número Turbo Notify ao qual o evento pertence — `"main"` para o número principal ou o alias de um número extra. É a **string do alias**, nunca um UUID. Presente em eventos ligados a um número específico — `message.*`, `number.*`, `group.*`, todos os `contact.*` (inclusive `contact.quota.*`) e `message.quota.*` (a quota de mensagens é por número); **omitido** em `storage.*` **e** em `media.unavailable` — os eventos que não pertencem a um número único. |
-| `created_at`      | `string` | Momento de **emissão** do evento pelo Turbo Notify — distinto de `data.at` (momento da ação no WhatsApp). ISO 8601 em UTC com sufixo `Z` e precisão de segundos (ex.: `2026-06-01T13:00:05Z`). |
+| `number_alias`    | `string` | Handle do número Turbo Notify ao qual o evento pertence: `"main"` para o número principal ou o alias de um número extra. É a **string do alias**, nunca um UUID. Presente em eventos ligados a um número específico: `message.*`, `number.*`, `group.*`, todos os `contact.*` (inclusive `contact.quota.*`) e `message.quota.*` (a quota de mensagens é por número); **omitido** em `storage.*` **e** em `media.unavailable`: os eventos que não pertencem a um número único. |
+| `created_at`      | `string` | Momento de **emissão** do evento pelo Turbo Notify, distinto de `data.at` (momento da ação no WhatsApp). ISO 8601 em UTC com sufixo `Z` e precisão de segundos (ex.: `2026-06-01T13:00:05Z`). |
 | `data`            | `object` | Dados específicos do evento (veja [Campos da mensagem](#campos-da-mensagem)). |
 
 :::note[Receipts e direção]
@@ -108,31 +108,31 @@ Todos os eventos `message.*` compartilham os campos abaixo em `data`:
 |-------|------|-----------|
 | `id` | `string \| null` | Identificador público da mensagem (`msg_{hex32}`). `null` apenas em `message.send.failed` (registro não criado). |
 | `from` | `object` | Quem originou o evento. Pessoa (inbound): `{contact_id?, name?, number}`. Outbound: `{contact_id?, name?, alias, number}`. |
-| `to` | `object` | Destinatário. 1:1 inbound: `{contact_id?, name?, alias, number}` — o `alias` é **sempre presente** e identifica a sua linha que recebeu. 1:1 outbound: `{contact_id?, name?, number}`. Grupo: `{group_id, name?}`. |
+| `to` | `object` | Destinatário. 1:1 inbound: `{contact_id?, name?, alias, number}`, o `alias` é **sempre presente** e identifica a sua linha que recebeu. 1:1 outbound: `{contact_id?, name?, number}`. Grupo: `{group_id, name?}`. |
 | `preview` | `string` | Recorte do conteúdo (até 50 chars). Veja [Preview por tipo](#preview-por-tipo). |
-| `content_type` | `string` | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, `contact`, `poll`, `interactive`. Mensagens de tipo desconhecido chegam como `unsupported`. Vem como `""` (string vazia) em `message.deleted`, `message.edit.failed` e `message.delete.failed` — essas operações não repetem o tipo do conteúdo original. |
+| `content_type` | `string` | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, `contact`, `poll`, `interactive`. Mensagens de tipo desconhecido chegam como `unsupported`. Vem como `""` (string vazia) em `message.deleted`, `message.edit.failed` e `message.delete.failed`: essas operações não repetem o tipo do conteúdo original. |
 | `direction` | `string` | `"outbound"` (ação da organização/API) ou `"inbound"` (ação do peer/WhatsApp). |
 | `channel` | `string` | Sempre `"whatsapp"`. |
 | `origin` | `string` | `"tn"` (ação originada via API do Turbo Notify) ou `"native"` (originada no canal WhatsApp). Eventos inbound (`message.received`/`delivered`/`read`) são sempre `"native"`. Sempre presente. |
-| `at` | `string` | ISO 8601 em UTC com sufixo `Z` e precisão de segundos (ex.: `2026-06-01T13:00:05Z`) — momento da **ação real no WhatsApp** (envio, entrega, leitura, edição, etc.). Distinto de `created_at` (momento de emissão pelo Turbo Notify). |
-| `mentions` | `array` | **Opcional** — presente apenas quando a mensagem menciona alguém, e **apenas** nos eventos que carregam o body: `message.received`, `message.replied`, `message.sent`, `message.edited`. Itens `{contact_id?, name?, number}` (mesmo shape do `from` inbound), na ordem dos tokens no texto, sem duplicatas. Um `@<digitos>` no `preview`/texto **só** é menção se o número constar aqui. Ausente em `delivered`/`read`/`deleted`/`reacted` e nos `*.failed`. Em `message.edited`, é o conjunto re-extraído do **novo** texto. Veja [Menções (@mentions)](/messages/send/#menções-mentions). |
+| `at` | `string` | ISO 8601 em UTC com sufixo `Z` e precisão de segundos (ex.: `2026-06-01T13:00:05Z`): momento da **ação real no WhatsApp** (envio, entrega, leitura, edição, etc.). Distinto de `created_at` (momento de emissão pelo Turbo Notify). |
+| `mentions` | `array` | **Opcional**: presente apenas quando a mensagem menciona alguém, e **apenas** nos eventos que carregam o body: `message.received`, `message.replied`, `message.sent`, `message.edited`. Itens `{contact_id?, name?, number}` (mesmo shape do `from` inbound), na ordem dos tokens no texto, sem duplicatas. Um `@<digitos>` no `preview`/texto **só** é menção se o número constar aqui. Ausente em `delivered`/`read`/`deleted`/`reacted` e nos `*.failed`. Em `message.edited`, é o conjunto re-extraído do **novo** texto. Veja [Menções (@mentions)](/messages/send/#menções-mentions). |
 
 > **Ordem dos campos do objeto party** (`from`/`to`): sempre
 > `contact_id, name, alias, number` (alias onde existir; campos opcionais
-> omitidos quando `null`). O `to` de grupo é a exceção — mantém `{group_id, name?}`.
+> omitidos quando `null`). O `to` de grupo é a exceção: mantém `{group_id, name?}`.
 > A linha Turbo Notify do evento é identificada pelo `number_alias` do envelope;
 > resolva seu número/contato via `GET /v1/numbers/{alias}`.
 > `created_at` (envelope) é o momento de **emissão** do evento; `at` (em `data`)
-> é o momento da **ação no WhatsApp** — valores distintos.
+> é o momento da **ação no WhatsApp**: valores distintos.
 >
 > `name` em `from`/`to` é o push name (nome de exibição) configurado pelo
-> contato no WhatsApp — o Turbo Notify nunca infere ou busca isso em uma
+> contato no WhatsApp. O Turbo Notify nunca infere ou busca isso em uma
 > agenda de contatos. Ele fica disponível quando o contato **já enviou
 > pelo menos uma mensagem inbound para a sua organização** (é assim que o
 > WhatsApp entrega o push name), ou quando o número de destino é ele mesmo
 > uma linha Turbo Notify de **outra** organização com o nome já conhecido.
 > Fora esses dois casos, em um `message.sent` para alguém que nunca
-> apareceu em nenhuma dessas fontes, `to.name` vem **omitido** — não é um
+> apareceu em nenhuma dessas fontes, `to.name` vem **omitido**: não é um
 > erro; trate a ausência como "nome ainda desconhecido", não como falha de
 > entrega.
 
@@ -141,18 +141,18 @@ Para eventos **outbound** (`message.sent`/`replied`/`edited`/`deleted` e os
 `*.failed`) e para os eventos `number.*` de ação real, `data.at` é o
 **momento genuíno da ação no WhatsApp** (o timestamp real de envio reportado pelo
 WhatsApp), **não** o momento em que o Turbo Notify emitiu o evento. Por isso, nos exemplos
-abaixo `data.at` é tipicamente **anterior** ao `created_at` do envelope — o evento
+abaixo `data.at` é tipicamente **anterior** ao `created_at` do envelope. O evento
 é emitido alguns instantes após a ação que descreve.
 :::
 
-Eventos `message.*.failed` adicionam um objeto `error` estruturado — **o mesmo
+Eventos `message.*.failed` adicionam um objeto `error` estruturado: **o mesmo
 shape** do `status.error` retornado por `GET /v1/numbers/{alias}/messages/{id}` e
 `GET /v1/numbers/{alias}/messages/{id}/status` (coerência evento ↔ recurso):
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | `error` | `object` | Erro da falha. Presente em todos os eventos `*.failed`. |
-| `error.code` | `string` | Código estável legível por máquina — faça branch neste valor (ex.: `media_fetch_failed`, `unsupported_media_format`). |
+| `error.code` | `string` | Código estável legível por máquina: faça branch neste valor (ex.: `media_fetch_failed`, `unsupported_media_format`). |
 | `error.message` | `string` | Descrição legível da falha. |
 | `error.hint` | `string` | Orientação acionável para corrigir, derivada do `code`. **Omitido** (chave ausente, nunca `null`) quando não há orientação para o `code`. |
 
@@ -167,22 +167,22 @@ shape** do `status.error` retornado por `GET /v1/numbers/{alias}/messages/{id}` 
 | `audio` | Transcrição (quando disponível) → legenda → `[Audio]` |
 | `document` | Legenda → nome do arquivo → `[Document]` |
 | `location` | Texto humanizado sem colchetes, ex: `Av. Paulista, Sao Paulo, SP` |
-| `calendar` | Sem colchetes — dia da semana e mês abreviados em inglês, horário em UTC. Ex: `Reuniao — Tue, 2 Jun 2026 14:00` |
+| `calendar` | Sem colchetes: dia da semana e mês abreviados em inglês, horário em UTC. Ex: `Reuniao — Tue, 2 Jun 2026 14:00` |
 | `contact` | `[Contact: nome]` ou `[Contact]` quando o cartão não traz nome |
 | `poll` | `""` (string vazia) |
 | `interactive` | Texto do corpo (`body`) da mensagem interativa, ou `[Interactive]` quando o corpo está vazio |
-| `unsupported` | `""` (string vazia) — tipo de mensagem não reconhecido pelo Turbo Notify |
+| `unsupported` | `""` (string vazia): tipo de mensagem não reconhecido pelo Turbo Notify |
 
 :::note[Menções contam como 1 caractere no preview]
 Cada token de menção `@<numero>` presente em `data.mentions` conta como
 exatamente **1 caractere** no limite de ~50 do `preview`, e o recorte **nunca
-corta um token no meio** — uma mensagem com várias menções preserva mais texto
+corta um token no meio**. Uma mensagem com várias menções preserva mais texto
 visível do que a contagem bruta sugeriria. Um `@<digitos>` literal que **não**
 esteja em `mentions` é texto comum e conta caractere a caractere. O `preview` é
 byte-idêntico em todas as superfícies (webhook, polling, `GET`, listagem).
 :::
 
-### Exemplo — `message.sent` (outbound)
+### Exemplo: `message.sent` (outbound)
 
 ```json title="webhook-payload.json"
 {
@@ -206,18 +206,18 @@ byte-idêntico em todas as superfícies (webhook, polling, `GET`, listagem).
 ```
 
 `created_at` (`13:00:06`, emissão pelo Turbo Notify) é **distinto** de `data.at`
-(`13:00:05`, confirmação de envio no WhatsApp) — o evento foi emitido 1 s após
+(`13:00:05`, confirmação de envio no WhatsApp). O evento foi emitido 1 s após
 a ação.
 
 O `number_alias` do envelope identifica a linha Turbo Notify do evento; resolva seu número/contato via `GET /v1/numbers/{alias}`. Em conversas 1:1 outbound essa linha coincide com `from`.
 
 `origin` discrimina a fonte do envio outbound:
-- `"tn"` — enviado via API do Turbo Notify.
-- `"native"` — detectado diretamente do app WhatsApp (quando a organização digita pelo celular).
+- `"tn"`: enviado via API do Turbo Notify.
+- `"native"`: detectado diretamente do app WhatsApp (quando a organização digita pelo celular).
 
-`content_type` e `preview` espelham `message.received` — `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, `contact`, `poll` ou `interactive`. Para o body completo, faça `GET /v1/numbers/{alias}/messages/{id}`.
+`content_type` e `preview` espelham `message.received`: `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, `contact`, `poll` ou `interactive`. Para o body completo, faça `GET /v1/numbers/{alias}/messages/{id}`.
 
-### Exemplo — `message.received` (inbound)
+### Exemplo: `message.received` (inbound)
 
 ```json title="webhook-payload.json"
 {
@@ -242,12 +242,12 @@ O `number_alias` do envelope identifica a linha Turbo Notify do evento; resolva 
 
 `from.name` traz o nome de exibição configurado no WhatsApp (push name); omitido quando não definido. O `number_alias` do envelope resolve para `"main"` ou o alias do número extra que recebeu.
 
-### Exemplo — `message.received` (grupo)
+### Exemplo: `message.received` (grupo)
 
 Quando uma mensagem chega de um **grupo WhatsApp**,
 `to` carrega `group_id` + snapshot `name` em vez de `number`. A linha Turbo Notify
 que participa do grupo é identificada pelo `number_alias` do envelope.
-`from` continua sendo o participante que enviou — pessoas sempre falam, nunca grupos.
+`from` continua sendo o participante que enviou. Pessoas sempre falam, nunca grupos.
 Para mensagens 1:1, `to.group_id` é omitido.
 
 ```json title="message.received (grupo)"
@@ -278,11 +278,11 @@ Para mensagens 1:1, `to.group_id` é omitido.
 }
 ```
 
-- `to.group_id` é o identificador público do grupo (`grp_{hex32}`) — estável por organização. JIDs brutos do WhatsApp nunca são expostos.
-- O `number_alias` do envelope identifica a linha Turbo Notify que participa do grupo. Essencial quando a organização tem múltiplos números extras — resolva seu número/contato via `GET /v1/numbers/{alias}`.
-- Para detectar mensagens de grupo: verifique `"group_id" in data.to` — conversas 1:1 nunca carregam esse campo.
+- `to.group_id` é o identificador público do grupo (`grp_{hex32}`), estável por organização. JIDs brutos do WhatsApp nunca são expostos.
+- O `number_alias` do envelope identifica a linha Turbo Notify que participa do grupo. Essencial quando a organização tem múltiplos números extras: resolva seu número/contato via `GET /v1/numbers/{alias}`.
+- Para detectar mensagens de grupo: verifique `"group_id" in data.to`. Conversas 1:1 nunca carregam esse campo.
 
-### Exemplo — `message.received` com menções
+### Exemplo: `message.received` com menções
 
 Quando o texto (ou caption) menciona alguém, o
 body chega com os tokens já normalizados para `@<numero>` (dígitos E.164 sem
@@ -325,16 +325,16 @@ body chega com os tokens já normalizados para `@<numero>` (dígitos E.164 sem
 
 - `mentions` aparece **somente** nos eventos que carregam o body
   (`message.received`, `message.replied`, `message.sent`, `message.edited`) e
-  **somente** quando há menções — uma mensagem sem menções mantém o payload
+  **somente** quando há menções. Uma mensagem sem menções mantém o payload
   byte-idêntico ao contrato anterior.
 - Um `@<digitos>` no texto/`preview` **só** é menção se o número constar em
-  `mentions` — caso contrário é texto comum.
+  `mentions`. Caso contrário é texto comum.
 - O mesmo token recebido pode ser colado de volta num
-  [envio com menção](/messages/send/#menções-mentions) — a simetria é garantida.
+  [envio com menção](/messages/send/#menções-mentions). A simetria é garantida.
 
-### Exemplo — `message.edited`
+### Exemplo: `message.edited`
 
-```json title="message.edited (inbound — contato editou a mensagem)"
+```json title="message.edited (inbound: contato editou a mensagem)"
 {
   "id": "evt_edited_inbound_001",
   "type": "message.edited",
@@ -355,7 +355,7 @@ body chega com os tokens já normalizados para `@<numero>` (dígitos E.164 sem
 }
 ```
 
-```json title="message.edited (outbound — você editou a mensagem via API)"
+```json title="message.edited (outbound: você editou a mensagem via API)"
 {
   "id": "evt_edited_outbound_001",
   "type": "message.edited",
@@ -376,9 +376,9 @@ body chega com os tokens já normalizados para `@<numero>` (dígitos E.164 sem
 }
 ```
 
-### Exemplo — `message.deleted`
+### Exemplo: `message.deleted`
 
-```json title="message.deleted (inbound — contato apagou a mensagem)"
+```json title="message.deleted (inbound: contato apagou a mensagem)"
 {
   "id": "evt_deleted_inbound_001",
   "type": "message.deleted",
@@ -399,7 +399,7 @@ body chega com os tokens já normalizados para `@<numero>` (dígitos E.164 sem
 }
 ```
 
-```json title="message.deleted (outbound — você apagou a mensagem via API)"
+```json title="message.deleted (outbound: você apagou a mensagem via API)"
 {
   "id": "evt_deleted_outbound_001",
   "type": "message.deleted",
@@ -421,15 +421,15 @@ body chega com os tokens já normalizados para `@<numero>` (dígitos E.164 sem
 ```
 
 Em `message.deleted`, tanto `preview` quanto `content_type` vêm **sempre como
-`""` (string vazia)** — o evento informa apenas que a mensagem foi apagada, não
+`""` (string vazia)**. O evento informa apenas que a mensagem foi apagada, não
 o que ela continha. Não faça branch por `content_type` aqui; use o `data.id`
 para localizar a mensagem no seu lado.
 
-### Exemplo — `message.reacted`
+### Exemplo: `message.reacted`
 
-Para `message.reacted`: `content_type` é sempre `"text"` e `preview` contém o emoji (ou `""` para remoção). Os campos `emoji`, `action` e `reaction_event_id` foram removidos dos eventos — use `GET /v1/numbers/{alias}/messages/{id}` para o detalhe completo da reação.
+Para `message.reacted`: `content_type` é sempre `"text"` e `preview` contém o emoji (ou `""` para remoção). Os campos `emoji`, `action` e `reaction_event_id` foram removidos dos eventos. Use `GET /v1/numbers/{alias}/messages/{id}` para o detalhe completo da reação.
 
-```json title="message.reacted (inbound — contato reagiu a uma mensagem sua)"
+```json title="message.reacted (inbound: contato reagiu a uma mensagem sua)"
 {
   "id": "evt_reacted_inbound_001",
   "type": "message.reacted",
@@ -450,7 +450,7 @@ Para `message.reacted`: `content_type` é sempre `"text"` e `preview` contém o 
 }
 ```
 
-```json title="message.reacted (outbound — você reagiu a uma mensagem via API)"
+```json title="message.reacted (outbound: você reagiu a uma mensagem via API)"
 {
   "id": "evt_reacted_outbound_001",
   "type": "message.reacted",
@@ -471,11 +471,11 @@ Para `message.reacted`: `content_type` é sempre `"text"` e `preview` contém o 
 }
 ```
 
-Para remover uma reação previamente enviada, envie a propriedade `reaction` como `null` em `POST /v1/numbers/{alias}/messages/{id}/react` — veja [Enviar reação](/other-features/reaction/#remover-uma-reação). O evento `message.reacted` é emitido com `preview: ""`.
+Para remover uma reação previamente enviada, envie a propriedade `reaction` como `null` em `POST /v1/numbers/{alias}/messages/{id}/react`. Veja [Enviar reação](/other-features/reaction/#remover-uma-reação). O evento `message.reacted` é emitido com `preview: ""`.
 
-### Exemplo — `message.replied` (inbound/outbound)
+### Exemplo: `message.replied` (inbound/outbound)
 
-Replies são entregues como evento dedicado. `preview` contém o preview da **nova mensagem** (o reply, não a mensagem citada). `quoted_message_id` identifica a mensagem citada no formato `msg_<hex32>`; omitido quando o alvo não pôde ser resolvido (mensagem anterior ao Turbo Notify ou expirada por retenção — use `GET /v1/numbers/{alias}/messages/{id}` para acessar `replied.message_id` e `replied.preview` nesses casos).
+Replies são entregues como evento dedicado. `preview` contém o preview da **nova mensagem** (o reply, não a mensagem citada). `quoted_message_id` identifica a mensagem citada no formato `msg_<hex32>`; omitido quando o alvo não pôde ser resolvido (mensagem anterior ao Turbo Notify ou expirada por retenção: use `GET /v1/numbers/{alias}/messages/{id}` para acessar `replied.message_id` e `replied.preview` nesses casos).
 
 ```json title="message.replied (inbound)"
 {
@@ -499,7 +499,7 @@ Replies são entregues como evento dedicado. `preview` contém o preview da **no
 }
 ```
 
-```json title="message.replied (outbound — enviado via API)"
+```json title="message.replied (outbound: enviado via API)"
 {
   "id": "evt_replied_outbound",
   "type": "message.replied",
@@ -523,7 +523,7 @@ Replies são entregues como evento dedicado. `preview` contém o preview da **no
 
 Para responder uma mensagem via API, use o endpoint dedicado `POST /v1/numbers/{alias}/messages/{message_id}/reply` (body plano). Veja [/messages/send/](/messages/send/).
 
-### Exemplo — `message.delivered` / `message.read` (receipt inbound)
+### Exemplo: `message.delivered` / `message.read` (receipt inbound)
 
 Receipts são sempre **inbound**. `from` é quem disparou o recibo; `to` identifica o lado da organização (1:1: o seu número; grupo: o grupo). A linha da organização é dada pelo `number_alias` do envelope.
 
@@ -571,14 +571,14 @@ Receipts são sempre **inbound**. `from` é quem disparou o recibo; `to` identif
 
 `preview` segue a mesma janela de retenção de conteúdo do plano que o corpo completo da mensagem: não é permanente. Passada essa janela, `preview` e `transcription` (quando presentes) vêm com um marcador de redação em vez do conteúdo original, tanto em uma reentrega de webhook quanto em `GET /v1/events`. Consultá-la por id em `GET /v1/numbers/{alias}/messages/{id}` retorna `404 not_found` no mesmo instante. Veja [Retenção das mensagens](/messages/retention/) para o modelo completo (metadados: 12 meses fixos em todo plano; conteúdo, incluindo `preview`: FREE/SOLO 3 dias fixos, BUSINESS 3 dias por padrão com opção de 30 ou 90, CUSTOM definido em contrato).
 
-#### Recibos em grupo — um por participante
+#### Recibos em grupo: um por participante
 
 Quando você envia uma mensagem a um **grupo**, **cada outro participante**
 gera o seu próprio `delivered` (ao receber) e `read` (ao ler). Em cada
 recibo: `from` = aquele participante, `to` = o grupo. A linha da organização (dispositivo
 vinculado) que observou o recibo é dada pelo `number_alias` do envelope.
 
-```json title="message.read (grupo) — recibo do participante A"
+```json title="message.read (grupo): recibo do participante A"
 {
   "id": "evt_read_grp_A",
   "type": "message.read",
@@ -605,15 +605,15 @@ vinculado) que observou o recibo é dada pelo `number_alias` do envelope.
 ### Exemplos por `content_type` (inbound)
 
 O envelope do webhook é idêntico em estrutura para todos os tipos
-inbound — apenas `data.content_type` e `data.preview` mudam. Os
+inbound. Apenas `data.content_type` e `data.preview` mudam. Os
 trechos abaixo mostram só o objeto `data` para reduzir ruído visual.
 
 Para obter o **body completo** (texto, vCard, coordenadas, descrição
 do evento, link da mídia, etc.), faça `GET /v1/numbers/{alias}/messages/{id}`.
 
-#### `text` — texto simples
+#### `text`: texto simples
 
-```json title="data — message.received (text)"
+```json title="data: message.received (text)"
 {
   "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "from": { "name": "João Silva", "number": "5511777777777" },
@@ -628,12 +628,12 @@ do evento, link da mídia, etc.), faça `GET /v1/numbers/{alias}/messages/{id}`.
 ```
 
 > **Importante:** respostas (mensagens que citam outra)
-> são entregues como evento dedicado **`message.replied`** — nunca
+> são entregues como evento dedicado **`message.replied`**, nunca
 > como `message.received` com `content_type=reply`.
 
 #### `image`
 
-```json title="data — message.received (image)"
+```json title="data: message.received (image)"
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0010",
   "from": { "name": "João Silva", "number": "5511777777777" },
@@ -647,11 +647,11 @@ do evento, link da mídia, etc.), faça `GET /v1/numbers/{alias}/messages/{id}`.
 }
 ```
 
-Eventos não incluem o bloco `media` — faça `GET /v1/numbers/{alias}/messages/{id}` para obter o bloco `image` com a URL de download.
+Eventos não incluem o bloco `media`. Faça `GET /v1/numbers/{alias}/messages/{id}` para obter o bloco `image` com a URL de download.
 
 #### `video`
 
-```json title="data — message.received (video)"
+```json title="data: message.received (video)"
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0011",
   "from": { "name": "João Silva", "number": "5511777777777" },
@@ -665,9 +665,9 @@ Eventos não incluem o bloco `media` — faça `GET /v1/numbers/{alias}/messages
 }
 ```
 
-#### `audio` — voice note ou música
+#### `audio`: voice note ou música
 
-```json title="data — message.received (audio, sem BYO STT)"
+```json title="data: message.received (audio, sem BYO STT)"
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0012",
   "from": { "name": "João Silva", "number": "5511777777777" },
@@ -681,7 +681,7 @@ Eventos não incluem o bloco `media` — faça `GET /v1/numbers/{alias}/messages
 }
 ```
 
-```json title="data — message.received (audio, com BYO STT ativo — sucesso)"
+```json title="data: message.received (audio, com BYO STT ativo: sucesso)"
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0012",
   "from": { "name": "João Silva", "number": "5511777777777" },
@@ -700,7 +700,7 @@ Eventos não incluem o bloco `media` — faça `GET /v1/numbers/{alias}/messages
 }
 ```
 
-```json title="data — message.received (audio, com BYO STT ativo — falha)"
+```json title="data: message.received (audio, com BYO STT ativo: falha)"
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0012",
   "from": { "name": "João Silva", "number": "5511777777777" },
@@ -720,16 +720,16 @@ Eventos não incluem o bloco `media` — faça `GET /v1/numbers/{alias}/messages
 
 `mime_type` típico: `audio/ogg` (voice note) ou `audio/mpeg` (música).
 
-Quando **BYO Speech-to-Text** está configurado para o número, mensagens de áudio inbound ganham o campo **`transcription`** — uma união discriminada por `kind` (omitida quando não é mensagem de áudio):
+Quando **BYO Speech-to-Text** está configurado para o número, mensagens de áudio inbound ganham o campo **`transcription`**: uma união discriminada por `kind` (omitida quando não é mensagem de áudio):
 
-- **`{"kind": "available", "text": "...", "language"?: "pt"}`** — transcrição concluída; `language` é o código BCP-47 do idioma detectado/configurado quando disponível.
-- **`{"kind": "unavailable", "reason": "...", "hint"?: "..."}`** — transcrição não disponível. `reason` é um destes 5 valores: `not_configured`, `provider_error`, `timeout`, `no_adapter` ou `internal_error`. `hint` é uma orientação acionável opcional.
+- **`{"kind": "available", "text": "...", "language"?: "pt"}`**: transcrição concluída; `language` é o código BCP-47 do idioma detectado/configurado quando disponível.
+- **`{"kind": "unavailable", "reason": "...", "hint"?: "..."}`**: transcrição não disponível. `reason` é um destes 5 valores: `not_configured`, `provider_error`, `timeout`, `no_adapter` ou `internal_error`. `hint` é uma orientação acionável opcional.
 
 O fluxo da mensagem nunca é bloqueado por falha de transcrição.
 
 #### `document`
 
-```json title="data — message.received (document)"
+```json title="data: message.received (document)"
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0013",
   "from": { "name": "João Silva", "number": "5511777777777" },
@@ -745,7 +745,7 @@ O fluxo da mensagem nunca é bloqueado por falha de transcrição.
 
 #### `sticker`
 
-```json title="data — message.received (sticker)"
+```json title="data: message.received (sticker)"
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0014",
   "from": { "name": "João Silva", "number": "5511777777777" },
@@ -761,7 +761,7 @@ O fluxo da mensagem nunca é bloqueado por falha de transcrição.
 
 #### `location`
 
-```json title="data — message.received (location)"
+```json title="data: message.received (location)"
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0001",
   "from": { "name": "João Silva", "number": "5511777777777" },
@@ -777,9 +777,9 @@ O fluxo da mensagem nunca é bloqueado por falha de transcrição.
 
 `preview` é o texto humanizado sem colchetes. Body completo via `GET /v1/numbers/{alias}/messages/{id}` no campo `location` com `latitude`, `longitude`, `name`, `address`, etc.
 
-#### `calendar` — evento/calendário (WhatsApp `eventMessage`)
+#### `calendar`: evento/calendário (WhatsApp `eventMessage`)
 
-```json title="data — message.received (calendar)"
+```json title="data: message.received (calendar)"
 {
   "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0003",
   "from": { "name": "João Silva", "number": "5511777777777" },
@@ -798,13 +798,13 @@ Body completo via `GET /v1/numbers/{alias}/messages/{id}` no campo `calendar` co
 :::tip
 Quer ver o body renderizado de forma visual antes de plugar em
 produção? Cadastre a URL gerada pelo <ExternalLink href="https://webhook.turbonotify.com">Webhook Inspector</ExternalLink>
-como seu webhook e envie uma mensagem de teste real — cada entrega chega em
+como seu webhook e envie uma mensagem de teste real. Cada entrega chega em
 tempo real, com headers e body completos.
 :::
 
 ## Tipos de evento
 
-O catálogo público é fechado — o mesmo endpoint configurado como webhook só
+O catálogo público é fechado. O mesmo endpoint configurado como webhook só
 recebe os **42 tipos de evento** do catálogo público, sem surpresas. Esta
 página cobre os **24** eventos das famílias `message.*`, `number.*`,
 `storage.*` e `media.*`. Os **18** restantes vivem em três páginas
@@ -812,10 +812,10 @@ dedicadas: 6 eventos `contact.*` (inclui `contact.quota.*`) em
 [Eventos de contato](/webhooks/contact-events/), 10 eventos `group.*` em
 [Eventos de ciclo de vida](/groups/lifecycle-events/), e 2 eventos
 `message.quota.*` em [Eventos de quota de mensagem](/webhooks/message-quota-events/).
-Todos chegam no mesmo endpoint configurado — não é preciso registrar nada
+Todos chegam no mesmo endpoint configurado. Não é preciso registrar nada
 separadamente.
 
-### Mensagens — ciclo de envio
+### Mensagens: ciclo de envio
 
 | Tipo                      | Quando é emitido                                                   |
 | ------------------------- | ------------------------------------------------------------------ |
@@ -824,18 +824,18 @@ separadamente.
 | `message.delivered`       | Receipt inbound: peer entregou uma mensagem que você enviou.       |
 | `message.read`            | Receipt inbound: peer leu uma mensagem que você enviou.            |
 
-### Mensagens — replies (citações)
+### Mensagens: replies (citações)
 
 | Tipo                      | Quando é emitido                                                   |
 | ------------------------- | ------------------------------------------------------------------ |
 | `message.replied`         | Reply enviado/recebido (qualquer `content_type`, ambas direções).  |
 | `message.reply.failed`    | Falha ao enviar um reply (via `POST /v1/numbers/{alias}/messages/{message_id}/reply`). |
 
-### Mensagens — recebimento e operações
+### Mensagens: recebimento e operações
 
 | Tipo                      | Quando é emitido                                                   |
 | ------------------------- | ------------------------------------------------------------------ |
-| `message.received`        | Mensagem recebida de um contato (texto, mídia — sem citação).      |
+| `message.received`        | Mensagem recebida de um contato (texto, mídia, sem citação).       |
 | `message.edited`          | Mensagem foi editada (sua ou do contato).                          |
 | `message.edit.failed`     | Falha ao editar uma mensagem.                                      |
 | `message.deleted`         | Mensagem foi deletada/revogada (sua ou do contato).                |
@@ -843,7 +843,7 @@ separadamente.
 | `message.reacted`         | Uma reação foi adicionada ou removida (`preview` = emoji ou `""`). |
 | `message.react.failed`    | Falha ao reagir a uma mensagem.                                    |
 
-### Números — ciclo de vida
+### Números: ciclo de vida
 
 | Tipo                          | Quando é emitido                                                  |
 | ----------------------------- | ----------------------------------------------------------------- |
@@ -856,11 +856,11 @@ separadamente.
 | `number.remove.canceled`      | Exclusão agendada foi cancelada.                                  |
 | `number.removed`              | Número extra foi removido.                                        |
 
-Todos os eventos `number.*` carregam os campos comuns `alias` e `number` (quando disponível). O campo `name` — nome de exibição WhatsApp do número, capturado na conexão — é **opcional** em todos os eventos e **omitido quando nulo**. O `alias` `"main"` identifica o número principal; qualquer outro valor identifica um número extra.
+Todos os eventos `number.*` carregam os campos comuns `alias` e `number` (quando disponível). O campo `name` (nome de exibição WhatsApp do número, capturado na conexão) é **opcional** em todos os eventos e **omitido quando nulo**. O `alias` `"main"` identifica o número principal; qualquer outro valor identifica um número extra.
 
-Todos os eventos `number.*` também carregam o par de coerência `channel` (sempre `"whatsapp"`) e `origin` (sempre `"tn"` — o ciclo de vida do dispositivo é produzido pela plataforma Turbo Notify). Eventos `number.*` **não** carregam `direction` — o ciclo de vida do link (conexão, desconexão, revogação, remoção, criação) não é um fluxo de mensagem WhatsApp.
+Todos os eventos `number.*` também carregam o par de coerência `channel` (sempre `"whatsapp"`) e `origin` (sempre `"tn"`, o ciclo de vida do dispositivo é produzido pela plataforma Turbo Notify). Eventos `number.*` **não** carregam `direction`. O ciclo de vida do link (conexão, desconexão, revogação, remoção, criação) não é um fluxo de mensagem WhatsApp.
 
-O campo `at` (em `data`) carrega o **momento da ação real no WhatsApp** — e é um valor **distinto** do `created_at` do envelope (momento de emissão pelo Turbo Notify). Os eventos de ação real **`number.connected`**, **`number.disconnected`**, **`number.revoked`** e **`number.connect.failed`** carregam `at` com esse momento genuíno do WhatsApp (tipicamente anterior ao `created_at`); os eventos sintéticos do Turbo Notify — **`number.created`**, **`number.remove.scheduled`**, **`number.remove.canceled`** e **`number.removed`** — **não** carregam `at`, apenas o `created_at` do envelope (`number.remove.scheduled` mantém `scheduled_at` como timestamp de valor de negócio, com seu nome semântico).
+O campo `at` (em `data`) carrega o **momento da ação real no WhatsApp**, e é um valor **distinto** do `created_at` do envelope (momento de emissão pelo Turbo Notify). Os eventos de ação real **`number.connected`**, **`number.disconnected`**, **`number.revoked`** e **`number.connect.failed`** carregam `at` com esse momento genuíno do WhatsApp (tipicamente anterior ao `created_at`); os eventos sintéticos do Turbo Notify (**`number.created`**, **`number.remove.scheduled`**, **`number.remove.canceled`** e **`number.removed`**) **não** carregam `at`, apenas o `created_at` do envelope (`number.remove.scheduled` mantém `scheduled_at` como timestamp de valor de negócio, com seu nome semântico).
 
 ```json title="number.connected (exemplo)"
 {
@@ -888,7 +888,7 @@ Eventos relacionados à integração BYO Object Storage (AWS S3, Cloudflare R2, 
 Estes eventos são **agnósticos de provedor**: o payload é o mesmo independentemente do provedor configurado.
 :::
 
-:::caution[Mensagens recebidas com mídia — entrega só após resolução]
+:::caution[Mensagens recebidas com mídia: entrega só após resolução]
 Para mensagens **inbound com mídia** (imagem, vídeo, áudio, documento, sticker), o webhook `message.received` só é enviado depois que o estado de mídia chega a um *terminal* para a sua organização:
 
 - **Com [BYO Storage](/general/byo-storage-setup/) ativo**: bytes salvos no seu bucket, ou falha permanente sinalizada por `media.unavailable`.
@@ -910,7 +910,7 @@ Use `GET /v1/numbers/{alias}/messages/{id}` para acessar o bloco `image`/`video`
 | ----------------------------- | ----------------------------------------------------------------- |
 | `media.unavailable`           | Mídia não pôde ser persistida no bucket BYO (`reason`: `no_storage`, `storage_circuit_open`, `upload_failed`). |
 
-#### Exemplo — `storage.degraded`
+#### Exemplo: `storage.degraded`
 
 ```json title="webhook-payload.json"
 {
@@ -929,7 +929,7 @@ Use `GET /v1/numbers/{alias}/messages/{id}` para acessar o bloco `image`/`video`
 }
 ```
 
-#### Exemplo — `storage.recovered`
+#### Exemplo: `storage.recovered`
 
 ```json title="webhook-payload.json"
 {
@@ -946,7 +946,7 @@ Use `GET /v1/numbers/{alias}/messages/{id}` para acessar o bloco `image`/`video`
 }
 ```
 
-#### Exemplo — `media.unavailable`
+#### Exemplo: `media.unavailable`
 
 ```json title="webhook-payload.json"
 {
@@ -997,17 +997,17 @@ Os eventos de falha compartilham um envelope comum e diferem entre si pelo conju
 }
 ```
 
-`from` e `to` são **sempre obrigatórios** em todo evento `message.*.failed` —
+`from` e `to` são **sempre obrigatórios** em todo evento `message.*.failed`:
 mesmo em falhas early-pipeline como esta, em que nenhum registro de mensagem
 chegou a ser criado (`id: null`). Quando o pipeline falha antes de resolver
 o destinatário real, `from` é sintetizado a partir do número/alias que
 tentou enviar. O campo `error.hint` é **omitido** (não `null`) quando não
-há orientação acionável para o código — o exemplo acima ilustra isso
+há orientação acionável para o código. O exemplo acima ilustra isso
 (`session_not_connected` não tem `hint`).
 
 ### `message.edit.failed` / `message.delete.failed` / `message.react.failed`
 
-Diferentemente de `message.send.failed`, essas operações falham **sobre uma mensagem que já existe** — `id` está sempre presente.
+Diferentemente de `message.send.failed`, essas operações falham **sobre uma mensagem que já existe**: `id` está sempre presente.
 
 ```json title="message.edit.failed"
 {
@@ -1034,9 +1034,9 @@ Diferentemente de `message.send.failed`, essas operações falham **sobre uma me
 }
 ```
 
-O WhatsApp aceita edição apenas em mensagens recentes e ainda não apagadas. Quando ele recusa, o Turbo Notify emite `message.edit.failed` com `error.code: "edit_failed"`. Antes disso, o próprio `POST .../edit` já rejeita mensagens que não estão em estado editável, com `400 message_not_editable` — veja [Editar e deletar](/messages/edit-delete/).
+O WhatsApp aceita edição apenas em mensagens recentes e ainda não apagadas. Quando ele recusa, o Turbo Notify emite `message.edit.failed` com `error.code: "edit_failed"`. Antes disso, o próprio `POST .../edit` já rejeita mensagens que não estão em estado editável, com `400 message_not_editable`. Veja [Editar e deletar](/messages/edit-delete/).
 
-`message.delete.failed` segue exatamente a mesma forma — apenas o valor de
+`message.delete.failed` segue exatamente a mesma forma: apenas o valor de
 `type` muda; `preview` e `content_type` também vêm `""`.
 
 `message.react.failed` difere em **um** ponto além do `type`: seu
@@ -1050,7 +1050,7 @@ enquanto `edit.failed` e `delete.failed` trazem `""`.
 Quando você envia uma mensagem para um grupo via
 `POST /v1/numbers/{alias}/messages` com `to.group_id`, os webhooks subsequentes
 (`message.sent`, `message.delivered`, `message.read`,
-`message.send.failed`) usam o mesmo shape polimórfico — `to` carrega
+`message.send.failed`) usam o mesmo shape polimórfico, `to` carrega
 `group_id` + snapshot `name`, e o `number_alias` do envelope identifica a linha que enviou:
 
 ```json title="message.sent (outbound para grupo)"
@@ -1074,7 +1074,7 @@ Quando você envia uma mensagem para um grupo via
 }
 ```
 
-- `to.group_id` é o identificador público `grp_{hex32}` — mesmo valor fornecido no `POST /v1/numbers/{alias}/messages`.
+- `to.group_id` é o identificador público `grp_{hex32}`. Mesmo valor fornecido no `POST /v1/numbers/{alias}/messages`.
 - O `number_alias` do envelope identifica a linha Turbo Notify que enviou a mensagem ao grupo.
 - Para detectar mensagens de grupo: verifique `"group_id" in data.to`.
 
@@ -1095,11 +1095,11 @@ Operações da API que disparam processamento assíncrono expõem o `X‑Request
 
 ## Tentativas de entrega
 
-Se seu endpoint não responder com status `2xx` dentro de 10 segundos, o Turbo Notify reagenda a entrega seguindo um cronograma no estilo Standard Webhooks com **jitter total** — o atraso real de cada tentativa é um valor aleatório entre 0 e o máximo indicado, nunca um valor fixo:
+Se seu endpoint não responder com status `2xx` dentro de 10 segundos, o Turbo Notify reagenda a entrega seguindo um cronograma no estilo Standard Webhooks com **jitter total**, o atraso real de cada tentativa é um valor aleatório entre 0 e o máximo indicado, nunca um valor fixo:
 
 | Tentativa | Atraso antes desta tentativa |
 | :-------: | ----------------------------------------- |
-| 1         | Nenhum — entrega inicial                   |
+| 1         | Nenhum: entrega inicial                    |
 | 2         | ~0 s (próximo ciclo de reentrega, ≤15 s)   |
 | 3         | até 5 segundos                             |
 | 4         | até 5 minutos                              |
@@ -1111,12 +1111,12 @@ Após a 6ª tentativa falhar, o evento é marcado como `dead_letter` e nenhuma n
 :::note[Reentrega exige o plano BUSINESS ou superior]
 O cronograma de reentrega acima é uma feature de plano, disponível a partir
 do tier `BUSINESS`. Organizações em `FREE`/`SOLO` recebem **exatamente
-1 tentativa** — se essa única tentativa não retornar `2xx`, o evento é
+1 tentativa**: se essa única tentativa não retornar `2xx`, o evento é
 marcado como `dead_letter` imediatamente, sem nenhuma reentrega. O header
 `X‑Webhook‑Max‑Attempts`, presente em toda tentativa de entrega, reflete
 esse limite (`1` para `FREE`/`SOLO`; `6` para `BUSINESS`/`CUSTOM`).
 
-Isso afeta apenas a **reentrega** em caso de falha — a primeira tentativa
+Isso afeta apenas a **reentrega** em caso de falha. A primeira tentativa
 de entrega acontece normalmente em todos os tiers. Veja [Quota e
 uso](/usage/quota/) para os limites e restrições de cada plano.
 :::
@@ -1127,7 +1127,7 @@ O Turbo Notify adota o modelo **at-least-once**. Em situações excepcionais, o 
 
 ### O campo `id` como chave de idempotência
 
-O campo `id` (ex.: `evt_abc123…`) identifica o evento de forma única e é **estável entre tentativas de entrega**. Se o mesmo `id` chegar duas vezes no seu endpoint, trata-se de uma reentrega automática pelo Turbo Notify — o evento já foi processado na primeira entrega.
+O campo `id` (ex.: `evt_abc123…`) identifica o evento de forma única e é **estável entre tentativas de entrega**. Se o mesmo `id` chegar duas vezes no seu endpoint, trata-se de uma reentrega automática pelo Turbo Notify. O evento já foi processado na primeira entrega.
 
 Armazene os `id` recebidos e ignore eventos cujo `id` já esteja na sua base:
 
@@ -1147,11 +1147,11 @@ Em produção, persista o `id` em uma tabela ou cache com TTL de ~72 h.
 
 ### Timestamps em reentregas
 
-O campo `created_at` (envelope) reflete o **momento de emissão do evento pelo Turbo Notify** — quando o registro do evento é criado e publicado, nunca a hora em que o webhook foi enviado ao seu endpoint. Quando presente, `at` (em `data`) reflete o **momento da ação real no WhatsApp**. Estes são **valores distintos**: um evento pode ser emitido algum tempo depois da ação que descreve (eventos sintéticos do Turbo Notify não têm `at`). Em reentregas, tanto `created_at` quanto `at` permanecem **inalterados** — são os mesmos valores da tentativa original.
+O campo `created_at` (envelope) reflete o **momento de emissão do evento pelo Turbo Notify**: quando o registro do evento é criado e publicado, nunca a hora em que o webhook foi enviado ao seu endpoint. Quando presente, `at` (em `data`) reflete o **momento da ação real no WhatsApp**. Estes são **valores distintos**: um evento pode ser emitido algum tempo depois da ação que descreve (eventos sintéticos do Turbo Notify não têm `at`). Em reentregas, tanto `created_at` quanto `at` permanecem **inalterados**: são os mesmos valores da tentativa original.
 
 Isso significa que, ao receber uma reentrega:
-- `created_at` é o momento de emissão; `at` (quando presente) é o momento da ação no WhatsApp — ambos fixos entre tentativas.
-- `X‑Webhook‑Attempt` é incrementado a cada tentativa — use-o para diagnóstico, não para lógica de negócio.
+- `created_at` é o momento de emissão; `at` (quando presente) é o momento da ação no WhatsApp, ambos fixos entre tentativas.
+- `X‑Webhook‑Attempt` é incrementado a cada tentativa: use-o para diagnóstico, não para lógica de negócio.
 - `X‑Webhook‑Timestamp` reflete a hora do **envio HTTP atual** e é usado para validação de assinatura e proteção anti-replay; **não** é o timestamp do evento.
 
 ## Alternativa: polling

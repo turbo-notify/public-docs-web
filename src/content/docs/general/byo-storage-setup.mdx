@@ -16,11 +16,11 @@ Quando um contato envia uma imagem, vídeo, áudio, documento ou figurinha para 
 3. Retorna uma URL pré-assinada diretamente no objeto de mídia (`image.url`, `video.url`, …) ao consultar `GET /v1/numbers/{alias}/messages/{id}`.
 4. Envia o webhook `message.received` com os campos de mídia disponíveis.
 
-Sem BYO Storage configurado, o campo `kind` retorna `"unavailable"` com `reason: "no_storage"` — os bytes da mídia não são persistidos.
+Sem BYO Storage configurado, o campo `kind` retorna `"unavailable"` com `reason: "no_storage"`. Os bytes da mídia não são persistidos.
 
 ## Provedores suportados
 
-O Turbo Notify usa a S3 HTTP API como protocolo de transporte — o mesmo protocolo suportado pelos três provedores:
+O Turbo Notify usa a S3 HTTP API como protocolo de transporte, o mesmo protocolo suportado pelos três provedores:
 
 | Provedor | Free tier | Notas |
 |----------|:---------:|-------|
@@ -62,14 +62,14 @@ Acesse <DashboardLink path="/storage">Armazenamento</DashboardLink> e preencha:
 | **Região** | Região do bucket (ex: `us-east-1`, `auto` para R2) |
 | **Access Key ID** | Chave de acesso IAM / R2 / Supabase |
 | **Secret Access Key** | Chave secreta correspondente |
-| **Cloudflare Account ID** / **Supabase Project Ref** | Apenas para R2 e Supabase, respectivamente — o endpoint S3-compatible é gerado automaticamente a partir desse valor |
+| **Cloudflare Account ID** / **Supabase Project Ref** | Apenas para R2 e Supabase, respectivamente: o endpoint S3-compatible é gerado automaticamente a partir desse valor |
 
 ### 4. Valide a conexão
 
 Após salvar, clique em **Testar conexão**. O Turbo Notify verifica o bucket (`HEAD`), grava um objeto temporário (`PUT`), lê-o de volta (`GET`) e o remove (`DELETE`) para validar as 4 permissões necessárias (`ListBucket`/`PutObject`/`GetObject`/`DeleteObject`). O resultado aparece como:
 
-- **Conectado** — integração ativa, mídias passam a ser armazenadas imediatamente.
-- **Falha** — verifique credenciais, nome do bucket e permissões.
+- **Conectado**: integração ativa, mídias passam a ser armazenadas imediatamente.
+- **Falha**: verifique credenciais, nome do bucket e permissões.
 
 ## Comportamento após configuração
 
@@ -95,7 +95,7 @@ Com BYO Storage ativo, fotos de perfil são armazenadas no bucket e retornadas v
 
 ### Mídias anteriores à configuração
 
-Mídias recebidas **antes** da ativação do BYO Storage permanecem com `kind: "unavailable"` — não há backfill retroativo. Apenas novas mídias são armazenadas.
+Mídias recebidas **antes** da ativação do BYO Storage permanecem com `kind: "unavailable"`. Não há backfill retroativo. Apenas novas mídias são armazenadas.
 
 ## Solução de problemas
 
@@ -115,18 +115,18 @@ O circuit breaker de storage foi ativado por falhas consecutivas. O Turbo Notify
 
 ### `kind: "pending"`
 
-O upload está em andamento. Aguarde alguns segundos e consulte `GET /v1/numbers/{alias}/messages/{id}` novamente. Esse estado só é visível durante o processamento — o webhook `message.received` só é emitido após resolução (disponível ou indisponível).
+O upload está em andamento. Aguarde alguns segundos e consulte `GET /v1/numbers/{alias}/messages/{id}` novamente. Esse estado só é visível durante o processamento: o webhook `message.received` só é emitido após resolução (disponível ou indisponível).
 
 ## Segurança
 
-- Credenciais são armazenadas encriptadas (AES-256-GCM) — nunca em texto claro.
+- Credenciais são armazenadas encriptadas (AES-256-GCM), nunca em texto claro.
 - O Turbo Notify nunca expõe credenciais em logs ou respostas.
 - URLs pré-assinadas têm validade configurável (padrão: 15 minutos; configurável até 1 hora).
-- Recomendamos política de acesso **least-privilege** — escopo restrito ao bucket do Turbo Notify.
+- Recomendamos política de acesso **least-privilege**: escopo restrito ao bucket do Turbo Notify.
 
 ## Relacionado
 
-- [Consultar mensagem](/messages/get/) — campos de mídia com união discriminada por `kind`.
-- [Webhooks — Armazenamento e mídia](/messages/webhook/#armazenamento-e-mídia) — eventos `storage.degraded` e `storage.recovered`.
-- [Envio de mídia](/messages/send-media/) — envio de mídia outbound por URL pública.
-- [Foto de perfil](/contacts/profile-picture/) — redirect para URL pré-assinada.
+- [Consultar mensagem](/messages/get/): campos de mídia com união discriminada por `kind`.
+- [Webhooks: Armazenamento e mídia](/messages/webhook/#armazenamento-e-mídia): eventos `storage.degraded` e `storage.recovered`.
+- [Envio de mídia](/messages/send-media/): envio de mídia outbound por URL pública.
+- [Foto de perfil](/contacts/profile-picture/): redirect para URL pré-assinada.

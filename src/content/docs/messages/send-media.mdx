@@ -8,7 +8,7 @@ import ApiResponse from '@components/ApiResponse.astro';
 
 Mídia (imagens, áudios, vídeos, documentos e figurinhas) é enviada
 pelo mesmo endpoint `POST /v1/messages` usado para texto. Os campos de
-mídia ficam dentro do objeto **aninhado `content`** — o tipo é inferido
+mídia ficam dentro do objeto **aninhado `content`**. O tipo é inferido
 automaticamente pelo campo âncora presente (`image_url`, `video_url`,
 `audio_url`, `document_url` ou `sticker_url`).
 
@@ -27,10 +27,10 @@ Para enviar mídia a partir de um número extra, use `/v1/numbers/{alias}/messag
 | `document` | `document_url` | PDF, DOCX, XLSX, etc. | 100 MB | ✓ | ✓ |
 | `sticker` | `sticker_url` | WebP animado, exatamente 512×512px | 500 KB | — | — |
 
-`caption` **não é aceito** em `audio` e `sticker` — a API retorna
+`caption` **não é aceito** em `audio` e `sticker`. A API retorna
 `422` se o campo for enviado nesses tipos.
 
-## Modalidade — URL pública
+## Modalidade: URL pública
 
 Forneça uma URL HTTPS acessível publicamente. O Turbo Notify busca o
 arquivo antes de entregar ao WhatsApp.
@@ -97,8 +97,8 @@ arquivo antes de entregar ao WhatsApp.
 </Tabs>
 
 :::tip[Menções no caption]
-O `caption` de imagem aceita tokens de menção `@<numero>` — por exemplo
-`"caption": "Confere essa foto, @5511987650000?"` — com as mesmas regras do
+O `caption` de imagem aceita tokens de menção `@<numero>` (por exemplo
+`"caption": "Confere essa foto, @5511987650000?"`) com as mesmas regras do
 `text` (detecção implícita, dígitos E.164 sem `+`, fail-open).
 Veja [Menções (@mentions)](/messages/send/#menções-mentions).
 :::
@@ -353,12 +353,12 @@ de documento também aceita [menções `@<numero>`](/messages/send/#menções-me
 </Tabs>
 
 Stickers devem ser WebP animados (formato exigido pelo WhatsApp), com
-dimensões **exatas de 512×512 pixels** — qualquer outra dimensão é
-rejeitada mesmo que o WebP seja válido — e respeitar o limite de 500 KB.
+dimensões **exatas de 512×512 pixels** (qualquer outra dimensão é
+rejeitada mesmo que o WebP seja válido) e respeitar o limite de 500 KB.
 
 ## Esquema de campos (todos os tipos)
 
-Os campos de mídia ficam dentro do objeto `content`. O campo âncora (ex.: `image_url`) determina a variante — todo envio de mídia é feito por URL pública; não existe modalidade de envio direto por chave de objeto do seu BYO Storage.
+Os campos de mídia ficam dentro do objeto `content`. O campo âncora (ex.: `image_url`) determina a variante. Todo envio de mídia é feito por URL pública; não existe modalidade de envio direto por chave de objeto do seu BYO Storage.
 
 | Campo em `content` | Tipo | Obrigatório | Notas |
 |---|---|---|---|
@@ -368,7 +368,7 @@ Os campos de mídia ficam dentro do objeto `content`. O campo âncora (ex.: `ima
 | `document_url` | URL | condicional | Campo âncora para documentos; URL pública HTTPS |
 | `sticker_url` | URL | condicional | Campo âncora para figurinhas; URL pública HTTPS |
 | `mime_type` | string | não | recomendado; o Turbo Notify pode inferir do `Content-Type` da resposta |
-| `caption` | string | parcial | aceito em `image`, `video`, `document`; **não aceito** em `audio` e `sticker` (retorna `422`). Aceita tokens de [menção `@<numero>`](/messages/send/#menções-mentions) — detecção implícita, mesmas regras do `text` |
+| `caption` | string | parcial | aceito em `image`, `video`, `document`; **não aceito** em `audio` e `sticker` (retorna `422`). Aceita tokens de [menção `@<numero>`](/messages/send/#menções-mentions), detecção implícita, mesmas regras do `text` |
 | `filename` | string | não | apenas em `document`; aparece como nome do anexo no chat |
 
 ## Resposta
@@ -412,7 +412,7 @@ carrega `content_type` e `preview` (mesmo shape de `message.received`):
 ```
 
 Para baixar o arquivo de uma mídia recebida, consulte
-[`GET /v1/numbers/{alias}/messages/{id}`](/messages/get/) — os campos de mídia
+[`GET /v1/numbers/{alias}/messages/{id}`](/messages/get/): os campos de mídia
 aparecem **diretamente** no objeto específico do `content_type` (`image`, `video`,
 `audio`, `document`, `sticker`), sem sub-objeto `media`. Com BYO Object Storage
 configurado, esse objeto vem com `kind: "available"` e `url` contendo a URL
@@ -420,6 +420,6 @@ pré-assinada de download.
 
 ## Relacionado
 
-- [Envio de mensagens](/messages/send/) — texto, localização, contato, calendário (mesmo endpoint).
-- [Webhook outbound](/messages/webhook/) — payloads de `message.sent` e `message.delivered`.
-- [Consultar mensagem](/messages/get/) — obter o body completo, inclusive mídia.
+- [Envio de mensagens](/messages/send/): texto, localização, contato, calendário (mesmo endpoint).
+- [Webhook outbound](/messages/webhook/): payloads de `message.sent` e `message.delivered`.
+- [Consultar mensagem](/messages/get/): obter o body completo, inclusive mídia.

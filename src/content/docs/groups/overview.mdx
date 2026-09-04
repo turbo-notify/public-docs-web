@@ -6,7 +6,7 @@ description: Recebimento e envio de mensagens em grupos do WhatsApp via Turbo No
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 O Turbo Notify reconhece grupos do WhatsApp como entidades de primeira
-classe — mensagens recebidas em grupo trazem o contexto da conversa, e
+classe: mensagens recebidas em grupo trazem o contexto da conversa, e
 o envio para grupos usa o identificador público `grp_{hex32}`.
 
 ## Conceitos
@@ -18,15 +18,15 @@ hexadecimais, derivado de um identificador interno, no mesmo formato dos
 demais prefixos públicos (`msg_`, `ct_`, `req_`, `evt_`).
 
 > O identificador do WhatsApp (`120363xxxxx@g.us`) **nunca** é exposto
-> em respostas, webhooks ou polling — apenas o `grp_{hex32}` do Turbo Notify.
+> em respostas, webhooks ou polling: apenas o `grp_{hex32}` do Turbo Notify.
 
 ### Campo `to` polimórfico
 
-O campo `to` discrimina por presença de chave — sem campo `kind` ou `type`:
+O campo `to` discrimina por presença de chave, sem campo `kind` ou `type`:
 
-- **1:1** → `to: { "number": "+55..." }` — destinatário pessoa.
-- **Grupo** → `to: { "group_id": "grp_..." }` — destinatário grupo.
-- **Por contato** → `to: { "contact_id": "ct_..." }` — resolve o telefone a partir do registro de contato do Turbo Notify.
+- **1:1** → `to: { "number": "+55..." }`: destinatário pessoa.
+- **Grupo** → `to: { "group_id": "grp_..." }`: destinatário grupo.
+- **Por contato** → `to: { "contact_id": "ct_..." }`: resolve o telefone a partir do registro de contato do Turbo Notify.
 
 A mesma regra vale para os payloads de webhook e polling: quando
 `to.group_id` está presente, o destinatário lógico é o grupo.
@@ -34,7 +34,7 @@ Mensagens 1:1 preservam o shape pré-existente byte-idêntico.
 
 ### Campo `from` sempre é pessoa
 
-Grupos não falam — participantes falam dentro de grupos. Portanto:
+Grupos não falam. Participantes falam dentro de grupos. Portanto:
 
 - Inbound: `from` é o participante que enviou a mensagem no grupo.
 - Outbound: `from` é o número Turbo Notify que enviou a mensagem.
@@ -43,8 +43,8 @@ Em nenhum cenário `from` carrega um `group_id`.
 
 ### Linha Turbo Notify (`number_alias` do envelope)
 
-A linha Turbo Notify que participa da conversa — 1:1 ou grupo, inbound ou
-outbound — é identificada pelo campo **`number_alias` do envelope** do evento
+A linha Turbo Notify que participa da conversa (1:1 ou grupo, inbound ou
+outbound) é identificada pelo campo **`number_alias` do envelope** do evento
 (`"main"` para o número principal ou o alias de um número extra). Resolva o
 número/contato correspondente via `GET /v1/numbers/{alias}`.
 
@@ -77,7 +77,7 @@ const isGroup = "group_id" in data.to;
 ## Recebendo mensagens de grupo
 
 Cada mensagem inbound proveniente de um grupo é entregue como
-[`message.received`](/messages/webhook/#exemplo--messagereceived-grupo)
+[`message.received`](/messages/webhook/#exemplo-messagereceived-grupo)
 no webhook + polling. `from` é o participante que enviou; `to` traz o
 `group_id` e o snapshot do nome do grupo; a linha Turbo Notify que participa
 do grupo é identificada pelo `number_alias` do envelope.
@@ -89,7 +89,7 @@ Para enviar a um grupo a partir do número principal, use `POST /v1/messages`. P
 :::note[Requer plano BUSINESS ou superior]
 Enviar mensagem para um `group_id` exige a feature `groups:messages`,
 disponível a partir do tier `BUSINESS`. Em `FREE`/`SOLO` o envio é
-recusado com `402 feature_not_available` — receber mensagens de grupo e
+recusado com `402 feature_not_available`. Receber mensagens de grupo e
 consultar detalhes continuam funcionando normalmente. Veja
 [Limitações de grupos](/groups/limitations/) e
 [Quota e uso](/usage/quota/#envio-para-grupos-exige-plano-business-ou-superior).
@@ -246,7 +246,7 @@ roteia a mensagem para o grupo pelo número identificado em `{alias}`. Para 1:1,
 
 `GET /v1/numbers/{alias}/groups` lista os grupos observados por um número,
 paginado por cursor. `GET /v1/numbers/{alias}/groups/{group_id}` retorna o
-detalhe de um grupo específico. Ambos disponíveis em qualquer tier — não
+detalhe de um grupo específico. Ambos disponíveis em qualquer tier, não
 exigem a feature `groups:messages`.
 
 **Escopo obrigatório:** `groups:read`.
@@ -263,7 +263,7 @@ GET /v1/numbers/{alias}/groups/{group_id}
 | `name` | string | Filtro parcial pelo nome do grupo |
 | `include_left` | bool | Inclui grupos dos quais o número já saiu (padrão `false`) |
 
-Cada item — tanto na listagem (`data[]`) quanto no detalhe — tem este shape:
+Cada item, tanto na listagem (`data[]`) quanto no detalhe, tem este shape:
 
 ```json
 {
@@ -285,16 +285,16 @@ Cada item — tanto na listagem (`data[]`) quanto no detalhe — tem este shape:
 A listagem envelopa os itens em `{ "data": [...], "cursor": "...", "has_more": true }`.
 `is_active` é `false` quando o número já saiu do grupo (só aparece na
 listagem com `include_left=true`). `picture` é a mesma união discriminada
-usada pelo endpoint dedicado — veja [Foto do grupo](/groups/picture/).
+usada pelo endpoint dedicado: veja [Foto do grupo](/groups/picture/).
 
 `GET /v1/numbers/{alias}/groups/{group_id}` retorna `400 invalid_group_id`
-quando o `group_id` não bate com `^grp_[0-9a-f]{32}$` — o formato é validado
-antes da consulta. Um `group_id` **bem-formado** que não existe, ou que
+quando o `group_id` não bate com `^grp_[0-9a-f]{32}$` (o formato é validado
+antes da consulta). Um `group_id` **bem-formado** que não existe, ou que
 pertence a outro número/organização, retorna `404 group_not_found`.
 
 ## Quota e rate-limit
 
-Um envio para grupo conta como **1 destinatário** no rate-limit diário —
+Um envio para grupo conta como **1 destinatário** no rate-limit diário,
 independente de quantos participantes o grupo tenha. A quota de
 contatos (`contact.*`) **não** é afetada por envios para grupos: grupos
 nunca materializam contatos.
@@ -307,5 +307,5 @@ o catálogo completo.
 
 ## Limitações
 
-Consulte [Limitações](/groups/limitations/) — recursos explicitamente
+Consulte [Limitações](/groups/limitations/): recursos explicitamente
 fora do escopo (criação/admin/listagem de membros via API).
