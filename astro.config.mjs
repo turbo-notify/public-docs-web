@@ -75,6 +75,11 @@ export default defineConfig({
               translations: { en: 'Storage', es: 'Almacenamiento' },
             },
             {
+              slug: 'general/mcp-server',
+              label: 'Servidor MCP',
+              translations: { en: 'MCP Server', es: 'Servidor MCP' },
+            },
+            {
               slug: 'general/next-steps',
               label: 'Próximos passos',
               translations: { en: 'Next Steps', es: 'Próximos Pasos' },

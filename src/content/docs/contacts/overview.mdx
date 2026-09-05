@@ -30,7 +30,7 @@ Contatos são escopados por número. Para o **número principal**, use as rotas 
 ```
 
 1. **Descoberta**: a primeira observação de `(organização, número, telefone)` cria o contato com o `source` apropriado.
-2. **Enriquecimento**: pipeline assíncrono enriquece com `name`, `profile_picture`. Falhas são fail-open: o contato existe mesmo sem enriquecimento.
+2. **Enriquecimento**: o Turbo Notify completa de forma assíncrona com `name`, `profile_picture`. Falhas são fail-open: o contato existe mesmo sem enriquecimento.
 3. **Quota**: cada contato distinto contactado via Turbo Notify dentro do ciclo de faturamento atual (`cycle_start` até `cycle_end`) consome um slot da quota, seja um contato novo ou recorrente. A quota só reseta em `resets_at`.
 
 ## Tier de quota

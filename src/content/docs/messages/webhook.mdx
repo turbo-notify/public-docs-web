@@ -32,7 +32,7 @@ Toda requisição de webhook enviada pelo Turbo Notify inclui os cabeçalhos aba
 | `X-Webhook-Max-Attempts` | Total de tentativas que o Turbo Notify fará antes de desistir. |
 | `User-Agent` | `TurboNotify-Webhook/1.0`: útil para WAF allowlists. |
 
-O segredo para validação está disponível no <DashboardLink path="/webhooks">Dashboard</DashboardLink>, na mesma seção onde você cadastra a URL.
+O segredo é definido por **você**, no <DashboardLink path="/webhooks">Dashboard</DashboardLink>, no mesmo formulário em que você cadastra a URL. O Turbo Notify não gera um segredo: escolha um valor aleatório e longo, guarde-o na sua aplicação e informe o mesmo valor nos dois lados.
 
 Exemplo de validação da assinatura:
 
@@ -569,7 +569,7 @@ Receipts são sempre **inbound**. `from` é quem disparou o recibo; `to` identif
 }
 ```
 
-`preview` segue a mesma janela de retenção de conteúdo do plano que o corpo completo da mensagem: não é permanente. Passada essa janela, `preview` e `transcription` (quando presentes) vêm com um marcador de redação em vez do conteúdo original, tanto em uma reentrega de webhook quanto em `GET /v1/events`. Consultá-la por id em `GET /v1/numbers/{alias}/messages/{id}` retorna `404 not_found` no mesmo instante. Veja [Retenção das mensagens](/messages/retention/) para o modelo completo (metadados: 12 meses fixos em todo plano; conteúdo, incluindo `preview`: FREE/SOLO 3 dias fixos, BUSINESS 3 dias por padrão com opção de 30 ou 90, CUSTOM definido em contrato).
+`preview` segue a mesma janela de retenção de conteúdo do plano que o corpo completo da mensagem: não é permanente. Passada essa janela, `preview` e `transcription` (quando presentes) vêm com um marcador de redação em vez do conteúdo original numa reentrega de webhook, e `GET /v1/events` deixa de retornar o evento. Consultá-la por id em `GET /v1/numbers/{alias}/messages/{id}` retorna `404 not_found` no mesmo instante. Veja [Retenção das mensagens](/messages/retention/) para o modelo completo (metadados: 12 meses fixos em todo plano; conteúdo, incluindo `preview`: FREE/SOLO 3 dias fixos, BUSINESS 3 dias por padrão com opção de 30 ou 90, CUSTOM definido em contrato).
 
 #### Recibos em grupo: um por participante
 
@@ -998,7 +998,7 @@ Os eventos de falha compartilham um envelope comum e diferem entre si pelo conju
 ```
 
 `from` e `to` são **sempre obrigatórios** em todo evento `message.*.failed`:
-mesmo em falhas early-pipeline como esta, em que nenhum registro de mensagem
+mesmo em falhas que acontecem antes de qualquer registro ser criado como esta, em que nenhum registro de mensagem
 chegou a ser criado (`id: null`). Quando o pipeline falha antes de resolver
 o destinatário real, `from` é sintetizado a partir do número/alias que
 tentou enviar. O campo `error.hint` é **omitido** (não `null`) quando não
@@ -1080,7 +1080,7 @@ Quando você envia uma mensagem para um grupo via
 
 ## Mapeamento de operações assíncronas
 
-Operações da API que disparam processamento assíncrono expõem o `X‑Request‑ID` no header da resposta. Use `GET /v1/events?request_id=req_...` para consultar os eventos da operação e identificar o resultado pelo `id` da mensagem (`data.id`):
+Operações da API que disparam processamento assíncrono expõem o `X-Request-ID` no header da resposta. Use `GET /v1/events?request_id=req_...` para consultar os eventos da operação e identificar o resultado pelo `id` da mensagem (`data.id`):
 
 | Operação                   | Evento de sucesso             | Evento de falha                   |
 | -------------------------- | ----------------------------- | --------------------------------- |
@@ -1113,7 +1113,7 @@ O cronograma de reentrega acima é uma feature de plano, disponível a partir
 do tier `BUSINESS`. Organizações em `FREE`/`SOLO` recebem **exatamente
 1 tentativa**: se essa única tentativa não retornar `2xx`, o evento é
 marcado como `dead_letter` imediatamente, sem nenhuma reentrega. O header
-`X‑Webhook‑Max‑Attempts`, presente em toda tentativa de entrega, reflete
+`X-Webhook-Max-Attempts`, presente em toda tentativa de entrega, reflete
 esse limite (`1` para `FREE`/`SOLO`; `6` para `BUSINESS`/`CUSTOM`).
 
 Isso afeta apenas a **reentrega** em caso de falha. A primeira tentativa
@@ -1136,7 +1136,7 @@ const seen = new Set();
 
 function handleEvent(event) {
   if (seen.has(event.id)) {
-    return; // reentrega — já processado
+    return; // reentrega: já processado
   }
   seen.add(event.id);
   // ... processar
@@ -1151,8 +1151,8 @@ O campo `created_at` (envelope) reflete o **momento de emissão do evento pelo T
 
 Isso significa que, ao receber uma reentrega:
 - `created_at` é o momento de emissão; `at` (quando presente) é o momento da ação no WhatsApp, ambos fixos entre tentativas.
-- `X‑Webhook‑Attempt` é incrementado a cada tentativa: use-o para diagnóstico, não para lógica de negócio.
-- `X‑Webhook‑Timestamp` reflete a hora do **envio HTTP atual** e é usado para validação de assinatura e proteção anti-replay; **não** é o timestamp do evento.
+- `X-Webhook-Attempt` é incrementado a cada tentativa: use-o para diagnóstico, não para lógica de negócio.
+- `X-Webhook-Timestamp` reflete a hora do **envio HTTP atual** e é usado para validação de assinatura e proteção anti-replay; **não** é o timestamp do evento.
 
 ## Alternativa: polling
 

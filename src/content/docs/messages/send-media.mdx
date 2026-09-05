@@ -25,7 +25,7 @@ Para enviar mídia a partir de um número extra, use `/v1/numbers/{alias}/messag
 | `video` | `video_url` | MP4 | 100 MB | ✓ | — |
 | `audio` | `audio_url` | MP3, OGG, M4A | 16 MB | — | — |
 | `document` | `document_url` | PDF, DOCX, XLSX, etc. | 100 MB | ✓ | ✓ |
-| `sticker` | `sticker_url` | WebP animado, exatamente 512×512px | 500 KB | — | — |
+| `sticker` | `sticker_url` | WebP (estático ou animado), exatamente 512×512px | 500 KB | — | — |
 
 `caption` **não é aceito** em `audio` e `sticker`. A API retorna
 `422` se o campo for enviado nesses tipos.
@@ -178,7 +178,7 @@ O `caption` de vídeo também aceita [menções `@<numero>`](/messages/send/#men
       -d '{
         "to": {"number": "+5511999999999"},
         "content": {
-          "audio_url": "https://cdn.exemplo.com/voice-note.ogg",
+          "audio_url": "https://cdn.exemplo.com/audio.ogg",
           "mime_type": "audio/ogg"
         }
       }'
@@ -195,7 +195,7 @@ O `caption` de vídeo também aceita [menções `@<numero>`](/messages/send/#men
       body: JSON.stringify({
         to: { number: '+5511999999999' },
         content: {
-          audio_url: 'https://cdn.exemplo.com/voice-note.ogg',
+          audio_url: 'https://cdn.exemplo.com/audio.ogg',
           mime_type: 'audio/ogg'
         }
       })
@@ -215,7 +215,7 @@ O `caption` de vídeo também aceita [menções `@<numero>`](/messages/send/#men
         json={
             "to": {"number": "+5511999999999"},
             "content": {
-                "audio_url": "https://cdn.exemplo.com/voice-note.ogg",
+                "audio_url": "https://cdn.exemplo.com/audio.ogg",
                 "mime_type": "audio/ogg",
             },
         },
@@ -224,8 +224,15 @@ O `caption` de vídeo também aceita [menções `@<numero>`](/messages/send/#men
   </TabItem>
 </Tabs>
 
-`mime_type` para voice notes geralmente é `audio/ogg`; para músicas
-use `audio/mpeg` ou `audio/mp4`.
+`mime_type` é opcional e não muda como o arquivo é enviado: o formato que o
+WhatsApp recebe vem do que o próprio servidor da URL entrega.
+
+:::note[Áudio chega como arquivo, não como mensagem de voz]
+O áudio enviado pela API sempre chega como arquivo de áudio, com a barra de
+reprodução comum. Não existe parâmetro que o transforme em mensagem de voz
+(aquela gravada segurando o microfone), e `mime_type` não faz isso: ele só
+descreve o formato.
+:::
 
 ### Documento
 

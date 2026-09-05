@@ -178,7 +178,7 @@ reconexão, falha, revogação). Um número `disconnected`, `failed`,
 `reconnecting` etc. reporta o instante dessa própria transição, não um
 timestamp de conexão desatualizado.
 
-Um número recém-criado, sem link de dispositivo ainda (`status: "pending"`,
+Um número recém-criado, que ainda não passou por nenhuma transição de status (`status: "pending"`,
 como `condominio_3` no exemplo acima), não tem transição alguma registrada:
 `status.at` vem como **string vazia** (`""`). Trate isso antes de converter
 para data: `Date.parse("")` (JS) devolve `NaN`, e

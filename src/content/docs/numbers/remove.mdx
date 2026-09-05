@@ -14,7 +14,7 @@ Remova números extras que não são mais necessários para liberar vagas no seu
 O efeito na fatura depende de qual dos dois caminhos de remoção foi tomado:
 
 - **Remoção imediata** (elegível a reembolso: menos de **72 horas** desde a primeira conexão **e** menos de **10 mensagens** enviadas): o número é excluído na hora e a cobrança pro-rata feita na ativação é **estornada automaticamente**. Ele não entra na fatura do próximo ciclo.
-- **Remoção agendada**: o número permanece na conta durante os **30 dias** de espera, então **qualquer novo ciclo que comece nesse intervalo ainda o cobra pelo valor cheio de renovação**, exatamente como um número apenas desconectado. A cobrança só cessa quando a exclusão é de fato executada.
+- **Remoção agendada**: o número permanece na conta até o **fim do ciclo de uso atual do número** (veja `scheduled_deletion_at` na resposta), então **qualquer novo ciclo que comece nesse intervalo ainda o cobra pelo valor cheio de renovação**, exatamente como um número apenas desconectado. A cobrança só cessa quando a exclusão é de fato executada.
 
 O campo `refund_eligible` na resposta do `DELETE` informa qual caminho foi tomado (`true` = remoção imediata). Para mais detalhes, consulte a documentação de [Cobrança de números extras](/numbers/billing/).
 

@@ -281,7 +281,7 @@ contagem atual de números extras vivos da organização.
 Diferente do 402 de contatos, este 429 **não** carrega `details` com
 `used`/`quota`/`resets_at` no corpo. Consulte
 `GET /v1/numbers/{alias}/messages/quota` (ou `GET /v1/usage/messages`) para o
-snapshot completo e o `resets_at` real. O cabeçalho `Retry‑After` aqui é um
+snapshot completo e o `resets_at` real. O cabeçalho `Retry-After` aqui é um
 valor técnico curto (não representa "quanto falta para a quota renovar", a
 quota só renova em `resets_at`, que pode estar a dias de distância).
 

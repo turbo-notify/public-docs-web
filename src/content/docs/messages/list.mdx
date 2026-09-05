@@ -179,7 +179,7 @@ Use `GET /v1/messages` para o número principal. Para números extras, use `GET 
 | `data[].content_type` | string | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, etc. |
 | `data[].preview` | string | Recorte grapheme-aware do conteúdo (mesmo valor de `GET /v1/numbers/{alias}/messages/{id}`) |
 | `data[].at` | string | ISO 8601: momento **estável de ocorrência** da mensagem (outbound: envio real; inbound: recebimento). Não avança conforme a mensagem progride `sent → delivered → read`. |
-| `data[].status` | object | `{state, at, error}`: estado atual de entrega e o timestamp dessa transição. Nesta listagem `error` é **sempre `null`**, inclusive quando `state: "failed"`. Para obter o detalhe da falha, consulte `GET /v1/numbers/{alias}/messages/{id}/status` ou `GET /v1/numbers/{alias}/messages/{id}`. |
+| `data[].status` | object | `{state, at, error}`: estado atual de entrega e o timestamp dessa transição. Em `GET /v1/numbers/{alias}/messages` o `error` vem preenchido (`{code, message, hint}`) quando `state` é `"failed"`. Na rota plana `GET /v1/messages` ele vem **sempre `null`**: nesse caso consulte `GET /v1/messages/{id}/status` ou `GET /v1/messages/{id}`. |
 
 :::note[Sem `mentions` na listagem]
 Diferente de [Consultar mensagem](/messages/get/), os itens desta lista

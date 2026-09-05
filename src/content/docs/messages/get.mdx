@@ -550,7 +550,7 @@ O campo `preview` segue **exatamente a mesma janela de retenção de conteúdo**
   `@<digitos>` literal fora de `mentions` conta caractere a caractere. O valor é
   **byte-idêntico** ao `data.preview` dos webhooks/polling.
 
-Depois que a mensagem sai da janela de retenção de conteúdo do seu plano, esta consulta responde `404 not_found` para o recurso **inteiro**: `preview` não é retornado separadamente do restante do conteúdo, não há um caminho que devolva só o recorte depois desse ponto. A mesma janela redige `data.preview` (junto com o resto do conteúdo) nos payloads de webhook armazenados para reentrega e nos eventos de `GET /v1/events` (polling): consulta por id, reentrega de webhook e polling obedecem a **uma única promessa de retenção**, nunca duas.
+Depois que a mensagem sai da janela de retenção de conteúdo do seu plano, esta consulta responde `404 not_found` para o recurso **inteiro**: `preview` não é retornado separadamente do restante do conteúdo, não há um caminho que devolva só o recorte depois desse ponto. A mesma janela redige `data.preview` (junto com o resto do conteúdo) nos payloads de webhook armazenados para reentrega, e faz `GET /v1/events` deixar de retornar o evento: consulta por id, reentrega de webhook e polling obedecem a **uma única promessa de retenção**, nunca duas.
 
 ## Sobre `kind`
 

@@ -27,7 +27,7 @@ Ambos os eventos carregam, logo abaixo de `organization_id`, o campo `number_ali
 
 `used`/`quota` são medidos contra o ciclo de faturamento avaliado da organização (`cycle_start`/`cycle_end`, ISO 8601 UTC); `resets_at` é igual a `cycle_end`.
 
-> Entre os eventos de conta, `number_alias` é omitido **apenas** em `storage.*`. Toda família `*.quota.*` (contatos e mensagens) passou a carregá-lo.
+> Entre os eventos de conta, `number_alias` é omitido em `storage.*` e em `media.unavailable`. Toda família `*.quota.*` (contatos e mensagens) passou a carregá-lo.
 
 ## Exemplo: `message.quota.warning`
 

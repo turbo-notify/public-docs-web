@@ -29,7 +29,8 @@ de grupo (criação, gerenciamento de membros, alteração de configurações)
 | Receber mensagens de grupos | ✅ (webhook `message.received` com `to.group_id` + `to.name`) |
 | Enviar mensagens para grupos | ✅ (`POST /v1/numbers/{alias}/messages` com `to.group_id`), **requer plano `BUSINESS` ou superior** (veja abaixo) |
 | Enviar indicador de digitação para grupos | ✅ (`POST /v1/numbers/{alias}/typing-indicator` com `to.group_id`), **requer plano `BUSINESS` ou superior** (veja abaixo) |
-| Reagir, editar, deletar mensagens em grupo | ✅ |
+| Editar, deletar mensagens em grupo | ✅ |
+| Reagir a mensagens em grupo | ✅, requer plano que inclua reações (a reação exige plano em qualquer conversa, não só em grupo) |
 | Listar grupos do número (`GET /v1/numbers/{alias}/groups`) | ✅ (paginado por cursor: `cursor`, `limit`, `name`, `include_left`) |
 | Consultar detalhe de um grupo (`GET /v1/numbers/{alias}/groups/{id}`) | ✅ |
 | Receber notificação quando entra/sai de grupo | ✅ (`group.joined` / `group.left`) |

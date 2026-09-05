@@ -1,0 +1,111 @@
+---
+title: Servidor MCP
+description: Use a API do Turbo Notify como ferramentas de um agente de IA, pelo Model Context Protocol, sem escrever cliente HTTP nenhum.
+---
+
+import DashboardLink from '@components/DashboardLink.astro';
+import ExternalLink from '@components/ExternalLink.astro';
+
+O Turbo Notify expõe a própria API pública como um servidor <ExternalLink href="https://modelcontextprotocol.io">MCP (Model Context Protocol)</ExternalLink>. Seu agente recebe **31 ferramentas** já descritas (enviar mensagem, ler conversa, consultar contato, ver cota, reconectar número) e escolhe entre elas sozinho.
+
+É a mesma API de sempre, apresentada de outro jeito. Nada de novo para contratar, nenhum endpoint diferente por baixo, e sua chave de acesso continua sendo a mesma.
+
+## Quando usar
+
+| Você está construindo | Use |
+|---|---|
+| Um agente de IA que decide o que fazer | **Servidor MCP** |
+| Uma integração determinística (disparo transacional, cron, ETL) | **API REST** |
+
+As duas são suportadas e as duas continuam documentadas. O servidor MCP economiza escrever e manter o adaptador entre a API e o seu modelo, e não faz nada além disso.
+
+## Conexão
+
+O endereço é `https://mcp.turbonotify.com/mcp`, transporte **Streamable HTTP**, autenticado com a sua <DashboardLink path="/api-keys">chave de acesso</DashboardLink> no header `Authorization`.
+
+A tela <DashboardLink path="/mcp">MCP</DashboardLink> do dashboard traz essa configuração já pronta para copiar e mostra quais ferramentas cada uma das suas chaves alcança, o que é o erro mais comum na primeira integração.
+
+```json title=".mcp.json"
+{
+  "mcpServers": {
+    "turbo-notify": {
+      "url": "https://mcp.turbonotify.com/mcp",
+      "headers": {
+        "Authorization": "Bearer SUA_CHAVE"
+      }
+    }
+  }
+}
+```
+
+Esse formato funciona no Claude Code, no Claude Desktop e em qualquer host MCP que aceite servidor remoto. Em frameworks de agente (Agno, CrewAI, LangGraph) a configuração é equivalente: URL, transporte `streamable-http`, header de autorização.
+
+:::caution[Quem identifica a sua conta é a chave]
+O endereço do servidor é o mesmo para todos os clientes do Turbo Notify. O que diz que a conta é a sua é a chave, enviada em **cada** chamada, e não existe chave padrão: sem ela, a chamada é recusada. Trate a chave como senha; o endereço pode ser compartilhado à vontade.
+:::
+
+## Ferramentas
+
+Toda ferramenta de mensageria aceita `number_alias` e assume `"main"` quando você não informa.
+
+| Grupo | Escopo da chave | Ferramentas |
+|---|---|---|
+| Envio | `messages:send` | `send_text` · `send_media` · `send_location` · `send_contact_card` · `send_calendar_event` · `send_cta_button` |
+| Ação sobre mensagem | `messages:send` | `reply_to_message` · `edit_message` · `delete_message` · `react_to_message` · `send_typing_indicator` |
+| Leitura de mensagens | `messages:read` | `list_messages` · `get_message` · `get_message_status` · `get_message_receipts` · `get_message_reactions` |
+| Leitura de contatos | `contacts:read` | `list_contacts` · `get_contact` · `get_contact_profile_picture` |
+| Atualizar um contato | `contacts:write` | `refresh_contact` |
+| Grupos | `groups:read` | `list_groups` · `get_group` · `get_group_picture` |
+| Leitura de números | `numbers:read` | `list_numbers` · `get_number` |
+| Conectar e desconectar | `numbers:write` | `connect_number` · `disconnect_number` |
+| Eventos | `events:read` | `list_events` |
+| Uso e cotas | qualquer chave válida | `get_usage` · `get_message_quota` · `get_contact_quota` |
+
+Uma chave criada sem escolher escopo tem acesso completo e alcança as 31. A coluna acima é para quem prefere criar uma chave restrita: peça só os escopos das ferramentas que o seu agente realmente vai usar. Duas linhas costumam surpreender: **responder, editar, apagar e reagir contam como envio** (`messages:send`, não `messages:read`), e **atualizar um contato** gasta uma consulta real ao WhatsApp, então pede `contacts:write`.
+
+### O que não está aqui, e por quê
+
+Nenhuma ferramenta adiciona, renomeia, remove ou vincula número. O critério é direto: **muda o que a sua organização paga, ou precisa de alguém com o celular na mão?**
+
+Incluir um número extra cobra o cartão antes de provisionar, então uma ferramenta que o agente pode repetir é uma ferramenta que cobra duas vezes. Remover pode gerar estorno. Vincular é metade de um fluxo cuja outra metade é uma pessoa digitando um código de vinculação no celular.
+
+`connect_number` e `disconnect_number` **estão** disponíveis: não exigem ninguém por perto e nenhum dos dois desfaz a vinculação com o aparelho. É o que permite um agente perceber que o próprio número caiu e levantá-lo de volta sem chamar você.
+
+Há um caso em que reconectar cobra: se o número extra tinha exclusão agendada, reconectar também cancela a exclusão e, quando esse número já existia antes do ciclo atual começar, cobra a taxa de ativação para trazê-lo de volta.
+
+Para as operações administrativas, continue usando o <DashboardLink path="/numbers">dashboard</DashboardLink> ou a API REST.
+
+## Erros
+
+O código de erro da API chega intacto na mensagem da ferramenta, porque é nele que o agente consegue decidir o que fazer:
+
+| Situação | O agente recebe |
+|---|---|
+| Argumento inválido | `invalid_request: <código>` |
+| Chave errada ou sem escopo | `unauthorized: <código>` |
+| Cota, plano ou cartão | `payment_required: <código>` + o objeto `details` inteiro |
+| Não encontrado | `not_found: <código>` |
+| Limite de taxa | `rate_limited: <código>`, com `Retry-After` quando houver |
+| Falha temporária | `service_unavailable: <código>` |
+
+O `details` do 402 vai completo, sem resumo: é o que distingue um teto de cota que reseta no fim do ciclo de um recurso que o plano simplesmente não inclui.
+
+### Erros de conexão
+
+Esses três são respondidos antes de qualquer ferramenta rodar, então quem os vê é o seu cliente MCP, não o agente:
+
+| Resposta | O que aconteceu | O que fazer |
+|---|---|---|
+| `401 unauthorized` | Uma conexão foi aberta sem a chave. | Envie o header `Authorization` também na conexão, não só nas chamadas. |
+| `429 too_many_streams` | Este cliente já mantém o máximo de conexões abertas ao mesmo tempo (8 por padrão). | Feche as que não usa, ou reduza o número de processos conectados a partir da mesma origem. O limite é por origem da conexão, não por chave. |
+| `429 rate_limit_exceeded` | Muitas requisições a partir da mesma origem em pouco tempo. | Respeite o `Retry-After` da resposta. |
+
+## Exemplo completo
+
+O repositório <ExternalLink href="https://github.com/turbo-notify/examples">turbo-notify/examples</ExternalLink> traz um atendente de WhatsApp funcional construído sobre esse servidor: recebe mensagem por webhook, decide com um modelo e responde por `reply_to_message`. É código pequeno e comentado, feito para ser lido antes de ser rodado.
+
+## Próximos passos
+
+- [Chave de acesso](/general/access-key/): criar e gerenciar a chave que autentica o servidor MCP
+- [Webhook](/messages/webhook/): receber mensagens para o seu agente responder
+- [Polling de eventos](/messages/polling/): alternativa ao webhook, quando você não tem endpoint público

@@ -36,7 +36,7 @@ A cobrança pro-rata de ativação é um lançamento avulso. A partir do ciclo s
 
 Se você adicionar um número extra e ele for **removido de imediato** (veja o critério em [Removendo um número extra](#removendo-um-número-extra)), a cobrança pro-rata feita na ativação é **reembolsada**, veja `refund_eligible` na resposta do `DELETE`.
 
-Quando a remoção é **agendada** (30 dias de espera), o número continua na conta e continua sendo cobrado normalmente em cada início de ciclo até a exclusão ser executada, sem reembolso da cobrança já feita.
+Quando a remoção é **agendada** (até o fim do ciclo de uso atual do número), o número continua na conta e continua sendo cobrado normalmente em cada início de ciclo até a exclusão ser executada, sem reembolso da cobrança já feita.
 
 ## Removendo um número extra
 
@@ -46,14 +46,14 @@ Com o número já desconectado, a remoção segue um de dois caminhos, decidido 
 
 **Remoção imediata (número pouco ou nada usado).** Se o número se qualifica como uso mínimo: menos de **72 horas** desde a primeira conexão **e** menos de **10 mensagens** enviadas (um número que nunca chegou a conectar sempre se qualifica), ele é removido na hora, sem período de espera.
 
-**Remoção agendada (número já em uso).** Fora dessas condições, o número entra em status `pending_deletion` e a remoção definitiva é agendada para **30 dias** depois: o campo `scheduled_deletion_at` na resposta traz a data exata. Durante todo esse período você pode reverter a decisão com `POST /v1/numbers/{alias}/cancel-deletion`. O número volta ao estado normal.
+**Remoção agendada (número já em uso).** Fora dessas condições, o número entra em status `pending_deletion` e a remoção definitiva é agendada para o **fim do ciclo de uso atual do número** (ciclo de 30 dias contado desde a primeira conexão, não 30 dias a partir de agora): o campo `scheduled_deletion_at` na resposta traz a data exata. Durante todo esse período você pode reverter a decisão com `POST /v1/numbers/{alias}/cancel-deletion`. O número volta ao estado normal.
 
 A resposta do `DELETE` informa qual caminho foi tomado, em `refund_eligible` (`true` = remoção imediata) e `scheduled_deletion_at`.
 
 Os dois caminhos têm efeitos diferentes na fatura:
 
 - **Remoção imediata**: o número é excluído na hora e a cobrança pro-rata feita na ativação é **reembolsada**. Veja [Números removidos logo após a ativação](#números-removidos-logo-após-a-ativação-podem-ser-reembolsados).
-- **Remoção agendada**: o número continua na conta durante os 30 dias de espera, então **continua sendo cobrado normalmente em cada início de ciclo** nesse intervalo, exatamente como um número apenas desconectado (veja [Pausar em vez de remover](#pausar-em-vez-de-remover) logo abaixo). A cobrança só cessa quando a exclusão é efetivamente executada.
+- **Remoção agendada**: o número continua na conta até o fim do ciclo de uso atual, então **continua sendo cobrado normalmente em cada início de ciclo** nesse intervalo, exatamente como um número apenas desconectado (veja [Pausar em vez de remover](#pausar-em-vez-de-remover) logo abaixo). A cobrança só cessa quando a exclusão é efetivamente executada.
 
 ### Pausar em vez de remover
 
@@ -80,7 +80,7 @@ Remova um número existente para liberar espaço, ou fale com o time comercial s
 
 **Sou cobrado por números desconectados?**
 
-Sim: desconectar pausa o funcionamento do número, mas não interrompe a cobrança: ele continua sendo cobrado a cada início de ciclo. Para parar de ser cobrado, é necessário remover o número, e quando a remoção é agendada, a cobrança só cessa depois que a exclusão é executada, ao fim dos 30 dias.
+Sim: desconectar pausa o funcionamento do número, mas não interrompe a cobrança: ele continua sendo cobrado a cada início de ciclo. Para parar de ser cobrado, é necessário remover o número, e quando a remoção é agendada, a cobrança só cessa depois que a exclusão é executada, ao fim do ciclo de uso atual do número.
 
 **Posso adicionar e remover números livremente?**
 

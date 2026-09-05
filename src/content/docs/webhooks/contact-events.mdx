@@ -90,8 +90,8 @@ sua própria contagem de contatos distintos, então os eventos
 > `resets_at` é igual a `cycle_end`.
 
 > O `number_alias` fica no **envelope**, nunca dentro de `data`. Entre os eventos
-> de conta, o campo é omitido apenas em `storage.*` (o único evento sem um número
-> único). Toda família `*.quota.*` (tanto `contact.quota.*` quanto
+> de conta, o campo é omitido em `storage.*` e em `media.unavailable` (os
+> eventos sem um número único). Toda família `*.quota.*` (tanto `contact.quota.*` quanto
 > `message.quota.*`, por número) carrega `number_alias`.
 
 ## Exemplo: `contact.created`

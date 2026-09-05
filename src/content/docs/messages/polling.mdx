@@ -112,7 +112,129 @@ Os resultados são ordenados por `created_at DESC` (mais recentes primeiro).
 
 A paginação é baseada em cursor, o que garante páginas estáveis mesmo enquanto novos eventos chegam. O cursor é o `id` de um evento.
 
-**Avançar para a próxima página**: passe o `id` do último evento retornado em `starting_after`:
+Os eventos vêm **do mais novo para o mais antigo**, e é isso que decide qual cursor usar:
+
+| Você quer | Use | Direção |
+|---|---|---|
+| Acompanhar o que acabou de acontecer | `ending_before` | Eventos **mais novos** que o cursor |
+| Percorrer o histórico | `starting_after` | Eventos **mais antigos** que o cursor |
+
+:::caution[Para acompanhar mensagens novas, o cursor é `ending_before`]
+`starting_after` avança para trás no tempo. Se você guardar o último evento processado e passá-lo em `starting_after` num laço, vai receber eventos cada vez mais antigos e **nunca** alcançar os novos. Guarde o `id` do **primeiro** evento da página (o mais recente) e passe-o em `ending_before`. Uma resposta vazia quer dizer que você está em dia.
+:::
+
+:::caution[Uma página cheia quer dizer que sobrou coisa de fora]
+A resposta sempre traz os eventos **mais recentes** que cabem no `limit`, então se chegaram mais eventos do que o `limit` entre duas consultas, os que ficaram de fora são os **mais antigos** do lote. Se você guardar só o primeiro `id` da página e seguir em frente, esses eventos ficam para trás e não voltam mais.
+
+A regra é simples: **página cheia significa que há mais**. Use `limit=100` e, sempre que a página vier cheia, continue lendo com `starting_after` a partir do último evento dela até reencontrar o cursor que você já tinha. Uma organização que envia 150 mensagens por minuto gera receipts junto: um lote de mais de 20 eventos entre duas consultas é rotina.
+:::
+
+**Acompanhar eventos novos**: peça o que chegou depois do último evento processado e, se a página vier cheia, desça até alcançá-lo.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="acompanhar.sh"
+    # Primeira consulta: sem cursor, traz os mais recentes
+    curl "https://api.turbonotify.com/v1/events?limit=100" \
+      -H "Authorization: Bearer SUA_CHAVE"
+
+    # Consultas seguintes: só o que chegou depois do último que você processou
+    curl "https://api.turbonotify.com/v1/events?limit=100&ending_before=evt_01993c5a1b24d3e9f01a2b3c4d5e6f70" \
+      -H "Authorization: Bearer SUA_CHAVE"
+
+    # Se essa resposta veio com 100 eventos, ainda há mais: continue a partir
+    # do ÚLTIMO evento dela até reencontrar o cursor que você já tinha.
+    curl "https://api.turbonotify.com/v1/events?limit=100&starting_after=evt_01993c5a1b24d3e9f01a2b3c4d5e6f99" \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="acompanhar.js"
+    const LIMITE = 100;
+    let ultimoVisto = null;
+
+    async function pagina(params) {
+      const response = await fetch(
+        `https://api.turbonotify.com/v1/events?${params}`,
+        { headers: { 'Authorization': 'Bearer SUA_CHAVE' } }
+      );
+      return (await response.json()).data;
+    }
+
+    async function buscarNovidades() {
+      const params = new URLSearchParams({ limit: String(LIMITE) });
+      if (ultimoVisto) params.set('ending_before', ultimoVisto);
+
+      let atual = await pagina(params);
+      // Vazio: você está em dia.
+      if (atual.length === 0) return [];
+
+      const lote = [...atual];
+
+      // Página cheia com um cursor conhecido: chegou mais do que coube, e o
+      // que falta é mais antigo que o último desta página. Desça até
+      // reencontrar o cursor anterior.
+      while (ultimoVisto && atual.length === LIMITE) {
+        atual = await pagina(new URLSearchParams({
+          limit: String(LIMITE),
+          starting_after: lote[lote.length - 1].id,
+        }));
+        for (const evento of atual) {
+          if (evento.id === ultimoVisto) { atual = []; break; }
+          lote.push(evento);
+        }
+      }
+
+      // O primeiro do lote é o mais recente: é ele que vira o próximo cursor.
+      ultimoVisto = lote[0].id;
+      return lote;
+    }
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="acompanhar.py"
+    import requests
+
+    LIMITE = 100
+    ultimo_visto = None
+
+    def pagina(**params):
+        response = requests.get(
+            "https://api.turbonotify.com/v1/events",
+            headers={"Authorization": "Bearer SUA_CHAVE"},
+            params={"limit": LIMITE, **params},
+        )
+        return response.json()["data"]
+
+    def buscar_novidades():
+        global ultimo_visto
+        atual = pagina(ending_before=ultimo_visto) if ultimo_visto else pagina()
+
+        # Vazio: você está em dia.
+        if not atual:
+            return []
+
+        lote = list(atual)
+
+        # Página cheia com um cursor conhecido: chegou mais do que coube, e o
+        # que falta é mais antigo que o último desta página. Desça até
+        # reencontrar o cursor anterior.
+        while ultimo_visto and len(atual) == LIMITE:
+            atual = pagina(starting_after=lote[-1]["id"])
+            for evento in atual:
+                if evento["id"] == ultimo_visto:
+                    atual = []
+                    break
+                lote.append(evento)
+
+        # O primeiro do lote é o mais recente: é ele que vira o próximo cursor.
+        ultimo_visto = lote[0]["id"]
+        return lote
+    ```
+  </TabItem>
+</Tabs>
+
+**Percorrer o histórico**: passe o `id` do último evento retornado em `starting_after`:
 
 <Tabs>
   <TabItem label="cURL">
@@ -352,23 +474,9 @@ Para recuperar eventos perdidos durante uma indisponibilidade do seu endpoint:
 
 ## Retenção de eventos
 
-O **registro do evento** (a linha em si: `id`, `type`, `created_at`,
-`number_alias`) fica disponível para consulta por até **90 dias**, um
-horizonte fixo da plataforma. Consultas além desse período retornam resultado
-vazio.
+`GET /v1/events` aplica a **janela de retenção de conteúdo do seu plano** (a mesma que governa `GET /v1/numbers/{alias}/messages/{id}`: veja [Retenção das mensagens](/messages/retention/)) como limite inferior de `created_at` da consulta. Eventos mais antigos que essa janela **não são retornados**, e isso vale para todas as famílias de evento, não apenas `message.*`. Numa organização no padrão de 3 dias, por exemplo, o polling enxerga os últimos 3 dias de eventos.
 
-Para a família `message.*`, os campos de **conteúdo** dentro de `data`
-(`preview`, `transcription`, quando presentes) obedecem, à parte, à mesma
-janela de retenção de conteúdo do seu plano: a mesma que governa
-`GET /v1/numbers/{alias}/messages/{id}` e a reentrega de webhook (veja
-[Retenção das mensagens](/messages/retention/)). Consulta por id, reentrega
-de webhook e polling obedecem a uma única promessa de retenção, nunca duas:
-um evento `message.*` mais antigo que a janela de conteúdo do seu plano
-continua retornável pelo polling até completar os 90 dias de retenção do
-evento em si, mas com os campos de conteúdo já **redigidos**: a linha do
-evento persiste, o conteúdo não. Numa organização `BUSINESS` no padrão de 3
-dias, por exemplo, o conteúdo de eventos `message.*` some da resposta bem
-antes dos 90 dias de retenção do evento.
+O registro do evento em si é descartado fisicamente após **30 dias**, um horizonte fixo da plataforma. O que você observa na prática é sempre o menor dos dois prazos.
 
 ## Erros possíveis
 
