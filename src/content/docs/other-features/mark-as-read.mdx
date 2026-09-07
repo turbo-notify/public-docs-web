@@ -1,0 +1,289 @@
+---
+title: Marcar como lida
+description: Marque manualmente o histórico de mensagens não lidas de um chat ou grupo do WhatsApp como lida.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+Marcar mensagens como lidas sinaliza ao WhatsApp que sua aplicação leu o histórico de um chat, produzindo o "check azul" para quem enviou as mensagens.
+
+## Marcação automática
+
+O Turbo Notify já marca automaticamente o histórico de mensagens não lidas de um chat (ou grupo) como lido antes de enviar, responder, reagir, editar ou excluir uma mensagem nesse mesmo chat. Isso reproduz o comportamento de um cliente WhatsApp real: as mensagens são lidas antes de qualquer interação, sem necessidade de configuração adicional.
+
+Use o endpoint abaixo apenas quando quiser marcar um chat como lido sem realizar nenhuma outra ação no WhatsApp, por exemplo para manter a caixa de entrada da sua própria aplicação sincronizada com o WhatsApp.
+
+:::note[Requer plano BUSINESS ou superior]
+Este endpoint exige a feature `read_receipts`, disponível a partir do tier `BUSINESS`. Nos planos `FREE`/`SOLO`, a marcação automática descrita acima continua funcionando normalmente; apenas a marcação **manual** via este endpoint é bloqueada com `402`:
+
+<ApiResponse
+  status={402}
+  body={{
+    error: 'feature_not_available',
+  }}
+/>
+:::
+
+## Marcar um chat como lido
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="mark-as-read.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/messages/read \
+      -H "Authorization: Bearer SUA_CHAVE" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": {"number": "+5511999999999"}
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="mark-as-read.js"
+    const response = await fetch('https://api.turbonotify.com/v1/messages/read', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer SUA_CHAVE',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: { number: '+5511999999999' }
+      })
+    });
+
+    console.log(response.status); // 202
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="mark_as_read.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/messages/read"
+    headers = {
+        "Authorization": "Bearer SUA_CHAVE",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "to": {"number": "+5511999999999"}
+    }
+
+    response = requests.post(url, json=data, headers=headers)
+    print(response.status_code)  # 202
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="mark_as_read.go"
+    package main
+
+    import (
+        "fmt"
+        "net/http"
+        "strings"
+    )
+
+    func main() {
+        payload := strings.NewReader(`{"to": {"number": "+5511999999999"}}`)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/messages/read", payload)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        req.Header.Set("Content-Type", "application/json")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        fmt.Println(resp.StatusCode) // 202
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="mark-as-read.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/messages/read';
+    $data = [
+        'to' => ['number' => '+5511999999999']
+    ];
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer SUA_CHAVE',
+                'Content-Type: application/json'
+            ],
+            'method' => 'POST',
+            'content' => json_encode($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    file_get_contents($url, false, $context);
+    var_dump($http_response_header);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="MarkAsRead.cs"
+    using System.Text;
+    using System.Text.Json;
+
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var data = new {
+        to = new { number = "+5511999999999" }
+    };
+
+    var json = JsonSerializer.Serialize(data);
+    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+    var response = await client.PostAsync("https://api.turbonotify.com/v1/messages/read", content);
+    Console.WriteLine((int)response.StatusCode); // 202
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="MarkAsRead.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class MarkAsRead {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var json = """
+                {
+                    "to": {"number": "+5511999999999"}
+                }
+                """;
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/messages/read"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.statusCode()); // 202
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+Após enviar, o Turbo Notify retorna aceite assíncrono:
+
+<ApiResponse
+  status={202}
+  body={{
+    operation_id: 'op_read_9f3c2a1d47e8',
+    status: { state: 'pending', at: '2025-07-16T10:00:00Z' },
+  }}
+/>
+
+O aceite assíncrono confirma apenas que a operação foi enfileirada. O histórico de mensagens não lidas é buscado no momento do processamento; se não houver nenhuma mensagem pendente, a operação simplesmente não tem efeito, sem gerar erro.
+
+## Destinatários disponíveis
+
+O campo `to` aceita exatamente uma das três formas abaixo, assim como na rota de [envio de mensagens](/messages/send/):
+
+| Forma | Exemplo | Quando usar |
+| ----- | ------- | ----------- |
+| `number` | `{"number": "+5511999999999"}` | Número E.164 conhecido |
+| `group_id` | `{"group_id": "grp_…"}` | Grupo do WhatsApp |
+| `contact_id` | `{"contact_id": "ct_…"}` | ID do contato no Turbo Notify (telefone resolvido internamente) |
+
+## Marcar um grupo como lido
+
+Para marcar como lidas as mensagens de um grupo do WhatsApp, use `to.group_id` com o identificador do grupo no lugar de `to.number`. Como o grupo pode ter várias pessoas com mensagens não lidas, o Turbo Notify agrupa a marcação por remetente dentro do grupo.
+
+:::note[Requer plano BUSINESS ou superior]
+Marcar como lida um grupo (assim como enviar mensagem) exige também a feature
+`groups:messages`, disponível a partir do tier `BUSINESS`. Em `FREE`/`SOLO`
+você ainda **recebe** mensagens de grupo, **lista grupos**
+(`GET /v1/numbers/{alias}/groups`) e consulta detalhes normalmente. Apenas a
+marcação de leitura direcionada a um `group_id` é bloqueada com `402`:
+
+<ApiResponse
+  status={402}
+  body={{
+    error: 'feature_not_available',
+  }}
+/>
+
+Veja [Quota e uso](/usage/quota/#envio-para-grupos-exige-plano-business-ou-superior)
+e [Limitações de grupos](/groups/limitations/).
+:::
+
+```bash title="mark-as-read-group.sh"
+curl -X POST \
+  https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/messages/read \
+  -H "Authorization: Bearer SUA_CHAVE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": {"group_id": "grp_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"}
+  }'
+```
+
+O `group_id` é o identificador do grupo no formato `grp_{hex32}`, retornado pelo endpoint de [listagem de grupos](/groups/overview/).
+
+## Marcar como lida por contact_id
+
+Use `to.contact_id` para marcar como lidas as mensagens de um contato do catálogo do Turbo Notify sem informar o telefone diretamente. O telefone é resolvido internamente a partir do registro do contato.
+
+```bash title="mark-as-read-contact.sh"
+curl -X POST \
+  https://api.turbonotify.com/v1/numbers/ALIAS_DO_NUMERO/messages/read \
+  -H "Authorization: Bearer SUA_CHAVE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": {"contact_id": "ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"}
+  }'
+```
+
+## Marcar como lida com número extra
+
+Na forma aninhada, o número que marca as mensagens como lidas é **sempre o alias do path**. Para marcar mensagens como lidas a partir de um [número extra](/numbers/add/) cadastrado e ativo, use essa forma com o alias desse número no lugar de `{alias}`:
+
+```bash title="mark-as-read.sh"
+curl -X POST \
+  https://api.turbonotify.com/v1/numbers/vendas-sp/messages/read \
+  -H "Authorization: Bearer SUA_CHAVE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": {"number": "+5511999999999"}
+  }'
+```
+
+As duas formas tratam o número de origem de maneira diferente:
+
+- **Aninhada** (`POST /v1/numbers/{alias}/messages/read`): o número que marca as mensagens é sempre o alias do path.
+- **Plana** (`POST /v1/messages/read`): marca **sempre** a partir do número principal (`main`).
+
+**Para marcar mensagens como lidas a partir de um número extra, use obrigatoriamente a forma aninhada**, com o alias do número extra no path.
+
+Caso o alias informado no path não esteja cadastrado ou o número não esteja ativo, a operação
+será rejeitada.
+
+Saiba mais sobre [números extras](/numbers/add/).
+
+## Eventos de webhook
+
+Operações de marcação como lida são **fire-and-forget**: o `202 Accepted` confirma apenas o
+aceite assíncrono e **nenhum evento de webhook** é entregue para essas operações. Sua
+aplicação já sabe que fez a chamada; não há um terceiro para notificar.
+
+## Erros possíveis
+
+| Status | Código de erro          | Descrição                                          |
+| :----: | ----------------------- | -------------------------------------------------- |
+| `400`  | `contact_not_found`     | O `contact_id` informado em `to` não pertence a esta organização.  |
+| `400`  | `contacts_not_enabled`  | Marcação por `contact_id` não está configurada nesta instância. |
+| `400`  | `groups_not_enabled`    | Suporte a grupos não está habilitado nesta instância. |
+| `402`  | `feature_not_available` | O recurso não está disponível no plano contratado. |
+| `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
+| `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
+| `404`  | `group_not_found`       | O `group_id` informado em `to` não foi encontrado. |
+| `422`  | `no_active_session`     | A organização não tem sessão WhatsApp conectada.   |
+| `422`  | `sender_disconnected`   | O número extra do alias na URL está desconectado.  |
+| `422`  | `sender_not_found`      | O alias/número informado não corresponde a nenhum remetente da conta. |
+| `422`  | `session_not_connected` | A sessão do remetente não está conectada no momento da marcação. |
+| `422`  | `validation_error`      | O corpo da requisição está malformado ou não passou na validação de schema. A resposta inclui `details.errors` com a lista de campos inválidos. |
+| `500`  | `internal_error`        | Erro interno inesperado no servidor.               |

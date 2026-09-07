@@ -23,6 +23,8 @@ Para citar (responder) uma mensagem existente (qualquer variante de conteúdo), 
 
 A mensagem citada precisa estar **dentro da [janela de retenção de conteúdo](/messages/retention/)** do seu plano: responder a uma mensagem mais antiga que a janela retorna `404 not_found`: a mesma resposta de uma mensagem inexistente.
 
+Antes de enviar, o Turbo Notify marca automaticamente como lido o histórico de mensagens não lidas do chat de destino. Para marcar um chat como lido sem enviar nenhuma mensagem, veja [Marcar como lida](/other-features/mark-as-read/).
+
 :::tip[Roteamento por número]
 - **Número principal** → `POST /v1/messages` (rota plana) **ou** `POST /v1/numbers/main/messages`: as duas formas são idênticas.
 - **Número extra** → `POST /v1/numbers/{alias}/messages`, onde `{alias}` é o alias configurado no dashboard. [Saiba mais](/numbers/add/).
