@@ -346,8 +346,8 @@ Saiba mais sobre [números extras](/numbers/add/).
 | `402`  | `feature_not_available` | O recurso não está disponível no plano contratado. |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
-| `404`  | `not_found`             | A mensagem não foi encontrada, pertence a outra organização ou está fora da [janela de retenção de conteúdo](/messages/retention/) do plano (a janela **também** se aplica a reagir, e os três casos devolvem a mesma resposta). |
-| `404`  | `message_not_found`     | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
+| `404`  | `not_found`             | A mensagem não foi encontrada, pertence a outra organização, está fora da [janela de retenção de conteúdo](/messages/retention/) do plano, ou (na rota aninhada `/numbers/{alias}/messages/.../react`) pertence a um número diferente do alias informado na URL: todos esses casos devolvem a mesma resposta, sem distinção. |
+| `404`  | `message_not_found`     | *(apenas na rota atalho sem `{alias}`, `POST /v1/messages/{id}/react`)* O `message_id` existe mas pertence a um número extra, não ao número principal. |
 | `422`  | `message_not_reactable` | A mensagem alvo da reação ainda não foi enviada ao WhatsApp ou já foi apagada. |
 | `422`  | `no_active_session`     | A organização não tem sessão WhatsApp conectada.   |
 | `422`  | `sender_disconnected`   | O número extra do alias na URL está desconectado.  |
@@ -356,4 +356,4 @@ Saiba mais sobre [números extras](/numbers/add/).
 | `422`  | `validation_error`      | O corpo da requisição está malformado ou não passou na validação de schema. A resposta inclui `details.errors` com a lista de campos inválidos. |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.               |
 
-Os dois códigos `404` são distintos: `not_found` significa "não existe, não é sua, ou já saiu da janela de retenção do seu tier", enquanto `message_not_found` significa "existe, mas você a endereçou pelo número errado". Nesse caso, repita a chamada com o alias correto no path.
+Os dois códigos `404` só são distintos na rota atalho do número principal (sem `{alias}` na URL): ali, `not_found` significa "não existe, não é sua, ou já saiu da janela de retenção do seu tier", enquanto `message_not_found` significa "existe, mas pertence a um número extra". Na rota aninhada `/numbers/{alias}/messages/...`, os dois cenários (mensagem inexistente e mensagem de outro número) colapsam no mesmo `not_found`: se você sabe que a mensagem existe mas recebeu `not_found`, confira se está usando o alias correto do número que a enviou ou recebeu.

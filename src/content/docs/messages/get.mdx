@@ -565,7 +565,7 @@ Quando o Object Storage está configurado, o Turbo Notify copia automaticamente 
 | `400` | `invalid_message_id` | O identificador não corresponde ao formato `msg_` + 32 hex. |
 | `403` | `not_authorized` | A chave de acesso está inválida ou ausente. |
 | `403` | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
-| `404` | `not_found` | Mensagem não encontrada, pertence a outra organização, ou está fora da [janela de retenção de conteúdo](/messages/retention/) do plano: mesmo shape de uma mensagem que nunca existiu. |
-| `404` | `message_not_found` | O `message_id` existe mas pertence a um número diferente do alias informado na URL. |
+| `404` | `not_found` | Mensagem não encontrada, pertence a outra organização, está fora da [janela de retenção de conteúdo](/messages/retention/) do plano, ou (na rota aninhada `/numbers/{alias}/messages/{id}`) pertence a um número diferente do alias informado na URL: mesmo shape de uma mensagem que nunca existiu. |
+| `404` | `message_not_found` | *(apenas na rota atalho sem `{alias}`, `GET /v1/messages/{id}`)* O `message_id` existe mas pertence a um número extra, não ao número principal. |
 | `429` | `rate_limit_exceeded` | Limite de requisições ultrapassado. |
 | `500` | `internal_error` | Erro interno inesperado no servidor. |
