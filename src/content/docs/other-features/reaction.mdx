@@ -12,6 +12,8 @@ O endpoint é roteado pelo `message_id` da mensagem-alvo na URL: não há campo 
 
 Esta página cobre o **envio** e a remoção de reações. Para listar as reações ativas de uma mensagem, veja [Consultar reações](/messages/reactions/).
 
+Antes de enviar a reação, o Turbo Notify marca automaticamente como lido o histórico de mensagens não lidas do chat de origem da mensagem-alvo. Veja [Marcar como lida](/other-features/mark-as-read/).
+
 ## Adicionar uma reação
 
 `POST /v1/messages/{message_id}/react`: adiciona uma reação à mensagem identificada por `{message_id}` (formato `msg_{hex32}`). Esta rota opera sobre o número principal. Para enviar a reação a partir de um número extra, use a forma completa `POST /v1/numbers/{alias}/messages/{message_id}/react` com o alias do número no path.

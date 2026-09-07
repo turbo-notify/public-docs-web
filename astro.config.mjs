@@ -250,6 +250,11 @@ export default defineConfig({
               label: 'Indicador de digitação',
               translations: { en: 'Typing Indicator', es: 'Indicador de Escritura' },
             },
+            {
+              slug: 'other-features/mark-as-read',
+              label: 'Marcar como lida',
+              translations: { en: 'Mark as Read', es: 'Marcar como Leída' },
+            },
           ],
         },
         {
