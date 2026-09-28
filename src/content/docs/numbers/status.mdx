@@ -167,14 +167,13 @@ tem contrapartida na API pública):
 ```
 :::
 
-:::note[`description`, `scheduled_deletion_at` e `reason` sempre `null` aqui]
+:::note[`description` e `scheduled_deletion_at` sempre `null` aqui]
 Diferente de [Listagem](/numbers/list/), que retorna a `description` real
 cadastrada, este endpoint (`GET /v1/numbers/{alias}`) hoje retorna
-`description`, `scheduled_deletion_at` **e `reason`** sempre como `null`,
-independente do valor real: nenhum motivo de falha é populado hoje, mesmo
-quando `status: "failed"`. Quando o número está com `status:
-"pending_deletion"`, o timestamp da exclusão agendada aparece no campo `at`
-(não em `scheduled_deletion_at`). Para a descrição cadastrada, consulte
+`description` e `scheduled_deletion_at` sempre como `null`, independente do
+valor real. Quando o número está com `status: "pending_deletion"`, o
+timestamp da exclusão agendada aparece no campo `at` (não em
+`scheduled_deletion_at`). Para a descrição cadastrada, consulte
 [Listagem](/numbers/list/).
 :::
 
@@ -207,7 +206,7 @@ da exclusão agendada (veja a nota acima).
 | `at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`status`): atualiza a cada transição. **String vazia (`""`)** apenas quando o número ainda não tem link de dispositivo (`status: "pending"`, nenhuma transição registrada). Exceção: quando `status = "pending_deletion"`, é o momento da exclusão agendada. |
 | `description` | string\|null | Sempre `null` neste endpoint hoje, veja nota acima |
 | `scheduled_deletion_at` | string\|null | Sempre `null` neste endpoint hoje, veja nota acima |
-| `reason` | string\|null | Reservado para o motivo de falha: **hoje sempre `null`**, veja a nota acima |
+| `reason` | string\|null | Motivo da falha quando `status` é `"failed"`, veja [Motivos de falha](#motivos-de-falha); `null` em qualquer outro status |
 | `pairing` | object\|null | Informações de pareamento: presente apenas durante o processo de vinculação |
 
 ### Bloco de pareamento (`pairing`)
@@ -231,27 +230,30 @@ Presente quando `status` é `pairing` e o código ainda está válido:
 | `connected`          | O número está vinculado e pronto para envio de mensagens.                 |
 | `disconnected`       | Conexão perdida ou desativada; a autenticação é preservada para reconectar. |
 | `reconnecting`       | Reconexão automática em andamento após uma queda.                         |
-| `failed`             | A vinculação falhou. Verifique o motivo abaixo.                           |
+| `failed`             | A vinculação falhou. O motivo vem em `reason`, veja abaixo.               |
 | `revoked`            | O dispositivo foi desvinculado pelo WhatsApp.                             |
 | `pending_deletion`   | Exclusão agendada (`DELETE /v1/numbers/{alias}`): sobrepõe qualquer outro status até a exclusão. |
 
 ## Motivos de falha
 
-O campo `reason` foi projetado para indicar o motivo quando `status` é
-`failed`, mas **ainda não está implementado**: a rota sempre retorna
-`reason: null`, mesmo em `status: "failed"` (veja a nota acima). Os valores
-abaixo descrevem a intenção original e **ainda não são emitidos** pela API:
+Quando `status` é `"failed"`, o campo `reason` diz o que aconteceu, para você
+mostrar a mensagem certa ao seu cliente. O mesmo valor chega no evento
+[`number.connect.failed`](/messages/webhook/). Em qualquer outro status,
+`reason` é `null`.
 
-| Motivo                  | Descrição                                                     |
-| ----------------------- | ------------------------------------------------------------- |
-| `no_active_session`     | A organização não tem uma sessão ativa para parear o número extra através dela. |
-| `pair_phone_timeout`    | O WhatsApp não retornou um código de pareamento em 30s.       |
-| `pair_phone_error`      | O WhatsApp retornou um erro ao gerar o código.                |
-| `pair_qr_timeout`       | O QR code não foi gerado em 20s.                               |
-| `pair_qr_error`         | O WhatsApp retornou um erro ao gerar o QR code.                |
-| `pairing_timeout`       | O código foi gerado, mas não foi inserido dentro da janela de validade. |
-| `pairing_monitor_error` | Erro interno inesperado ao monitorar a finalização do pareamento. |
-| `paired_phone_mismatch` | O WhatsApp que concluiu o pareamento não é o do número cadastrado. Vincule de novo usando o celular desse número. |
+| Motivo                   | O que aconteceu e o que fazer |
+| ------------------------ | ----------------------------- |
+| `pairing_timeout`        | O código foi gerado, mas não foi usado a tempo. Peça um novo código. |
+| `paired_phone_mismatch`  | Outro WhatsApp concluiu o pareamento. Pareie de novo usando o celular do número cadastrado. |
+| `phone_already_bound`    | Este número já está em uso na conta. |
+| `no_active_session`      | O número principal da conta precisa estar conectado para parear números extras. |
+| `code_generation_failed` | O WhatsApp não gerou o código naquele momento. Tente de novo em instantes. |
+| `connection_lost`        | O número perdeu a conexão com o WhatsApp e precisa ser pareado de novo. |
+| `pairing_failed`         | Qualquer outra falha. Pareie de novo. |
+
+Novos motivos podem ser adicionados. Trate um valor que você não conhece como
+`pairing_failed`. Para montar a tela de pareamento do seu cliente, veja
+[Experiência de pareamento recomendada](/numbers/add/#experiência-de-pareamento-recomendada).
 
 ## Erros possíveis
 

@@ -252,12 +252,83 @@ ficar pronto. Mostre sempre o código mais recente.
 O pareamento precisa ser concluído no WhatsApp do número cadastrado. Se outro
 WhatsApp digitar o código ou escanear o QR code, o pareamento é recusado, o
 dispositivo é desconectado desse WhatsApp e o número fica com `status: "failed"`.
-Você recebe o evento [`number.connect.failed`](/messages/webhook/), cujo campo
-`error` explica o motivo. Para tentar de novo, chame `POST /v1/numbers/{alias}/pair`
-e conclua o pareamento no celular do número cadastrado.
+O motivo chega como `reason: "paired_phone_mismatch"`, tanto no
+[status](/numbers/status/) quanto no evento
+[`number.connect.failed`](/messages/webhook/). Para tentar de novo, chame
+`POST /v1/numbers/{alias}/pair` e conclua o pareamento no celular do número
+cadastrado.
 
 Depois de pareado, o número aparece em **Dispositivos conectados** no celular com
 o nome da sua organização.
+
+## Experiência de pareamento recomendada
+
+Se você oferece números de WhatsApp aos seus próprios clientes, quem pareia o
+celular é o seu cliente, na sua tela. Com o fluxo abaixo ele consegue se
+resolver sozinho, inclusive quando digita o código errado:
+
+1. **Peça o código.** Chame `POST /v1/numbers/{alias}/pair`.
+2. **Mostre o código assim que ele ficar pronto.** Consulte
+   `GET /v1/numbers/{alias}` a cada 2 segundos enquanto `status` for
+   `"pairing"`. Quando o bloco `pairing` vier preenchido, exiba `pairing.data`
+   e uma contagem regressiva até `pairing.expires_at`. Se `pairing` voltar
+   `null` depois de um código já exibido, um novo código está sendo gerado:
+   mostre "gerando novo código" e continue consultando.
+3. **Deixe "Gerar novo código" sempre visível.** O WhatsApp não avisa quando
+   o código é digitado errado, e depois de um erro nem o código certo é mais
+   aceito. Esse botão chama `POST /v1/numbers/{alias}/pair` de novo; use-o
+   também quando a contagem chegar a zero.
+4. **Encerre pelo resultado.** `status: "connected"` significa que deu certo.
+   `status: "failed"` traz o motivo em `reason`; mostre a mensagem da tabela
+   abaixo e ofereça tentar de novo. Se você usa webhooks, os eventos
+   [`number.connected`](/messages/webhook/) e
+   [`number.connect.failed`](/messages/webhook/) (com o mesmo `reason`)
+   substituem a consulta para saber o resultado; o código em si só é
+   entregue pela consulta de status, por ser uma credencial de curta duração.
+
+| `reason` | O que dizer ao seu cliente |
+| -------- | -------------------------- |
+| `pairing_timeout` | O código expirou antes de ser usado. Gere um novo código. |
+| `paired_phone_mismatch` | O código foi usado em outro WhatsApp. Use o celular do número cadastrado. |
+| `phone_already_bound` | Este número já está em uso na conta. |
+| `no_active_session` | O número principal da conta precisa estar conectado antes. |
+| `code_generation_failed` | O WhatsApp não gerou o código agora. Tente de novo em instantes. |
+| `connection_lost` | O número perdeu a conexão com o WhatsApp. Pareie de novo. |
+| `pairing_failed` | Não foi possível concluir o pareamento. Tente de novo. |
+
+Trate valores de `reason` que você não conhece como `pairing_failed`: novos
+motivos podem ser adicionados.
+
+### Limite de tentativas
+
+Cada chamada de `POST /v1/numbers/{alias}/pair` pede um código novo ao
+WhatsApp e gera uma notificação no celular. Pedidos seguidos demais fazem o
+próprio WhatsApp bloquear novos códigos para aquele número por um tempo. Para
+proteger o número do seu cliente, o pareamento aceita até **10 pedidos por
+minuto por número** e **30 por minuto na conta**. Acima disso a resposta é
+`429 pairing_rate_limited`, com o cabeçalho `Retry-After` em segundos:
+
+<ApiResponse
+  status={429}
+  headers={{ 'Retry-After': '42' }}
+  body={{
+    error: 'pairing_rate_limited',
+  }}
+/>
+
+Mostre ao seu cliente quanto tempo falta, a partir de `Retry-After`, em vez
+de repetir a chamada.
+
+### Erros do pedido de pareamento
+
+| Status | Código de erro | Descrição |
+| :----: | -------------- | --------- |
+| `402`  | `subscription_inactive` | A assinatura da organização não está ativa. |
+| `402`  | `feature_not_available` | O plano atual não inclui números extras. |
+| `403`  | `main_number_pair_not_allowed` | O número principal é pareado pelo dashboard, não por esta rota. |
+| `404`  | `extra_number_not_found` | O alias informado não existe na conta. |
+| `409`  | `already_paired_or_connected` | O número já está pareado ou conectado. |
+| `429`  | `pairing_rate_limited` | Limite de tentativas atingido; aguarde `Retry-After` segundos. |
 
 ## Cancelando o pareamento
 
@@ -382,7 +453,7 @@ solicitação em andamento e voltar o número para `"pending"`:
 ## Usabilidade
 
 - Cada número extra deve pertencer a um aparelho com WhatsApp ativo.
-- O código de pareamento tem validade limitada (aproximadamente 180 segundos). Caso expire ou seja digitado errado, chame `POST /v1/numbers/{alias}/pair` novamente.
+- O código de pareamento tem validade limitada: use `pairing.expires_at` do [status](/numbers/status/) para a contagem regressiva. Caso expire ou seja digitado errado, chame `POST /v1/numbers/{alias}/pair` novamente (veja [Experiência de pareamento recomendada](#experiência-de-pareamento-recomendada)).
 - `alias` é obrigatório no cadastro e deve começar com uma letra: use-o no envio de mensagens via URL (`/v1/numbers/{alias}/...`).
 - O número nasce com status `pending` e só avança para `pairing` após a chamada de pareamento.
 

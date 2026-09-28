@@ -206,7 +206,7 @@ traz o momento da **exclusão agendada**, não uma transição de conexão.
 | `data[].status` | object | `{status, at, reason?}`: estado atual do número |
 | `data[].status.status` | string | `pending`, `pairing`, `inactive`, `connecting`, `connected`, `disconnected`, `reconnecting`, `failed`, `revoked` ou `pending_deletion`, veja [Tabela de status](/numbers/status/#tabela-de-status) |
 | `data[].status.at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`data[].status.status`): atualiza a cada transição. **String vazia (`""`)** apenas quando o número ainda não tem link de dispositivo (`status: "pending"`, nenhuma transição registrada). Exceção: em `status: "pending_deletion"`, é o momento da exclusão agendada. |
-| `data[].status.reason` | string\|null | Reservado para o motivo de falha: **hoje sempre `null`**, independente do `status` (inclusive em `"failed"`); a rota ainda não popula este campo. |
+| `data[].status.reason` | string\|null | Motivo da falha quando `status.status` é `"failed"` (mesmos valores de [Motivos de falha](/numbers/status/#motivos-de-falha)); `null` em qualquer outro status. |
 
 ## Erros possíveis
 

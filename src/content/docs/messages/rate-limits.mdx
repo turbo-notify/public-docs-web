@@ -58,6 +58,20 @@ O endpoint de [refresh de contato](/contacts/refresh/) (`POST .../contacts/{cont
 
 Estourar esse limite retorna `429 refresh_rate_limited` com o cabeçalho `Retry-After`.
 
+## Pareamento de números extras
+
+Cada `POST /v1/numbers/{alias}/pair` pede um código novo ao WhatsApp e gera uma
+notificação no celular do número. O limite protege o número de ser bloqueado
+pelo próprio WhatsApp por excesso de pedidos:
+
+| Escopo | Pedidos/min |
+| ------ | -----------:|
+| Por número | 10 |
+| Por conta | 30 |
+
+Estourar qualquer um retorna `429 pairing_rate_limited` com o cabeçalho
+`Retry-After`. Veja [Experiência de pareamento recomendada](/numbers/add/#experiência-de-pareamento-recomendada).
+
 ## Proteção contra rajadas (operacional, igual em todos os tiers)
 
 Independente do tier contratado, o Turbo Notify aplica limites operacionais fixos para proteger a infraestrutura. Estes **não** diferenciam por plano:
