@@ -441,6 +441,7 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 | :----: | ----------------------- | ------------------------------------------------- |
 | `400`  | `contact_not_found`     | O `contact_id` informado não pertence à organização.  |
 | `400`  | `contacts_not_enabled`  | Envio por `contact_id` não configurado.           |
+| `400`  | `invalid_recipient`     | Não foi possível resolver o destinatário informado em `to` para um endereço de envio. Informar nenhum ou mais de um entre `number`, `group_id` e `contact_id` retorna `422 validation_error`. |
 | `400`  | `not_group_member`      | Sua linha não é mais participante do `group_id` informado, veja [Envio para grupo](#envio-para-grupo). |
 | `402`  | `feature_not_available` | Envio para grupo (`to.group_id`) requer plano `BUSINESS` ou superior, veja [Envio para grupo](#envio-para-grupo). |
 | `402`  | `subscription_inactive` | Assinatura com pagamento pendente, encerrada ou trial expirado (`details.status`). Bloqueia todo envio até a assinatura voltar a ficar ativa. |
@@ -468,7 +469,7 @@ O status informa o andamento do processamento da mensagem. Para detalhes complet
   status={202}
   body={{
     message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
-    status: { state: 'pending', at: '2025-07-16T10:00:00Z' },
+    status: { state: 'pending', at: '2025-07-16T10:00:00Z', error: null },
   }}
 />
 

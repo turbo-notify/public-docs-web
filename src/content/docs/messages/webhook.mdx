@@ -8,6 +8,8 @@ import ExternalLink from '@components/ExternalLink.astro';
 
 O Turbo Notify notifica seu sistema sobre eventos (envio confirmado, entrega, leitura, mensagem recebida, reação, falha) via webhook (HTTP POST). O objeto `data` de cada evento é **idêntico** ao retornado pelo endpoint [`GET /events`](/messages/polling/).
 
+Se quem responde é um agente de IA, a combinação comum é: o webhook entrega o evento à sua aplicação, e o agente age pelas ferramentas do [Servidor MCP](/general/mcp-server/) (por exemplo `reply_to_message`). Sem endpoint público, o agente pode ler os mesmos eventos com a ferramenta `list_events`.
+
 ## Recebimento dos eventos
 
 Para começar a receber eventos, cadastre a URL do seu webhook no <DashboardLink path="/webhooks">Dashboard</DashboardLink>. A URL deve ser pública, acessível via HTTPS e responder com status `2xx` dentro de 10 segundos.
@@ -1110,11 +1112,12 @@ Após a 6ª tentativa falhar, o evento é marcado como `dead_letter` e nenhuma n
 
 :::note[Reentrega exige o plano BUSINESS ou superior]
 O cronograma de reentrega acima é uma feature de plano, disponível a partir
-do tier `BUSINESS`. Organizações em `FREE`/`SOLO` recebem **exatamente
+do tier `BUSINESS`. Organizações em `SOLO` recebem **exatamente
 1 tentativa**: se essa única tentativa não retornar `2xx`, o evento é
 marcado como `dead_letter` imediatamente, sem nenhuma reentrega. O header
 `X-Webhook-Max-Attempts`, presente em toda tentativa de entrega, reflete
-esse limite (`1` para `FREE`/`SOLO`; `6` para `BUSINESS`/`CUSTOM`).
+esse limite (`1` para `SOLO`; `6` para `BUSINESS`/`CUSTOM`). O plano `FREE`
+não tem entrega por webhook: acompanhe os eventos por [polling](/messages/polling/).
 
 Isso afeta apenas a **reentrega** em caso de falha. A primeira tentativa
 de entrega acontece normalmente em todos os tiers. Veja [Quota e

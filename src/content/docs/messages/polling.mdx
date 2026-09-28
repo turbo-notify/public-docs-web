@@ -476,7 +476,7 @@ Para recuperar eventos perdidos durante uma indisponibilidade do seu endpoint:
 
 `GET /v1/events` aplica a **janela de retenção de conteúdo do seu plano** (a mesma que governa `GET /v1/numbers/{alias}/messages/{id}`: veja [Retenção das mensagens](/messages/retention/)) como limite inferior de `created_at` da consulta. Eventos mais antigos que essa janela **não são retornados**, e isso vale para todas as famílias de evento, não apenas `message.*`. Numa organização no padrão de 3 dias, por exemplo, o polling enxerga os últimos 3 dias de eventos.
 
-O registro do evento em si é descartado fisicamente após **30 dias**, um horizonte fixo da plataforma. O que você observa na prática é sempre o menor dos dois prazos.
+O registro do evento em si é descartado fisicamente após **90 dias**, um horizonte fixo da plataforma. O que você observa na prática é sempre o menor dos dois prazos.
 
 ## Erros possíveis
 

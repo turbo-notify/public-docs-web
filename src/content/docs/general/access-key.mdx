@@ -53,6 +53,10 @@ Cada chave carrega **escopos de permissão** que determinam quais operações el
 
 A tabela de erros de cada endpoint indica o escopo exigido pela operação.
 
+### Chave para um agente de IA
+
+Para conectar um agente pelo [Servidor MCP](/general/mcp-server/), crie uma chave com o template **Agente de IA (MCP)** no dashboard. Ele marca só o necessário para um atendente: `messages:send`, `messages:read`, `contacts:read`, `groups:read`, `numbers:read` e `events:read`. O [catálogo de ferramentas](/general/mcp-server/#ferramentas) mostra o escopo que cada ferramenta exige, caso você prefira ajustar a chave. Pelo servidor MCP, os dois erros `403` acima chegam ao agente como `unauthorized: not_authorized` e `unauthorized: insufficient_scope`.
+
 ## Relacionado
 
 - [Início rápido](/general/getting-started/): primeiro envio usando a chave.

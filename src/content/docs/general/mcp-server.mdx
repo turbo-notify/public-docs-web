@@ -1,111 +1,284 @@
 ---
 title: Servidor MCP
-description: Use a API do Turbo Notify como ferramentas de um agente de IA, pelo Model Context Protocol, sem escrever cliente HTTP nenhum.
+description: Conecte um agente de IA ao seu WhatsApp pelo Model Context Protocol. São 32 ferramentas prontas sobre a mesma API, autenticadas com a sua própria chave.
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 import DashboardLink from '@components/DashboardLink.astro';
 import ExternalLink from '@components/ExternalLink.astro';
 
-O Turbo Notify expõe a própria API pública como um servidor <ExternalLink href="https://modelcontextprotocol.io">MCP (Model Context Protocol)</ExternalLink>. Seu agente recebe **31 ferramentas** já descritas (enviar mensagem, ler conversa, consultar contato, ver cota, reconectar número) e escolhe entre elas sozinho.
+O Turbo Notify expõe a própria API pública como um servidor <ExternalLink href="https://modelcontextprotocol.io">MCP (Model Context Protocol)</ExternalLink>. Seu agente de IA recebe **32 ferramentas** já descritas (enviar mensagem, responder, marcar conversa como lida, consultar contato, ver cota, reconectar número) e escolhe entre elas sozinho.
 
-É a mesma API de sempre, apresentada de outro jeito. Nada de novo para contratar, nenhum endpoint diferente por baixo, e sua chave de acesso continua sendo a mesma.
+É a mesma API de sempre, apresentada de outro jeito: cada ferramenta chama exatamente um endpoint documentado, com a sua chave. Cotas, limites de plano, ritmo de envio e códigos de erro são os mesmos da API REST. Não há nada novo para contratar.
 
 ## Quando usar
 
 | Você está construindo | Use |
 |---|---|
-| Um agente de IA que decide o que fazer | **Servidor MCP** |
-| Uma integração determinística (disparo transacional, cron, ETL) | **API REST** |
+| Um agente de IA que decide o que fazer (atendente, assistente, triagem) | **Servidor MCP** |
+| Uma integração determinística (disparo transacional, rotina agendada, ETL) | **[API REST](/messages/send/)** |
+| Algo que precisa **reagir** a mensagens recebidas | **[Webhook](/messages/webhook/)** para receber, somado ao MCP ou à API para agir |
 
-As duas são suportadas e as duas continuam documentadas. O servidor MCP economiza escrever e manter o adaptador entre a API e o seu modelo, e não faz nada além disso.
+Um agente de atendimento costuma combinar os dois lados: o webhook avisa a sua aplicação que chegou mensagem, e o agente responde pelas ferramentas MCP. O repositório de [exemplo](#exemplo-completo) faz exatamente isso.
 
 ## Conexão
 
-O endereço é `https://mcp.turbonotify.com/mcp`, transporte **Streamable HTTP**, autenticado com a sua <DashboardLink path="/api-keys">chave de acesso</DashboardLink> no header `Authorization`.
+| | |
+|---|---|
+| Endereço | `https://mcp.turbonotify.com/mcp` |
+| Transporte | Streamable HTTP |
+| Autenticação | Header `Authorization: Bearer SUA_CHAVE` em **toda** requisição |
 
-A tela <DashboardLink path="/mcp">MCP</DashboardLink> do dashboard traz essa configuração já pronta para copiar e mostra quais ferramentas cada uma das suas chaves alcança, o que é o erro mais comum na primeira integração.
+A tela <DashboardLink path="/mcp">MCP</DashboardLink> do dashboard traz as configurações abaixo prontas para copiar e mostra quais ferramentas cada uma das suas chaves alcança.
 
-```json title=".mcp.json"
-{
-  "mcpServers": {
-    "turbo-notify": {
-      "url": "https://mcp.turbonotify.com/mcp",
-      "headers": {
-        "Authorization": "Bearer SUA_CHAVE"
+<Tabs>
+  <TabItem label="Claude Code">
+    Pelo terminal:
+
+    ```bash
+    claude mcp add --transport http turbo-notify https://mcp.turbonotify.com/mcp --header "Authorization: Bearer SUA_CHAVE"
+    ```
+
+    Ou no arquivo `.mcp.json` do projeto. O campo `"type": "http"` é obrigatório para servidor remoto:
+
+    ```json title=".mcp.json"
+    {
+      "mcpServers": {
+        "turbo-notify": {
+          "type": "http",
+          "url": "https://mcp.turbonotify.com/mcp",
+          "headers": {
+            "Authorization": "Bearer SUA_CHAVE"
+          }
+        }
       }
     }
-  }
-}
-```
+    ```
+  </TabItem>
+  <TabItem label="Cursor">
+    ```json title="mcp.json"
+    {
+      "mcpServers": {
+        "turbo-notify": {
+          "url": "https://mcp.turbonotify.com/mcp",
+          "headers": {
+            "Authorization": "Bearer SUA_CHAVE"
+          }
+        }
+      }
+    }
+    ```
+  </TabItem>
+  <TabItem label="Claude Desktop">
+    O arquivo de configuração do Claude Desktop não aceita servidor remoto com `url` e `headers`. A conexão passa pela ponte `mcp-remote`, que exige Node.js instalado. A chave vai numa variável de ambiente para não ser quebrada no espaço depois de `Bearer`:
 
-Esse formato funciona no Claude Code, no Claude Desktop e em qualquer host MCP que aceite servidor remoto. Em frameworks de agente (Agno, CrewAI, LangGraph) a configuração é equivalente: URL, transporte `streamable-http`, header de autorização.
+    ```json title="claude_desktop_config.json"
+    {
+      "mcpServers": {
+        "turbo-notify": {
+          "command": "npx",
+          "args": [
+            "-y",
+            "mcp-remote",
+            "https://mcp.turbonotify.com/mcp",
+            "--header",
+            "Authorization:${TURBO_NOTIFY_AUTH}"
+          ],
+          "env": {
+            "TURBO_NOTIFY_AUTH": "Bearer SUA_CHAVE"
+          }
+        }
+      }
+    }
+    ```
+
+    Reinicie o Claude Desktop depois de salvar o arquivo.
+  </TabItem>
+  <TabItem label="Frameworks de agente">
+    Configure o cliente MCP do framework com o endereço acima, transporte Streamable HTTP e o header de autorização. O nome da opção de transporte muda de um para outro: `streamable-http` no Agno e no CrewAI, `streamable_http` no LangGraph (via `langchain-mcp-adapters`).
+
+    ```python title="agno_agent.py"
+    from agno.tools.mcp import MCPTools
+
+    tools = MCPTools(
+        url="https://mcp.turbonotify.com/mcp",
+        transport="streamable-http",
+        headers={"Authorization": "Bearer SUA_CHAVE"},
+    )
+    ```
+  </TabItem>
+</Tabs>
 
 :::caution[Quem identifica a sua conta é a chave]
-O endereço do servidor é o mesmo para todos os clientes do Turbo Notify. O que diz que a conta é a sua é a chave, enviada em **cada** chamada, e não existe chave padrão: sem ela, a chamada é recusada. Trate a chave como senha; o endereço pode ser compartilhado à vontade.
+O endereço do servidor é o mesmo para todos os clientes do Turbo Notify. O que diz que a conta é a sua é a chave, enviada em cada chamada. Não existe chave padrão: sem ela, nenhuma ferramenta executa. Trate a chave como senha; o endereço pode ser compartilhado à vontade.
 :::
+
+## Chave e escopos
+
+Use uma <DashboardLink path="/api-keys">chave de acesso</DashboardLink> comum. Uma chave com o template **Acesso total** alcança as 32 ferramentas, mas para um agente o recomendado é uma chave só com o necessário.
+
+Ao criar a chave no dashboard, o template **Agente de IA (MCP)** já marca o conjunto recomendado para um atendente: `messages:send`, `messages:read`, `contacts:read`, `groups:read`, `numbers:read` e `events:read`. Ele deixa de fora, de propósito:
+
+- `numbers:write`: reconectar e desconectar número é decisão de quem opera a conta, e reconectar pode gerar cobrança (veja [Reconectar pode cobrar](#reconectar-pode-cobrar)).
+- `contacts:write`: atualizar um contato faz uma consulta real ao WhatsApp.
+
+Cada ferramenta exige o escopo indicado no [catálogo](#ferramentas). Duas regras costumam surpreender: **responder, editar, apagar, reagir e marcar como lida contam como envio** (`messages:send`), e as ferramentas de **cota e uso não exigem escopo**, só uma chave válida.
 
 ## Ferramentas
 
-Toda ferramenta de mensageria aceita `number_alias` e assume `"main"` quando você não informa.
+Toda ferramenta que atua sobre mensagens, contatos ou grupos aceita `number_alias` e assume `"main"` (o número principal) quando você não informa. Os limites de plano são os mesmos da API: reagir (`react_to_message`) e o indicador de digitação (`send_typing_indicator`) exigem plano SOLO ou superior; o envio para grupos (inclusive o indicador de digitação em grupo), os recibos de leitura (`get_message_receipts`) e `mark_as_read` exigem BUSINESS ou superior. Receber mensagens por webhook exige SOLO ou superior; no FREE, o agente acompanha as mensagens recebidas com `list_events`. Sem o plano necessário, a ferramenta responde `payment_required: feature_not_available`.
 
-| Grupo | Escopo da chave | Ferramentas |
+### Envio
+
+| Ferramenta | O que faz | Escopo |
 |---|---|---|
-| Envio | `messages:send` | `send_text` · `send_media` · `send_location` · `send_contact_card` · `send_calendar_event` · `send_cta_button` |
-| Ação sobre mensagem | `messages:send` | `reply_to_message` · `edit_message` · `delete_message` · `react_to_message` · `send_typing_indicator` |
-| Leitura de mensagens | `messages:read` | `list_messages` · `get_message` · `get_message_status` · `get_message_receipts` · `get_message_reactions` |
-| Leitura de contatos | `contacts:read` | `list_contacts` · `get_contact` · `get_contact_profile_picture` |
-| Atualizar um contato | `contacts:write` | `refresh_contact` |
-| Grupos | `groups:read` | `list_groups` · `get_group` · `get_group_picture` |
-| Leitura de números | `numbers:read` | `list_numbers` · `get_number` |
-| Conectar e desconectar | `numbers:write` | `connect_number` · `disconnect_number` |
-| Eventos | `events:read` | `list_events` |
-| Uso e cotas | qualquer chave válida | `get_usage` · `get_message_quota` · `get_contact_quota` |
+| `send_text` | Envia texto, com menções `@número` quando for grupo | `messages:send` |
+| `send_media` | Envia imagem, vídeo, áudio, documento ou figurinha a partir de uma URL (`kind` escolhe o tipo) | `messages:send` |
+| `send_location` | Envia uma localização | `messages:send` |
+| `send_contact_card` | Envia um cartão de contato | `messages:send` |
+| `send_calendar_event` | Envia um convite de evento de agenda | `messages:send` |
+| `send_cta_button` | Envia uma mensagem com botão de link | `messages:send` |
 
-Uma chave criada sem escolher escopo tem acesso completo e alcança as 31. A coluna acima é para quem prefere criar uma chave restrita: peça só os escopos das ferramentas que o seu agente realmente vai usar. Duas linhas costumam surpreender: **responder, editar, apagar e reagir contam como envio** (`messages:send`, não `messages:read`), e **atualizar um contato** gasta uma consulta real ao WhatsApp, então pede `contacts:write`.
+### Responder e agir
 
-### O que não está aqui, e por quê
+| Ferramenta | O que faz | Escopo |
+|---|---|---|
+| `reply_to_message` | Responde citando uma mensagem | `messages:send` |
+| `edit_message` | Edita uma mensagem enviada | `messages:send` |
+| `delete_message` | Apaga uma mensagem enviada | `messages:send` |
+| `react_to_message` | Reage a uma mensagem (substitui a reação anterior) | `messages:send` |
+| `send_typing_indicator` | Mostra "digitando…" na conversa | `messages:send` |
+| `mark_as_read` | Marca como lidas as mensagens não lidas de uma conversa ou grupo, sem responder | `messages:send` |
 
-Nenhuma ferramenta adiciona, renomeia, remove ou vincula número. O critério é direto: **muda o que a sua organização paga, ou precisa de alguém com o celular na mão?**
+### Leitura de mensagens
 
-Incluir um número extra cobra o cartão antes de provisionar, então uma ferramenta que o agente pode repetir é uma ferramenta que cobra duas vezes. Remover pode gerar estorno. Vincular é metade de um fluxo cuja outra metade é uma pessoa digitando um código de vinculação no celular.
+| Ferramenta | O que faz | Escopo |
+|---|---|---|
+| `list_messages` | Lista mensagens do número | `messages:read` |
+| `get_message` | Consulta uma mensagem | `messages:read` |
+| `get_message_status` | Consulta o status de entrega | `messages:read` |
+| `get_message_receipts` | Consulta os recibos de entrega e leitura | `messages:read` |
+| `get_message_reactions` | Consulta as reações de uma mensagem | `messages:read` |
+| `get_message_quota` | Consulta a cota de mensagens do número | nenhum |
 
-`connect_number` e `disconnect_number` **estão** disponíveis: não exigem ninguém por perto e nenhum dos dois desfaz a vinculação com o aparelho. É o que permite um agente perceber que o próprio número caiu e levantá-lo de volta sem chamar você.
+### Contatos
 
-Há um caso em que reconectar cobra: se o número extra tinha exclusão agendada, reconectar também cancela a exclusão e, quando esse número já existia antes do ciclo atual começar, cobra a taxa de ativação para trazê-lo de volta.
+| Ferramenta | O que faz | Escopo |
+|---|---|---|
+| `list_contacts` | Lista contatos do número | `contacts:read` |
+| `get_contact` | Consulta um contato | `contacts:read` |
+| `get_contact_profile_picture` | Consulta a foto de perfil | `contacts:read` |
+| `refresh_contact` | Atualiza nome e foto consultando o WhatsApp | `contacts:write` |
+| `get_contact_quota` | Consulta a cota de contatos do número | nenhum |
 
-Para as operações administrativas, continue usando o <DashboardLink path="/numbers">dashboard</DashboardLink> ou a API REST.
+### Grupos
+
+| Ferramenta | O que faz | Escopo |
+|---|---|---|
+| `list_groups` | Lista os grupos do número | `groups:read` |
+| `get_group` | Consulta um grupo: nome, descrição, foto, configurações e quantidade de participantes | `groups:read` |
+| `get_group_picture` | Consulta a foto do grupo | `groups:read` |
+
+### Números
+
+| Ferramenta | O que faz | Escopo |
+|---|---|---|
+| `list_numbers` | Lista o número principal e os extras | `numbers:read` |
+| `get_number` | Consulta o status de um número | `numbers:read` |
+| `connect_number` | Reconecta um número desconectado, sem QR code | `numbers:write` |
+| `disconnect_number` | Desconecta um número sem desfazer a vinculação com o celular | `numbers:write` |
+
+### Uso e eventos
+
+| Ferramenta | O que faz | Escopo |
+|---|---|---|
+| `get_usage` | Consulta o uso agregado da conta no ciclo | nenhum |
+| `list_events` | Lista eventos (os mesmos do webhook) por tipo, número, período ou `request_id`. É como o agente fica sabendo de mensagens recebidas sem ter webhook | `events:read` |
+
+As ferramentas de escrita devolvem um `request_id` quando a plataforma gera um. Guarde-o para localizar depois o resultado daquela operação com `list_events`.
+
+### Reconectar pode cobrar
+
+`connect_number` não cobra nada, com uma exceção: se o número for extra e você tiver agendado a exclusão dele, reconectar **cancela a exclusão** e, quando o número foi criado antes do início do ciclo cobrado atual, **cobra a taxa de ativação** para trazê-lo de volta. É a única ferramenta que pode gerar cobrança. Se o seu agente não deve tomar essa decisão, não dê `numbers:write` à chave dele.
+
+`connect_number` não recupera um número com status `revoked` (desvinculado pelo celular): esse precisa ser vinculado de novo por uma pessoa.
+
+Repetir `connect_number` ou `disconnect_number` não muda nada. O número que já está no estado pedido responde `invalid_request: already_connected`, `already_connecting` ou `no_active_session`, e isso significa que o objetivo já foi atingido, não que a chamada falhou.
+
+### O que não está disponível, e por quê
+
+Nenhuma ferramenta inclui, renomeia, remove ou vincula número. O critério é: **muda o que a sua conta paga, ou precisa de alguém com o celular na mão?**
+
+| Operação | Por que não é ferramenta |
+|---|---|
+| Incluir número extra | Cobra o cartão antes de provisionar. Uma ferramenta que o agente pode repetir é uma ferramenta que cobra duas vezes. |
+| Remover número | Agenda uma exclusão real e pode gerar estorno. |
+| [Renomear número](/numbers/update/) | Muda o endereço de uma caixa de entrada em uso. |
+| Vincular número (pareamento) | Metade do fluxo é uma pessoa digitando o código de vinculação no celular. |
+| Cancelar exclusão agendada | Não existe como ferramenta própria: quem agendou decide desfazê-la. Reconectar com `connect_number` um número extra com exclusão agendada cancela a exclusão e pode cobrar (veja [Reconectar pode cobrar](#reconectar-pode-cobrar)). |
+
+Para essas operações, use o <DashboardLink path="/numbers">dashboard</DashboardLink> ou a [API REST](/numbers/add/).
+
+## Envio sem duplicar
+
+As ferramentas de envio e `reply_to_message` aceitam `idempotency_key`: qualquer texto ASCII imprimível de 1 a 255 caracteres, escolhido por você. Se a chamada falhar por tempo esgotado e o agente tentar de novo **com a mesma chave, no mesmo número**, a mensagem não é enviada duas vezes. Sem ela, repetir após um timeout pode entregar a mensagem em dobro, e o destinatário vê as duas.
+
+Use uma chave nova para cada mensagem nova, derivada de algo estável do seu lado (por exemplo o `id` do evento que o agente está respondendo). Uma chave fora do formato é recusada com uma mensagem que nomeia o campo.
+
+## Limites
+
+| Limite | Valor | Contado por |
+|---|---|---|
+| Requisições ao servidor MCP | 600 por minuto | Chave de acesso |
+| Conexões de streaming abertas ao mesmo tempo | 8 | Chave de acesso |
+| Requisições ao servidor MCP, limite compartilhado | 3000 por minuto | Endereço de origem |
+| Conexões de streaming abertas ao mesmo tempo, limite compartilhado | 64 | Endereço de origem |
+
+Quando uma requisição chega sem chave, os limites são contados pelo endereço de origem. O limite
+por endereço vale sempre, somado ao limite por chave: uma requisição é recusada quando qualquer um
+dos dois se esgota. Ele é maior para comportar várias chaves atrás da mesma saída de rede (por
+exemplo, uma plataforma que hospeda agentes de vários clientes), mas, somadas, elas não passam de
+3000 requisições por minuto nem de 64 conexões de streaming. Os limites da própria API (ritmo
+de envio, cotas do plano) continuam valendo por trás de cada ferramenta: veja
+[Limites](/messages/rate-limits/) e [Quota e uso](/usage/quota/).
 
 ## Erros
 
-O código de erro da API chega intacto na mensagem da ferramenta, porque é nele que o agente consegue decidir o que fazer:
+### Dentro do resultado da ferramenta
 
-| Situação | O agente recebe |
-|---|---|
-| Argumento inválido | `invalid_request: <código>` |
-| Chave errada ou sem escopo | `unauthorized: <código>` |
-| Cota, plano ou cartão | `payment_required: <código>` + o objeto `details` inteiro |
-| Não encontrado | `not_found: <código>` |
-| Limite de taxa | `rate_limited: <código>`, com `Retry-After` quando houver |
-| Falha temporária | `service_unavailable: <código>` |
+Quando uma ferramenta não consegue fazer o que foi pedido, o agente recebe o motivo no próprio resultado, com o código de erro da API intacto. É nele que o agente decide se corrige, espera ou desiste:
 
-O `details` do 402 vai completo, sem resumo: é o que distingue um teto de cota que reseta no fim do ciclo de um recurso que o plano simplesmente não inclui.
+| Situação | O agente recebe | O que fazer |
+|---|---|---|
+| Chamada sem chave | Uma mensagem pedindo a chave no header `Authorization: Bearer` | Configure o header no cliente MCP. |
+| Argumento recusado antes de chegar à API | Uma mensagem que nomeia o campo | Corrija o argumento indicado. |
+| Argumento inválido | `invalid_request: <código>` | Corrija os argumentos e tente de novo. Exceção: `already_connected`, `already_connecting` e `no_active_session` numa repetição de `connect_number` ou `disconnect_number` significam que o número já está no estado pedido. |
+| Chave inválida ou revogada | `unauthorized: not_authorized` | Gere uma nova chave no dashboard. |
+| Chave sem o escopo da ferramenta | `unauthorized: insufficient_scope` | Veja o escopo na tabela de [ferramentas](#ferramentas) e use uma chave que o tenha. |
+| Cota, plano ou pagamento | `payment_required: <código>` e o objeto `details` completo | Veja [Quota e uso](/usage/quota/#erros). |
+| Não encontrado | `not_found: <código>` | Confira o identificador ou o `number_alias`. |
+| Limite de ritmo da API | `rate_limited: <código>`, com o tempo de espera quando houver | Espere o tempo indicado. |
+| Falha temporária | `service_unavailable` | Tente de novo em instantes. |
 
-### Erros de conexão
+O `details` vai completo, sem resumo: é o que distingue uma cota que reseta no fim do ciclo de um recurso que o plano não inclui.
 
-Esses três são respondidos antes de qualquer ferramenta rodar, então quem os vê é o seu cliente MCP, não o agente:
+### Na conexão
+
+Estes são respondidos antes de qualquer ferramenta rodar, então quem os vê é o seu cliente MCP, não o agente:
 
 | Resposta | O que aconteceu | O que fazer |
 |---|---|---|
-| `401 unauthorized` | Uma conexão foi aberta sem a chave. | Envie o header `Authorization` também na conexão, não só nas chamadas. |
-| `429 too_many_streams` | Este cliente já mantém o máximo de conexões abertas ao mesmo tempo (8 por padrão). | Feche as que não usa, ou reduza o número de processos conectados a partir da mesma origem. O limite é por origem da conexão, não por chave. |
-| `429 rate_limit_exceeded` | Muitas requisições a partir da mesma origem em pouco tempo. | Respeite o `Retry-After` da resposta. |
+| `401 unauthorized` | Uma conexão de streaming foi aberta sem chave. | Envie o header `Authorization` também na conexão, não só nas chamadas. |
+| `429 too_many_streams` | Esta chave já mantém 8 conexões de streaming abertas, ou o endereço de origem já mantém 64. | Feche as que não usa, ou reduza os processos conectados com a mesma chave ou o mesmo endereço. |
+| `429 rate_limit_exceeded` | Mais de 600 requisições em um minuto com esta chave, ou mais de 3000 em um minuto vindas do mesmo endereço. | Respeite o `Retry-After` da resposta. |
 
 ## Exemplo completo
 
-O repositório <ExternalLink href="https://github.com/turbo-notify/examples">turbo-notify/examples</ExternalLink> traz um atendente de WhatsApp funcional construído sobre esse servidor: recebe mensagem por webhook, decide com um modelo e responde por `reply_to_message`. É código pequeno e comentado, feito para ser lido antes de ser rodado.
+O repositório <ExternalLink href="https://github.com/turbo-notify/examples">turbo-notify/examples</ExternalLink> traz um atendente de WhatsApp funcional construído sobre este servidor: recebe a mensagem pelo webhook, decide com um modelo e responde com `reply_to_message`. É código pequeno e comentado, feito para ser lido antes de ser rodado.
 
 ## Próximos passos
 
-- [Chave de acesso](/general/access-key/): criar e gerenciar a chave que autentica o servidor MCP
+- [Chave de acesso](/general/access-key/): criar a chave do agente com os escopos certos
 - [Webhook](/messages/webhook/): receber mensagens para o seu agente responder
 - [Polling de eventos](/messages/polling/): alternativa ao webhook, quando você não tem endpoint público
+- [Marcar como lida](/other-features/mark-as-read/): o que `mark_as_read` faz no WhatsApp

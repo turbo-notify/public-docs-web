@@ -182,7 +182,7 @@ Substitui o texto de uma mensagem de texto já enviada (edição nativa do Whats
   status={202}
   body={{
     message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
-    status: { state: 'pending', at: '2026-06-01T13:05:01Z' },
+    status: { state: 'pending', at: '2026-06-01T13:05:01Z', error: null },
   }}
 />
 
@@ -331,7 +331,7 @@ WhatsApp). O corpo da requisição é **vazio**.
   status={202}
   body={{
     message_id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
-    status: { state: 'pending', at: '2026-06-01T13:06:01Z' },
+    status: { state: 'pending', at: '2026-06-01T13:06:01Z', error: null },
   }}
 />
 
@@ -372,6 +372,7 @@ Os dois endpoints compartilham o mesmo conjunto de erros:
 | `404`  | `number_not_found`       | O alias informado na URL não corresponde a nenhum número cadastrado. |
 | `404`  | `not_found`              | A mensagem não foi encontrada, pertence a outra organização, está fora da [janela de retenção de conteúdo](/messages/retention/) do plano, ou (na rota aninhada `/numbers/{alias}/messages/...`) pertence a um número diferente do alias informado na URL: todos esses casos devolvem a mesma resposta, sem distinção. |
 | `404`  | `message_not_found`      | *(apenas na rota atalho sem `{alias}`, `POST /v1/messages/{id}/edit`\|`/delete`)* O `message_id` existe mas pertence a um número extra, não ao número principal. |
+| `404`  | `request_not_found`      | A mensagem deixou de ser encontrada enquanto a edição ou exclusão era processada. Consulte a mensagem com `GET` e, se ela ainda existir, tente de novo. |
 | `422`  | `session_not_connected`  | O número que originalmente enviou a mensagem não tem uma sessão WhatsApp conectada no momento. |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                            |
 

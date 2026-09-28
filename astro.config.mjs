@@ -3,20 +3,6 @@ import starlight from '@astrojs/starlight';
 
 export default defineConfig({
   site: 'https://docs.turbonotify.com',
-  // The /extra-numbers/* section was folded into /numbers/* (domain-aligned
-  // grouping realignment, ADR 2026-06-22). Redirect old links so they don't 404.
-  redirects: {
-    // `trailingSlash: 'ignore'` (default) normalises `/extra-numbers` and
-    // `/extra-numbers/` to one route, so a single key covers both forms.
-    // Listing both collides ("a static route cannot be defined more than once").
-    '/extra-numbers': '/numbers/add/',
-    '/extra-numbers/add': '/numbers/add/',
-    '/extra-numbers/status': '/numbers/status/',
-    '/extra-numbers/list': '/numbers/list/',
-    '/extra-numbers/remove': '/numbers/remove/',
-    '/extra-numbers/activation': '/numbers/activation/',
-    '/extra-numbers/billing': '/numbers/billing/',
-  },
   integrations: [
     starlight({
       title: 'Turbo Notify',
@@ -107,6 +93,11 @@ export default defineConfig({
                   slug: 'numbers/status',
                   label: 'Status',
                   translations: { en: 'Status', es: 'Estado' },
+                },
+                {
+                  slug: 'numbers/update',
+                  label: 'Atualização',
+                  translations: { en: 'Update', es: 'Actualización' },
                 },
                 {
                   slug: 'numbers/list',

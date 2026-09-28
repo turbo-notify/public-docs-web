@@ -438,6 +438,7 @@ aceite assíncrono e **nenhum evento de webhook** é entregue para essas operaç
 | `400`  | `contact_not_found`     | O `contact_id` informado em `to` não pertence a esta organização.  |
 | `400`  | `contacts_not_enabled`  | Envio por `contact_id` não está configurado nesta instância. |
 | `400`  | `groups_not_enabled`    | Suporte a grupos não está habilitado nesta instância. |
+| `400`  | `invalid_recipient`     | Não foi possível resolver o destinatário informado em `to` para um endereço de envio. Informar nenhum ou mais de um entre `number`, `group_id` e `contact_id` retorna `422 validation_error`. |
 | `402`  | `feature_not_available` | O recurso não está disponível no plano contratado. |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |

@@ -169,6 +169,10 @@ que só olham um campo. Estes dois endpoints (diferente de `GET /v1/usage`)
 expõem `cycle_start`/`cycle_end` explicitamente porque são o snapshot de **um**
 número, não um roll-up de vários.
 
+Pelo [Servidor MCP](/general/mcp-server/), um agente consulta o mesmo com
+`get_usage`, `get_message_quota` e `get_contact_quota`. Essas três ferramentas
+não exigem escopo: qualquer chave válida as usa.
+
 ## Janela de retenção de conteúdo
 
 Além da quota, cada plano define por quantos dias o **conteúdo** de uma
@@ -235,9 +239,10 @@ mensagem ou indicador de digitação para grupo (`groups:messages`, BUSINESS+, v
 detalhado de recibos (`read_receipts`, BUSINESS+, veja
 [Recibos](/messages/receipts/)); criação de números extras (`extra_numbers`,
 indisponível em FREE/SOLO, veja [Números extras](/numbers/add/)); e
-**reentrega de webhook** (`webhooks:retries`, BUSINESS+, em `FREE`/`SOLO` cada
+**reentrega de webhook** (`webhooks:retries`, BUSINESS+, em `SOLO` cada
 evento tem **uma única tentativa** de entrega; falhou, não há retentativa, veja
-[Eventos via webhook](/messages/webhook/)).
+[Eventos via webhook](/messages/webhook/); no `FREE` não há webhook, use
+`GET /v1/events`, disponível em todos os planos).
 
 ### 402: limite de números extras atingido
 

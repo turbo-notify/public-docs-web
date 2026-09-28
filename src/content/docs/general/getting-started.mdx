@@ -188,7 +188,7 @@ Após o envio, você receberá uma resposta semelhante a esta, indicando que sua
   status={202}
   body={{
     message_id: 'msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
-    status: { state: 'pending', at: '2025-07-16T10:00:00Z' },
+    status: { state: 'pending', at: '2025-07-16T10:00:00Z', error: null },
   }}
 />
 
@@ -314,3 +314,7 @@ Use `GET /v1/messages/{id}` para confirmar se a mensagem chegou ao destinatário
 Para a lista completa de estados de entrega, veja [Status da mensagem](/messages/status/). Para acompanhar eventos sem webhook, veja [Polling de eventos](/messages/polling/).
 
 Pronto! A partir daqui, os próximos passos estão em [Próximos passos](/general/next-steps/): chave de acesso, webhooks e os demais recursos da API.
+
+:::tip[Construindo um agente de IA?]
+A mesma chave conecta um agente (Claude, Cursor ou um framework como Agno) ao seu WhatsApp pelo [Servidor MCP](/general/mcp-server/): 32 ferramentas prontas, sem escrever cliente HTTP.
+:::

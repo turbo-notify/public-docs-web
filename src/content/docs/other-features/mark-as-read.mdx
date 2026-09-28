@@ -14,6 +14,8 @@ O Turbo Notify já marca automaticamente o histórico de mensagens não lidas de
 
 Use o endpoint abaixo apenas quando quiser marcar um chat como lido sem realizar nenhuma outra ação no WhatsApp, por exemplo para manter a caixa de entrada da sua própria aplicação sincronizada com o WhatsApp.
 
+Um agente de IA conectado pelo [Servidor MCP](/general/mcp-server/) faz o mesmo com a ferramenta `mark_as_read` (escopo `messages:send`, mesma exigência de plano), útil para triagem ou para passar a conversa a uma pessoa sem responder.
+
 :::note[Requer plano BUSINESS ou superior]
 Este endpoint exige a feature `read_receipts`, disponível a partir do tier `BUSINESS`. Nos planos `FREE`/`SOLO`, a marcação automática descrita acima continua funcionando normalmente; apenas a marcação **manual** via este endpoint é bloqueada com `402`:
 
@@ -277,6 +279,7 @@ aplicação já sabe que fez a chamada; não há um terceiro para notificar.
 | `400`  | `contact_not_found`     | O `contact_id` informado em `to` não pertence a esta organização.  |
 | `400`  | `contacts_not_enabled`  | Marcação por `contact_id` não está configurada nesta instância. |
 | `400`  | `groups_not_enabled`    | Suporte a grupos não está habilitado nesta instância. |
+| `400`  | `invalid_recipient`     | Não foi possível resolver o destinatário informado em `to` para um endereço de envio. Informar nenhum ou mais de um entre `number`, `group_id` e `contact_id` retorna `422 validation_error`. |
 | `402`  | `feature_not_available` | O recurso não está disponível no plano contratado. |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |

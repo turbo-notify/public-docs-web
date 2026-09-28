@@ -21,6 +21,10 @@ Acesse a página de <DashboardLink path="/numbers">Números</DashboardLink> no d
 
 Para ativar (conectar) um número extra que está inativo, faça uma requisição POST para o endpoint de conexão informando o alias do número na URL.
 
+:::caution[Pode gerar cobrança]
+Se o número extra tiver exclusão agendada, esta chamada cancela a exclusão. Quando o número foi criado antes do início do ciclo cobrado atual, a taxa de ativação é cobrada de novo para trazê-lo de volta. Veja [Cobrança de números extras](/numbers/billing/).
+:::
+
 <Tabs>
   <TabItem label="cURL">
     ```bash title="turbo-notify.sh"

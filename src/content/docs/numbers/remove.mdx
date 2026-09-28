@@ -167,6 +167,10 @@ para exclusão retorna o mesmo agendamento (sem gerar um novo reembolso).
 Enquanto o número estiver em `pending_deletion` (exclusão ainda não
 executada), você pode cancelar e manter o número normalmente.
 
+:::caution[Pode gerar cobrança]
+Cancelar a exclusão agendada de um número extra (por esta chamada ou reconectando o número) pode gerar cobrança: quando o número foi criado antes do início do ciclo cobrado atual, a taxa de ativação é cobrada de novo para trazê-lo de volta. Veja [Cobrança de números extras](/numbers/billing/).
+:::
+
 <Tabs>
   <TabItem label="cURL">
     ```bash title="turbo-notify.sh"
