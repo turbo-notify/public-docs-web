@@ -236,6 +236,29 @@ números extras. O código em si é entregue de forma assíncrona: consulte
 [Status dos números extras](/numbers/status/), cujo bloco `pairing` traz
 `{method, data, expires_at}` enquanto `status` é `"pairing"`.
 
+### Código digitado errado
+
+Se o código for digitado errado no celular, o WhatsApp invalida esse código
+na hora: nem o código correto é aceito depois disso. O WhatsApp não informa
+esse erro, então ofereça na sua tela uma opção para gerar um novo código.
+
+Para gerar um novo código, chame `POST /v1/numbers/{alias}/pair` de novo
+enquanto o número estiver com `status: "pairing"`. A tentativa anterior é
+descartada e o bloco `pairing` do status volta a vir vazio até o novo código
+ficar pronto. Mostre sempre o código mais recente.
+
+### O WhatsApp do número cadastrado
+
+O pareamento precisa ser concluído no WhatsApp do número cadastrado. Se outro
+WhatsApp digitar o código ou escanear o QR code, o pareamento é recusado, o
+dispositivo é desconectado desse WhatsApp e o número fica com `status: "failed"`.
+Você recebe o evento [`number.connect.failed`](/messages/webhook/), cujo campo
+`error` explica o motivo. Para tentar de novo, chame `POST /v1/numbers/{alias}/pair`
+e conclua o pareamento no celular do número cadastrado.
+
+Depois de pareado, o número aparece em **Dispositivos conectados** no celular com
+o nome da sua organização.
+
 ## Cancelando o pareamento
 
 Enquanto o número estiver com `status: "pairing"`, você pode cancelar a
@@ -359,7 +382,7 @@ solicitação em andamento e voltar o número para `"pending"`:
 ## Usabilidade
 
 - Cada número extra deve pertencer a um aparelho com WhatsApp ativo.
-- O código de pareamento tem validade limitada (aproximadamente 180 segundos). Caso expire, chame `POST /v1/numbers/{alias}/pair` novamente.
+- O código de pareamento tem validade limitada (aproximadamente 180 segundos). Caso expire ou seja digitado errado, chame `POST /v1/numbers/{alias}/pair` novamente.
 - `alias` é obrigatório no cadastro e deve começar com uma letra: use-o no envio de mensagens via URL (`/v1/numbers/{alias}/...`).
 - O número nasce com status `pending` e só avança para `pairing` após a chamada de pareamento.
 
