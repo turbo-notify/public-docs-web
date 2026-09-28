@@ -1,25 +1,25 @@
 ---
-title: Ativação e desativação de números
-description: Como ativar e desativar números extras na sua conta do Turbo Notify.
+title: Conexão de números extras
+description: Como desconectar e reconectar números extras já pareados na sua conta do Turbo Notify.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 import DashboardLink from '@components/DashboardLink.astro';
 
-Controle quais números extras estão ativos para envio de mensagens. Números desativados permanecem cadastrados na conta, mas não podem ser usados como remetente.
+Desconecte um número extra já pareado para parar de usá-lo por um tempo, e reconecte quando quiser voltar, sem parear de novo. Números desconectados continuam cadastrados na conta, mas não podem ser usados como remetente. Para o primeiro vínculo com o WhatsApp, veja [Pareamento](/numbers/pairing/).
 
 ## Cobrança
 
-Números extras desativados continuam sendo cobrados enquanto estiverem cadastrados. Para encerrar a cobrança, é necessário remover o número. Consulte os detalhes em [Cobrança de números extras](/numbers/billing/).
+Números extras desconectados continuam sendo cobrados enquanto estiverem cadastrados. Para encerrar a cobrança, é necessário remover o número. Consulte os detalhes em [Cobrança de números extras](/numbers/billing/).
 
 ## Pelo dashboard
 
-Acesse a página de <DashboardLink path="/numbers">Números</DashboardLink> no dashboard para ativar ou desativar números com um clique.
+Acesse a página de <DashboardLink path="/numbers">Números</DashboardLink> no dashboard para desconectar ou reconectar números com um clique.
 
-## Ativação
+## Reconectar
 
-Para ativar (conectar) um número extra que está inativo, faça uma requisição POST para o endpoint de conexão informando o alias do número na URL.
+Para reconectar um número extra desconectado, faça uma requisição POST para o endpoint de conexão informando o alias do número na URL.
 
 :::caution[Pode gerar cobrança]
 Se o número extra tiver exclusão agendada, esta chamada cancela a exclusão. Quando o número foi criado antes do início do ciclo cobrado atual, a taxa de ativação é cobrada de novo para trazê-lo de volta. Veja [Cobrança de números extras](/numbers/billing/).
@@ -151,9 +151,9 @@ em estado `connecting` (`at` vem vazio nesta chamada). O status final
 (`connected` ou `failed`) chega via webhook `number.connected` /
 `number.connect.failed`, ou consultando o [Status dos números extras](/numbers/status/).
 
-## Desativação
+## Desconectar
 
-Para desativar (desconectar) um número extra que está ativo, faça uma requisição POST para o endpoint de desconexão informando o alias do número na URL.
+Para desconectar um número extra conectado, faça uma requisição POST para o endpoint de desconexão informando o alias do número na URL.
 
 <Tabs>
   <TabItem label="cURL">
@@ -284,7 +284,7 @@ status anterior até o Turbo Notify concluir a desconexão). O status final
 (`disconnected`) chega via webhook `number.disconnected`, ou consultando
 o [Status dos números extras](/numbers/status/).
 
-:::note[Ativação e desativação do número principal]
+:::note[Conexão do número principal]
 O número principal tem suas próprias rotas, sem `{alias}` no path e com
 resposta mais simples (só `alias` e `status`, sem o campo `at`):
 
@@ -302,7 +302,7 @@ disconnect.
 
 ## Erros possíveis
 
-### Ativação (`POST /v1/numbers/{alias}/connect`)
+### Reconectar (`POST /v1/numbers/{alias}/connect`)
 
 | Status | Código de erro              | Descrição                                                     |
 | :----: | ---------------------------- | ------------------------------------------------------------- |
@@ -315,7 +315,7 @@ disconnect.
 | `409`  | `already_connecting`         | Já existe uma tentativa de conexão em andamento.                |
 | `500`  | `internal_error`             | Erro interno inesperado no servidor.                           |
 
-### Desativação (`POST /v1/numbers/{alias}/disconnect`)
+### Desconectar (`POST /v1/numbers/{alias}/disconnect`)
 
 | Status | Código de erro          | Descrição                                                     |
 | :----: | ------------------------ | ------------------------------------------------------------- |

@@ -1,0 +1,56 @@
+---
+title: Visão geral dos números
+description: Número principal e números extras no Turbo Notify, o ciclo de vida de um número e qual rota usar em cada etapa.
+---
+
+Cada número de WhatsApp da sua conta envia e recebe mensagens como um
+dispositivo conectado ao WhatsApp daquele telefone, do mesmo jeito que o
+WhatsApp Web. O telefone continua funcionando normalmente, e o Turbo Notify
+aparece em **Dispositivos conectados** com o nome da sua organização.
+
+## Número principal e números extras
+
+| | Número principal | Números extras |
+| - | ---------------- | -------------- |
+| Quantos | Um por conta | Quantos o plano permitir |
+| Alias | Sempre `main` | Você escolhe no cadastro |
+| Cadastro e pareamento | Pelo dashboard | Pelo dashboard ou pela API |
+| Cobrança | Incluída no plano | Por número, veja [Cobrança](/numbers/billing/) |
+
+Todas as rotas de mensagens, contatos e grupos ficam debaixo do número:
+`/v1/numbers/{alias}/...`.
+
+## Ciclo de vida de um número extra
+
+| Etapa | O que você faz | Status resultante | Página |
+| ----- | -------------- | ----------------- | ------ |
+| Cadastrar | `POST /v1/numbers` | `pending` | [Inclusão](/numbers/add/) |
+| Parear | `POST /v1/numbers/{alias}/pair` e o código digitado no celular | `pairing`, depois `connected` ou `failed` | [Pareamento](/numbers/pairing/) |
+| Acompanhar | `GET /v1/numbers/{alias}` ou webhooks `number.*` | o status atual | [Status](/numbers/status/) |
+| Desconectar e reconectar | `POST /v1/numbers/{alias}/disconnect` e `.../connect` | `disconnected`, `connecting`, `connected` | [Conexão](/numbers/activation/) |
+| Remover | `DELETE /v1/numbers/{alias}` | `pending_deletion`, depois removido | [Remoção](/numbers/remove/) |
+
+Um número conectado pode cair sozinho (por exemplo, se o celular ficar muito
+tempo sem internet ou se alguém remover a conexão em **Dispositivos
+conectados**). Nesses casos o status muda para `disconnected`,
+`reconnecting` ou `revoked`, e você é avisado pelo webhook correspondente.
+Um número `revoked` precisa ser pareado de novo.
+
+## Acompanhar mudanças
+
+Duas formas, que podem ser combinadas:
+
+- **Webhooks** `number.*` avisam cada mudança assim que ela acontece, veja
+  [Webhook](/messages/webhook/).
+- **Consulta** `GET /v1/numbers/{alias}` devolve o status atual e, durante o
+  pareamento, o código a ser digitado. É a forma certa de mostrar o código,
+  que não é enviado por webhook.
+
+## Se você revende números
+
+Quando os números da sua conta pertencem aos seus clientes, é o seu cliente
+quem digita o código no celular dele. A página de
+[Pareamento](/numbers/pairing/#experiência-de-pareamento-recomendada)
+descreve a tela que permite a ele concluir sozinho: novo código a qualquer
+momento, mensagem certa para cada motivo de falha e o limite de tentativas
+que protege o número dele.

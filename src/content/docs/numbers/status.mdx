@@ -8,10 +8,6 @@ import ApiResponse from '@components/ApiResponse.astro';
 
 Acompanhe o status de cada número extra cadastrado na sua conta para garantir que esteja ativo e pronto para envio.
 
-## Cobrança
-
-A cobrança de números extras é feita de forma proporcional ao período de uso. Para entender os valores e o ciclo de cobrança, consulte a documentação de [Cobrança de números extras](/numbers/billing/).
-
 ## Consultar status
 
 Para verificar o status de um número extra específico, faça uma requisição GET informando o alias do número.
@@ -211,7 +207,8 @@ da exclusão agendada (veja a nota acima).
 
 ### Bloco de pareamento (`pairing`)
 
-Presente quando `status` é `pairing` e o código ainda está válido:
+Presente quando `status` é `pairing` e o código está pronto (veja
+[Pareamento de números extras](/numbers/pairing/#mostrar-o-código)):
 
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
@@ -253,7 +250,7 @@ mostrar a mensagem certa ao seu cliente. O mesmo valor chega no evento
 
 Novos motivos podem ser adicionados. Trate um valor que você não conhece como
 `pairing_failed`. Para montar a tela de pareamento do seu cliente, veja
-[Experiência de pareamento recomendada](/numbers/add/#experiência-de-pareamento-recomendada).
+[Pareamento de números extras](/numbers/pairing/#experiência-de-pareamento-recomendada).
 
 ## Erros possíveis
 

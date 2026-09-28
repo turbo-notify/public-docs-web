@@ -85,9 +85,19 @@ export default defineConfig({
               translations: { en: 'Number Management', es: 'Gestión de números' },
               items: [
                 {
+                  slug: 'numbers/overview',
+                  label: 'Visão geral',
+                  translations: { en: 'Overview', es: 'Visión general' },
+                },
+                {
                   slug: 'numbers/add',
                   label: 'Inclusão',
                   translations: { en: 'Add', es: 'Agregar' },
+                },
+                {
+                  slug: 'numbers/pairing',
+                  label: 'Pareamento',
+                  translations: { en: 'Pairing', es: 'Emparejamiento' },
                 },
                 {
                   slug: 'numbers/status',
@@ -95,24 +105,24 @@ export default defineConfig({
                   translations: { en: 'Status', es: 'Estado' },
                 },
                 {
-                  slug: 'numbers/update',
-                  label: 'Atualização',
-                  translations: { en: 'Update', es: 'Actualización' },
-                },
-                {
                   slug: 'numbers/list',
                   label: 'Listagem',
                   translations: { en: 'List', es: 'Listar' },
                 },
                 {
+                  slug: 'numbers/activation',
+                  label: 'Conexão',
+                  translations: { en: 'Connection', es: 'Conexión' },
+                },
+                {
+                  slug: 'numbers/update',
+                  label: 'Atualização',
+                  translations: { en: 'Update', es: 'Actualización' },
+                },
+                {
                   slug: 'numbers/remove',
                   label: 'Remoção',
                   translations: { en: 'Remove', es: 'Eliminar' },
-                },
-                {
-                  slug: 'numbers/activation',
-                  label: 'Ativação',
-                  translations: { en: 'Activation', es: 'Activación' },
                 },
                 {
                   slug: 'numbers/billing',

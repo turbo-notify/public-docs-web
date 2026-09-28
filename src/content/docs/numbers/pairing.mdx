@@ -1,0 +1,474 @@
+---
+title: Pareamento de números extras
+description: Como vincular um número extra ao WhatsApp pela API com código de vinculação, tratar código digitado errado, motivos de falha e o limite de tentativas.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+Pareamento é o momento em que o WhatsApp do número passa a reconhecer o
+Turbo Notify como um dispositivo conectado. Depois de [cadastrar o número
+extra](/numbers/add/), quem tem o celular dele em mãos digita um **código de
+vinculação** no WhatsApp. Pela API, números extras pareiam sempre por código
+de vinculação. O número principal é pareado pelo dashboard.
+
+Se você oferece números de WhatsApp aos seus próprios clientes, quem digita
+o código é o seu cliente, na sua tela. Esta página mostra como montar essa
+tela para que ele consiga concluir sozinho, inclusive quando algo dá errado.
+
+## Como funciona
+
+1. Você pede um código com `POST /v1/numbers/{alias}/pair`. O número passa
+   para `status: "pairing"`.
+2. Em poucos segundos o código fica disponível no bloco `pairing` de
+   `GET /v1/numbers/{alias}`.
+3. No celular do número, a pessoa abre o WhatsApp em **Dispositivos
+   conectados > Conectar dispositivo > Conectar com número de telefone** e
+   digita o código.
+4. O número passa para `status: "connected"` (ou `"failed"`, com o motivo em
+   `reason`).
+
+Depois de pareado, o número aparece em **Dispositivos conectados** no
+celular com o nome da sua organização, para que a pessoa reconheça a conexão
+e não a remova por engano.
+
+## Pedir o código
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/numbers/vendas_sp/pair \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch('https://api.turbonotify.com/v1/numbers/vendas_sp/pair', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer SUA_CHAVE' }
+    });
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/numbers/vendas_sp/pair"
+    headers = {"Authorization": "Bearer SUA_CHAVE"}
+
+    response = requests.post(url, headers=headers)
+    print(response.json())
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/numbers/vendas_sp/pair", nil)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/numbers/vendas_sp/pair';
+
+    $options = [
+        'http' => [
+            'header' => ['Authorization: Bearer SUA_CHAVE'],
+            'method' => 'POST'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    var_dump(json_decode($result, true));
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var response = await client.PostAsync(
+        "https://api.turbonotify.com/v1/numbers/vendas_sp/pair",
+        null
+    );
+    Console.WriteLine(await response.Content.ReadAsStringAsync());
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers/vendas_sp/pair"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+**Escopo obrigatório:** `numbers:write`
+
+<ApiResponse
+  status={202}
+  body={{
+    alias: 'vendas_sp',
+    status: 'pairing',
+  }}
+/>
+
+A resposta confirma o pedido. O código é gerado pelo WhatsApp e chega de
+forma assíncrona.
+
+## Mostrar o código
+
+Consulte `GET /v1/numbers/{alias}` enquanto `status` for `"pairing"`. Quando
+o código estiver pronto, o bloco `pairing` vem preenchido:
+
+<ApiResponse
+  status={200}
+  body={{
+    contact_id: null,
+    name: null,
+    type: 'extra',
+    alias: 'vendas_sp',
+    number: '5511988888888',
+    status: 'pairing',
+    at: '2026-09-28T14:00:00Z',
+    description: null,
+    scheduled_deletion_at: null,
+    reason: null,
+    pairing: {
+      method: 'pairing_code',
+      data: 'Z5X7-LTYL',
+      expires_at: '2026-09-28T14:02:40Z',
+    },
+  }}
+/>
+
+- `pairing.data` é o código, com 8 caracteres, exibido com hífen.
+- `pairing.expires_at` é o fim da validade: use para a contagem regressiva.
+- Enquanto o código ainda está sendo gerado, `pairing` vem `null`.
+
+## Código digitado errado
+
+Se o código for digitado errado no celular, o WhatsApp invalida esse código
+na hora: nem o código correto é aceito depois disso. O WhatsApp não avisa
+esse erro a ninguém, então a sua tela precisa oferecer um novo código a
+qualquer momento.
+
+Para gerar um novo código, chame `POST /v1/numbers/{alias}/pair` de novo
+enquanto o número estiver com `status: "pairing"`. O código anterior é
+descartado, o bloco `pairing` volta a vir `null` e, em seguida, traz o novo
+código. Mostre sempre o código mais recente. O mesmo vale quando o código
+expira.
+
+## O WhatsApp do número cadastrado
+
+O pareamento precisa ser concluído no WhatsApp do número cadastrado. Se
+outro WhatsApp usar o código, o pareamento é recusado, o dispositivo é
+desconectado desse outro WhatsApp e o número fica com `status: "failed"` e
+`reason: "paired_phone_mismatch"`. Para tentar de novo, peça um novo código e
+conclua o pareamento no celular do número cadastrado.
+
+## Resultado do pareamento
+
+| Situação | Pelo status | Pelo webhook |
+| -------- | ----------- | ------------ |
+| Deu certo | `status: "connected"` | [`number.connected`](/messages/webhook/) |
+| Falhou | `status: "failed"` e o motivo em `reason` | [`number.connect.failed`](/messages/webhook/), com o mesmo `reason` |
+
+O código em si só é entregue pela consulta de status: por ser uma credencial
+de curta duração, ele não é enviado em webhooks.
+
+### Motivos de falha
+
+| `reason` | O que dizer ao seu cliente |
+| -------- | -------------------------- |
+| `pairing_timeout` | O código expirou antes de ser usado. Gere um novo código. |
+| `paired_phone_mismatch` | O código foi usado em outro WhatsApp. Use o celular do número cadastrado. |
+| `phone_already_bound` | Este número já está em uso na conta. |
+| `no_active_session` | O número principal da conta precisa estar conectado antes. |
+| `code_generation_failed` | O WhatsApp não gerou o código agora. Tente de novo em instantes. |
+| `connection_lost` | O número perdeu a conexão com o WhatsApp. Pareie de novo. |
+| `pairing_failed` | Não foi possível concluir o pareamento. Tente de novo. |
+
+Novos motivos podem ser adicionados. Trate um valor que você não conhece como
+`pairing_failed`.
+
+## Experiência de pareamento recomendada
+
+Uma tela de pareamento que resolve sozinha os casos comuns:
+
+1. **Peça o código** com `POST /v1/numbers/{alias}/pair`.
+2. **Consulte o status a cada 2 segundos** enquanto `status` for `"pairing"`.
+   Com `pairing` preenchido, mostre `pairing.data` e a contagem regressiva até
+   `pairing.expires_at`. Com `pairing` `null`, mostre "gerando código".
+3. **Deixe "Gerar novo código" sempre visível**, não só quando o código
+   expira: é a saída para o código digitado errado. O botão chama
+   `POST /v1/numbers/{alias}/pair` de novo.
+4. **Encerre pelo resultado**: `connected` mostra sucesso; `failed` mostra a
+   mensagem do `reason` e oferece tentar de novo.
+5. **Respeite o limite de tentativas**: em um `429`, mostre quanto falta a
+   partir do cabeçalho `Retry-After` em vez de repetir a chamada.
+
+<Tabs>
+  <TabItem label="Node">
+    ```js title="pareamento.js"
+    const API = 'https://api.turbonotify.com/v1/numbers';
+    const headers = { 'Authorization': 'Bearer SUA_CHAVE' };
+
+    // Chamado ao abrir a tela e pelo botão "Gerar novo código".
+    async function pedirCodigo(alias) {
+      const res = await fetch(`${API}/${alias}/pair`, { method: 'POST', headers });
+      if (res.status === 429) {
+        return { aguardarSegundos: Number(res.headers.get('Retry-After')) };
+      }
+      return { aguardarSegundos: 0 };
+    }
+
+    // Chamado a cada 2 segundos enquanto a tela estiver aberta.
+    async function consultar(alias) {
+      const res = await fetch(`${API}/${alias}`, { headers });
+      const numero = await res.json();
+      if (numero.status === 'connected') return { tela: 'sucesso' };
+      if (numero.status === 'failed') return { tela: 'falha', motivo: numero.reason };
+      if (numero.pairing) {
+        return { tela: 'codigo', codigo: numero.pairing.data, expiraEm: numero.pairing.expires_at };
+      }
+      return { tela: 'gerando' };
+    }
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="pareamento.py"
+    import requests
+
+    API = "https://api.turbonotify.com/v1/numbers"
+    HEADERS = {"Authorization": "Bearer SUA_CHAVE"}
+
+
+    def pedir_codigo(alias: str) -> int:
+        """Chamado ao abrir a tela e pelo botão "Gerar novo código".
+
+        Retorna quantos segundos esperar antes de permitir outro pedido.
+        """
+        res = requests.post(f"{API}/{alias}/pair", headers=HEADERS)
+        if res.status_code == 429:
+            return int(res.headers["Retry-After"])
+        return 0
+
+
+    def consultar(alias: str) -> dict:
+        """Chamado a cada 2 segundos enquanto a tela estiver aberta."""
+        numero = requests.get(f"{API}/{alias}", headers=HEADERS).json()
+        if numero["status"] == "connected":
+            return {"tela": "sucesso"}
+        if numero["status"] == "failed":
+            return {"tela": "falha", "motivo": numero["reason"]}
+        if numero["pairing"]:
+            return {
+                "tela": "codigo",
+                "codigo": numero["pairing"]["data"],
+                "expira_em": numero["pairing"]["expires_at"],
+            }
+        return {"tela": "gerando"}
+    ```
+  </TabItem>
+</Tabs>
+
+## Limite de tentativas
+
+Cada `POST /v1/numbers/{alias}/pair` pede um código novo ao WhatsApp e gera
+uma notificação no celular do número. Pedidos seguidos demais fazem o próprio
+WhatsApp bloquear novos códigos para aquele número por um tempo. Para
+proteger o número, o pareamento aceita até **10 pedidos por minuto por
+número** e **30 por minuto na conta**. Acima disso a resposta é
+`429 pairing_rate_limited`, com o cabeçalho `Retry-After` em segundos:
+
+<ApiResponse
+  status={429}
+  headers={{ 'Retry-After': '42' }}
+  body={{
+    error: 'pairing_rate_limited',
+  }}
+/>
+
+## Cancelar o pareamento
+
+Enquanto o número estiver com `status: "pairing"`, você pode cancelar a
+solicitação em andamento e voltar o número para `"pending"`:
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/numbers/vendas_sp/cancel-pairing \
+      -H "Authorization: Bearer SUA_CHAVE"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch('https://api.turbonotify.com/v1/numbers/vendas_sp/cancel-pairing', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer SUA_CHAVE' }
+    });
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/numbers/vendas_sp/cancel-pairing"
+    headers = {"Authorization": "Bearer SUA_CHAVE"}
+
+    response = requests.post(url, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/numbers/vendas_sp/cancel-pairing", nil)
+        req.Header.Set("Authorization", "Bearer SUA_CHAVE")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/numbers/vendas_sp/cancel-pairing';
+
+    $options = [
+        'http' => [
+            'header' => ['Authorization: Bearer SUA_CHAVE'],
+            'method' => 'POST'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
+
+    var response = await client.PostAsync(
+        "https://api.turbonotify.com/v1/numbers/vendas_sp/cancel-pairing",
+        null
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers/vendas_sp/cancel-pairing"))
+                .header("Authorization", "Bearer SUA_CHAVE")
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+<ApiResponse
+  status={200}
+  body={{
+    alias: 'vendas_sp',
+    status: 'pending',
+  }}
+/>
+
+
+O cancelamento vale só enquanto o número está com `status: "pairing"`. Para
+parear depois, peça um novo código.
+
+## Erros possíveis
+
+### Pedir o código (`POST /v1/numbers/{alias}/pair`)
+
+| Status | Código de erro | Descrição |
+| :----: | -------------- | --------- |
+| `402`  | `subscription_inactive` | A assinatura da organização não está ativa (resposta inclui `details.status`). |
+| `402`  | `feature_not_available` | O plano atual não inclui números extras. |
+| `403`  | `main_number_pair_not_allowed` | O número principal é pareado pelo dashboard. |
+| `404`  | `extra_number_not_found` | O alias informado não existe na conta. |
+| `409`  | `already_paired_or_connected` | O número já está pareado ou conectado. |
+| `429`  | `pairing_rate_limited` | Limite de tentativas atingido: aguarde `Retry-After` segundos. |
+
+### Cancelar (`POST /v1/numbers/{alias}/cancel-pairing`)
+
+| Status | Código de erro | Descrição |
+| :----: | -------------- | --------- |
+| `402`  | `feature_not_available` | O plano atual não inclui números extras. |
+| `404`  | `extra_number_not_found` | O alias informado não existe na conta. |
+| `409`  | `not_pairing` | O número não está com `status: "pairing"`. |
+
+As duas rotas também retornam `403 not_authorized` (chave inválida ou
+ausente) e `403 insufficient_scope` (falta o escopo `numbers:write`).
