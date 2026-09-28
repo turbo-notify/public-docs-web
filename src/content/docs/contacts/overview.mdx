@@ -17,7 +17,7 @@ Contatos são escopados por número. Para o **número principal**, use as rotas 
 | Criação | Automática na primeira observação `(organização, número, telefone)` |
 | Identificador | `ct_{hex32}`: identificador público estável |
 | Escopo | Por número: o mesmo telefone alcançado por dois números da mesma organização gera **dois contatos distintos**, com `ct_` ids diferentes (e o mesmo telefone em organizações distintas também) |
-| Persistência | Sem TTL; persiste após `deleted_at` (soft delete histórico) |
+| Persistência | Sem expiração: o contato permanece enquanto a organização existir |
 
 ## Ciclo de vida
 
@@ -30,7 +30,7 @@ Contatos são escopados por número. Para o **número principal**, use as rotas 
 ```
 
 1. **Descoberta**: a primeira observação de `(organização, número, telefone)` cria o contato com o `source` apropriado.
-2. **Enriquecimento**: o Turbo Notify completa de forma assíncrona com `name`, `profile_picture`. Falhas são fail-open: o contato existe mesmo sem enriquecimento.
+2. **Enriquecimento**: o Turbo Notify completa de forma assíncrona com `name`, `picture`. Falhas são fail-open: o contato existe mesmo sem enriquecimento.
 3. **Quota**: cada contato distinto contactado via Turbo Notify dentro do ciclo de faturamento atual (`cycle_start` até `cycle_end`) consome um slot da quota, seja um contato novo ou recorrente. A quota só reseta em `resets_at`.
 
 ## Tier de quota
@@ -56,7 +56,7 @@ aplicados via suporte: sempre por número, nunca um teto único para a conta.
 ## Fora de escopo
 
 - Não há `POST /v1/numbers/{alias}/contacts`: contatos são derivados de tráfego.
-- Não há `DELETE /v1/numbers/{alias}/contacts/{id}`: use soft delete via dashboard.
+- Não há `DELETE /v1/numbers/{alias}/contacts/{id}`: contatos não são excluídos manualmente.
 - Não há sincronização de agenda do WhatsApp.
 
 ## Próximos passos

@@ -187,7 +187,7 @@ Também é possível cadastrar números extras de forma programática pela API.
 
 O cadastro (`POST /v1/numbers`) e o pareamento (obtenção do código a ser
 inserido no WhatsApp) são **operações separadas**. `alias` é obrigatório:
-deve começar com uma letra, e `description` é opcional. A resposta do
+deve começar com uma letra e ter no máximo 50 caracteres, e `description` é opcional. A resposta do
 cadastro confirma apenas a criação do número: o `status` sempre nasce
 `"pending"` e não há código de pareamento inline:
 
@@ -225,7 +225,7 @@ O número nasce com `status: "pending"`. Para vinculá-lo ao WhatsApp, siga
 ## Regras do cadastro
 
 - Cada número extra deve pertencer a um aparelho com WhatsApp ativo: é nele que o pareamento é concluído.
-- `alias` é obrigatório e deve começar com uma letra. Ele identifica o número nas rotas `/v1/numbers/{alias}/...`, inclusive no envio de mensagens.
+- `alias` é obrigatório, deve começar com uma letra e ter no máximo 50 caracteres. Ele identifica o número nas rotas `/v1/numbers/{alias}/...`, inclusive no envio de mensagens.
 - O alias `main` é reservado para o número principal.
 - Um mesmo telefone só pode estar cadastrado uma vez na conta.
 
@@ -235,7 +235,7 @@ Veja os principais erros que podem ocorrer no cadastro de números extras:
 
 | Status | Código de erro           | Descrição                                              |
 | :----: | ------------------------ | ------------------------------------------------------ |
-| `400`  | `invalid_json`           | O `alias` está vazio ou é inválido. (Um corpo de requisição malformado retorna `422 validation_error`, não este código.) |
+| `422`  | `validation_error`       | O corpo é inválido: `alias` vazio, que não começa com letra ou com mais de 50 caracteres, `phone_number` ausente, ou algum campo de texto com caractere inválido. A resposta traz `details.errors` com o campo e a mensagem. |
 | `400`  | `reserved_alias`         | O alias `"main"` é reservado para o número principal e não pode ser usado em um número extra. |
 | `400`  | `no_payment_method`      | A organização não tem forma de pagamento cadastrada. Nenhuma cobrança é tentada e nenhum número é criado. |
 | `402`  | `subscription_inactive`  | A assinatura da organização está `past_due`, `terminated`, `pending` ou com trial expirado (resposta inclui `details.status`). |

@@ -348,6 +348,7 @@ Saiba mais sobre [números extras](/numbers/add/).
 | `402`  | `feature_not_available` | O recurso não está disponível no plano contratado. |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.        |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
+| `404`  | `number_not_found`      | O `{alias}` do path não corresponde a nenhum número da conta (na rota plana: a conta ainda não tem número principal). |
 | `404`  | `not_found`             | A mensagem não foi encontrada, pertence a outra organização, está fora da [janela de retenção de conteúdo](/messages/retention/) do plano, ou (na rota aninhada `/numbers/{alias}/messages/.../react`) pertence a um número diferente do alias informado na URL: todos esses casos devolvem a mesma resposta, sem distinção. |
 | `404`  | `message_not_found`     | *(apenas na rota atalho sem `{alias}`, `POST /v1/messages/{id}/react`)* O `message_id` existe mas pertence a um número extra, não ao número principal. |
 | `422`  | `message_not_reactable` | A mensagem alvo da reação ainda não foi enviada ao WhatsApp ou já foi apagada. |

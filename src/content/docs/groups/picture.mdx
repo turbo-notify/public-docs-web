@@ -49,7 +49,7 @@ Não trate os dois como equivalentes: um cliente que espera 404 do grupo
 nunca vai vê-lo, e um cliente que espera 200 do contato vai receber 404.
 :::
 
-O Turbo Notify reavalia automaticamente uma foto marcada como `unavailable` enquanto o storage estava ausente e a envia assim que você habilita o BYO Storage, sem necessidade de nova ação (ver [a foto fica disponível depois](/groups/lifecycle-events/#groups-picture-becomes-available)).
+O Turbo Notify reavalia a foto marcada como `unavailable` na próxima atividade do grupo depois que você habilita o BYO Storage, sem necessidade de nova ação (ver [a foto fica disponível depois](/groups/lifecycle-events/#groups-picture-becomes-available)).
 
 ## Exemplo: foto disponível
 
@@ -81,7 +81,7 @@ A URL pré-assinada tem validade curta: **15 minutos por padrão** (configuráve
   }}
 />
 
-O campo `reason` discrimina a causa: `no_storage` (sem storage configurado), `storage_circuit_open` (circuit breaker aberto), `upload_failed` (falha de upload neste ciclo) ou `peer_has_none` (o grupo não tem foto). O `setup_hint` acompanha apenas `no_storage` e `storage_circuit_open`: para `upload_failed` e `peer_has_none` ele é omitido. É o mesmo envelope usado por mídia e pela foto de contato.
+O campo `reason` discrimina a causa: `no_storage` (sem storage configurado), `storage_circuit_open` (o seu storage vinha falhando e o envio foi suspenso temporariamente), `upload_failed` (falha de upload neste ciclo) ou `peer_has_none` (o grupo não tem foto). O `setup_hint` só é preenchido para `no_storage` e `storage_circuit_open`. Para `upload_failed` e `peer_has_none` ele vem como `null`. É o mesmo envelope usado por mídia e pela foto de contato.
 
 ## Campo `picture` inline em `GET /v1/numbers/{alias}/groups/{group_id}`
 

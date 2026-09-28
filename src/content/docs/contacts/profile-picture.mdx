@@ -9,7 +9,7 @@ import ApiResponse from '@components/ApiResponse.astro';
 
 Retorna a foto de perfil do contato. Quando a foto está disponível, a resposta é um **302 redirect** para uma URL pré-assinada; quando não está, a resposta é **200 OK** com um corpo JSON descrevendo o motivo: este endpoint **não** usa 404 para "sem foto" (veja a tabela abaixo).
 
-> O 302 aponta para uma URL **pré-assinada** do seu BYO Storage (nunca a object key crua). Uma foto marcada como `unavailable` enquanto o storage estava ausente é **reavaliada** e enviada assim que você habilita o BYO Storage. O webhook [`contact.picture_changed`](/webhooks/contact-events/#exemplo-contactpicture_changed) é então emitido.
+> O 302 aponta para uma URL **pré-assinada** do seu BYO Storage (nunca a object key crua). Uma foto marcada como `unavailable` enquanto o storage estava ausente é **reavaliada** na próxima interação com o contato depois que você habilita o BYO Storage. O webhook [`contact.picture_changed`](/webhooks/contact-events/#exemplo-contactpicture_changed) é emitido quando a foto chega ao seu bucket.
 
 ## Endpoint
 
@@ -60,7 +60,7 @@ Pragma: no-cache
   }}
 />
 
-O campo `reason` discrimina a causa: `no_storage` (sem storage configurado), `storage_circuit_open` (circuit breaker aberto), `upload_failed` (a tentativa de upload deste ciclo falhou: **sem retry imediato**; diferente da mídia de mensagem, que é terminal, a foto é **re-resolvida na próxima interação do contato**) ou `peer_has_none` (o contato não tem foto no WhatsApp). O `setup_hint` acompanha apenas `no_storage` e `storage_circuit_open`. Para `upload_failed` e `peer_has_none` ele é omitido.
+O campo `reason` discrimina a causa: `no_storage` (sem storage configurado), `storage_circuit_open` (o seu storage vinha falhando e o envio foi suspenso temporariamente), `upload_failed` (a tentativa de upload deste ciclo falhou: **sem retry imediato**; diferente da mídia de mensagem, que é terminal, a foto é **re-resolvida na próxima interação do contato**) ou `peer_has_none` (o contato não tem foto no WhatsApp). O `setup_hint` só é preenchido para `no_storage` e `storage_circuit_open`. Para `upload_failed` e `peer_has_none` ele vem como `null`.
 
 ## Cache
 

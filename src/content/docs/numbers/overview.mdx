@@ -28,19 +28,21 @@ Todas as rotas de mensagens, contatos e grupos ficam debaixo do número:
 | Parear | `POST /v1/numbers/{alias}/pair` e o código digitado no celular | `pairing`, depois `connected` ou `failed` | [Pareamento](/numbers/pairing/) |
 | Acompanhar | `GET /v1/numbers/{alias}` ou webhooks `number.*` | o status atual | [Status](/numbers/status/) |
 | Desconectar e reconectar | `POST /v1/numbers/{alias}/disconnect` e `.../connect` | `disconnected`, `connecting`, `connected` | [Conexão](/numbers/activation/) |
-| Remover | `DELETE /v1/numbers/{alias}` | `pending_deletion`, depois removido | [Remoção](/numbers/remove/) |
+| Remover | `DELETE /v1/numbers/{alias}` | removido na hora ou `pending_deletion` até o fim do ciclo | [Remoção](/numbers/remove/) |
 
 Um número conectado pode cair sozinho (por exemplo, se o celular ficar muito
 tempo sem internet ou se alguém remover a conexão em **Dispositivos
-conectados**). Nesses casos o status muda para `disconnected`,
-`reconnecting` ou `revoked`, e você é avisado pelo webhook correspondente.
-Um número `revoked` precisa ser pareado de novo.
+conectados**). Nesses casos o status muda para `disconnected` (webhook
+`number.disconnected`), `reconnecting` enquanto o Turbo Notify tenta
+reconectar sozinho (visível na consulta de status), ou `revoked` (webhook
+`number.revoked`). Um número `revoked` precisa ser pareado de novo.
 
 ## Acompanhar mudanças
 
 Duas formas, que podem ser combinadas:
 
-- **Webhooks** `number.*` avisam cada mudança assim que ela acontece, veja
+- **Webhooks** `number.*` avisam assim que o número conecta, desconecta,
+  falha, é revogado ou tem a remoção agendada, cancelada ou concluída, veja
   [Webhook](/messages/webhook/).
 - **Consulta** `GET /v1/numbers/{alias}` devolve o status atual e, durante o
   pareamento, o código a ser digitado. É a forma certa de mostrar o código,

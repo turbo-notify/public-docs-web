@@ -76,14 +76,8 @@ Estourar qualquer um retorna `429 pairing_rate_limited` com o cabeçalho
 
 Independente do tier contratado, o Turbo Notify aplica limites operacionais fixos para proteger a infraestrutura. Estes **não** diferenciam por plano:
 
-- **`messages_per_minute`**: 10.000 envios/minuto, aplicados **por organização e por número** (proteção contra rajadas da infraestrutura). É um limite **global** da conta: vale para toda a plataforma, não por conexão ou servidor.
+- **`messages_per_minute`**: 10.000 envios/minuto **por número** (proteção contra rajadas). Cada número tem a sua própria contagem, somando todas as requisições enviadas por ele.
 - **`recipients_per_day`**: 2.000 mensagens/dia para o **mesmo destinatário**, por número (proteção anti-bloqueio). Não há limite de destinatários distintos por dia: você pode alcançar quantos contatos quiser, respeitando as demais quotas do plano.
-
-## Números extras
-
-Cada número extra cadastrado na conta possui seu próprio relógio de espaçamento de envio, independente do número principal. Os limites de cada número extra seguem as mesmas regras de tier da conta.
-
-Isso permite distribuir o volume de envio entre vários números, aumentando a capacidade total de envio da sua conta.
 
 ## Controles internos
 
@@ -107,11 +101,13 @@ Para evitar problemas, siga as recomendações de uso responsável descritas em 
 | :----: | ------------------------ | ------------------------------------------------------------------------- |
 | `429`  | `send_rate_spacing`      | Envio antes do intervalo mínimo entre mensagens do tier, no mesmo número. |
 | `429`  | `refresh_rate_limited`   | Limite de refresh de contato ultrapassado.                                |
-| `429`  | `messages_per_minute_limit_exceeded` | Proteção contra rajadas: 10.000 envios/minuto ultrapassado, limite **global** da conta, aplicado por organização e por número (veja [acima](#proteção-contra-rajadas-operacional-igual-em-todos-os-tiers)). |
+| `429`  | `messages_per_minute_limit_exceeded` | Proteção contra rajadas: mais de 10.000 envios/minuto no mesmo número (veja [acima](#proteção-contra-rajadas-operacional-igual-em-todos-os-tiers)). |
 | `429`  | `recipients_per_day_limit_exceeded`  | Proteção anti-bloqueio: 2.000 mensagens/dia para o mesmo destinatário, por número (veja [acima](#proteção-contra-rajadas-operacional-igual-em-todos-os-tiers)). |
 | `429`  | `warmup_limit_exceeded` | Número conectado há poucos dias: o volume diário é liberado aos poucos para o WhatsApp não tratar o número novo como suspeito. O cabeçalho `Retry-After` indica quantos segundos faltam para o limite diário renovar (meia-noite UTC). |
 | `429`  | `duplicate_burst_blocked` | O mesmo texto foi enviado para mais de 20 destinatários na última hora, pelo mesmo número. Varie o conteúdo ou espace os envios. |
 | `429`  | `reply_ratio_too_low` | Poucas respostas recebidas em relação ao que o número enviou, sinal de envio não solicitado. Reduza o volume para quem não interage. |
+| `429`  | `pairing_rate_limited`   | Pedidos de código de pareamento acima do limite, veja [Pareamento de números extras](#pareamento-de-números-extras). |
+| `429`  | `rate_limit_exceeded`    | Limite geral de requisições à API da sua organização ultrapassado (1.000 requisições por segundo). Aguarde alguns instantes e tente novamente. |
 | `503`  | `internal_error`         | Serviço temporariamente indisponível. Tente novamente após alguns instantes. |
 | `503`  | `plan_lookup_failed`     | Não foi possível resolver o plano da organização no momento. A requisição não foi processada. Tente novamente. |
 

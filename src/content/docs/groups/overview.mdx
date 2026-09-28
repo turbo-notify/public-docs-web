@@ -30,7 +30,6 @@ O campo `to` discrimina por presença de chave, sem campo `kind` ou `type`:
 
 A mesma regra vale para os payloads de webhook e polling: quando
 `to.group_id` está presente, o destinatário lógico é o grupo.
-Mensagens 1:1 preservam o shape pré-existente byte-idêntico.
 
 ### Campo `from` sempre é pessoa
 
@@ -53,7 +52,7 @@ número/contato correspondente via `GET /v1/numbers/{alias}`.
 {
   "number_alias": "main",
   "data": {
-    "from": { "contact_id": "ct_...", "name": "Cleverson", "number": "5571999258283" },
+    "from": { "contact_id": "ct_...", "name": "Ana Souza", "number": "5511988887777" },
     "to":   { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" }
   }
 }

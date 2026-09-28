@@ -26,7 +26,7 @@ O Turbo Notify usa a S3 HTTP API como protocolo de transporte, o mesmo protocolo
 |----------|:---------:|-------|
 | **Cloudflare R2** | Sim | Sem custo de egress; excelente para alta frequência de downloads. Consulte o site do provedor para limites atuais. |
 | **Supabase Storage** | Sim | Ideal se você já usa Supabase na sua stack. Consulte o site do provedor para limites atuais. |
-| **AWS S3** | Sim (Free Tier 12 meses) | Maior ecossistema de ferramentas; há custo de egress. Consulte o site da AWS para detalhes. |
+| **AWS S3** | Sim | Maior ecossistema de ferramentas; há custo de egress. Consulte o site da AWS para detalhes. |
 
 :::note[Preços]
 Não citamos valores específicos pois os planos dos provedores mudam. Acesse o site de cada provedor para verificar os limites e preços atuais antes de escolher.
@@ -49,7 +49,7 @@ s3:DeleteObject
 s3:ListBucket
 ```
 
-Crie um usuário IAM (AWS), API token (Cloudflare R2) ou service role (Supabase) com escopo restrito ao bucket do Turbo Notify.
+Crie um usuário IAM (AWS), um API token do R2 (Cloudflare) ou chaves de acesso S3 nas configurações de Storage do projeto (Supabase), com escopo restrito ao bucket do Turbo Notify.
 
 ### 3. Configure no dashboard
 
@@ -64,12 +64,9 @@ Acesse <DashboardLink path="/storage">Armazenamento</DashboardLink> e preencha:
 | **Secret Access Key** | Chave secreta correspondente |
 | **Cloudflare Account ID** / **Supabase Project Ref** | Apenas para R2 e Supabase, respectivamente: o endpoint S3-compatible é gerado automaticamente a partir desse valor |
 
-### 4. Valide a conexão
+### 4. Valide a conexão e salve
 
-Após salvar, clique em **Testar conexão**. O Turbo Notify verifica o bucket (`HEAD`), grava um objeto temporário (`PUT`), lê-o de volta (`GET`) e o remove (`DELETE`) para validar as 4 permissões necessárias (`ListBucket`/`PutObject`/`GetObject`/`DeleteObject`). O resultado aparece como:
-
-- **Conectado**: integração ativa, mídias passam a ser armazenadas imediatamente.
-- **Falha**: verifique credenciais, nome do bucket e permissões.
+Antes de salvar, clique em **Testar conexão**. O Turbo Notify verifica o bucket (`HEAD`), grava um objeto temporário (`PUT`), lê esse objeto de volta (`GET`) e o remove (`DELETE`), validando as 4 permissões necessárias (`ListBucket`/`PutObject`/`GetObject`/`DeleteObject`). Cada verificação aparece numa lista com o seu resultado, e o botão de salvar só é liberado quando as quatro passam. Depois de salvo, as mídias passam a ser armazenadas imediatamente. Se alguma verificação falhar, confira as credenciais, o nome do bucket e as permissões.
 
 ## Comportamento após configuração
 
@@ -111,7 +108,7 @@ Acesse <DashboardLink path="/storage">Armazenamento</DashboardLink> e clique em 
 
 ### `kind: "unavailable"` com `reason: "storage_circuit_open"`
 
-O circuit breaker de storage foi ativado por falhas consecutivas. O Turbo Notify retentará automaticamente. Quando a conexão for restabelecida, você receberá o webhook `storage.recovered`.
+O seu Object Storage falhou várias vezes seguidas e o envio de mídia para ele foi suspenso temporariamente. O Turbo Notify volta a tentar automaticamente. Quando a conexão for restabelecida, você receberá o webhook `storage.recovered`.
 
 ### `kind: "pending"`
 

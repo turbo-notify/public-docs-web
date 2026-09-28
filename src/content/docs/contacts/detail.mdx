@@ -143,7 +143,7 @@ public class DetalheContato {
   body={{
     id: 'ct_a1b2c3d4e5f6789012345678901234ab',
     number_alias: 'main',
-    phone_number: '+5571999294756',
+    phone_number: '+5511988887777',
     name: 'João Silva',
     is_self: false,
     first_messaged_at: '2026-05-10T13:25:00Z',
@@ -175,6 +175,6 @@ leitura nunca o retorna.
 
 ## Erros
 
-- `404 contact_not_found`: ID inválido ou pertencente a outra organização.
+- `404 contact_not_found`: o contato não existe, pertence a outra organização ou a outro número. Um `contact_id` fora do formato `ct_{hex32}` retorna `400 invalid_contact_id`.
 
 Veja a [referência de erros](/contacts/errors/).

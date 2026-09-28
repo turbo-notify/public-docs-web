@@ -15,8 +15,8 @@ O corpo de `POST /v1/numbers/{alias}/messages` (ou o atalho
 inferido automaticamente pelo campo âncora presente em `content`
 (`text`, `image_url`, `latitude`, `start_at`, …). **Não envie** um campo
 `content_type` no request: ele nunca é aceito (incluí-lo retorna `422`).
-Suporta texto, localização, contato, calendário e
-mídia (`image`, `video`, `audio`, `document`, `sticker`, veja
+Suporta texto, localização, contato, calendário, mensagem com botão de
+link (`interactive_type`) e mídia (`image`, `video`, `audio`, `document`, `sticker`, veja
 [Envio de mídia](/messages/send-media/)).
 
 Para citar (responder) uma mensagem existente (qualquer variante de conteúdo), use o endpoint dedicado `POST /v1/messages/{message_id}/reply`, onde `{message_id}` é o id público da mensagem citada (`msg_{hex32}`). O body do reply contém apenas `content`. O webhook resultante é `message.replied` (em vez de `message.sent`); veja [Webhooks](/messages/webhook/#exemplo-messagereplied-inboundoutbound).
@@ -441,6 +441,7 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 | :----: | ----------------------- | ------------------------------------------------- |
 | `400`  | `contact_not_found`     | O `contact_id` informado não pertence à organização.  |
 | `400`  | `contacts_not_enabled`  | Envio por `contact_id` não configurado.           |
+| `400`  | `invalid_phone_number`  | O `to.number` informado não é um telefone válido em formato E.164 (ex.: `+5511999999999`). |
 | `400`  | `invalid_recipient`     | Não foi possível resolver o destinatário informado em `to` para um endereço de envio. Informar nenhum ou mais de um entre `number`, `group_id` e `contact_id` retorna `422 validation_error`. |
 | `400`  | `not_group_member`      | Sua linha não é mais participante do `group_id` informado, veja [Envio para grupo](#envio-para-grupo). |
 | `402`  | `feature_not_available` | Envio para grupo (`to.group_id`) requer plano `BUSINESS` ou superior, veja [Envio para grupo](#envio-para-grupo). |
@@ -448,17 +449,18 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 | `402`  | `contact_quota_exceeded` | Franquia de contatos distintos do ciclo atual esgotada, veja [Quota e uso](/usage/quota/). |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.       |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
+| `404`  | `number_not_found`      | O alias informado na URL não corresponde a nenhum número cadastrado na conta. |
+| `404`  | `group_not_found`       | O `group_id` informado em `to` não foi encontrado na conta. |
 | `422`  | `validation_error`      | O corpo da requisição está malformado ou não passou na validação. A resposta traz `details.errors` com os campos rejeitados. |
 | `422`  | `no_active_session`     | A organização não tem sessão WhatsApp conectada.  |
 | `422`  | `sender_disconnected`   | O número extra do alias na URL está desconectado. |
-| `422`  | `sender_not_found`      | O alias/número informado não corresponde a nenhum remetente da conta. |
 | `422`  | `session_not_connected` | A sessão do remetente não está conectada no momento do envio. |
 | `422`  | `extra_number_not_connected` | O número extra do alias na URL está registrado mas sua conexão como dispositivo vinculado não está ativa no momento. |
 | `422`  | `group_not_owned_by_number` | O `group_id` informado pertence a outro número da conta, não ao alias do path. |
 | `422`  | `message_not_replyable` | *(apenas `POST .../messages/{message_id}/reply`)* A mensagem citada ainda não foi enviada ao WhatsApp ou já foi apagada. |
 | `429`  | `messages_quota_exceeded` | Franquia de mensagens do ciclo atual esgotada, veja [Quota e uso](/usage/quota/). |
 | `429`  | `send_rate_spacing`     | Envio antes do intervalo mínimo entre mensagens do seu tier, veja [Limites de uso](/messages/rate-limits/). |
-| `429`  | `rate_limit_exceeded`   | Outro limite operacional do plano foi ultrapassado, veja [Limites de uso](/messages/rate-limits/). |
+| `429`  | `rate_limit_exceeded`   | Limite de requisições por segundo da API ultrapassado. Os demais limites de proteção do envio (`messages_per_minute_limit_exceeded`, `recipients_per_day_limit_exceeded`, `warmup_limit_exceeded`, `duplicate_burst_blocked`, `reply_ratio_too_low`) têm códigos próprios, veja [Limites de uso](/messages/rate-limits/#erros-relacionados). |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.              |
 
 ## Status da mensagem
@@ -483,9 +485,9 @@ Para saber por quanto tempo as mensagens ficam disponíveis para consulta e oper
 
 ---
 
-## Conteúdo rico: localização, contato e calendário
+## Conteúdo rico: localização, contato, calendário e botão com link
 
-`POST /v1/messages` aceita três variantes de
+`POST /v1/messages` aceita quatro variantes de
 conteúdo rico além de `text`. Cada variante tem um campo âncora próprio
 dentro do objeto `content` e é despachada para o WhatsApp como o tipo
 nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
@@ -788,15 +790,42 @@ ou usar a variante `text` com link ICS quando o destinatário for
 pessoal e o horário for crítico.
 :::
 
+### Enviar botão com link
+
+Uma mensagem com um botão que abre um link. O campo âncora é
+`interactive_type`, sempre `"cta_url"`.
+
+```json title="POST /v1/messages: botão com link"
+{
+  "to": { "number": "+5511999999999" },
+  "content": {
+    "interactive_type": "cta_url",
+    "body": "Seu pedido foi enviado.",
+    "footer": "Loja Exemplo",
+    "url_button": { "display_text": "Rastrear", "url": "https://exemplo.com/rastreio/123" }
+  }
+}
+```
+
+| Campo | Tipo | Obrigatório | Notas |
+|---|---|---|---|
+| `content.interactive_type` | string | sim | sempre `"cta_url"` |
+| `content.body` | string | sim | 1 a 1024 caracteres |
+| `content.header` | object | não | `{ "type": "text", "text": "..." }`, `text` com 1 a 60 caracteres |
+| `content.footer` | string | não | até 60 caracteres |
+| `content.url_button.display_text` | string | sim | 1 a 20 caracteres |
+| `content.url_button.url` | string | sim | URL `http://` ou `https://` |
+
 ### Como aparece no destinatário
 
 Cada tipo aparece no WhatsApp do destinatário com a UI nativa:
 **localização** com mapa e botão "Ver no mapa", **contato** com card
-salvável, **calendário** com botão "Adicionar ao calendário".
+salvável, **calendário** com botão "Adicionar ao calendário", **botão
+com link** com o botão logo abaixo do texto.
 
 Para visualizar exatamente como o evento `message.sent` correspondente
 chega no seu webhook, abra o [Webhook Inspector](https://webhook.turbonotify.com/).
-O painel "Enriched" renderiza esses três tipos com cards dedicados.
+O painel "Enriched" renderiza esses tipos com cards dedicados.
 
 ## Envio para grupo
 
@@ -845,7 +874,8 @@ O campo `to` é polimórfico. Aceita exatamente uma das três formas (sem `kind`
   webhooks/polling de `message.received` (`to.group_id`) ou nos
   eventos de [ciclo de vida de grupo](/groups/lifecycle-events/).
 - O objeto `content` usa o mesmo schema de envios 1:1 (texto, imagem,
-  vídeo, áudio, documento, sticker, location, contact, calendar):
+  vídeo, áudio, documento, sticker, location, contact, calendar,
+  interactive):
   sem mudanças.
 - Para citar uma mensagem dentro do grupo, use o endpoint dedicado
   `POST /v1/numbers/{alias}/messages/{message_id}/reply`.

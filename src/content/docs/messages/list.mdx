@@ -190,12 +190,13 @@ Para ver as menções de uma mensagem específica, consulte
 
 ## Ordenação e paginação
 
-- Os itens vêm ordenados pela ordem interna de criação (mais recente
-  primeiro): não estritamente por `at`. Para a maioria das mensagens os
-  dois coincidem; para envios outbound, `at` (o momento real de envio)
-  pode ficar alguns instantes atrás da ordem de criação por causa do
-  espaçamento anti-ban (veja [Limites de uso](/messages/rate-limits/)). A
-  página é sempre completa e sem lacunas.
+- Os itens vêm na ordem em que o Turbo Notify aceitou cada mensagem (mais
+  recente primeiro), não estritamente por `at`. Para a maioria das
+  mensagens os dois coincidem; em envios outbound, `at` (o momento real de
+  envio) pode ficar alguns segundos depois do aceite, porque o envio simula
+  o tempo de digitação antes de chegar ao WhatsApp. Por isso `at` pode sair
+  levemente fora de ordem dentro da página. A página é sempre completa e
+  sem lacunas.
 - A paginação usa `cursor`: passe o valor retornado como `cursor` na
   próxima chamada até `has_more` ser `false`.
 - Mensagens fora da [janela de retenção de conteúdo](/messages/retention/)

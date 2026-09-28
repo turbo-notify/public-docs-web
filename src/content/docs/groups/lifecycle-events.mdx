@@ -183,9 +183,8 @@ envelope para saber quando o evento foi emitido.
 Este evento também **não** carrega `changed_by` nem `picture.fetched_at`: a
 descoberta é feita por comparação de hash, sem um autor identificável, e a
 validade da URL já é expressa por `picture.url_expires_at`. O `fetched_at`
-aparece nas três superfícies de **leitura** de grupo: `GET /v1/numbers/{alias}/groups`
-(listagem), `GET /v1/numbers/{alias}/groups/{group_id}` (detalhe) e
-`GET /v1/numbers/{alias}/groups/{group_id}/picture`. Nunca neste webhook.
+aparece nas duas superfícies de **leitura** de grupo: `GET /v1/numbers/{alias}/groups`
+(listagem) e `GET /v1/numbers/{alias}/groups/{group_id}` (detalhe). Nunca neste webhook.
 
 Guarde o `picture.hash` para detectar mudanças efetivas e re-baixar a foto
 antes que a URL pré-assinada expire (`url_expires_at`). Para ler a foto sob

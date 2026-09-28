@@ -14,7 +14,7 @@ Esta página cobre a **consulta** de reações. Para enviar ou remover uma reaç
 
 Para listar as reações de uma mensagem, faça uma requisição `GET` informando o `message_id` retornado no envio.
 
-**Endpoint:** `GET /v1/numbers/{alias}/messages/{message_id}/reactions`
+**Endpoint:** `GET /v1/messages/{message_id}/reactions` para o número principal. Para números extras, use `GET /v1/numbers/{alias}/messages/{message_id}/reactions`, em que `{alias}` é o `number_alias` da mensagem.
 
 **Escopo obrigatório:** `messages:read`
 
@@ -22,6 +22,7 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
 
 | Parâmetro    | Tipo   | Descrição                               |
 | ------------ | ------ | --------------------------------------- |
+| `alias` | string | *(apenas na rota de número extra)* Alias do número ao qual a mensagem pertence. |
 | `message_id` | string | Identificador público da mensagem (`msg_{hex32}`) |
 
 <Tabs>
@@ -202,4 +203,5 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
 | `403`  | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read`.           |
 | `404`  | `not_found`         | A mensagem não foi encontrada, pertence a outra organização, está fora da [janela de retenção de conteúdo](/messages/retention/) do plano, ou (na rota aninhada `/numbers/{alias}/messages/.../reactions`) pertence a um número diferente do alias informado na URL: todos esses casos devolvem a mesma resposta, sem distinção. |
 | `404`  | `message_not_found` | *(apenas na rota atalho sem `{alias}`, `GET /v1/messages/{id}/reactions`)* O `message_id` existe mas pertence a um número extra, não ao número principal. |
+| `404` | `number_not_found` | *(apenas na rota com `{alias}`)* O alias informado na URL não corresponde a nenhum número cadastrado. |
 | `500`  | `internal_error`    | Erro interno inesperado no servidor.                              |

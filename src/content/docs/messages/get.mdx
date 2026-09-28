@@ -504,7 +504,7 @@ Mídia não está disponível. O campo `reason` indica a causa.
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `kind` | string | `"unavailable"` |
-| `reason` | string | `no_storage`: nenhum Object Storage configurado; `storage_circuit_open`: circuit breaker aberto no recebimento; `upload_failed`: storage saudável, mas este item não pôde ser persistido; `deleted`: a mensagem foi apagada/revogada depois que a mídia já havia sido armazenada. O motivo é gravado no momento do evento (recebimento ou exclusão) e lido literalmente. |
+| `reason` | string | `no_storage`: nenhum Object Storage configurado; `storage_circuit_open`: o seu Object Storage vinha falhando repetidamente no momento do recebimento, e o envio de mídia para ele estava suspenso temporariamente; `upload_failed`: storage saudável, mas este item não pôde ser persistido; `deleted`: a mensagem foi apagada/revogada depois que a mídia já havia sido armazenada. O motivo é gravado no momento do evento (recebimento ou exclusão) e lido literalmente. |
 | `mime_type` | `string \| null` | Tipo MIME detectado |
 | `size_bytes` | `integer \| null` | Tamanho do arquivo em bytes |
 | `setup_hint` | `object \| null` | Presente quando `reason` é `no_storage` ou `storage_circuit_open`. Contém `setup_url`, `docs_url` e `message`. |
@@ -567,5 +567,6 @@ Quando o Object Storage está configurado, o Turbo Notify copia automaticamente 
 | `403` | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
 | `404` | `not_found` | Mensagem não encontrada, pertence a outra organização, está fora da [janela de retenção de conteúdo](/messages/retention/) do plano, ou (na rota aninhada `/numbers/{alias}/messages/{id}`) pertence a um número diferente do alias informado na URL: mesmo shape de uma mensagem que nunca existiu. |
 | `404` | `message_not_found` | *(apenas na rota atalho sem `{alias}`, `GET /v1/messages/{id}`)* O `message_id` existe mas pertence a um número extra, não ao número principal. |
+| `404` | `number_not_found` | *(apenas na rota com `{alias}`)* O alias informado na URL não corresponde a nenhum número cadastrado. |
 | `429` | `rate_limit_exceeded` | Limite de requisições ultrapassado. |
 | `500` | `internal_error` | Erro interno inesperado no servidor. |

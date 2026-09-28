@@ -8,7 +8,7 @@ sidebar:
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-Liste os contatos da organização autenticada. Suporta filtros, paginação por cursor e ordenação.
+Liste os contatos de um número. Suporta filtros e paginação por cursor; os itens vêm do atualizado mais recentemente para o mais antigo.
 
 Os contatos são escopados por número: `{alias}` é `main` (número principal) ou o alias de um número extra, e o mesmo telefone alcançado por dois números diferentes corresponde a dois contatos distintos.
 
@@ -33,7 +33,7 @@ Para listar contatos de um número extra, use `/v1/numbers/{alias}/contacts` ond
 | --------- | ---- | --------- |
 | `limit` | int | 1–200 (default 50) |
 | `cursor` | string | Token opaco retornado em `cursor` |
-| `phone` | string | Filtro exato por E.164 (`+5571999...`) |
+| `phone` | string | Filtro exato por E.164 (`+5511...`) |
 | `name` | string | Correspondência parcial sobre o nome do contato |
 | `source` | enum | `inbound \| outbound \| self \| mention`: `mention` é o contato observado pela primeira vez por ter sido **mencionado** em uma mensagem; contatos criados por menção **não** consomem quota de contatos |
 | `contacted_in_cycle` | bool | Considera apenas contatos contactados via Turbo Notify dentro do ciclo de faturamento avaliado (novos ou recorrentes) |
@@ -160,7 +160,7 @@ public class ListarContatos {
       {
         id: 'ct_a1b2c3d4e5f6789012345678901234ab',
         number_alias: 'main',
-        phone_number: '+5571999294756',
+        phone_number: '+5511988887777',
         name: 'João Silva',
         is_self: false,
         first_messaged_at: '2026-05-10T13:25:00Z',

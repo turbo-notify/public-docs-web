@@ -5,7 +5,7 @@ sidebar:
   order: 1
 ---
 
-Lista de eventos webhook emitidos pelo Turbo Notify para mudanças em contatos. Você precisa configurar a URL do webhook e habilitar `contact.*` no dashboard: veja [Webhook: configuração e envelope](/messages/webhook/) para o passo a passo, a validação de assinatura e o formato do envelope.
+Lista de eventos webhook emitidos pelo Turbo Notify para mudanças em contatos. Os eventos `contact.*` são entregues à URL de webhook configurada no dashboard, junto com os demais eventos: veja [Webhook: configuração e envelope](/messages/webhook/) para o passo a passo, a validação de assinatura e o formato do envelope.
 
 ## Tabela
 
@@ -13,7 +13,7 @@ Lista de eventos webhook emitidos pelo Turbo Notify para mudanças em contatos. 
 | ------ | ------ |
 | `contact.created` | Primeira observação do trio `(organização, número, telefone)`: a identidade do contato é **por número**, então o mesmo telefone alcançando o `main` e um número extra gera **dois** eventos `contact.created`, um por número (veja [Contatos: visão geral](/contacts/overview/)) |
 | `contact.name_changed` | `name` divergiu do snapshot anterior |
-| `contact.picture_changed` | WhatsApp emitiu `PictureUpdate` ou refresh detectou hash novo |
+| `contact.picture_changed` | O WhatsApp avisou que a foto mudou, ou uma interação com o contato detectou uma foto nova, e ela foi armazenada no seu BYO Storage |
 | `contact.first_messaged` | A organização enviou a primeira mensagem outbound para este contato (sinal de **aquisição** de novo contato, observabilidade; a quota é consumida por contato contactado no ciclo de faturamento avaliado, não por este evento) |
 | `contact.quota.warning` | Cruzou o limiar de 80/90/95% da quota de contatos do ciclo |
 | `contact.quota.exceeded` | Tentativa rejeitada por estouro (HTTP 402) |
@@ -29,7 +29,7 @@ próprio contato (`ct_{hex32}`), igual ao `data.id` de `message.*`.
 {
   "id": "ct_a1b2c3d4...",
   "name": "João Silva",
-  "number": "5571999294756",
+  "number": "5511988887777",
   "direction": "inbound",
   "channel": "whatsapp",
   "origin": "tn"
@@ -38,7 +38,7 @@ próprio contato (`ct_{hex32}`), igual ao `data.id` de `message.*`.
 
 - `id`: id público do contato (`ct_{hex32}`), o sujeito do evento.
 - `name`: push name do contato no WhatsApp.
-- `number`: **E.164 completo**.
+- `number`: telefone completo em dígitos, sem o `+` (ex.: `5511999999999`). Nos endpoints REST de contato, o mesmo número vem em `phone_number` com o `+`.
 - `direction`: sempre `"inbound"` (o contato é observado/descoberto pelo canal
   do WhatsApp). Ausente nos eventos sintéticos de quota.
 - `channel`: sempre `"whatsapp"`.
@@ -100,7 +100,7 @@ Sintético: sem `at`, sem `source`.
 
 ```json
 {
-  "id": "evt_a1b2c3d4...",
+  "id": "evt_36cd28f516fd65fc58d84081cfa17dcb",
   "type": "contact.created",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "number_alias": "main",
@@ -108,7 +108,7 @@ Sintético: sem `at`, sem `source`.
   "data": {
     "id": "ct_a1b2...",
     "name": "João Silva",
-    "number": "5571999294756",
+    "number": "5511988887777",
     "direction": "inbound",
     "channel": "whatsapp",
     "origin": "tn"
@@ -130,7 +130,7 @@ Sintético: sem `at`, sem `source`.
   "data": {
     "id": "ct_a1b2...",
     "name": "João S.",
-    "number": "5571999294756",
+    "number": "5511988887777",
     "old_name": "João Silva",
     "direction": "inbound",
     "channel": "whatsapp",
@@ -155,7 +155,7 @@ WhatsApp): aqui o Turbo Notify emitiu o evento 3 s após a alteração do nome.
   "data": {
     "id": "ct_a1b2...",
     "name": "João Silva",
-    "number": "5571999294756",
+    "number": "5511988887777",
     "picture": {
       "kind": "available",
       "url": "https://<bucket>.r2.cloudflarestorage.com/contacts/.../picture.jpg?...",
@@ -184,8 +184,8 @@ foto está armazenada no seu bucket ela vem como `kind: "available"` com
 uma URL **pré-assinada e com validade limitada** (`url_expires_at`, ~15 min),
 nunca uma URL do WhatsApp. Re-baixe a foto via o endpoint GET quando a URL
 expirar. O evento dispara **apenas** quando a foto chega ao seu bucket, inclusive
-quando o contato foi observado sem foto e ela fica disponível depois (basta
-habilitar o BYO Storage). Para ler a foto sob demanda use
+quando o contato foi observado sem foto e ela fica disponível depois (após
+habilitar o BYO Storage, na próxima interação com o contato). Para ler a foto sob demanda use
 [`GET /v1/numbers/{alias}/contacts/{contact_id}/profile-picture`](/contacts/profile-picture/),
 onde `{alias}` é o `number_alias` recebido no envelope deste evento.
 
@@ -201,7 +201,7 @@ onde `{alias}` é o `number_alias` recebido no envelope deste evento.
   "data": {
     "id": "ct_...",
     "name": "João Silva",
-    "number": "5571999294756",
+    "number": "5511988887777",
     "tier": "unknown",
     "direction": "inbound",
     "channel": "whatsapp",
@@ -231,7 +231,7 @@ emite `"unknown"`. Não use este campo para inferir o plano da organização: o
     "cycle_start": "2026-06-01T00:00:00Z",
     "cycle_end": "2026-07-01T00:00:00Z",
     "resets_at": "2026-07-01T00:00:00Z",
-    "tier": "FREE",
+    "tier": "SOLO",
     "channel": "whatsapp",
     "origin": "tn"
   }
@@ -264,7 +264,7 @@ momento da ação.
     "cycle_start": "2026-06-01T00:00:00Z",
     "cycle_end": "2026-07-01T00:00:00Z",
     "resets_at": "2026-07-01T00:00:00Z",
-    "tier": "FREE",
+    "tier": "SOLO",
     "channel": "whatsapp",
     "origin": "tn"
   }

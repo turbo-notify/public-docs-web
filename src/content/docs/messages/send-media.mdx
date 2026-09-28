@@ -359,7 +359,7 @@ de documento também aceita [menções `@<numero>`](/messages/send/#menções-me
   </TabItem>
 </Tabs>
 
-Stickers devem ser WebP animados (formato exigido pelo WhatsApp), com
+Stickers devem ser WebP (estático ou animado), com
 dimensões **exatas de 512×512 pixels** (qualquer outra dimensão é
 rejeitada mesmo que o WebP seja válido) e respeitar o limite de 500 KB.
 
@@ -374,7 +374,7 @@ Os campos de mídia ficam dentro do objeto `content`. O campo âncora (ex.: `ima
 | `audio_url` | URL | condicional | Campo âncora para áudios; URL pública HTTPS |
 | `document_url` | URL | condicional | Campo âncora para documentos; URL pública HTTPS |
 | `sticker_url` | URL | condicional | Campo âncora para figurinhas; URL pública HTTPS |
-| `mime_type` | string | não | recomendado; o Turbo Notify pode inferir do `Content-Type` da resposta |
+| `mime_type` | string | não | opcional e informativo: não altera o envio. O formato é identificado a partir do próprio arquivo baixado da URL |
 | `caption` | string | parcial | aceito em `image`, `video`, `document`; **não aceito** em `audio` e `sticker` (retorna `422`). Aceita tokens de [menção `@<numero>`](/messages/send/#menções-mentions), detecção implícita, mesmas regras do `text` |
 | `filename` | string | não | apenas em `document`; aparece como nome do anexo no chat |
 
@@ -399,7 +399,7 @@ carrega `content_type` e `preview` (mesmo shape de `message.received`):
 
 ```json title="webhook-message-sent.json"
 {
-  "id": "evt_abc123def456789012345678",
+  "id": "evt_3f9a1c2b4d5e6f708192a3b4c5d6e7f8",
   "type": "message.sent",
   "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
   "number_alias": "main",

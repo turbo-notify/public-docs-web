@@ -160,7 +160,7 @@ Liste todos os números da sua conta (o principal e os extras) para consultar al
         alias: 'condominio_3',
         number: '5511999999999',
         description: null,
-        status: { status: 'pending', at: '', reason: null },
+        status: { status: 'pending', at: '2025-07-16T10:10:00Z', reason: null },
       },
     ],
     cursor: null,
@@ -178,11 +178,9 @@ reconexão, falha, revogação). Um número `disconnected`, `failed`,
 `reconnecting` etc. reporta o instante dessa própria transição, não um
 timestamp de conexão desatualizado.
 
-Um número recém-criado, que ainda não passou por nenhuma transição de status (`status: "pending"`,
-como `condominio_3` no exemplo acima), não tem transição alguma registrada:
-`status.at` vem como **string vazia** (`""`). Trate isso antes de converter
-para data: `Date.parse("")` (JS) devolve `NaN`, e
-`datetime.fromisoformat("")` (Python) levanta `ValueError`.
+Um número recém-cadastrado, que ainda não foi pareado (`status: "pending"`,
+como `condominio_3` no exemplo acima), traz em `status.at` o momento do
+cadastro.
 
 A exceção é `status: "pending_deletion"` (apenas números extras): `status.at`
 traz o momento da **exclusão agendada**, não uma transição de conexão.
@@ -205,7 +203,7 @@ traz o momento da **exclusão agendada**, não uma transição de conexão.
 | `data[].description` | string\|null | Descrição livre definida pelo usuário |
 | `data[].status` | object | `{status, at, reason?}`: estado atual do número |
 | `data[].status.status` | string | `pending`, `pairing`, `inactive`, `connecting`, `connected`, `disconnected`, `reconnecting`, `failed`, `revoked` ou `pending_deletion`, veja [Tabela de status](/numbers/status/#tabela-de-status) |
-| `data[].status.at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`data[].status.status`): atualiza a cada transição. **String vazia (`""`)** apenas quando o número ainda não tem link de dispositivo (`status: "pending"`, nenhuma transição registrada). Exceção: em `status: "pending_deletion"`, é o momento da exclusão agendada. |
+| `data[].status.at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`data[].status.status`): atualiza a cada transição. Exceção: em `status: "pending_deletion"`, é o momento da exclusão agendada. |
 | `data[].status.reason` | string\|null | Motivo da falha quando `status.status` é `"failed"` (mesmos valores de [Motivos de falha](/numbers/status/#motivos-de-falha)); `null` em qualquer outro status. |
 
 ## Erros possíveis

@@ -180,10 +180,8 @@ revogação). Um número `disconnected`, `failed`, `reconnecting` etc. reporta
 o instante dessa própria transição, então `desconectado desde {at}` /
 `falhou em {at}` exibem o horário certo diretamente.
 
-Um número recém-criado, sem link de dispositivo ainda (`status: "pending"`),
-não tem transição alguma registrada: `at` vem como **string vazia** (`""`).
-Trate isso antes de converter para data: `Date.parse("")` (JS) devolve
-`NaN`, e `datetime.fromisoformat("")` (Python) levanta `ValueError`.
+Um número recém-cadastrado (`status: "pending"`) traz em `at` o momento do
+cadastro.
 
 A única exceção é `status: "pending_deletion"`, em que `at` traz o momento
 da exclusão agendada (veja a nota acima).
@@ -199,7 +197,7 @@ da exclusão agendada (veja a nota acima).
 | `alias` | string | Identificador único do número extra na conta |
 | `number` | string | Número de telefone em dígitos E.164 (sem `+`) |
 | `status` | string | Estado atual, veja [Tabela de status](#tabela-de-status) |
-| `at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`status`): atualiza a cada transição. **String vazia (`""`)** apenas quando o número ainda não tem link de dispositivo (`status: "pending"`, nenhuma transição registrada). Exceção: quando `status = "pending_deletion"`, é o momento da exclusão agendada. |
+| `at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`status`): atualiza a cada transição. Exceção: quando `status = "pending_deletion"`, é o momento da exclusão agendada. |
 | `description` | string\|null | Sempre `null` neste endpoint hoje, veja nota acima |
 | `scheduled_deletion_at` | string\|null | Sempre `null` neste endpoint hoje, veja nota acima |
 | `reason` | string\|null | Motivo da falha quando `status` é `"failed"`, veja [Motivos de falha](#motivos-de-falha); `null` em qualquer outro status |
@@ -221,7 +219,7 @@ Presente quando `status` é `pairing` e o código está pronto (veja
 | Status              | Descrição                                                                 |
 | -------------------- | -------------------------------------------------------------------------- |
 | `pending`            | Número cadastrado; aguardando início do pareamento.                       |
-| `pairing`            | Código de pareamento gerado; aguardando inserção no WhatsApp.             |
+| `pairing`            | Pareamento em andamento: o código está sendo gerado ou aguardando ser digitado no WhatsApp. |
 | `inactive`           | Autenticação obtida, mas a conexão ainda não foi estabelecida.            |
 | `connecting`         | Conexão sendo estabelecida (`POST .../connect` aceito).                   |
 | `connected`          | O número está vinculado e pronto para envio de mensagens.                 |

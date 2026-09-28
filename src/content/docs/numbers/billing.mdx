@@ -48,6 +48,8 @@ Com o número já desconectado, a remoção segue um de dois caminhos, decidido 
 
 **Remoção agendada (número já em uso).** Fora dessas condições, o número entra em status `pending_deletion` e a remoção definitiva é agendada para o **fim do ciclo de uso atual do número** (ciclo de 30 dias contado desde a primeira conexão, não 30 dias a partir de agora): o campo `scheduled_deletion_at` na resposta traz a data exata. Durante todo esse período você pode reverter a decisão com `POST /v1/numbers/{alias}/cancel-deletion`. O número volta ao estado normal.
 
+Cancelar a exclusão agendada, por essa chamada ou reconectando o número, pode gerar uma nova cobrança pro-rata de ativação: isso acontece quando o número foi criado antes do início do ciclo cobrado atual, porque ele já ficou fora da fatura desse ciclo. Se essa cobrança falhar, a exclusão continua agendada.
+
 A resposta do `DELETE` informa qual caminho foi tomado, em `refund_eligible` (`true` = remoção imediata) e `scheduled_deletion_at`.
 
 Os dois caminhos têm efeitos diferentes na fatura:
