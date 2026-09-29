@@ -25,7 +25,7 @@ Um agente de atendimento costuma combinar os dois lados: o webhook avisa a sua a
 
 | | |
 |---|---|
-| Endereço | `https://mcp.turbonotify.com/mcp` |
+| Endereço | `https://mcp.turbonotify.com` |
 | Transporte | Streamable HTTP |
 | Autenticação | Header `Authorization: Bearer SUA_CHAVE` em **toda** requisição |
 
@@ -36,7 +36,7 @@ A tela <DashboardLink path="/mcp">MCP</DashboardLink> do dashboard traz as confi
     Pelo terminal:
 
     ```bash
-    claude mcp add --transport http turbo-notify https://mcp.turbonotify.com/mcp --header "Authorization: Bearer SUA_CHAVE"
+    claude mcp add --transport http turbo-notify https://mcp.turbonotify.com --header "Authorization: Bearer SUA_CHAVE"
     ```
 
     Ou no arquivo `.mcp.json` do projeto. O campo `"type": "http"` é obrigatório para servidor remoto:
@@ -46,7 +46,7 @@ A tela <DashboardLink path="/mcp">MCP</DashboardLink> do dashboard traz as confi
       "mcpServers": {
         "turbo-notify": {
           "type": "http",
-          "url": "https://mcp.turbonotify.com/mcp",
+          "url": "https://mcp.turbonotify.com",
           "headers": {
             "Authorization": "Bearer SUA_CHAVE"
           }
@@ -60,7 +60,7 @@ A tela <DashboardLink path="/mcp">MCP</DashboardLink> do dashboard traz as confi
     {
       "mcpServers": {
         "turbo-notify": {
-          "url": "https://mcp.turbonotify.com/mcp",
+          "url": "https://mcp.turbonotify.com",
           "headers": {
             "Authorization": "Bearer SUA_CHAVE"
           }
@@ -80,7 +80,7 @@ A tela <DashboardLink path="/mcp">MCP</DashboardLink> do dashboard traz as confi
           "args": [
             "-y",
             "mcp-remote",
-            "https://mcp.turbonotify.com/mcp",
+            "https://mcp.turbonotify.com",
             "--header",
             "Authorization:${TURBO_NOTIFY_AUTH}"
           ],
@@ -101,7 +101,7 @@ A tela <DashboardLink path="/mcp">MCP</DashboardLink> do dashboard traz as confi
     from agno.tools.mcp import MCPTools
 
     tools = MCPTools(
-        url="https://mcp.turbonotify.com/mcp",
+        url="https://mcp.turbonotify.com",
         transport="streamable-http",
         headers={"Authorization": "Bearer SUA_CHAVE"},
     )
