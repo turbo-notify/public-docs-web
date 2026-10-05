@@ -54,6 +54,25 @@ O campo `tier` nas respostas abaixo é sempre um dos 4 valores acima, em
 - Apenas envios **outbound** com `origin: "tn"` consomem a quota de mensagens;
   apenas contatos contactados **via Turbo Notify** consomem a quota de contatos.
 
+## O que conta na quota
+
+Um envio via Turbo Notify só consome a unidade de mensagem e a unidade de
+contato se **chegar ao WhatsApp** (ou enquanto ainda está a caminho dele).
+
+- **A API recusou o envio** (por exemplo `429` por espaçamento entre envios,
+  mensagem repetida ou limite de destinatários por dia): nada é consumido.
+  Uma tentativa recusada não gasta a sua quota.
+- **O envio foi aceito (`202`), mas falhou antes de chegar ao WhatsApp** (por
+  exemplo `message.send.failed` com `number_not_connected`, falha ao baixar a
+  mídia ou tempo esgotado): as duas unidades são devolvidas logo depois da
+  falha, em até alguns minutos. `used` volta a refletir só o que chegou.
+- **A mensagem chegou ao WhatsApp e a entrega falhou depois**: ela conta, como
+  qualquer mensagem que saiu do seu número.
+
+Os limites de ritmo do envio (espaçamento, mensagens por minuto, destinatários
+por dia) contam tentativas, não entregas: uma tentativa recusada continua
+contando para esses limites.
+
 ## Envio para grupos exige plano BUSINESS ou superior
 
 Enviar mensagem ou indicador de digitação para um `group_id` requer a feature

@@ -1,6 +1,6 @@
 ---
 title: Forçar refresh do contato
-description: "Endpoint POST /v1/numbers/{alias}/contacts/{contact_id}/refresh: solicita reenriquecimento sob demanda. 202 Accepted, rate-limited por tier."
+description: "Endpoint POST /v1/numbers/{alias}/contacts/{contact_id}/refresh: atualiza o nome do contato sob demanda. 202 Accepted com requested_at, resultado visível no próprio contato, rate-limited por tier."
 sidebar:
   order: 4
 ---
@@ -8,7 +8,11 @@ sidebar:
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-Solicita o reenriquecimento do nome de um contato sob demanda. Dispara uma consulta real ao WhatsApp e consome o limite de refresh por tier. Por isso exige o escopo de escrita, não o de leitura. Retorna 202 imediatamente; o enriquecimento ocorre em background. A foto de perfil não é atualizada por este endpoint: ela é reavaliada automaticamente na próxima troca de mensagens com o contato.
+Pede ao WhatsApp o nome atual de um contato. Dispara uma consulta real ao WhatsApp e consome o limite de refresh por tier. Por isso exige o escopo de escrita, não o de leitura. Retorna 202 imediatamente; a consulta termina em alguns segundos e o resultado aparece no próprio contato.
+
+O refresh atualiza **somente o nome**. A foto de perfil não é atualizada por este endpoint: ela é reavaliada automaticamente na próxima troca de mensagens entre o número e o contato. O refresh também não muda nada na entrega das suas mensagens.
+
+A consulta usa a conexão do número dono do contato (`main` ou o alias do número extra). Se esse número não estiver conectado, o refresh termina na hora com o resultado `number_not_connected`.
 
 ## Endpoint
 
@@ -50,7 +54,7 @@ const res = await fetch(`https://api.turbonotify.com/v1/contacts/${id}/refresh`,
   method: "POST",
   headers: { Authorization: "Bearer SUA_CHAVE" },
 });
-const { status } = await res.json();
+const { status, requested_at } = await res.json();
 ```
 </TabItem>
 <TabItem label="Python">
@@ -148,12 +152,40 @@ public class RefreshContato {
   status={202}
   body={{
     status: 'queued',
+    requested_at: '2026-05-10T13:40:00Z',
   }}
 />
 
-A resposta é um envelope mínimo: apenas confirma o enfileiramento. Não há
-`request_id` nem timestamp no corpo. Quando o enriquecimento concluir, o
-webhook `contact.name_changed` é emitido se o nome tiver mudado, ou consulte `GET /v1/contacts/{contact_id}`
-novamente para ver o resultado.
+`requested_at` é o momento do pedido (UTC, precisão de segundos). Ele identifica
+este refresh no campo `refresh` do contato.
+
+## Acompanhar o resultado
+
+Consulte o contato com [`GET /v1/contacts/{contact_id}`](/contacts/detail/) (ou
+`GET /v1/numbers/{alias}/contacts/{contact_id}`). O campo `refresh` mostra o
+último refresh que você pediu:
+
+```json
+"refresh": {
+  "requested_at": "2026-05-10T13:40:00Z",
+  "completed_at": null,
+  "outcome": null
+}
+```
+
+Enquanto a consulta está em andamento, `completed_at` e `outcome` ficam `null`.
+Quando ela termina, os dois são preenchidos:
+
+| `outcome` | O que significa | O que fazer |
+| --------- | --------------- | ----------- |
+| `updated` | O nome mudou no WhatsApp e o contato já mostra o nome novo. | Nada. O webhook `contact.name_changed` também é enviado. |
+| `unchanged` | O nome do contato já estava atualizado. | Nada. |
+| `number_not_connected` | O número dono do contato não estava conectado ao WhatsApp. | Reconecte o número e peça o refresh de novo. |
+| `unavailable` | O WhatsApp não respondeu sobre este contato, ou não foi possível iniciar a consulta. | Tente de novo em alguns minutos. |
+
+Um novo pedido substitui o anterior: `requested_at` passa a ser o do novo
+pedido e `completed_at`/`outcome` voltam a `null` até ele terminar. Se o nome
+mudou, você também recebe o webhook `contact.name_changed`; nenhum outro
+evento é enviado por causa do refresh.
 
 Veja [eventos de contato](/webhooks/contact-events/).

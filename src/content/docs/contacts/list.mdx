@@ -36,7 +36,7 @@ Para listar contatos de um número extra, use `/v1/numbers/{alias}/contacts` ond
 | `phone` | string | Filtro exato por E.164 (`+5511...`) |
 | `name` | string | Correspondência parcial sobre o nome do contato |
 | `source` | enum | `inbound \| outbound \| self \| mention`: `mention` é o contato observado pela primeira vez por ter sido **mencionado** em uma mensagem; contatos criados por menção **não** consomem quota de contatos |
-| `contacted_in_cycle` | bool | Considera apenas contatos contactados via Turbo Notify dentro do ciclo de faturamento avaliado (novos ou recorrentes) |
+| `contacted_in_cycle` | bool | Considera apenas contatos contactados via Turbo Notify dentro do ciclo de faturamento avaliado (novos ou recorrentes). Um envio que não chegou ao WhatsApp não conta |
 
 ## Exemplo de request
 
@@ -167,6 +167,7 @@ public class ListarContatos {
         last_interaction_at: '2026-05-10T13:42:00Z',
         verified_on_whatsapp_at: '2026-05-10T13:25:00Z',
         picture: { kind: 'unavailable', reason: 'peer_has_none' },
+        refresh: null,
         created_at: '2026-05-10T13:25:00Z',
         updated_at: '2026-05-10T13:42:00Z',
       },
@@ -180,5 +181,11 @@ Cada item é o mesmo objeto retornado por [Detalhe](/contacts/detail/). O
 `phone_number` é o **E.164 completo** (sem máscara). A entidade de contato
 mantém seus timestamps de ciclo de vida distintos
 (`created_at`/`updated_at`/`first_messaged_at`/…), não é o eco de um evento.
+
+`first_messaged_at` é quando a primeira mensagem deste número via Turbo Notify
+chegou ao contato no WhatsApp, e `last_interaction_at` é a última mensagem
+trocada de fato com ele, em qualquer direção. `refresh` mostra o último
+[refresh](/contacts/refresh/) que você pediu (`null` se nunca pediu). Os
+detalhes de cada campo estão em [Detalhe](/contacts/detail/).
 
 Veja também: [Detalhe](/contacts/detail/) · [Erros](/contacts/errors/).
