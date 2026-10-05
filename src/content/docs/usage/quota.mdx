@@ -63,9 +63,14 @@ contato se **chegar ao WhatsApp** (ou enquanto ainda está a caminho dele).
   mensagem repetida ou limite de destinatários por dia): nada é consumido.
   Uma tentativa recusada não gasta a sua quota.
 - **O envio foi aceito (`202`), mas falhou antes de chegar ao WhatsApp** (por
-  exemplo `message.send.failed` com `number_not_connected`, falha ao baixar a
-  mídia ou tempo esgotado): as duas unidades são devolvidas logo depois da
-  falha, em até alguns minutos. `used` volta a refletir só o que chegou.
+  exemplo `message.send.failed` com `number_not_connected` ou falha ao baixar a
+  mídia): as duas unidades são devolvidas logo depois da falha, em até alguns
+  minutos. `used` volta a refletir só o que chegou.
+- **O envio não foi confirmado dentro do tempo limite da nossa fila**
+  (`message.send.failed` com `message_timeout`): a unidade **não** é devolvida,
+  porque a mensagem ainda pode ter saído do seu número. Se ela chegar ao
+  WhatsApp depois, o envio passa a `sent` e continua contando; se você
+  reenviar, o novo envio conta por si só.
 - **A mensagem chegou ao WhatsApp e a entrega falhou depois**: ela conta, como
   qualquer mensagem que saiu do seu número.
 
