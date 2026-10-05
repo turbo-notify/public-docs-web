@@ -206,7 +206,7 @@ veja [Webhooks](/messages/webhook/) e [Consultar mensagem](/messages/get/)):
 | Campo          | Descrição                                                                 |
 | -------------- | ------------------------------------------------------------------------- |
 | `error.code`   | Código estável legível por máquina: faça branch neste valor (ex.: `number_not_connected`, `whatsapp_send_failed`, `media_fetch_failed`). |
-| `error.message`| Descrição legível da falha.                                               |
+| `error.message`| Descrição legível da falha, para os seus logs e para depuração. Pode trazer um diagnóstico do WhatsApp em inglês; identificadores pessoais (números, JIDs) nunca aparecem nela. Não faça branch neste texto: ele pode mudar, o `code` é o contrato estável. |
 | `error.hint`   | `string`: orientação acionável para corrigir, derivada do `code`. **Ausente** (chave omitida, nunca `null`) quando não há orientação para o `code`. |
 
 Neste endpoint o campo `error` está **sempre presente**: vem preenchido quando `state` é `failed` e `null` nos demais estados (`pending`/`sent`/`delivered`/`read`). Já em `GET /v1/numbers/{alias}/messages/{id}`, o campo é **omitido** quando não há falha.
