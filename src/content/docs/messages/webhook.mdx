@@ -858,11 +858,45 @@ separadamente.
 | `number.remove.canceled`      | Exclusão agendada foi cancelada.                                  |
 | `number.removed`              | Número extra foi removido.                                        |
 
-Todos os eventos `number.*` carregam os campos comuns `alias` e `number` (quando disponível). O campo `name` (nome de exibição WhatsApp do número, capturado na conexão) é **opcional** em todos os eventos e **omitido quando nulo**. O `alias` `"main"` identifica o número principal; qualquer outro valor identifica um número extra. `number.connected`, `number.disconnected`, `number.connect.failed` e `number.revoked` também podem trazer `contact_id` (`ct_…`, o contato que representa o próprio número), omitido quando ainda não existe. `number.revoked` sempre traz `reason` (texto do motivo informado pelo WhatsApp); `number.disconnected` traz `reason`, um código que descreve a causa da queda. Trate valores que você não conhece de forma genérica (como "o número caiu").
+Todos os eventos `number.*` carregam os campos comuns `alias` e `number` (quando disponível). O campo `name` (nome de exibição WhatsApp do número, capturado na conexão) é **opcional** em todos os eventos e **omitido quando nulo**. O `alias` `"main"` identifica o número principal; qualquer outro valor identifica um número extra. `number.connected`, `number.disconnected`, `number.connect.failed` e `number.revoked` também podem trazer `contact_id` (`ct_…`, o contato que representa o próprio número), omitido quando ainda não existe. `number.disconnected` e `number.revoked` sempre trazem `reason`, um código estável que diz o que aconteceu, veja [Motivos de uma queda](#motivos-de-uma-queda).
 
 Todos os eventos `number.*` também carregam o par de coerência `channel` (sempre `"whatsapp"`) e `origin` (sempre `"tn"`, o ciclo de vida do dispositivo é produzido pela plataforma Turbo Notify). Eventos `number.*` **não** carregam `direction`. O ciclo de vida do link (conexão, desconexão, revogação, remoção, criação) não é um fluxo de mensagem WhatsApp.
 
-**Reconexão automática.** Quando o Turbo Notify transfere a conexão de um número internamente (manutenção, balanceamento de carga, recuperação de uma falha interna), ele reconecta o número sozinho. Se o número volta dentro da janela de reconexão automática (cerca de um minuto), **nenhum** `number.disconnected` e **nenhum** `number.connected` são enviados: para você, o número não caiu. Se não volta a tempo, um único `number.disconnected` é enviado ao fim da janela, com `at` igual ao momento em que o número ficou offline; por isso esse `at` pode ser cerca de um a dois minutos anterior ao `created_at` do envelope. O `number.connected` chega quando o número volta. Uma queda informada pelo próprio WhatsApp é enviada na hora.
+**Reconexão automática.** Quando a conexão de um número cai e o Turbo Notify consegue trazê-lo de volta sozinho (a conexão com o WhatsApp caiu, ou o Turbo Notify transferiu a conexão internamente por manutenção, balanceamento de carga ou recuperação de uma falha interna), nada é enviado na hora. Se o número volta dentro da janela de reconexão automática (cerca de um minuto), **nenhum** `number.disconnected` e **nenhum** `number.connected` são enviados: para você, o número não caiu. Se não volta a tempo, um único `number.disconnected` é enviado ao fim da janela, com `at` igual ao momento em que o número ficou offline; por isso esse `at` pode ser cerca de um a dois minutos anterior ao `created_at` do envelope. O Turbo Notify continua tentando, e o `number.connected` chega quando o número volta. Uma queda que precisa de você é enviada na hora (veja os motivos abaixo).
+
+#### Motivos de uma queda
+
+Use `reason` para decidir o que mostrar ao seu cliente. Os valores são estáveis e escritos do ponto de vista dele.
+
+| Evento | `reason` | O que aconteceu e o que fazer |
+| ------ | -------- | ----------------------------- |
+| `number.disconnected` | `connection_lost` | A conexão com o WhatsApp caiu e não voltou dentro da janela de reconexão automática. O Turbo Notify continua reconectando: você não precisa fazer nada. |
+| `number.disconnected` | `service_interruption` | Uma interrupção do lado do Turbo Notify tirou o número do ar. Ele volta sozinho; se continuar desconectado, conecte de novo (`POST /v1/numbers/{alias}/connect`). |
+| `number.disconnected` | `replaced_by_another_device` | Outra conexão assumiu o dispositivo vinculado deste número. Enviado na hora. |
+| `number.disconnected` | `disconnected_by_request` | Alguém da sua conta desconectou ou removeu o número. Enviado na hora. |
+| `number.revoked` | `logged_out_on_phone` | O dispositivo foi desconectado no celular (WhatsApp, **Dispositivos conectados**). Pareie o número de novo. |
+| `number.revoked` | `replaced_by_another_device` | Outra conexão assumiu o dispositivo vinculado deste número e, por segurança, ele foi desvinculado. Pareie o número de novo. |
+
+O mesmo código tem o mesmo significado em todos os eventos `number.*`: o tipo do evento diz a consequência (`number.disconnected`: o número continua pareado e pode voltar; `number.revoked` e `number.connect.failed`: é preciso parear de novo). Novos motivos podem ser adicionados. Trate um valor que você não conhece em `number.disconnected` como `connection_lost` e em `number.revoked` como `logged_out_on_phone`.
+
+```json title="number.disconnected (exemplo)"
+{
+  "id": "evt_6f0e1d2c3b4a59687766554433221100",
+  "type": "number.disconnected",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T13:06:21Z",
+  "data": {
+    "name": "Turbo Notify",
+    "alias": "main",
+    "number": "5511973117056",
+    "reason": "connection_lost",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T13:05:12Z"
+  }
+}
+```
 
 O campo `at` (em `data`) carrega o **momento da ação real no WhatsApp**, e é um valor **distinto** do `created_at` do envelope (momento de emissão pelo Turbo Notify). Os eventos de ação real **`number.connected`**, **`number.disconnected`**, **`number.revoked`** e **`number.connect.failed`** carregam `at` com esse momento genuíno do WhatsApp (tipicamente anterior ao `created_at`); os eventos sintéticos do Turbo Notify (**`number.created`**, **`number.remove.scheduled`**, **`number.remove.canceled`** e **`number.removed`**) **não** carregam `at`, apenas o `created_at` do envelope (`number.remove.scheduled` mantém `scheduled_at` como timestamp de valor de negócio, com seu nome semântico).
 
