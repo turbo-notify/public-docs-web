@@ -14,7 +14,7 @@ Lista de eventos webhook emitidos pelo Turbo Notify para mudanças em contatos. 
 | `contact.created` | Primeira observação do trio `(organização, número, telefone)`: a identidade do contato é **por número**, então o mesmo telefone alcançando o `main` e um número extra gera **dois** eventos `contact.created`, um por número (veja [Contatos: visão geral](/contacts/overview/)) |
 | `contact.name_changed` | `name` divergiu do snapshot anterior |
 | `contact.picture_changed` | O WhatsApp avisou que a foto mudou, ou uma interação com o contato detectou uma foto nova, e ela foi armazenada no seu BYO Storage |
-| `contact.first_messaged` | A organização enviou a primeira mensagem outbound para este contato (sinal de **aquisição** de novo contato, observabilidade; a quota é consumida por contato contactado no ciclo de faturamento avaliado, não por este evento) |
+| `contact.first_messaged` | A primeira mensagem enviada por este número via Turbo Notify **chegou** ao contato no WhatsApp. Dispara uma vez por contato e número (sinal de **aquisição** de novo contato; a quota é consumida por contato contactado no ciclo de faturamento avaliado, não por este evento) |
 | `contact.quota.warning` | Cruzou o limiar de 80/90/95% da quota de contatos do ciclo |
 | `contact.quota.exceeded` | Tentativa rejeitada por estouro (HTTP 402) |
 
@@ -210,6 +210,12 @@ onde `{alias}` é o `number_alias` recebido no envelope deste evento.
   }
 }
 ```
+
+O evento só é enviado quando a mensagem chega ao WhatsApp: um envio aceito que
+falha antes disso (por exemplo com `number_not_connected`) não dispara
+`contact.first_messaged`, e o próximo envio que chegar dispara. `data.at` é o
+momento em que essa primeira mensagem chegou ao WhatsApp e corresponde ao
+`first_messaged_at` do [contato](/contacts/detail/).
 
 O campo `tier` **não é populado** neste evento: `contact.first_messaged` sempre
 emite `"unknown"`. Não use este campo para inferir o plano da organização: o

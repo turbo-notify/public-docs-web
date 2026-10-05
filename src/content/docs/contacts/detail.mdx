@@ -156,6 +156,11 @@ public class DetalheContato {
       hash: 'a3f1c9...',
       fetched_at: '2026-05-10T13:25:00Z',
     },
+    refresh: {
+      requested_at: '2026-05-10T13:40:00Z',
+      completed_at: '2026-05-10T13:40:06Z',
+      outcome: 'updated',
+    },
     created_at: '2026-05-10T13:25:00Z',
     updated_at: '2026-05-10T13:42:00Z',
   }}
@@ -172,6 +177,14 @@ dos eventos `contact.*`). `picture` é uma união discriminada por `kind`
 eventos; quando `kind` é `available`, o próprio bloco carrega `fetched_at`.
 O valor `pending` só aparece em payloads de webhook: este endpoint de
 leitura nunca o retorna.
+
+### Datas de interação e refresh
+
+| Campo | Significado |
+| ----- | ----------- |
+| `first_messaged_at` | Quando a primeira mensagem enviada por este número via Turbo Notify chegou ao contato no WhatsApp. `null` enquanto nenhuma chegou. Um envio que falhou antes de chegar ao WhatsApp não preenche este campo. |
+| `last_interaction_at` | A última mensagem trocada de fato com o contato, em qualquer direção: recebida, enviada pelo celular ou enviada via Turbo Notify e entregue ao WhatsApp. Um envio que não chegou ao WhatsApp não altera este campo. |
+| `refresh` | O último [refresh](/contacts/refresh/) que você pediu para este contato. `null` se você nunca pediu. Traz `requested_at`, `completed_at` e `outcome`; os dois últimos ficam `null` enquanto o refresh está em andamento. |
 
 ## Erros
 

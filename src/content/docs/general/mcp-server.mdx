@@ -168,7 +168,7 @@ Toda ferramenta que atua sobre mensagens, contatos ou grupos aceita `number_alia
 | `list_contacts` | Lista contatos do número | `contacts:read` |
 | `get_contact` | Consulta um contato | `contacts:read` |
 | `get_contact_profile_picture` | Consulta a foto de perfil | `contacts:read` |
-| `refresh_contact` | Atualiza nome e foto consultando o WhatsApp | `contacts:write` |
+| `refresh_contact` | Atualiza o nome do contato consultando o WhatsApp | `contacts:write` |
 | `get_contact_quota` | Consulta a cota de contatos do número | nenhum |
 
 ### Grupos
@@ -203,7 +203,7 @@ As ferramentas de escrita devolvem um `request_id` quando a plataforma gera um. 
 
 `connect_number` não recupera um número com status `revoked` (desvinculado pelo celular): esse precisa ser vinculado de novo por uma pessoa.
 
-Repetir `connect_number` ou `disconnect_number` não muda nada. O número que já está no estado pedido responde `invalid_request: already_connected`, `already_connecting` ou `no_active_session`, e isso significa que o objetivo já foi atingido, não que a chamada falhou.
+Repetir `connect_number` ou `disconnect_number` não muda nada. O número que já está no estado pedido responde `conflict: already_connected`, `conflict: already_connecting` ou `conflict: already_disconnected`, e isso significa que o objetivo já foi atingido, não que a chamada falhou.
 
 ### O que não está disponível, e por quê
 
@@ -252,7 +252,9 @@ Quando uma ferramenta não consegue fazer o que foi pedido, o agente recebe o mo
 |---|---|---|
 | Chamada sem chave | Uma mensagem pedindo a chave no header `Authorization: Bearer` | Configure o header no cliente MCP. |
 | Argumento recusado antes de chegar à API | Uma mensagem que nomeia o campo | Corrija o argumento indicado. |
-| Argumento inválido | `invalid_request: <código>` | Corrija os argumentos e tente de novo. Exceção: `already_connected`, `already_connecting` e `no_active_session` numa repetição de `connect_number` ou `disconnect_number` significam que o número já está no estado pedido. |
+| Argumento inválido | `invalid_request: <código>` | Corrija os argumentos e tente de novo. |
+| Número desconectado | `conflict: number_not_connected`, com a orientação para reconectar | Reconecte o número com `connect_number` (ou pelo dashboard, se o celular precisar ler um código de novo) e tente de novo. |
+| Número já no estado pedido | `conflict: already_connected`, `conflict: already_connecting` ou `conflict: already_disconnected` | Nada a fazer: numa repetição de `connect_number` ou `disconnect_number`, o número já está no estado pedido. |
 | Chave inválida ou revogada | `unauthorized: not_authorized` | Gere uma nova chave no dashboard. |
 | Chave sem o escopo da ferramenta | `unauthorized: insufficient_scope` | Veja o escopo na tabela de [ferramentas](#ferramentas) e use uma chave que o tenha. |
 | Cota, plano ou pagamento | `payment_required: <código>` e o objeto `details` completo | Veja [Quota e uso](/usage/quota/#erros). |

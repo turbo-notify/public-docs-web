@@ -373,7 +373,7 @@ Os dois endpoints compartilham o mesmo conjunto de erros:
 | `404`  | `not_found`              | A mensagem não foi encontrada, pertence a outra organização, está fora da [janela de retenção de conteúdo](/messages/retention/) do plano, ou (na rota aninhada `/numbers/{alias}/messages/...`) pertence a um número diferente do alias informado na URL: todos esses casos devolvem a mesma resposta, sem distinção. |
 | `404`  | `message_not_found`      | *(apenas na rota atalho sem `{alias}`, `POST /v1/messages/{id}/edit`\|`/delete`)* O `message_id` existe mas pertence a um número extra, não ao número principal. |
 | `404`  | `request_not_found`      | A mensagem deixou de ser encontrada enquanto a edição ou exclusão era processada. Consulte a mensagem com `GET` e, se ela ainda existir, tente de novo. |
-| `422`  | `session_not_connected`  | O número que originalmente enviou a mensagem não tem uma sessão WhatsApp conectada no momento. |
+| `409`  | `number_not_connected` | O número que enviou a mensagem não está conectado ao WhatsApp. Reconecte o número e tente de novo. |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                            |
 
 ## Quais mensagens podem ser editadas ou deletadas

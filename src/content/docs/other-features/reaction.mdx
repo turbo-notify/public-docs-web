@@ -351,11 +351,9 @@ Saiba mais sobre [números extras](/numbers/add/).
 | `404`  | `number_not_found`      | O `{alias}` do path não corresponde a nenhum número da conta (na rota plana: a conta ainda não tem número principal). |
 | `404`  | `not_found`             | A mensagem não foi encontrada, pertence a outra organização, está fora da [janela de retenção de conteúdo](/messages/retention/) do plano, ou (na rota aninhada `/numbers/{alias}/messages/.../react`) pertence a um número diferente do alias informado na URL: todos esses casos devolvem a mesma resposta, sem distinção. |
 | `404`  | `message_not_found`     | *(apenas na rota atalho sem `{alias}`, `POST /v1/messages/{id}/react`)* O `message_id` existe mas pertence a um número extra, não ao número principal. |
+| `409`  | `number_not_connected` | O número que envia não está conectado ao WhatsApp. Reconecte o número e tente de novo. |
 | `422`  | `message_not_reactable` | A mensagem alvo da reação ainda não foi enviada ao WhatsApp ou já foi apagada. |
-| `422`  | `no_active_session`     | A organização não tem sessão WhatsApp conectada.   |
-| `422`  | `sender_disconnected`   | O número extra do alias na URL está desconectado.  |
 | `422`  | `sender_not_found`      | O alias/número informado não corresponde a nenhum remetente da conta. |
-| `422`  | `session_not_connected` | A sessão do remetente não está conectada no momento do envio. |
 | `422`  | `validation_error`      | O corpo da requisição está malformado ou não passou na validação de schema. A resposta inclui `details.errors` com a lista de campos inválidos. |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.               |
 

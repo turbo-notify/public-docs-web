@@ -1007,7 +1007,7 @@ Os eventos de falha compartilham um envelope comum e diferem entre si pelo conju
   "number_alias": "main",
   "created_at": "2026-06-01T13:00:01Z",
   "data": {
-    "id": null,
+    "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
     "from": { "alias": "main", "number": "5511973117056" },
     "to": { "number": "5511999999999" },
     "preview": "Mensagem que falhou",
@@ -1016,8 +1016,9 @@ Os eventos de falha compartilham um envelope comum e diferem entre si pelo conju
     "channel": "whatsapp",
     "origin": "tn",
     "error": {
-      "code": "session_not_connected",
-      "message": "WhatsApp session is not connected"
+      "code": "number_not_connected",
+      "message": "The number is not connected to WhatsApp.",
+      "hint": "The number was not connected to WhatsApp. Reconnect it, then send the message again."
     },
     "at": "2026-06-01T13:00:00Z"
   }
@@ -1027,9 +1028,10 @@ Os eventos de falha compartilham um envelope comum e diferem entre si pelo conju
 `from` e `to` estão **sempre presentes** em todo evento `message.*.failed`,
 mesmo quando nenhum registro de mensagem chegou a ser criado (`id: null`).
 Se a falha acontece antes de o destinatário ser identificado, `from` traz o
-número e o alias que tentaram enviar. O campo `error.hint` é **omitido** (não
-`null`) quando não há orientação para o código, como no exemplo acima
-(`session_not_connected` não tem `hint`).
+número e o alias que tentaram enviar. O campo `error.hint` traz a orientação
+para o código, como no exemplo acima (`number_not_connected`: o número não
+estava conectado, reconecte e envie de novo), e é **omitido** (não `null`)
+quando não há orientação para o código.
 
 ### `message.edit.failed` / `message.delete.failed` / `message.react.failed`
 

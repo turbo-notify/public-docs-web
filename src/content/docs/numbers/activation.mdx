@@ -296,7 +296,8 @@ do tier. Ambas retornam `422 no_main_number_configured` quando não há número
 principal cadastrado na conta. No connect: `422 main_number_not_paired`
 quando o número existe mas ainda não concluiu o pareamento (pareie pelo
 dashboard primeiro), `409 already_connected` e `409 already_connecting`. No
-disconnect: `422 no_active_session` quando o número não está conectado.
+disconnect: `409 already_disconnected` quando o número já está desconectado
+(nada a fazer, o objetivo já foi atingido).
 :::
 
 ## Erros possíveis
@@ -324,7 +325,7 @@ disconnect: `422 no_active_session` quando o número não está conectado.
 | :----: | ------------------------ | ------------------------------------------------------------- |
 | `402`  | `feature_not_available`  | O plano atual não suporta números extras.                     |
 | `404`  | `extra_number_not_found` | O alias informado não corresponde a nenhum número cadastrado. |
-| `422`  | `no_active_session`      | O número extra já não está conectado (nada a desconectar).    |
+| `409`  | `already_disconnected`   | O número extra já está desconectado (nada a fazer).           |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                           |
 
 Ambas as rotas também retornam `403 not_authorized` (chave inválida/ausente)
