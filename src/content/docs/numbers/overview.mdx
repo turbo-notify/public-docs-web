@@ -37,6 +37,14 @@ conectados**). Nesses casos o status muda para `disconnected` (webhook
 reconectar sozinho (visível na consulta de status), ou `revoked` (webhook
 `number.revoked`). Um número `revoked` precisa ser pareado de novo.
 
+O Turbo Notify também pode transferir a conexão de um número internamente
+(manutenção, balanceamento de carga, recuperação de uma falha interna). Durante
+a reconexão automática o status fica `reconnecting`. Se o número volta dentro
+da janela de reconexão automática (cerca de um minuto), nenhum webhook é
+enviado. Se não volta a tempo, o status passa a `disconnected` e o webhook
+`number.disconnected` é enviado, com `at` igual ao momento em que o número
+ficou offline.
+
 ## Acompanhar mudanças
 
 Duas formas, que podem ser combinadas:

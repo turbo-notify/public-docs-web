@@ -178,6 +178,11 @@ reconexão, falha, revogação). Um número `disconnected`, `failed`,
 `reconnecting` etc. reporta o instante dessa própria transição, não um
 timestamp de conexão desatualizado.
 
+Durante uma reconexão automática (transferência interna da conexão), o número
+aparece como `reconnecting` e, se não volta em cerca de um minuto, como
+`disconnected`; nos dois casos `status.at` é o momento em que ele ficou
+offline. Veja [Status](/numbers/status/).
+
 Um número recém-cadastrado, que ainda não foi pareado (`status: "pending"`,
 como `condominio_3` no exemplo acima), traz em `status.at` o momento do
 cadastro.
