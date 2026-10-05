@@ -181,12 +181,14 @@ o instante dessa própria transição, então `desconectado desde {at}` /
 `falhou em {at}` exibem o horário certo diretamente.
 
 Durante uma reconexão automática (a conexão com o WhatsApp caiu, ou o Turbo
-Notify transferiu a conexão do número internamente), `reconnecting`, e o
-`disconnected` que pode vir depois dele se o número não volta em cerca de um
-minuto, trazem em `at` o mesmo instante: o momento em que o número ficou
-offline, igual ao `at` do webhook `number.disconnected`. Se o número volta
-dentro dessa janela, `at` passa a ser o momento da volta e nenhum webhook é
-enviado.
+Notify transferiu a conexão do número internamente), o status é
+`reconnecting` e `at` é o momento em que o número ficou offline, igual ao `at`
+do webhook `number.disconnected`. Se o número não volta em cerca de um minuto,
+você recebe o webhook `number.disconnected` com esse mesmo `at`. Depois de uma
+queda da conexão com o WhatsApp, o status continua `reconnecting` enquanto o
+Turbo Notify tenta reconectar; só depois de uma interrupção do lado do Turbo
+Notify ele passa a `disconnected`, com o mesmo `at`. Se o número volta dentro
+da janela, `at` passa a ser o momento da volta e nenhum webhook é enviado.
 
 Um número recém-cadastrado (`status: "pending"`) traz em `at` o momento do
 cadastro.
@@ -232,7 +234,7 @@ Presente quando `status` é `pairing` e o código está pronto (veja
 | `connecting`         | Conexão sendo estabelecida (`POST .../connect` aceito).                   |
 | `connected`          | O número está vinculado e pronto para envio de mensagens.                 |
 | `disconnected`       | Conexão perdida ou desativada; a autenticação é preservada para reconectar. |
-| `reconnecting`       | O Turbo Notify está reconectando o número sozinho, depois de uma queda da conexão ou de uma transferência interna. Você não precisa fazer nada. Se o número não volta em cerca de um minuto, você recebe `number.disconnected` e o Turbo Notify continua tentando. |
+| `reconnecting`       | O Turbo Notify está reconectando o número sozinho, depois de uma queda da conexão ou de uma transferência interna. Você não precisa fazer nada. Se o número não volta em cerca de um minuto, você recebe `number.disconnected` e o Turbo Notify continua tentando; depois de uma queda da conexão com o WhatsApp, o status segue `reconnecting` enquanto ele tenta. |
 | `failed`             | A vinculação falhou. O motivo vem em `reason`, veja abaixo.               |
 | `revoked`            | O dispositivo foi desvinculado pelo WhatsApp.                             |
 | `pending_deletion`   | Exclusão agendada (`DELETE /v1/numbers/{alias}`): sobrepõe qualquer outro status até a exclusão. |
