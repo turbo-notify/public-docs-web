@@ -189,8 +189,9 @@ Para consultar o status de uma mensagem, faça uma requisição `GET` informando
       state: 'failed',
       at: '2025-07-16T10:00:03Z',
       error: {
-        code: 'session_not_connected',
-        message: 'WhatsApp session is not connected',
+        code: 'number_not_connected',
+        message: 'The number is not connected to WhatsApp.',
+        hint: 'The number was not connected to WhatsApp. Reconnect it, then send the message again.',
       },
     },
   }}
@@ -204,7 +205,7 @@ veja [Webhooks](/messages/webhook/) e [Consultar mensagem](/messages/get/)):
 
 | Campo          | Descrição                                                                 |
 | -------------- | ------------------------------------------------------------------------- |
-| `error.code`   | Código estável legível por máquina: faça branch neste valor (ex.: `session_not_connected`, `whatsapp_send_failed`, `media_fetch_failed`). |
+| `error.code`   | Código estável legível por máquina: faça branch neste valor (ex.: `number_not_connected`, `whatsapp_send_failed`, `media_fetch_failed`). |
 | `error.message`| Descrição legível da falha.                                               |
 | `error.hint`   | `string`: orientação acionável para corrigir, derivada do `code`. **Ausente** (chave omitida, nunca `null`) quando não há orientação para o `code`. |
 

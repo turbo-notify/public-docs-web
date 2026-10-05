@@ -451,11 +451,8 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
 | `404`  | `number_not_found`      | O alias informado na URL não corresponde a nenhum número cadastrado na conta. |
 | `404`  | `group_not_found`       | O `group_id` informado em `to` não foi encontrado na conta. |
+| `409`  | `number_not_connected` | O número que envia não está conectado ao WhatsApp. Reconecte o número e tente de novo. |
 | `422`  | `validation_error`      | O corpo da requisição está malformado ou não passou na validação. A resposta traz `details.errors` com os campos rejeitados. |
-| `422`  | `no_active_session`     | A organização não tem sessão WhatsApp conectada.  |
-| `422`  | `sender_disconnected`   | O número extra do alias na URL está desconectado. |
-| `422`  | `session_not_connected` | A sessão do remetente não está conectada no momento do envio. |
-| `422`  | `extra_number_not_connected` | O número extra do alias na URL está registrado mas sua conexão como dispositivo vinculado não está ativa no momento. |
 | `422`  | `group_not_owned_by_number` | O `group_id` informado pertence a outro número da conta, não ao alias do path. |
 | `422`  | `message_not_replyable` | *(apenas `POST .../messages/{message_id}/reply`)* A mensagem citada ainda não foi enviada ao WhatsApp ou já foi apagada. |
 | `429`  | `messages_quota_exceeded` | Franquia de mensagens do ciclo atual esgotada, veja [Quota e uso](/usage/quota/). |
