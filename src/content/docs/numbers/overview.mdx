@@ -30,20 +30,23 @@ Todas as rotas de mensagens, contatos e grupos ficam debaixo do número:
 | Desconectar e reconectar | `POST /v1/numbers/{alias}/disconnect` e `.../connect` | `disconnected`, `connecting`, `connected` | [Conexão](/numbers/activation/) |
 | Remover | `DELETE /v1/numbers/{alias}` | removido na hora ou `pending_deletion` até o fim do ciclo | [Remoção](/numbers/remove/) |
 
-Um número conectado pode cair sozinho (por exemplo, se o celular ficar muito
-tempo sem internet ou se alguém remover a conexão em **Dispositivos
-conectados**). Nesses casos o status muda para `disconnected` (webhook
-`number.disconnected`), `reconnecting` enquanto o Turbo Notify tenta
-reconectar sozinho (visível na consulta de status), ou `revoked` (webhook
-`number.revoked`). Um número `revoked` precisa ser pareado de novo.
+Um número conectado pode cair: a conexão com o WhatsApp pode cair, o Turbo
+Notify pode transferir a conexão internamente (manutenção, balanceamento de
+carga, recuperação de uma falha interna) ou alguém pode remover a conexão em
+**Dispositivos conectados** no celular.
 
-O Turbo Notify também pode transferir a conexão de um número internamente
-(manutenção, balanceamento de carga, recuperação de uma falha interna). Durante
-a reconexão automática o status fica `reconnecting`. Se o número volta dentro
-da janela de reconexão automática (cerca de um minuto), nenhum webhook é
-enviado. Se não volta a tempo, o status passa a `disconnected` e o webhook
-`number.disconnected` é enviado, com `at` igual ao momento em que o número
-ficou offline.
+Quando o Turbo Notify consegue trazer o número de volta sozinho, o status fica
+`reconnecting` enquanto isso acontece. Se o número volta dentro da janela de
+reconexão automática (cerca de um minuto), nenhum webhook é enviado: para você,
+o número não caiu. Se não volta a tempo, você recebe `number.disconnected`, com
+`at` igual ao momento em que o número ficou offline, e o Turbo Notify continua
+tentando reconectar.
+
+Quando a queda precisa de você, o aviso chega na hora. Se a conexão foi
+removida no celular, você recebe `number.revoked` e o número precisa ser
+pareado de novo. O campo `reason` de `number.disconnected` e `number.revoked`
+diz o que aconteceu, veja
+[Motivos](/messages/webhook/#motivos-de-uma-queda).
 
 ## Acompanhar mudanças
 

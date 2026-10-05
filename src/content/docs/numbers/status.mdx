@@ -180,12 +180,13 @@ revogação). Um número `disconnected`, `failed`, `reconnecting` etc. reporta
 o instante dessa própria transição, então `desconectado desde {at}` /
 `falhou em {at}` exibem o horário certo diretamente.
 
-Durante uma reconexão automática (quando o Turbo Notify transfere a conexão do
-número internamente), `reconnecting` e o `disconnected` que vem depois dela,
-se o número não volta em cerca de um minuto, trazem em `at` o mesmo instante:
-o momento em que o número ficou offline, igual ao `at` do webhook
-`number.disconnected`. Se o número volta dentro dessa janela, `at` passa a ser
-o momento da volta e nenhum webhook é enviado.
+Durante uma reconexão automática (a conexão com o WhatsApp caiu, ou o Turbo
+Notify transferiu a conexão do número internamente), `reconnecting`, e o
+`disconnected` que pode vir depois dele se o número não volta em cerca de um
+minuto, trazem em `at` o mesmo instante: o momento em que o número ficou
+offline, igual ao `at` do webhook `number.disconnected`. Se o número volta
+dentro dessa janela, `at` passa a ser o momento da volta e nenhum webhook é
+enviado.
 
 Um número recém-cadastrado (`status: "pending"`) traz em `at` o momento do
 cadastro.
@@ -231,7 +232,7 @@ Presente quando `status` é `pairing` e o código está pronto (veja
 | `connecting`         | Conexão sendo estabelecida (`POST .../connect` aceito).                   |
 | `connected`          | O número está vinculado e pronto para envio de mensagens.                 |
 | `disconnected`       | Conexão perdida ou desativada; a autenticação é preservada para reconectar. |
-| `reconnecting`       | Reconexão automática em andamento após uma queda ou uma transferência interna da conexão. Se o número não volta em cerca de um minuto, passa a `disconnected`. |
+| `reconnecting`       | O Turbo Notify está reconectando o número sozinho, depois de uma queda da conexão ou de uma transferência interna. Você não precisa fazer nada. Se o número não volta em cerca de um minuto, você recebe `number.disconnected` e o Turbo Notify continua tentando. |
 | `failed`             | A vinculação falhou. O motivo vem em `reason`, veja abaixo.               |
 | `revoked`            | O dispositivo foi desvinculado pelo WhatsApp.                             |
 | `pending_deletion`   | Exclusão agendada (`DELETE /v1/numbers/{alias}`): sobrepõe qualquer outro status até a exclusão. |
