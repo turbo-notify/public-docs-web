@@ -277,7 +277,7 @@ contagem atual de números extras vivos da organização.
 
 <ApiResponse
   status={429}
-  headers={{ 'Retry-After': '1' }}
+  headers={{ 'Retry-After': '1296000' }}
   body={{
     error: 'messages_quota_exceeded',
   }}
@@ -286,16 +286,17 @@ contagem atual de números extras vivos da organização.
 Diferente do 402 de contatos, este 429 **não** carrega `details` com
 `used`/`quota`/`resets_at` no corpo. Consulte
 `GET /v1/numbers/{alias}/messages/quota` (ou `GET /v1/usage/messages`) para o
-snapshot completo e o `resets_at` real. O cabeçalho `Retry-After` aqui é um
-valor técnico curto (não representa "quanto falta para a quota renovar", a
-quota só renova em `resets_at`, que pode estar a dias de distância).
+snapshot completo e o `resets_at` real. O cabeçalho `Retry-After` traz quantos
+segundos faltam para a quota do número renovar, ou seja, até `resets_at` (no
+exemplo, 15 dias). Repetir o envio antes disso recebe o mesmo 429; para enviar
+já, use outro número ou mude de plano.
 
 ### 402 vs 429: quando aparecem
 
 | | 402 (contatos) | 429 (mensagens) |
 | - | ------------- | ------------- |
 | Sinal | Fazer upgrade de plano | Quota do ciclo esgotada |
-| Cabeçalho `Retry-After` | Ausente | Presente (não confiável para saber quando a quota renova) |
+| Cabeçalho `Retry-After` | Ausente | Presente: segundos até `resets_at` |
 | Corpo com `used`/`quota`/`resets_at` | Sim (`details`) | Não: consulte o endpoint de quota |
 | Reseta em | `resets_at` (fim do ciclo avaliado) ou upgrade | `resets_at` (fim do ciclo avaliado) |
 

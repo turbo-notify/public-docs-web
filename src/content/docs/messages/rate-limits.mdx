@@ -105,9 +105,9 @@ Para evitar problemas, siga as recomendações de uso responsável descritas em 
 | `429`  | `recipients_per_day_limit_exceeded`  | Proteção anti-bloqueio: 2.000 mensagens/dia para o mesmo destinatário, por número (veja [acima](#proteção-contra-rajadas-operacional-igual-em-todos-os-tiers)). |
 | `429`  | `warmup_limit_exceeded` | Número conectado há poucos dias: o volume diário é liberado aos poucos para o WhatsApp não tratar o número novo como suspeito. O cabeçalho `Retry-After` indica quantos segundos faltam para o limite diário renovar (meia-noite UTC). |
 | `429`  | `duplicate_burst_blocked` | O mesmo texto foi enviado para mais de 20 destinatários na última hora, pelo mesmo número. Varie o conteúdo ou espace os envios. |
-| `429`  | `reply_ratio_too_low` | Poucas respostas recebidas em relação ao que o número enviou, sinal de envio não solicitado. Reduza o volume para quem não interage. |
+| `429`  | `reply_ratio_too_low` | Poucas respostas recebidas em relação ao que o número enviou, sinal de envio não solicitado. Reduza o volume para quem não interage. Vem sem `Retry-After`: esperar não resolve, o envio volta a ser aceito quando os contatos respondem ou o volume cai. |
 | `429`  | `pairing_rate_limited`   | Pedidos de código de pareamento acima do limite, veja [Pareamento de números extras](#pareamento-de-números-extras). |
-| `429`  | `rate_limit_exceeded`    | Limite geral de requisições à API da sua organização ultrapassado (1.000 requisições por segundo). Aguarde alguns instantes e tente novamente. |
+| `429`  | `rate_limit_exceeded`    | Limite geral de requisições à API da sua organização ultrapassado (1.000 requisições por segundo). Requisições em paralelo são aceitas enquanto o total do segundo fica abaixo disso. Aguarde o `Retry-After` e tente novamente. |
 | `503`  | `internal_error`         | Serviço temporariamente indisponível. Tente novamente após alguns instantes. |
 | `503`  | `plan_lookup_failed`     | Não foi possível resolver o plano da organização no momento. A requisição não foi processada. Tente novamente. |
 
