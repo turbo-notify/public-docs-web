@@ -157,10 +157,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by inbox handle (``\"main\"`` or extra alias). ADR 2026-06-22: restricts results to events belonging to this specific number. The only organization-scoped events without a ``number_alias`` are ``storage.*`` (ADR 2026-07-02 made ``message.quota.*``/``contact.quota.*`` number-scoped too); those are excluded when this filter is active.",
+              "description": "Filter by number handle (``\"main\"`` or an extra number alias). Restricts results to events belonging to this specific number. The only organization-wide events without a ``number_alias`` are ``storage.*``; those are excluded when this filter is active.",
               "title": "Number Alias"
             },
-            "description": "Filter by inbox handle (``\"main\"`` or extra alias). ADR 2026-06-22: restricts results to events belonging to this specific number. The only organization-scoped events without a ``number_alias`` are ``storage.*`` (ADR 2026-07-02 made ``message.quota.*``/``contact.quota.*`` number-scoped too); those are excluded when this filter is active."
+            "description": "Filter by number handle (``\"main\"`` or an extra number alias). Restricts results to events belonging to this specific number. The only organization-wide events without a ``number_alias`` are ``storage.*``; those are excluded when this filter is active."
           },
           {
             "name": "created[gte]",
@@ -497,7 +497,7 @@
           "Messages"
         ],
         "summary": "React To Message Flat",
-        "description": "Add or remove a reaction on a message via the main number.\n\nThe ownership guard asserts the message belongs to the main inbox.",
+        "description": "Add or remove a reaction on a message via the main number.\n\nThe message must belong to the main number.",
         "operationId": "react_to_message_flat_v1_messages__message_id__react_post",
         "parameters": [
           {
@@ -1031,10 +1031,10 @@
                   "type": "null"
                 }
               ],
-              "description": "When true, restrict to contacts CONTACTED via Turbo Notify in the main number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Cycle-anchored (ADR 2026-07-04), not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected).",
+              "description": "When true, restrict to contacts CONTACTED via Turbo Notify in the main number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Based on the billing cycle, not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected).",
               "title": "Contacted In Cycle"
             },
-            "description": "When true, restrict to contacts CONTACTED via Turbo Notify in the main number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Cycle-anchored (ADR 2026-07-04), not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected)."
+            "description": "When true, restrict to contacts CONTACTED via Turbo Notify in the main number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Based on the billing cycle, not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected)."
           }
         ],
         "responses": {
@@ -2646,7 +2646,7 @@
           "Messages"
         ],
         "summary": "Mark As Read",
-        "description": "Mark a chat's (or WhatsApp Group's) unread inbound backlog as read\nfrom the number identified by ``alias`` — independent of the\nautomatic mark-as-read that already accompanies send/reply/react/\nedit/delete (ADR 2026-09-07-mark-as-read-on-interaction). Useful for\na customer's own client that wants inbox parity (e.g. an unread\nbadge cleared by the user) without sending any WhatsApp message.\n\nThe sender is inferred from the URL ``alias``; there is no ``from``\nbody field.",
+        "description": "Mark a chat's (or WhatsApp Group's) unread inbound backlog as read\nfrom the number identified by ``alias`` — independent of the\nautomatic mark-as-read that already accompanies send/reply/react/\nedit/delete. Useful for\na customer's own client that wants inbox parity (e.g. an unread\nbadge cleared by the user) without sending any WhatsApp message.\n\nThe sender is inferred from the URL ``alias``; there is no ``from``\nbody field.",
         "operationId": "mark_as_read_v1_numbers__alias__messages_read_post",
         "parameters": [
           {
@@ -2803,10 +2803,10 @@
                   "type": "null"
                 }
               ],
-              "description": "When true, restrict to contacts CONTACTED via Turbo Notify in this number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Cycle-anchored (ADR 2026-07-04), not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected).",
+              "description": "When true, restrict to contacts CONTACTED via Turbo Notify in this number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Based on the billing cycle, not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected).",
               "title": "Contacted In Cycle"
             },
-            "description": "When true, restrict to contacts CONTACTED via Turbo Notify in this number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Cycle-anchored (ADR 2026-07-04), not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected)."
+            "description": "When true, restrict to contacts CONTACTED via Turbo Notify in this number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Based on the billing cycle, not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected)."
           }
         ],
         "responses": {
@@ -3574,7 +3574,7 @@
           "tier"
         ],
         "title": "ContactQuotaResponse",
-        "description": "Organization's current contact-quota snapshot.\n\nTask 4.1 (public quota/usage shapes gain the evaluated cycle): the\nformer rolling ``window_days`` field is retired — the response now\ncarries the evaluated billing cycle directly (``cycle_start``/\n``cycle_end``), mirroring ``MessageQuotaResponse`` exactly.\n``resets_at`` always equals ``cycle_end``.\n\nm3 coherence fix: these three fields are typed ``str`` (not\n``datetime``) and formatted at construction time via the canonical\n``format_utc_iso()`` helper — matching the second-precision, Z-suffixed\nconvention already used by the NATS quota events (``contact.quota.*``)\nand every other public-surface timestamp (e.g. ``at`` on message\nresponses). A ``datetime``-typed field would serialize with Pydantic's\ndefault microsecond-precision encoder, diverging from the event side.\n\n.. code-block:: json\n\n   {\n     \"used\": 87,\n     \"quota\": 1000,\n     \"remaining\": 913,\n     \"cycle_start\": \"2026-06-01T00:00:00Z\",\n     \"cycle_end\": \"2026-07-01T00:00:00Z\",\n     \"resets_at\": \"2026-07-01T00:00:00Z\",\n     \"tier\": \"SOLO\"\n   }"
+        "description": "Organization's current contact-quota snapshot.\n\nTask 4.1 (public quota/usage shapes gain the evaluated cycle): the\nformer rolling ``window_days`` field is retired — the response now\ncarries the evaluated billing cycle directly (``cycle_start``/\n``cycle_end``), mirroring ``MessageQuotaResponse`` exactly.\n``resets_at`` always equals ``cycle_end``.\n\nThese three fields are UTC timestamps with second precision and a ``Z``\nsuffix, the same format used by the ``contact.quota.*`` webhook events\nand every other timestamp in the API (for example ``at`` on message\nresponses).\n\n.. code-block:: json\n\n   {\n     \"used\": 87,\n     \"quota\": 1000,\n     \"remaining\": 913,\n     \"cycle_start\": \"2026-06-01T00:00:00Z\",\n     \"cycle_end\": \"2026-07-01T00:00:00Z\",\n     \"resets_at\": \"2026-07-01T00:00:00Z\",\n     \"tier\": \"SOLO\"\n   }"
       },
       "ContactRefreshPayload": {
         "properties": {
@@ -3759,7 +3759,7 @@
           "self"
         ],
         "title": "ContactSource",
-        "description": "How a :class:`Contact` entered the platform.\n\nInvariant: SOURCE_IMMUTABLE — once set on contact creation the value\nnever changes. Re-pairing or address-book rotations do NOT alter the\nsource; ``last_interaction_at`` carries that signal instead.\n\nMembers:\n    INBOUND: First touched when the organization received a message from\n        this peer (worker emitted ``MessageReceivedEvent``).\n    OUTBOUND: First touched when the organization sent a message to this\n        peer (``SendMessageUseCase`` invoked\n        :meth:`ContactWriteRepository.upsert_contact`).\n    MENTION: First touched when this peer was @mentioned inside message\n        traffic (inbound, channel-outbound, or TN send — ADR 2026-07-03).\n        Traffic-derived like a receipt acker; NEVER stamps\n        ``first_messaged_at``/``last_messaged_at`` and never consumes a\n        quota slot (``tn_send=False`` always).\n    SELF: Contact represents a TN-managed number — primary session\n        or extra number for the organization itself. ``is_self=TRUE`` row."
+        "description": "How a contact entered the platform.\n\nInvariant: SOURCE_IMMUTABLE — once set on contact creation the value\nnever changes. Re-pairing or address-book rotations do NOT alter the\nsource; ``last_interaction_at`` carries that signal instead.\n\nMembers:\n    INBOUND: First touched when the organization received a message from\n        this peer.\n    OUTBOUND: First touched when the organization sent a message to this\n        peer.\n    MENTION: First touched when this peer was @mentioned inside message\n        traffic (received, sent from the phone, or sent through the API).\n        Traffic-derived like a receipt acker; NEVER stamps\n        ``first_messaged_at``/``last_messaged_at`` and never consumes a\n        quota slot (``tn_send=False`` always).\n    SELF: Contact represents a TN-managed number — primary session\n        or extra number for the organization itself. ``is_self=TRUE`` row."
       },
       "ContactUsageSnapshot": {
         "properties": {
@@ -3794,7 +3794,7 @@
           "tier"
         ],
         "title": "ContactUsageSnapshot",
-        "description": "Contact-quota subsection of :class:`UsageResponse`."
+        "description": "Contact-quota section of the usage response."
       },
       "DeleteMessageResponse": {
         "properties": {
@@ -3895,7 +3895,7 @@
           "data"
         ],
         "title": "EventResponse",
-        "description": "A single item in the :class:`ListEventsResponse` list.\n\nUnified envelope (2026-06-01 spec) — same fields on webhook and\npolling channels:\n\n- ``id``: evt_{hex32} event identifier.\n- ``type``: WebhookEventType value.\n- ``organization_id``: org_{hex32} — the organization's public identifier.\n- ``number_alias``: the organization number (\"inbox\") handle — ``\"main\"`` or an\n  extra alias — immediately below ``organization_id``; omitted for\n  organization-scoped events with no single number (ADR 2026-06-19).\n- ``created_at``: ISO 8601 with organization timezone offset (fallback UTC).\n- ``data``: Shared ``EventData`` subclass — byte-identical on both\n  channels.\n\nRemoved (2026-06-01): ``object``, ``request_id``, ``timestamp``."
+        "description": "A single item in the events list.\n\nUnified envelope (2026-06-01 spec) — same fields on webhook and\npolling channels:\n\n- ``id``: evt_{hex32} event identifier.\n- ``type``: WebhookEventType value.\n- ``organization_id``: org_{hex32} — the organization's public identifier.\n- ``number_alias``: the number handle — ``\"main\"`` or an\n  extra alias — immediately below ``organization_id``; omitted for\n  organization-wide events with no single number.\n- ``created_at``: ISO 8601 with organization timezone offset (fallback UTC).\n- ``data``: Shared ``EventData`` subclass — byte-identical on both\n  channels.\n\nRemoved (2026-06-01): ``object``, ``request_id``, ``timestamp``."
       },
       "ExtraNumberStatusPayload": {
         "properties": {
@@ -3985,7 +3985,7 @@
           "status"
         ],
         "title": "ExtraNumberSummaryResponse",
-        "description": "Per-item summary for ``GET /numbers`` (list).\n\nCanonical NUMBER identity prefix (ADR 2026-06-19 follow-up):\n``contact_id, name, type, alias, number`` then the surface-specific\n``description``/``status`` tail."
+        "description": "Per-item summary for ``GET /numbers`` (list).\n\nNumber identity fields, in order:\n``contact_id, name, type, alias, number`` then the surface-specific\n``description``/``status`` tail."
       },
       "GetExtraNumberStatusResponse": {
         "properties": {
@@ -4084,7 +4084,7 @@
           "at"
         ],
         "title": "GetExtraNumberStatusResponse",
-        "description": "``GET /numbers/{alias}`` — canonical NUMBER identity shape.\n\nField/wire order (ADR 2026-06-19 follow-up):\n``contact_id, name, type, alias, number, status, at`` then the\nsurface-specific tail (``description``, ``scheduled_deletion_at``,\n``reason``, ``pairing``)."
+        "description": "``GET /numbers/{alias}`` — canonical NUMBER identity shape.\n\nField order:\n``contact_id, name, type, alias, number, status, at`` then the\nsurface-specific tail (``description``, ``scheduled_deletion_at``,\n``reason``, ``pairing``)."
       },
       "GetMainNumberResponse": {
         "properties": {
@@ -4152,7 +4152,7 @@
           "status"
         ],
         "title": "GetMainNumberResponse",
-        "description": "``GET /numbers/main`` — canonical NUMBER identity shape.\n\nField/wire order (ADR 2026-06-19 follow-up):\n``contact_id, name, type, alias, number, status, at``."
+        "description": "``GET /numbers/main`` — canonical NUMBER identity shape.\n\nField order:\n``contact_id, name, type, alias, number, status, at``."
       },
       "GetMessageDetailsResponse": {
         "properties": {
@@ -4376,7 +4376,7 @@
           "status"
         ],
         "title": "GetMessageDetailsResponse",
-        "description": "``GET /v1/messages/{id}`` response.\n\nUnified with the webhook/polling event shape (2026-06-01 spec):\n\nCommon fields (all ``message.*`` events):\n- ``id``: public ``msg_{hex32}`` identifier.\n- ``organization_id``: ``org_{hex32}`` — the owning organization (after ``id``).\n- ``number_alias``: organization inbox handle (``\"main\"`` / extra alias), after\n  ``organization_id``. Replaces the dropped ``inbox`` party block.\n- ``from``/``to``: direction-aware party shapes.\n- ``preview``: grapheme-aware crop (≤ 50 chars). Follows the identical\n  per-organization content-retention window as the body (not permanent) —\n  resolved by the shared ``RetentionResolver``.\n- ``content_type``: ``text``, ``image``, ``audio``, etc.\n- ``direction``: ``\"outbound\"`` or ``\"inbound\"``.\n- ``channel``: always ``\"whatsapp\"``.\n- ``origin``: ``\"tn\"`` (API send), ``\"native\"`` (WhatsApp direct/inbound).\n  Always present — never ``null``.\n- ``at``: ISO 8601 — stable WhatsApp occurrence moment (does not advance\n  with delivery state; outbound = sent_at, inbound = created_at proxy).\n- ``status``: ``{state, at, error}`` — ``status.at`` is the advancing\n  current-delivery-status time (read_at → delivered_at → sent_at → failed_at\n  → created_at).  ``error`` is the nested ``MessageError``\n  (``{code, message, hint}``), present iff ``state=\"failed\"``.\n- ``mentions`` (ADR 2026-07-03): ``[{contact_id?, name?, number}, ...]`` —\n  hydrated ``@<number>`` mentions found in ``text``/the media ``caption``,\n  inbound AND outbound, stored order.  ``None`` when the message has no\n  mentions.  Survives the ``content`` retention purge (mirrors\n  ``quoted_message_id``).\n\nType-specific optional fields (one per ``content_type``):\n- ``text``: full text for ``content_type=\"text\"``.\n- ``image``, ``video``, ``audio``, ``document``, ``sticker``: media\n  objects including the discriminated ``media`` block (``kind`` field).\n- ``location``: ``{latitude, longitude, name?, address?, …}``.\n- ``calendar``: ``{name, start_at, …}``.\n- ``interactive``: ``{interactive_type, body, header?, footer?, url_button}``.\n- ``replied``: ``{message_id, preview}`` — for reply messages.\n\nFor ``message.reacted``: ``content_type=\"text\"``, ``text`` = emoji or ``\"\"``.\n\nRemoved (2026-06-01): ``body``, ``body_expired``, ``sent_at``,\n``delivered_at``, ``read_at``, ``updated_at``, ``quoted_message_id``\n(top-level), ``media`` (top-level — moved into type-specific objects).\nRemoved (ADR 2026-06-19): ``inbox`` party block — superseded by the flat\n``number_alias`` handle."
+        "description": "``GET /v1/messages/{id}`` response.\n\nUnified with the webhook/polling event shape (2026-06-01 spec):\n\nCommon fields (all ``message.*`` events):\n- ``id``: public ``msg_{hex32}`` identifier.\n- ``organization_id``: ``org_{hex32}`` — the owning organization (after ``id``).\n- ``number_alias``: organization inbox handle (``\"main\"`` / extra alias), after\n  ``organization_id``. Replaces the dropped ``inbox`` party block.\n- ``from``/``to``: direction-aware party shapes.\n- ``preview``: grapheme-aware crop (≤ 50 chars). Follows the identical\n  per-organization content-retention window as the body (not permanent) —\n  resolved by the shared ``RetentionResolver``.\n- ``content_type``: ``text``, ``image``, ``audio``, etc.\n- ``direction``: ``\"outbound\"`` or ``\"inbound\"``.\n- ``channel``: always ``\"whatsapp\"``.\n- ``origin``: ``\"tn\"`` (API send), ``\"native\"`` (WhatsApp direct/inbound).\n  Always present — never ``null``.\n- ``at``: ISO 8601 — stable WhatsApp occurrence moment (does not advance\n  with delivery state; outbound = sent_at, inbound = created_at proxy).\n- ``status``: ``{state, at, error}`` — ``status.at`` is the advancing\n  current-delivery-status time (read_at → delivered_at → sent_at → failed_at\n  → created_at).  ``error`` is the nested ``MessageError``\n  (``{code, message, hint}``), present iff ``state=\"failed\"``.\n- ``mentions``: ``[{contact_id?, name?, number}, ...]`` —\n  hydrated ``@<number>`` mentions found in ``text``/the media ``caption``,\n  inbound AND outbound, stored order.  ``None`` when the message has no\n  mentions.  Survives the ``content`` retention purge (mirrors\n  ``quoted_message_id``).\n\nType-specific optional fields (one per ``content_type``):\n- ``text``: full text for ``content_type=\"text\"``.\n- ``image``, ``video``, ``audio``, ``document``, ``sticker``: media\n  objects including the discriminated ``media`` block (``kind`` field).\n- ``location``: ``{latitude, longitude, name?, address?, …}``.\n- ``calendar``: ``{name, start_at, …}``.\n- ``interactive``: ``{interactive_type, body, header?, footer?, url_button}``.\n- ``replied``: ``{message_id, preview}`` — for reply messages.\n\nFor ``message.reacted``: ``content_type=\"text\"``, ``text`` = emoji or ``\"\"``.\n\nRemoved (2026-06-01): ``body``, ``body_expired``, ``sent_at``,\n``delivered_at``, ``read_at``, ``updated_at``, ``quoted_message_id``\n(top-level), ``media`` (top-level — moved into type-specific objects).\nRemoved: the ``inbox`` party block, replaced by the flat ``number_alias``\nhandle."
       },
       "GetMessageReactionsResponse": {
         "properties": {
@@ -4608,7 +4608,7 @@
           "updated_at"
         ],
         "title": "GroupResponse",
-        "description": "Public representation of a WhatsApp Group for the API consumer.\n\nIntentionally omits:\n- ``whatsapp_group_id`` (raw WA protocol identifier — internal)\n- ``parent_whatsapp_group_jid`` (internal community identifier)\n- ``picture_url`` / ``picture_hash`` (worker-internal WA CDN hints)\n- ``last_metadata_sync_at`` (internal cache-freshness marker — TN\n  implementation detail; ``updated_at`` already signals row changes)\n- ``deleted_at`` (admin-only)"
+        "description": "Public representation of a WhatsApp Group for the API consumer.\n\nIntentionally omits:\n- ``whatsapp_group_id`` (raw WA protocol identifier — internal)\n- ``parent_whatsapp_group_jid`` (internal community identifier)\n- ``picture_url`` / ``picture_hash`` (internal WhatsApp CDN hints)\n- ``last_metadata_sync_at`` (internal cache-freshness marker — TN\n  implementation detail; ``updated_at`` already signals row changes)\n- ``deleted_at`` (admin-only)"
       },
       "HTTPValidationError": {
         "properties": {
@@ -4809,7 +4809,7 @@
           "message"
         ],
         "title": "MessageError",
-        "description": "Structured error for a failed message operation.\n\nTHE single error shape across every surface that reports a failure —\nthe webhook ``data.error`` (failed events) and the public API\n``status.error`` (``GET /v1/messages/{id}``, ``GET .../status``, and the\nsend/edit/delete/reply responses). Present only when the message state is\n``failed``; ``null``/absent otherwise.\n\nInvariant — coherence:\n    This model is defined ONCE here and reused by both the webhook\n    contracts and the public-api response schemas. Do not fork a local\n    copy; a divergent error shape is exactly the incoherence this model\n    exists to prevent.\n\nFields:\n    code: Stable machine-readable identifier — consumers branch on this\n        (e.g. ``media_fetch_failed``, ``unsupported_media_format``,\n        ``reaction_lid_unavailable``). Never localised, never reworded.\n    message: Human-readable summary of what went wrong.\n    hint: Actionable, no-PII remediation guidance. Derived from ``code``\n        (+ content type) via the shared ``error_hint`` service, so the\n        event and the resource always carry the same hint. Omitted from\n        the wire — never ``null`` — when no guidance applies.\n\nInvariant — ``hint`` is omitted, never ``null``:\n    ``error_hint()`` returns ``None`` for every code outside its catalog\n    (``whatsapp_send_failed``, ``message_timeout``, ...). The\n    webhook surface already dropped the key via\n    ``EventData.to_public_dict(exclude_none=True)`` and the message-detail\n    GET via ``response_model_exclude_none``, but ``GET .../{id}/status``\n    cannot use that flag (it must keep ``error: null`` on the non-failed\n    states). Rather than bolt a ``field_serializer`` onto that one\n    consumer, the rule lives on the shape itself — which is what the\n    coherence invariant above demands, and what keeps the published\n    OpenAPI intact.\n\n    Why the shape and not the consumer: a ``field_serializer`` on the\n    enclosing payload makes that payload's serialization JSON schema\n    differ from its validation one, so Pydantic emits two definitions and\n    FastAPI publishes them as ``<Model>-Input`` / ``<Model>-Output`` —\n    renaming the component every generated client binds to, cascading the\n    rename to every enclosing model, and degrading ``error`` from\n    ``$ref: MessageError`` to a free-form object. A ``model_serializer``\n    here changes no schema at all (proved by\n    ``public-api/tests/contract/test_message_status_error_wire_shape.py``)."
+        "description": "Structured error for a failed message operation.\n\nThe same shape is used everywhere a failure is reported: the webhook\n``data.error`` of failed events and the ``status.error`` of the message\nendpoints (``GET /v1/messages/{id}``, ``GET .../status`` and the\nsend/edit/delete/reply responses). Present only when the message state\nis ``failed``; ``null`` or absent otherwise.\n\nFields:\n    code: Stable machine-readable identifier. Branch on this value (for\n        example ``media_fetch_failed``, ``unsupported_media_format``,\n        ``reaction_lid_unavailable``). It is never translated or reworded.\n    message: Human-readable summary of what went wrong.\n    hint: Actionable remediation guidance. Omitted, never ``null``, when\n        no guidance applies."
       },
       "MessageListItem": {
         "properties": {
@@ -4932,7 +4932,7 @@
           "tier"
         ],
         "title": "MessageQuotaResponse",
-        "description": "A number's current message-quota snapshot.\n\nTask 4.1 (public quota/usage shapes gain the evaluated cycle): the\nformer rolling ``window_days`` field is retired — the response now\ncarries the evaluated billing cycle directly (``cycle_start``/\n``cycle_end``), matching the internal ``MessageQuotaSnapshot`` and the\nNATS quota-event payloads exactly. ``resets_at`` always equals\n``cycle_end``.\n\nm3 coherence fix: these three fields are typed ``str`` (not\n``datetime``) and formatted at construction time via the canonical\n``format_utc_iso()`` helper — matching the second-precision, Z-suffixed\nconvention already used by the NATS quota events (``message.quota.*``)\nand every other public-surface timestamp. A ``datetime``-typed field\nwould serialize with Pydantic's default microsecond-precision encoder,\ndiverging from the event side.\n\n.. code-block:: json\n\n   {\n     \"used\": 1234,\n     \"quota\": 10000,\n     \"remaining\": 8766,\n     \"cycle_start\": \"2026-06-01T00:00:00Z\",\n     \"cycle_end\": \"2026-07-01T00:00:00Z\",\n     \"resets_at\": \"2026-07-01T00:00:00Z\",\n     \"tier\": \"SOLO\"\n   }"
+        "description": "A number's current message-quota snapshot.\n\nTask 4.1 (public quota/usage shapes gain the evaluated cycle): the\nformer rolling ``window_days`` field is retired — the response now\ncarries the evaluated billing cycle directly (``cycle_start``/\n``cycle_end``), matching the ``message.quota.*`` webhook events exactly.\n``resets_at`` always equals ``cycle_end``.\n\nThese three fields are UTC timestamps with second precision and a ``Z``\nsuffix, the same format used by the ``message.quota.*`` webhook events\nand every other timestamp in the API.\n\n.. code-block:: json\n\n   {\n     \"used\": 1234,\n     \"quota\": 10000,\n     \"remaining\": 8766,\n     \"cycle_start\": \"2026-06-01T00:00:00Z\",\n     \"cycle_end\": \"2026-07-01T00:00:00Z\",\n     \"resets_at\": \"2026-07-01T00:00:00Z\",\n     \"tier\": \"SOLO\"\n   }"
       },
       "MessageStatusPayload": {
         "properties": {
@@ -4995,7 +4995,7 @@
           "tier"
         ],
         "title": "MessageUsageSnapshot",
-        "description": "Message-quota subsection of :class:`UsageResponse`."
+        "description": "Message-quota section of the usage response."
       },
       "NumberFamilyUsage": {
         "properties": {
@@ -5155,7 +5155,7 @@
           "updated_at"
         ],
         "title": "OrganizationResponse",
-        "description": "Public representation of the authenticated organization's organization.\n\nExposes only safe fields — anti-ban bypass flags and billing overrides\nare admin-only and never present here (see :class:`OrganizationSnapshot`)."
+        "description": "Public representation of the authenticated organization's organization.\n\nExposes only safe fields — anti-ban bypass flags and billing overrides\nare admin-only and never present here."
       },
       "OutboundRecipientInput": {
         "properties": {
@@ -5227,7 +5227,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "OutboundSenderInput",
-        "description": "``from`` field on outbound message requests — alias XOR number.\n\nOn the request side either ``alias`` (e.g. ``\"main\"`` or an extra\nnumber alias) or ``number`` (E.164 phone) is provided — never both.\nThe :class:`SenderResolver` translates this input into the canonical\ndomain :class:`OutboundSender` value object before persistence."
+        "description": "``from`` field on outbound message requests — alias XOR number.\n\nOn the request side either ``alias`` (e.g. ``\"main\"`` or an extra\nnumber alias) or ``number`` (E.164 phone) is provided — never both.\nThe platform resolves the alias or number to the sending number\nbefore the message is stored."
       },
       "PairExtraNumberRequest": {
         "properties": {
@@ -5338,7 +5338,7 @@
           "url"
         ],
         "title": "ProfilePictureAvailable",
-        "description": "Profile picture is accessible via a signed URL.\n\n``url_expires_at`` is set for presigned URLs and ``None`` for\npermanent public URLs.  Consumers should re-fetch via the contacts\nAPI after the URL expires rather than caching indefinitely.\n\n``hash`` is the hex-encoded SHA-256 of the picture bytes —\nstable across re-uploads of the same image, useful for dedup.\n\n``fetched_at`` records when the worker last fetched the picture\nfrom WhatsApp — useful for freshness heuristics."
+        "description": "Profile picture is accessible via a signed URL.\n\n``url_expires_at`` is set for presigned URLs and ``None`` for\npermanent public URLs.  Consumers should re-fetch via the contacts\nAPI after the URL expires rather than caching indefinitely.\n\n``hash`` is the hex-encoded SHA-256 of the picture bytes —\nstable across re-uploads of the same image, useful for dedup.\n\n``fetched_at`` records when the picture was last fetched from\nWhatsApp, useful for freshness heuristics."
       },
       "ProfilePicturePending": {
         "properties": {
@@ -5363,7 +5363,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "ProfilePicturePending",
-        "description": "Profile picture upload to organization storage is in progress.\n\n``hash`` may be present when the worker already computed the\nSHA-256 of the fetched bytes at dispatch time."
+        "description": "Profile picture upload to organization storage is in progress.\n\n``hash`` may be present when the SHA-256 of the fetched bytes is\nalready known while the upload is in progress."
       },
       "ProfilePictureUnavailable": {
         "properties": {
@@ -5823,7 +5823,7 @@
           "start_at"
         ],
         "title": "SendCalendarContent",
-        "description": "Schedule a calendar event. Maps to WhatsApp ``eventMessage``.\n\n``start_at`` and ``end_at`` are timezone-aware ISO-8601 datetimes\n(Pydantic ``AwareDatetime`` rejects naive inputs at the boundary)."
+        "description": "Schedule a calendar event. Maps to WhatsApp ``eventMessage``.\n\n``start_at`` and ``end_at`` are timezone-aware ISO-8601 datetimes\n(values without a timezone are rejected)."
       },
       "SendContactContent": {
         "properties": {
@@ -5894,7 +5894,7 @@
           "phones"
         ],
         "title": "SendContactContent",
-        "description": "Share a contact card. Maps to WhatsApp ``ContactMessage``.\n\nThe vCard sent on the wire is generated server-side from these\nstructured fields (see ``vcard_builder.build_vcard`` in the worker).\nClients never craft the vCard themselves — keeps escaping correct\nand the produced contact compatible with WhatsApp's parser."
+        "description": "Share a contact card. Maps to WhatsApp ``ContactMessage``.\n\nThe vCard sent on the wire is generated server-side from these\nstructured fields. Clients never craft the vCard themselves, which keeps escaping correct\nand the produced contact compatible with WhatsApp's parser."
       },
       "SendContactEmail": {
         "properties": {
@@ -5973,7 +5973,7 @@
               }
             ],
             "title": "Caption",
-            "description": "Optional caption. Supports the same `@<number>` mention tokens as text bodies (normalized digits, echoed in `mentions` — ADR 2026-07-03)."
+            "description": "Optional caption. Supports the same `@<number>` mention tokens as text bodies (normalized digits, echoed in `mentions`)."
           },
           "filename": {
             "anyOf": [
@@ -6028,7 +6028,7 @@
               }
             ],
             "title": "Caption",
-            "description": "Optional caption. Supports the same `@<number>` mention tokens as text bodies (normalized digits, echoed in `mentions` — ADR 2026-07-03)."
+            "description": "Optional caption. Supports the same `@<number>` mention tokens as text bodies (normalized digits, echoed in `mentions`)."
           }
         },
         "additionalProperties": false,
@@ -6086,7 +6086,7 @@
           "url_button"
         ],
         "title": "SendInteractiveContent",
-        "description": "Interactive message — CTA URL only.\n\n``interactive_type`` is a one-value discriminator kept for forward\ncompatibility (and to anchor the JSON shape consistent with the\nstorage VO). ``url_button`` is required.\n\nSee ADR ``2026-05-14-remove-whatsapp-interactive-buttons-list``."
+        "description": "Interactive message — CTA URL only.\n\n``interactive_type`` is a one-value discriminator kept for forward\ncompatibility (and to anchor the JSON shape consistent with the\nstorage VO). ``url_button`` is required.\n\nOnly the call-to-action URL button is supported."
       },
       "SendLocationContent": {
         "properties": {
@@ -6210,7 +6210,7 @@
           "content"
         ],
         "title": "SendMessageRequest",
-        "description": "``POST /v1/messages`` request body.\n\n``to`` identifies the recipient (phone XOR group_id).\n``content`` is the message payload — variant is inferred from field\npresence (see :data:`SendMessageContent` and :func:`_discriminate_content`).\n``quoted_message_id`` is optional — supply a ``msg_{hex32}`` to quote an\nexisting message without using the dedicated ``/reply`` endpoint.\n\nThe sender number is determined by the ``{alias}`` URL segment of\n``POST /v1/numbers/{alias}/messages`` — there is no ``from`` field in\nthe request body."
+        "description": "``POST /v1/messages`` request body.\n\n``to`` identifies the recipient (phone XOR group_id).\n``content`` is the message payload — variant is inferred from field\npresence (see the content variants of this request).\n``quoted_message_id`` is optional — supply a ``msg_{hex32}`` to quote an\nexisting message without using the dedicated ``/reply`` endpoint.\n\nThe sender number is determined by the ``{alias}`` URL segment of\n``POST /v1/numbers/{alias}/messages`` — there is no ``from`` field in\nthe request body."
       },
       "SendMessageResponse": {
         "properties": {
@@ -6310,7 +6310,7 @@
             "maxLength": 4096,
             "minLength": 1,
             "title": "Text",
-            "description": "Message body. `@<number>` tokens (7-15 digits, e.g. `@5511973117056`) become real WhatsApp @mentions of that user: detected implicitly, normalized to canonical E.164 digits, and echoed in the message's `mentions` structure (ADR 2026-07-03)."
+            "description": "Message body. `@<number>` tokens (7-15 digits, e.g. `@5511990000001`) become real WhatsApp @mentions of that user: detected implicitly, normalized to canonical E.164 digits, and echoed in the message's `mentions` structure."
           }
         },
         "additionalProperties": false,
@@ -6398,7 +6398,7 @@
               }
             ],
             "title": "Caption",
-            "description": "Optional caption. Supports the same `@<number>` mention tokens as text bodies (normalized digits, echoed in `mentions` — ADR 2026-07-03)."
+            "description": "Optional caption. Supports the same `@<number>` mention tokens as text bodies (normalized digits, echoed in `mentions`)."
           }
         },
         "additionalProperties": false,
