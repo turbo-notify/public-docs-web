@@ -725,7 +725,7 @@ No `GET /v1/numbers/{alias}/messages/{id}`, o `mime_type` típico do bloco `audi
 Quando **BYO Speech-to-Text** está configurado para o número, mensagens de áudio inbound ganham o campo **`transcription`**: uma união discriminada por `kind` (omitida quando não é mensagem de áudio):
 
 - **`{"kind": "available", "text": "...", "language"?: "pt"}`**: transcrição concluída; `language` é o código BCP-47 do idioma detectado/configurado quando disponível.
-- **`{"kind": "unavailable", "reason": "...", "hint"?: "..."}`**: transcrição não disponível. `reason` é um destes 5 valores: `not_configured`, `provider_error`, `timeout`, `no_adapter` ou `internal_error`. `hint` é uma orientação acionável opcional.
+- **`{"kind": "unavailable", "reason": "...", "hint"?: "..."}`**: transcrição não disponível. `reason` é um destes 6 valores: `not_configured`, `provider_error`, `file_too_large` (áudio acima de 24 MB), `timeout`, `no_adapter` ou `internal_error`. `hint` é uma orientação opcional, escrita para quem lê o evento (com o link da tela **Transcrição** do dashboard quando há algo a ajustar lá).
 
 O fluxo da mensagem nunca é bloqueado por falha de transcrição.
 

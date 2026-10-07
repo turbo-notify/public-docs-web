@@ -10,7 +10,7 @@ O indicador de digitação permite que sua aplicação sinalize ao destinatário
 
 ## Indicador automático
 
-O Turbo Notify gerencia automaticamente o indicador de digitação antes do envio de mensagens. Quando uma mensagem é enviada, o indicador de digitação é ativado por um breve período antes da entrega, proporcionando uma experiência mais humana sem necessidade de configuração adicional.
+O Turbo Notify gerencia automaticamente o indicador de digitação antes do envio de mensagens. Quando uma mensagem é enviada, o indicador de digitação é ativado por um breve período antes da entrega, proporcionando uma experiência mais humana sem necessidade de configuração adicional. Antes disso, a conversa é aberta como uma pessoa faria: o número aparece online e as mensagens não lidas dessa conversa são marcadas como lidas.
 
 Use os endpoints abaixo apenas quando precisar de controle manual sobre o indicador de digitação.
 
@@ -175,9 +175,21 @@ Após enviar, o Turbo Notify retorna aceite assíncrono:
   }}
 />
 
+### O que acontece ao começar a digitar
+
+Começar a digitar também abre a conversa, como em um WhatsApp usado por uma pessoa, nesta ordem:
+
+1. O número aparece online, se ainda não estava.
+2. As mensagens que o número recebeu nessa conversa e ainda não leu são marcadas como lidas (o "check azul" para quem as enviou).
+3. Depois de uma pausa curta e aleatória, entre 0,3 e 1,5 segundo, aparece "digitando...".
+
+Assim, o "digitando..." nunca aparece por cima de mensagens não lidas. O número volta a ficar offline sozinho, alguns minutos depois da última interação com qualquer conversa (é a presença exibida no WhatsApp: a conexão e o status do número não mudam).
+
+Tudo isso é automático e não exige configuração. Não consome cota de mensagens nem de contatos e não gera evento de webhook. O plano exigido para o indicador de digitação continua o mesmo: a leitura que acompanha o início da digitação não depende da feature de leitura do plano BUSINESS ou superior, que vale só para a [marcação manual como lida](/other-features/mark-as-read/).
+
 ## Fim da digitação
 
-Para interromper o indicador de digitação manualmente, envie a mesma requisição com `is_typing` igual a `false`.
+Para interromper o indicador de digitação manualmente, envie a mesma requisição com `is_typing` igual a `false`. Parar de digitar só remove o indicador: nenhuma mensagem é marcada como lida.
 
 <Tabs>
   <TabItem label="cURL">

@@ -128,6 +128,8 @@ Cada ferramenta exige o escopo indicado no [catálogo](#ferramentas). Duas regra
 
 Toda ferramenta que atua sobre mensagens, contatos ou grupos aceita `number_alias` e assume `"main"` (o número principal) quando você não informa. Os limites de plano são os mesmos da API: reagir (`react_to_message`) e o indicador de digitação (`send_typing_indicator`) exigem plano SOLO ou superior; o envio para grupos (inclusive o indicador de digitação em grupo), os recibos de leitura (`get_message_receipts`) e `mark_as_read` exigem BUSINESS ou superior. Receber mensagens por webhook exige SOLO ou superior; no FREE, o agente acompanha as mensagens recebidas com `list_events`. Sem o plano necessário, a ferramenta responde `payment_required: feature_not_available`.
 
+Ao responder, reagir, editar, apagar ou começar a digitar, o número abre a conversa como uma pessoa faria: aparece online, marca como lidas as mensagens não lidas daquela conversa e só então age. Você não precisa chamar `mark_as_read` antes. Abrir a conversa assim é automático e não consome cota própria (a resposta, a reação e o envio contam como antes). Veja [Indicador de digitação](/other-features/typing-indicator/) e [Marcar como lida](/other-features/mark-as-read/).
+
 ### Envio
 
 | Ferramenta | O que faz | Escopo |

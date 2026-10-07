@@ -518,8 +518,8 @@ Quando **BYO Speech-to-Text** está configurado para o número, mensagens de áu
 | `kind` | string | `"available"`: transcrição concluída, ou `"unavailable"`: não disponível. |
 | `text` | string | *(apenas `available`)* Texto transcrito. |
 | `language` | `string \| null` | *(apenas `available`)* Código BCP-47 do idioma detectado/configurado, quando disponível. |
-| `reason` | string | *(apenas `unavailable`)* Um destes 5 valores: `not_configured`, `provider_error`, `timeout`, `no_adapter` ou `internal_error`. |
-| `hint` | `string \| null` | *(apenas `unavailable`)* Orientação acionável opcional. |
+| `reason` | string | *(apenas `unavailable`)* Um destes 6 valores: `not_configured`, `provider_error`, `file_too_large` (áudio acima de 24 MB), `timeout`, `no_adapter` ou `internal_error`. |
+| `hint` | `string \| null` | *(apenas `unavailable`)* Orientação opcional, escrita para quem lê o evento (com o link da tela **Transcrição** do dashboard quando há algo a ajustar lá). |
 
 O fluxo da mensagem nunca é bloqueado por falha de transcrição.
 

@@ -10,9 +10,11 @@ Marcar mensagens como lidas sinaliza ao WhatsApp que sua aplicação leu o hist�
 
 ## Marcação automática
 
-O Turbo Notify já marca automaticamente o histórico de mensagens não lidas de um chat (ou grupo) como lido antes de enviar, responder, reagir, editar ou excluir uma mensagem nesse mesmo chat. Isso reproduz o comportamento de um cliente WhatsApp real: as mensagens são lidas antes de qualquer interação, sem necessidade de configuração adicional.
+O Turbo Notify já marca automaticamente o histórico de mensagens não lidas de um chat (ou grupo) como lido antes de enviar, responder, reagir, editar ou excluir uma mensagem nesse mesmo chat, e também quando você [começa a digitar](/other-features/typing-indicator/) (parar de digitar não lê nada). Isso reproduz o comportamento de um cliente WhatsApp real: o número aparece online, as mensagens são lidas e só então a ação acontece, sem necessidade de configuração adicional.
 
-Use o endpoint abaixo apenas quando quiser marcar um chat como lido sem realizar nenhuma outra ação no WhatsApp, por exemplo para manter a caixa de entrada da sua própria aplicação sincronizada com o WhatsApp.
+O número volta a ficar offline sozinho, alguns minutos depois da última interação (é a presença exibida no WhatsApp: a conexão e o status do número não mudam). Abrir a conversa dessa forma é automático, não consome cota própria (o envio, a resposta ou a reação contam como antes) e não gera evento de webhook.
+
+Use o endpoint abaixo apenas quando quiser marcar um chat como lido sem realizar nenhuma outra ação no WhatsApp (o número também aparece online antes de ler), por exemplo para manter a caixa de entrada da sua própria aplicação sincronizada com o WhatsApp.
 
 Um agente de IA conectado pelo [Servidor MCP](/general/mcp-server/) faz o mesmo com a ferramenta `mark_as_read` (escopo `messages:send`, mesma exigência de plano), útil para triagem ou para passar a conversa a uma pessoa sem responder.
 
@@ -180,7 +182,7 @@ Após enviar, o Turbo Notify retorna aceite assíncrono:
   }}
 />
 
-O aceite assíncrono confirma apenas que a operação foi enfileirada. O histórico de mensagens não lidas é buscado no momento do processamento; se não houver nenhuma mensagem pendente, a operação simplesmente não tem efeito, sem gerar erro.
+O aceite assíncrono confirma apenas que a operação foi enfileirada. O histórico de mensagens não lidas é buscado no momento do processamento; se não houver nenhuma mensagem pendente, nada é marcado como lido (o número ainda aparece online), sem gerar erro.
 
 ## Destinatários disponíveis
 
