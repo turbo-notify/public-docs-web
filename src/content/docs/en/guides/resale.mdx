@@ -54,7 +54,7 @@ The same example in Node, Python, Go, PHP, C# and Java is in [Add extra numbers]
 - `external_id` has 1 to 128 characters and is unique among the account's numbers. Reusing one already in use answers `409 external_id_already_used`.
 - The number starts with `status: "pending"`.
 
-Each creation is a real card charge, so the pace of creations per account is limited: above it, the response is `429 rate_limit_exceeded` with a `Retry-After` header. Details in [Add extra numbers](/en/numbers/add/).
+Each creation is a real card charge, so the pace of creations per account is limited: above it, the response is `429 number_creation_rate_limited` with a `Retry-After` header, and nothing is charged. Details in [Add extra numbers](/en/numbers/add/).
 
 ## 2. Pair from the customer's phone
 

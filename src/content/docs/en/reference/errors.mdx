@@ -116,7 +116,8 @@ All of them carry the `Retry-After` header when there is a known waiting time. W
 
 | Status | Code | What it means and what to do |
 | :----: | ---- | ---------------------------- |
-| `429` | `rate_limit_exceeded` | Too many requests in a short time (including extra number creations and MCP server calls). |
+| `429` | `rate_limit_exceeded` | Too many requests in a short time (including MCP server calls). |
+| `429` | `number_creation_rate_limited` | The account created extra numbers faster than allowed. Nothing was charged. See [Add](/en/numbers/add/). |
 | `429` | `send_rate_spacing` | The send came before the number's minimum interval between messages. See [Rate limits](/en/messages/rate-limits/). |
 | `429` | `messages_quota_exceeded` | The number's message quota for the cycle is used up. It resets when the cycle turns. |
 | `429` | `messages_per_minute_limit_exceeded` | The number went over its messages-per-minute limit. |

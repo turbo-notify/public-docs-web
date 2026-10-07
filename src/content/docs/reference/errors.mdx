@@ -116,7 +116,8 @@ Todos trazem o cabeçalho `Retry-After` quando há um tempo de espera conhecido.
 
 | Status | Código | O que significa e o que fazer |
 | :----: | ------ | ----------------------------- |
-| `429` | `rate_limit_exceeded` | Requisições demais em pouco tempo (inclusive cadastros de números extras e chamadas ao servidor MCP). |
+| `429` | `rate_limit_exceeded` | Requisições demais em pouco tempo (inclusive chamadas ao servidor MCP). |
+| `429` | `number_creation_rate_limited` | A conta cadastrou números extras mais rápido do que o permitido. Nada foi cobrado. Veja [Inclusão](/numbers/add/). |
 | `429` | `send_rate_spacing` | O envio veio antes do intervalo mínimo entre mensagens do número. Veja [Limites](/messages/rate-limits/). |
 | `429` | `messages_quota_exceeded` | A cota de mensagens do ciclo do número acabou. Ela reinicia na virada do ciclo. |
 | `429` | `messages_per_minute_limit_exceeded` | O número passou do limite de mensagens por minuto. |

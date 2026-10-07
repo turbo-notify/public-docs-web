@@ -246,7 +246,7 @@ The number starts with `status: "pending"`. To link it to WhatsApp, follow
 - The alias `main` is reserved for the main number.
 - The same phone number can only be registered once in the account.
 - The same `external_id` can only be on one number of your organization at a time. Once a number is removed, its `external_id` is free for another number.
-- Each registration is a real card charge, so registrations are paced per account. Above that pace, the response is `429 rate_limit_exceeded`, with a `Retry-After` header telling you in how many seconds to try again.
+- Each registration is a real card charge, so registrations are paced per account. Above that pace, the response is `429 number_creation_rate_limited`, with a `Retry-After` header telling you in how many seconds to try again. Nothing is charged in that case.
 
 ## Possible errors
 
@@ -266,6 +266,6 @@ These are the main errors that can occur when adding extra numbers:
 | `403`  | `insufficient_scope`     | The API key does not have the `numbers:write` scope (the response includes `required_scope`). |
 | `409`  | `number_already_exists`  | The alias or phone number is already registered in the account. |
 | `409`  | `external_id_already_used` | Another number of your account already uses this `external_id`. |
-| `429`  | `rate_limit_exceeded`    | Your account created extra numbers faster than allowed. Wait the number of seconds in the `Retry-After` header and try again. |
+| `429`  | `number_creation_rate_limited` | Your account created extra numbers faster than allowed. Nothing was charged. Wait the number of seconds in the `Retry-After` header and try again. |
 | `500`  | `internal_error`         | Unexpected internal server error.                      |
 | `503`  | `payment_gateway_unavailable` | The activation charge could not be confirmed in time. No number is created; try again. |

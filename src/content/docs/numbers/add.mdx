@@ -244,7 +244,7 @@ O número nasce com `status: "pending"`. Para vinculá-lo ao WhatsApp, siga
 - O alias `main` é reservado para o número principal.
 - Um mesmo telefone só pode estar cadastrado uma vez na conta.
 - Um mesmo `external_id` só pode estar em um número da sua organização por vez. Depois que um número é removido, o `external_id` dele fica livre para outro número.
-- Cada cadastro é uma cobrança real no cartão, por isso os cadastros têm um ritmo máximo por conta. Acima dele, a resposta é `429 rate_limit_exceeded`, com o cabeçalho `Retry-After` dizendo em quantos segundos tentar de novo.
+- Cada cadastro é uma cobrança real no cartão, por isso os cadastros têm um ritmo máximo por conta. Acima dele, a resposta é `429 number_creation_rate_limited`, com o cabeçalho `Retry-After` dizendo em quantos segundos tentar de novo. Nada é cobrado nesse caso.
 
 ## Erros possíveis
 
@@ -264,6 +264,6 @@ Veja os principais erros que podem ocorrer no cadastro de números extras:
 | `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
 | `409`  | `number_already_exists`  | O alias ou o número informado já está cadastrado na conta. |
 | `409`  | `external_id_already_used` | Outro número da sua conta já usa este `external_id`. |
-| `429`  | `rate_limit_exceeded`    | A sua conta cadastrou números extras mais rápido do que o permitido. Aguarde os segundos do cabeçalho `Retry-After` e tente de novo. |
+| `429`  | `number_creation_rate_limited` | A sua conta cadastrou números extras mais rápido do que o permitido. Nada foi cobrado. Aguarde os segundos do cabeçalho `Retry-After` e tente de novo. |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                   |
 | `503`  | `payment_gateway_unavailable` | A cobrança de ativação não pôde ser confirmada a tempo. Nenhum número é criado; tente novamente. |

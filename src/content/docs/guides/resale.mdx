@@ -54,7 +54,7 @@ O mesmo exemplo em Node, Python, Go, PHP, C# e Java está em [Inclusão de núme
 - `external_id` tem de 1 a 128 caracteres e é único entre os números da conta. Repetir um que já está em uso responde `409 external_id_already_used`.
 - O número nasce com `status: "pending"`.
 
-Cada cadastro é uma cobrança real no cartão, então o ritmo de cadastros por conta é limitado: acima dele, a resposta é `429 rate_limit_exceeded` com o cabeçalho `Retry-After`. Detalhes em [Inclusão de números extras](/numbers/add/).
+Cada cadastro é uma cobrança real no cartão, então o ritmo de cadastros por conta é limitado: acima dele, a resposta é `429 number_creation_rate_limited` com o cabeçalho `Retry-After`, e nada é cobrado. Detalhes em [Inclusão de números extras](/numbers/add/).
 
 ## 2. Pareie pelo celular do cliente
 
