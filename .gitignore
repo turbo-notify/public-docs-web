@@ -43,3 +43,7 @@ Thumbs.db
 
 # graphify knowledge graph — IP, backup-only (never delivered)
 graphify-out/
+
+# Playwright
+test-results/
+playwright-report/

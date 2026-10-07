@@ -1,0 +1,239 @@
+---
+title: Message status
+description: Track the progress and any failures of the messages you send through the Turbo Notify API.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+After sending a message, you can check its status through the API at any time. The status shows how far processing and delivery on WhatsApp have progressed.
+
+## Status table
+
+| Status      | Description                                                               |
+| ----------- | ------------------------------------------------------------------------- |
+| `pending`   | Turbo Notify received the message and it is waiting to be processed.      |
+| `sent`      | The message was sent to WhatsApp successfully.                            |
+| `delivered` | The message was delivered to the recipient's device.                      |
+| `read`      | The recipient read the message.                                           |
+| `failed`    | The send failed. See the `error` object (`{code, message, hint}`) for details. |
+
+## Check the status
+
+To check a message's status, make a `GET` request with the `message_id` returned when you sent it.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X GET \
+      https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/status \
+      -H "Authorization: Bearer YOUR_KEY"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch(
+      'https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/status',
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer YOUR_KEY'
+        }
+      }
+    );
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/status"
+    headers = {
+        "Authorization": "Bearer YOUR_KEY"
+    }
+
+    response = requests.get(url, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/status", nil)
+        req.Header.Set("Authorization", "Bearer YOUR_KEY")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/status';
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer YOUR_KEY'
+            ],
+            'method' => 'GET'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+    var response = await client.GetAsync(
+        "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/status"
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/status"))
+                .header("Authorization", "Bearer YOUR_KEY")
+                .GET()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+## Response examples
+
+### Pending
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
+    status: { state: 'pending', at: '2025-07-16T10:00:00Z', error: null },
+  }}
+/>
+
+### Sent
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
+    status: { state: 'sent', at: '2025-07-16T10:00:02Z', error: null },
+  }}
+/>
+
+### Delivered
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
+    status: { state: 'delivered', at: '2025-07-16T10:00:05Z', error: null },
+  }}
+/>
+
+### Read
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
+    status: { state: 'read', at: '2025-07-16T10:01:12Z', error: null },
+  }}
+/>
+
+### Failed
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
+    status: {
+      state: 'failed',
+      at: '2025-07-16T10:00:03Z',
+      error: {
+        code: 'number_not_connected',
+        message: 'The number is not connected to WhatsApp.',
+        hint: 'The number was not connected to WhatsApp. Reconnect it, then send the message again.',
+      },
+    },
+  }}
+/>
+
+## Failure details
+
+When the status is `failed`, the `error` object holds the details. It has **the same
+structure** as the `data.error` of the `*.failed` webhooks, so the event and the lookup describe the failure
+the same way (see [Webhooks](/en/messages/webhook/) and [Get a message](/en/messages/get/)):
+
+| Field          | Description                                                               |
+| -------------- | ------------------------------------------------------------------------- |
+| `error.code`   | Stable code meant for your code: decide how to handle the failure from this value (e.g. `number_not_connected`, `whatsapp_send_failed`, `media_fetch_failed`). |
+| `error.message`| Human-readable description of the failure, for your logs and for debugging. It may carry a diagnostic from WhatsApp in English; personal identifiers (phone numbers, JIDs) never appear in it. Do not decide how to handle the failure from this text: it may change, the `code` is what stays stable. |
+| `error.hint`   | `string`: actionable guidance to fix the problem, derived from the `code`. **Absent** (key omitted, never `null`) when there is no guidance for the `code`. |
+
+On this endpoint the `error` field is **always present**: it is filled in when `state` is `failed` and `null` in the other states (`pending`/`sent`/`delivered`/`read`). In `GET /v1/numbers/{alias}/messages/{id}`, on the other hand, the field is **omitted** when there is no failure.
+
+## Possible errors
+
+| Status | Error code       | Description                                          |
+| :----: | ---------------- | ---------------------------------------------------- |
+| `403`  | `not_authorized` | The API key is invalid or missing.                   |
+| `403`  | `insufficient_scope` | The API key does not have the `messages:read` scope (the response includes `required_scope`). |
+| `404`  | `not_found`      | The message was not found, belongs to another organization, is outside your plan's [content retention window](/en/messages/retention/), or (on the nested route `/numbers/{alias}/messages/{id}/status`) belongs to a number other than the alias in the URL: all of these cases return the same response, with no distinction. |
+| `404`  | `message_not_found` | *(only on the shortcut route without `{alias}`, `GET /v1/messages/{id}/status`)* The `message_id` exists but belongs to an extra number, not to the main number. |
+| `404` | `number_not_found` | *(only on the route with `{alias}`)* The alias in the URL does not match any registered number. |
+| `500`  | `internal_error` | Unexpected internal server error.                    |
+
+## Retention
+
+Your plan's content retention window **also applies to this endpoint**, as it does to every route that takes a `{message_id}`. Once the message is older than your plan's window, `GET /v1/numbers/{alias}/messages/{id}/status` returns `404 not_found`, the same as for a message that never existed. Check and store the final status before then. The windows per plan are in [Retention](/en/messages/retention/).
+
+## When the status changed
+
+The time of the **most recent state change** comes in the `status.at` field, which **moves forward** with each change (`sent → delivered → read`):
+
+- In `GET /v1/numbers/{alias}/messages/{id}/status` the `status` object carries `{state, at}`: `status.at` is the moment the current state was reached.
+- In `GET /v1/numbers/{alias}/messages/{id}` the same `status.at` appears inside the `status` object. Do not confuse it with the `at` at the message's **root level**: that one is **when the message happened** (sent message: the actual send on WhatsApp; received message: when it was received) and **does not change** as the message moves on to `delivered`/`read`.
+- In the `message.sent`, `message.delivered` and `message.read` events (webhook and polling via `GET /v1/events`) the time of the action comes in `data.at`: the same field name in every `message.*` event.
+
+## Real-time updates
+
+To receive status updates automatically without polling the API, set up a webhook. See how in [Webhook events](/en/messages/webhook/).

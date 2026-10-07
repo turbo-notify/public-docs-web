@@ -101,11 +101,6 @@ body {
   align-items: center;
 }
 
-/* Hide social icons (config removed, CSS fallback for safety) */
-.social-icons {
-  display: none !important;
-}
-
 /* Header control elements */
 :root[data-theme='light'] site-search button,
 :root[data-theme='light'] starlight-theme-select label,

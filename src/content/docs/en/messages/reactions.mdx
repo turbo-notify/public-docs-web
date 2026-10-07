@@ -1,0 +1,207 @@
+---
+title: Get reactions
+description: List the active reactions on a message sent or received through the Turbo Notify API.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+After a message is sent or received, you can look up all of its active reactions. Each phone number can have at most one active reaction per message. The latest reaction sent replaces the previous one.
+
+This page covers **looking up** reactions. To send or remove a reaction, see [Send a reaction](/en/other-features/reaction/).
+
+## Get reactions
+
+To list a message's reactions, make a `GET` request with the `message_id` returned when you sent it.
+
+**Endpoint:** `GET /v1/messages/{message_id}/reactions` for the main number. For extra numbers, use `GET /v1/numbers/{alias}/messages/{message_id}/reactions`, where `{alias}` is the message's `number_alias`.
+
+**Required scope:** `messages:read`
+
+**Path parameters:**
+
+| Parameter    | Type   | Description                             |
+| ------------ | ------ | --------------------------------------- |
+| `alias` | string | *(extra number route only)* Alias of the number the message belongs to. |
+| `message_id` | string | Public message identifier (`msg_{hex32}`) |
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X GET \
+      https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions \
+      -H "Authorization: Bearer YOUR_KEY"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch(
+      'https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions',
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer YOUR_KEY'
+        }
+      }
+    );
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions"
+    headers = {
+        "Authorization": "Bearer YOUR_KEY"
+    }
+
+    response = requests.get(url, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions", nil)
+        req.Header.Set("Authorization", "Bearer YOUR_KEY")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions';
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer YOUR_KEY'
+            ],
+            'method' => 'GET'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+    var response = await client.GetAsync(
+        "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions"
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/reactions"))
+                .header("Authorization", "Bearer YOUR_KEY")
+                .GET()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+## Response examples
+
+### With reactions
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
+    reactions: [
+      {
+        from: {
+          number: '5511988887777',
+          contact_id: 'ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+          name: 'Ana Souza'
+        },
+        emoji: '👍',
+        at: '2025-07-16T10:05:00Z',
+        direction: 'inbound'
+      },
+      {
+        from: {
+          number: '5511977776666'
+        },
+        emoji: '❤️',
+        at: '2025-07-16T10:06:30Z',
+        direction: 'inbound'
+      }
+    ]
+  }}
+/>
+
+### No reactions
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
+    reactions: []
+  }}
+/>
+
+## Response structure
+
+| Field                    | Type    | Description                                                              |
+| ------------------------ | ------- | ------------------------------------------------------------------------ |
+| `message_id`             | string  | Public message identifier.                                               |
+| `reactions`              | array   | List of active reactions (one per phone number).                         |
+| `reactions[].from`       | object  | Sender of the reaction.                                                  |
+| `reactions[].from.number`| string  | Phone number of who reacted (without `+`).                               |
+| `reactions[].from.contact_id` | string | Public contact identifier (`ct_{hex32}`). Omitted when not available. |
+| `reactions[].from.name`  | string | Sender's name on WhatsApp. Omitted when not available.                          |
+| `reactions[].emoji`      | string  | Reaction emoji.                                                          |
+| `reactions[].at`         | string  | ISO 8601 date and time when the reaction was recorded.                   |
+| `reactions[].direction`  | string  | `"inbound"` (reaction from a contact) or `"outbound"` (reaction from the organization's number). |
+
+## Possible errors
+
+| Status | Error code       | Description                                          |
+| :----: | ---------------- | ---------------------------------------------------- |
+| `403`  | `not_authorized`    | The API key is invalid or missing.                                |
+| `403`  | `insufficient_scope` | The API key does not have the `messages:read` scope.             |
+| `404`  | `not_found`         | The message was not found, belongs to another organization, is outside your plan's [content retention window](/en/messages/retention/), or (on the nested route `/numbers/{alias}/messages/.../reactions`) belongs to a number other than the alias in the URL: all of these cases return the same response, with no distinction. |
+| `404`  | `message_not_found` | *(only on the shortcut route without `{alias}`, `GET /v1/messages/{id}/reactions`)* The `message_id` exists but belongs to an extra number, not to the main number. |
+| `404` | `number_not_found` | *(only on the route with `{alias}`)* The alias in the URL does not match any registered number. |
+| `500`  | `internal_error`    | Unexpected internal server error.                                 |

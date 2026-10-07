@@ -1,0 +1,122 @@
+---
+title: Rate limits
+description: "Rate limits per plan: message sending, contact refresh and pairing. The message and contact quotas per cycle are in Quota and usage."
+---
+
+import ApiResponse from '@components/ApiResponse.astro';
+import ExternalLink from '@components/ExternalLink.astro';
+
+> The message and contact quotas per billing cycle are in [Quota and usage](/en/usage/quota/), together with the 402/429 quota errors. This page documents only the **rate limits**, a separate concept.
+
+## Quotas and rate limits
+
+Turbo Notify applies two distinct control mechanisms. Do not confuse one with the other:
+
+| | Quota | Rate limit |
+| - | ----- | ---------- |
+| What it measures | Total volume used in the billing cycle (messages, distinct contacts) | Instant speed of sends and calls |
+| Window | Billing cycle being evaluated (`cycle_start` → `cycle_end`) | Seconds or minutes, unrelated to the cycle |
+| Resets at | `resets_at` (end of the cycle) | A few seconds later (`Retry-After`) |
+| Typical errors | `402 contact_quota_exceeded` · `429 messages_quota_exceeded` | `429 send_rate_spacing` · `429 rate_limit_exceeded` |
+| Documented in | [Quota and usage](/en/usage/quota/) | This page |
+
+This page covers only the **speed** limits: how fast you can send messages and call specific endpoints. For the message and contact quotas per cycle and their errors, see [Quota and usage](/en/usage/quota/).
+
+## Sending speed (per plan)
+
+Each message sent through the API keeps a minimum interval from the previous send **on the same number**: this spacing between sends reduces the risk of a block by WhatsApp. The interval depends on the plan:
+
+| Plan       | Minimum interval between sends | Equivalent in messages/min |
+| ---------- | ------------------------------:| --------------------------:|
+| `FREE`     | 6s | 10 msg/min |
+| `SOLO`     | 1.2s | 50 msg/min |
+| `BUSINESS` | 0.6s | 100 msg/min |
+| `CUSTOM`   | 0.4s | 150 msg/min |
+
+Sending before the minimum interval since the last successful send **on that number** returns `429` with the `send_rate_spacing` code and the `Retry-After` header (in seconds: the time left until the next allowed send):
+
+<ApiResponse
+  status={429}
+  headers={{ 'Retry-After': '2' }}
+  body={{
+    error: 'send_rate_spacing',
+  }}
+/>
+
+This limit is per **number** (main or extra): each number has its own spacing clock, so using [extra numbers](/en/numbers/add/) increases the account's total sending capacity.
+
+## Contact refresh (per plan)
+
+The [contact refresh](/en/contacts/refresh/) endpoint (`POST .../contacts/{contact_id}/refresh`) queries WhatsApp on the spot, unlike a simple read, so it has its own per-minute limit, which also grows with the plan:
+
+| Plan       | Refreshes/min |
+| ---------- | -------------:|
+| `FREE`     | 5   |
+| `SOLO`     | 30  |
+| `BUSINESS` | 120 |
+| `CUSTOM`   | 600 |
+
+Exceeding this limit returns `429 refresh_rate_limited` with the `Retry-After` header.
+
+## Pairing extra numbers
+
+Each `POST /v1/numbers/{alias}/pair` asks WhatsApp for a new code and triggers a
+notification on the number's phone. The limit protects the number from being blocked
+by WhatsApp itself for too many requests:
+
+| Scope | Requests/min |
+| ----- | ------------:|
+| Per number | 10 |
+| Per account | 30 |
+
+Exceeding either one returns `429 pairing_rate_limited` with the
+`Retry-After` header. See [Pairing extra numbers](/en/numbers/pairing/#attempt-limit).
+
+## Burst protection (the same on every plan)
+
+Regardless of the plan, Turbo Notify applies fixed limits to protect the service. They do **not** change from one plan to another:
+
+- **`messages_per_minute`**: 10,000 sends/minute **per number** (burst protection). Each number has its own count, adding up every request sent by it.
+- **`recipients_per_day`**: 2,000 messages/day to the **same recipient**, per number (block protection). There is no limit on distinct recipients per day: you can reach as many contacts as you want, within the plan's other quotas.
+
+## Internal controls
+
+Besides the rate limits, Turbo Notify applies internal controls to protect the infrastructure and prevent abuse. These controls may temporarily restrict sending in situations such as:
+
+- Abnormal traffic spikes coming from a single account.
+- Sending patterns that could compromise the stability of the service.
+- A high rate of consecutive failures or rejections.
+
+These controls are transparent and, in most cases, do not affect normal use of the platform.
+
+## Risk of being blocked
+
+WhatsApp has its own rules and usage limits. Even if you stay within Turbo Notify's limits, sending too much, sending unsolicited messages or sending content recipients consider spam can get your number blocked by WhatsApp.
+
+To avoid problems, follow the responsible-use recommendations in [Avoid abuse](/en/general/abuse/) and the <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">WhatsApp policies</ExternalLink>.
+
+## Related errors
+
+| Status | Error code               | Description                                                               |
+| :----: | ------------------------ | ------------------------------------------------------------------------- |
+| `429`  | `send_rate_spacing`      | Send before the plan's minimum interval between messages, on the same number. |
+| `429`  | `refresh_rate_limited`   | Contact refresh limit exceeded.                                           |
+| `429`  | `messages_per_minute_limit_exceeded` | Burst protection: more than 10,000 sends/minute on the same number (see [above](#burst-protection-the-same-on-every-plan)). |
+| `429`  | `recipients_per_day_limit_exceeded`  | Block protection: 2,000 messages/day to the same recipient, per number (see [above](#burst-protection-the-same-on-every-plan)). |
+| `429`  | `warmup_limit_exceeded` | Number connected only a few days ago: the daily volume is released gradually so WhatsApp does not treat the new number as suspicious. The `Retry-After` header tells how many seconds are left until the daily limit renews (midnight UTC). |
+| `429`  | `duplicate_burst_blocked` | The same text was sent to more than 20 recipients in the last hour, from the same number. Vary the content or space out the sends. |
+| `429`  | `reply_ratio_too_low` | Too few replies received compared with what the number sent, a sign of unsolicited sending. Reduce the volume to people who do not interact. It comes without `Retry-After`: waiting does not help, sending is accepted again when contacts reply or the volume drops. |
+| `429`  | `pairing_rate_limited`   | Pairing code requests above the limit, see [Pairing extra numbers](#pairing-extra-numbers). |
+| `429`  | `rate_limit_exceeded`    | Your organization's general API request limit exceeded (1,000 requests per second). Parallel requests are accepted as long as the total for the second stays below that. Wait for `Retry-After` and try again. |
+| `503`  | `internal_error`         | Service temporarily unavailable. Try again in a few moments.              |
+| `503`  | `plan_lookup_failed`     | The organization's plan could not be identified at the moment. The request was not processed. Try again. |
+
+For the **quota** errors (`402 contact_quota_exceeded`, `429 messages_quota_exceeded`, `402 feature_not_available`), see [Quota and usage](/en/usage/quota/#errors).
+
+## Best practices
+
+- Respect the `Retry-After` header when you receive a `429` status.
+- Spread your sends over time instead of sending everything at once: your plan's minimum spacing already sets the sustainable pace.
+- Use [extra numbers](/en/numbers/add/) to increase your sending capacity.
+- Monitor the API response codes to spot quickly when a limit is reached.
+- Set up [webhooks](/en/messages/webhook/) to follow message status without polling the API.

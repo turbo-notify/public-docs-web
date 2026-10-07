@@ -1,0 +1,289 @@
+---
+title: MCP server
+description: Connect an AI agent to your WhatsApp through the Model Context Protocol. 32 ready-made tools on top of the same API, authenticated with your own key.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import DashboardLink from '@components/DashboardLink.astro';
+import ExternalLink from '@components/ExternalLink.astro';
+
+Turbo Notify exposes its public API as an <ExternalLink href="https://modelcontextprotocol.io">MCP (Model Context Protocol)</ExternalLink> server. Your AI agent gets **32 tools** that are already described (send a message, reply, mark a chat as read, look up a contact, check quota, reconnect a number) and picks among them on its own.
+
+It is the same API as always, presented differently: each tool calls exactly one documented endpoint, with your key. Quotas, plan limits, sending pace and error codes are the same as in the REST API. There is nothing new to sign up for.
+
+## When to use
+
+| You are building | Use |
+|---|---|
+| An AI agent that decides what to do (support agent, assistant, triage) | **MCP server** |
+| A deterministic integration (transactional sends, scheduled job, ETL) | **[REST API](/en/messages/send/)** |
+| Something that needs to **react** to incoming messages | **[Webhook](/en/messages/webhook/)** to receive, plus MCP or the API to act |
+
+A support agent usually combines both sides: the webhook tells your application a message arrived, and the agent answers through the MCP tools. The [example](#full-example) repository does exactly that.
+
+## Connection
+
+| | |
+|---|---|
+| Address | `https://mcp.turbonotify.com` |
+| Transport | Streamable HTTP |
+| Authentication | `Authorization: Bearer YOUR_KEY` header on **every** request |
+
+The <DashboardLink path="/mcp">AI agents (MCP)</DashboardLink> screen in the dashboard has the configurations below ready to copy and shows which tools each of your keys can reach.
+
+<Tabs>
+  <TabItem label="Claude Code">
+    From the terminal:
+
+    ```bash
+    claude mcp add --transport http turbo-notify https://mcp.turbonotify.com --header "Authorization: Bearer YOUR_KEY"
+    ```
+
+    Or in the project's `.mcp.json` file. The `"type": "http"` field is required for a remote server:
+
+    ```json title=".mcp.json"
+    {
+      "mcpServers": {
+        "turbo-notify": {
+          "type": "http",
+          "url": "https://mcp.turbonotify.com",
+          "headers": {
+            "Authorization": "Bearer YOUR_KEY"
+          }
+        }
+      }
+    }
+    ```
+  </TabItem>
+  <TabItem label="Cursor">
+    ```json title="mcp.json"
+    {
+      "mcpServers": {
+        "turbo-notify": {
+          "url": "https://mcp.turbonotify.com",
+          "headers": {
+            "Authorization": "Bearer YOUR_KEY"
+          }
+        }
+      }
+    }
+    ```
+  </TabItem>
+  <TabItem label="Claude Desktop">
+    The Claude Desktop configuration file does not accept a remote server with `url` and `headers`. The connection goes through the `mcp-remote` bridge, which requires Node.js. The key goes in an environment variable so it does not get split at the space after `Bearer`:
+
+    ```json title="claude_desktop_config.json"
+    {
+      "mcpServers": {
+        "turbo-notify": {
+          "command": "npx",
+          "args": [
+            "-y",
+            "mcp-remote",
+            "https://mcp.turbonotify.com",
+            "--header",
+            "Authorization:${TURBO_NOTIFY_AUTH}"
+          ],
+          "env": {
+            "TURBO_NOTIFY_AUTH": "Bearer YOUR_KEY"
+          }
+        }
+      }
+    }
+    ```
+
+    Restart Claude Desktop after saving the file.
+  </TabItem>
+  <TabItem label="Agent frameworks">
+    Configure the framework's MCP client with the address above, the Streamable HTTP transport and the authorization header. The name of the transport option varies: `streamable-http` in Agno and CrewAI, `streamable_http` in LangGraph (through `langchain-mcp-adapters`).
+
+    ```python title="agno_agent.py"
+    from agno.tools.mcp import MCPTools
+
+    tools = MCPTools(
+        url="https://mcp.turbonotify.com",
+        transport="streamable-http",
+        headers={"Authorization": "Bearer YOUR_KEY"},
+    )
+    ```
+  </TabItem>
+</Tabs>
+
+:::caution[Your key is what identifies your account]
+The server address is the same for every Turbo Notify customer. What says the account is yours is the key, sent with every call. There is no default key: without one, no tool runs. Treat the key like a password; the address can be shared freely.
+:::
+
+## Key and scopes
+
+Use a regular <DashboardLink path="/api-keys">API key</DashboardLink>. A key with the **Full access** template reaches all 32 tools, but for an agent we recommend a key with only what it needs.
+
+When you create the key in the dashboard, the **AI agent (MCP)** template already selects the recommended set for a support agent: `messages:send`, `messages:read`, `contacts:read`, `groups:read`, `numbers:read` and `events:read`. It leaves out:
+
+- `numbers:write`: reconnecting and disconnecting a number is a decision for whoever runs the account, and reconnecting can generate a charge (see [Reconnecting may charge](#reconnecting-may-charge)).
+- `contacts:write`: refreshing a contact makes a real lookup on WhatsApp.
+
+Each tool requires the scope shown in the [catalog](#tools). Two rules often surprise people: **replying, editing, deleting, reacting and marking as read count as sending** (`messages:send`), and the **quota and usage** tools require no scope, only a valid key.
+
+## Tools
+
+Every tool that acts on messages, contacts or groups accepts `number_alias` and assumes `"main"` (the main number) when you leave it out. Plan limits are the same as in the API: reacting (`react_to_message`) and the typing indicator (`send_typing_indicator`) require the SOLO plan or higher; sending to groups (including the typing indicator in a group), read receipts (`get_message_receipts`) and `mark_as_read` require BUSINESS or higher. Receiving messages by webhook requires SOLO or higher; on FREE, the agent follows incoming messages with `list_events`. Without the required plan, the tool answers `payment_required: feature_not_available`.
+
+When replying, reacting, editing, deleting or starting to type, the number opens the chat the way a person would: it shows as online, marks that chat's unread messages as read and only then acts. You do not need to call `mark_as_read` first. Opening the chat this way is automatic and does not use any quota of its own (the reply, the reaction and the send count as before). See [Typing indicator](/en/other-features/typing-indicator/) and [Mark as read](/en/other-features/mark-as-read/).
+
+### Sending
+
+| Tool | What it does | Scope |
+|---|---|---|
+| `send_text` | Sends text, with `@number` mentions in a group | `messages:send` |
+| `send_media` | Sends an image, video, audio, document or sticker from a URL (`kind` picks the type) | `messages:send` |
+| `send_location` | Sends a location | `messages:send` |
+| `send_contact_card` | Sends a contact card | `messages:send` |
+| `send_calendar_event` | Sends a calendar event invitation | `messages:send` |
+| `send_cta_button` | Sends a message with a link button | `messages:send` |
+
+### Reply and act
+
+| Tool | What it does | Scope |
+|---|---|---|
+| `reply_to_message` | Replies quoting a message | `messages:send` |
+| `edit_message` | Edits a sent message | `messages:send` |
+| `delete_message` | Deletes a sent message | `messages:send` |
+| `react_to_message` | Reacts to a message (replaces the previous reaction) | `messages:send` |
+| `send_typing_indicator` | Shows "typing…" in the chat | `messages:send` |
+| `mark_as_read` | Marks the unread messages of a chat or group as read, without replying | `messages:send` |
+
+### Reading messages
+
+| Tool | What it does | Scope |
+|---|---|---|
+| `list_messages` | Lists the number's messages | `messages:read` |
+| `get_message` | Gets a message | `messages:read` |
+| `get_message_status` | Gets the delivery status | `messages:read` |
+| `get_message_receipts` | Gets the delivery and read receipts | `messages:read` |
+| `get_message_reactions` | Gets a message's reactions | `messages:read` |
+| `get_message_quota` | Gets the number's message quota | none |
+
+### Contacts
+
+| Tool | What it does | Scope |
+|---|---|---|
+| `list_contacts` | Lists the number's contacts | `contacts:read` |
+| `get_contact` | Gets a contact | `contacts:read` |
+| `get_contact_profile_picture` | Gets the profile picture | `contacts:read` |
+| `refresh_contact` | Updates the contact's name by looking it up on WhatsApp | `contacts:write` |
+| `get_contact_quota` | Gets the number's contact quota | none |
+
+### Groups
+
+| Tool | What it does | Scope |
+|---|---|---|
+| `list_groups` | Lists the number's groups | `groups:read` |
+| `get_group` | Gets a group: name, description, picture, settings and number of participants | `groups:read` |
+| `get_group_picture` | Gets the group picture | `groups:read` |
+
+### Numbers
+
+| Tool | What it does | Scope |
+|---|---|---|
+| `list_numbers` | Lists the main number and the extra numbers, with each one's `external_id` (the identifier you set yourself, see [Add extra numbers](/en/numbers/add/)). Accepts the `status` and `external_id` filters, like the [list](/en/numbers/list/#filters) | `numbers:read` |
+| `get_number` | Gets a number's status and its `external_id` | `numbers:read` |
+| `connect_number` | Reconnects a disconnected number, without a QR code | `numbers:write` |
+| `disconnect_number` | Disconnects a number without unlinking it from the phone | `numbers:write` |
+
+### Usage and events
+
+| Tool | What it does | Scope |
+|---|---|---|
+| `get_usage` | Gets the account's aggregated usage in the cycle | none |
+| `list_events` | Lists events (the same as the webhook) by type, number, period or `request_id`. This is how the agent learns about incoming messages without a webhook | `events:read` |
+
+Write tools return a `request_id` when the platform generates one. Keep it to find the outcome of that operation later with `list_events`.
+
+### Reconnecting may charge
+
+`connect_number` charges nothing, with one exception: if the number is an extra number and you scheduled its deletion, reconnecting **cancels the deletion** and, when the number was created before the start of the current billed cycle, **charges the activation fee** to bring it back. It is the only tool that can generate a charge. If your agent should not make that decision, do not give its key `numbers:write`.
+
+`connect_number` does not recover a number with status `revoked` (unlinked from the phone): that one has to be linked again by a person.
+
+Repeating `connect_number` or `disconnect_number` changes nothing. A number that is already in the requested state answers `conflict: already_connected`, `conflict: already_connecting` or `conflict: already_disconnected`, and that means the goal was already reached, not that the call failed.
+
+### What is not available, and why
+
+No tool adds, renames, removes or links a number. The rule is: **does it change what your account pays, or does it need someone holding the phone?**
+
+| Operation | Why it is not a tool |
+|---|---|
+| Add an extra number | It charges the card before provisioning. A tool the agent can repeat is a tool that charges twice. |
+| Remove a number | It schedules a real deletion and may result in a refund. |
+| [Rename a number](/en/numbers/update/) | It changes the address of an inbox in use. |
+| Link a number (pairing) | Half of the flow is a person typing the pairing code on the phone. |
+| Cancel a scheduled deletion | It does not exist as its own tool: whoever scheduled it decides to undo it. Reconnecting an extra number with a scheduled deletion through `connect_number` cancels the deletion and may charge (see [Reconnecting may charge](#reconnecting-may-charge)). |
+
+For these operations, use the <DashboardLink path="/numbers">dashboard</DashboardLink> or the [REST API](/en/numbers/add/).
+
+## Sending without duplicates
+
+The send tools and `reply_to_message` accept `idempotency_key`: any printable ASCII text of 1 to 255 characters, chosen by you. If the call fails with a timeout and the agent retries **with the same key, on the same number**, the message is not sent twice. Without it, retrying after a timeout can deliver the message twice, and the recipient sees both.
+
+Use a new key for each new message, derived from something stable on your side (for example the `id` of the event the agent is answering). A key in the wrong format is rejected with a message that names the field.
+
+## Limits
+
+| Limit | Value | Counted per |
+|---|---|---|
+| Requests to the MCP server | 600 per minute | API key |
+| Streaming connections open at the same time | 8 | API key |
+| Requests to the MCP server, shared limit | 3000 per minute | Source address |
+| Streaming connections open at the same time, shared limit | 64 | Source address |
+
+When a request arrives without a key, limits are counted per source address. The per-address
+limit always applies, on top of the per-key limit: a request is refused when either one runs out.
+It is higher to accommodate several keys behind the same network egress (for example, a platform
+that hosts agents for several customers), but together they cannot exceed 3000 requests per minute
+or 64 streaming connections. The API's own limits (sending pace, plan quotas) still apply behind
+each tool: see [Limits](/en/messages/rate-limits/) and [Quota and usage](/en/usage/quota/).
+
+## Errors
+
+### Inside the tool result
+
+When a tool cannot do what was asked, the agent gets the reason in the result itself, with the API error code intact. That is what the agent uses to decide whether to fix, wait or give up:
+
+| Situation | The agent gets | What to do |
+|---|---|---|
+| Call without a key | A message asking for the key in the `Authorization: Bearer` header | Configure the header in the MCP client. |
+| Argument rejected before reaching the API | A message that names the field | Fix the indicated argument. |
+| Invalid argument | `invalid_request: <code>` | Fix the arguments and try again. |
+| Number disconnected | `conflict: number_not_connected`, with guidance to reconnect | Reconnect the number with `connect_number` (or in the dashboard, if the phone needs to read a code again) and try again. |
+| Number already in the requested state | `conflict: already_connected`, `conflict: already_connecting` or `conflict: already_disconnected` | Nothing to do: on a repeated `connect_number` or `disconnect_number`, the number is already in the requested state. |
+| Invalid or revoked key | `unauthorized: not_authorized` | Create a new key in the dashboard. |
+| Key without the tool's scope | `unauthorized: insufficient_scope` | Look up the scope in the [tools](#tools) table and use a key that has it. |
+| Quota, plan or payment | `payment_required: <code>` and the full `details` object | See [Quota and usage](/en/usage/quota/#errors). |
+| Not found | `not_found: <code>` | Check the identifier or the `number_alias`. |
+| API rate limit | `rate_limited: <code>`, with the wait time when there is one | Wait for the indicated time. |
+| Temporary failure | `service_unavailable` | Try again shortly. |
+
+The `details` object is passed in full, not summarized: it is what tells a quota that resets at the end of the cycle apart from a feature your plan does not include.
+
+### On the connection
+
+These are answered before any tool runs, so your MCP client sees them, not the agent:
+
+| Response | What happened | What to do |
+|---|---|---|
+| `401 unauthorized` | A streaming connection was opened without a key. | Send the `Authorization` header on the connection too, not only on the calls. |
+| `429 too_many_streams` | This key already holds 8 open streaming connections, or the source address already holds 64. | Close the ones you do not use, or reduce the processes connected with the same key or from the same address. |
+| `429 rate_limit_exceeded` | More than 600 requests in one minute with this key, or more than 3000 in one minute from the same address. | Honor the response's `Retry-After`. |
+
+## Full example
+
+The <ExternalLink href="https://github.com/turbo-notify/examples">turbo-notify/examples</ExternalLink> repository has a working WhatsApp support agent built on this server: it receives the message through the webhook, decides with a model and answers with `reply_to_message`. It is small, commented code, meant to be read before it is run.
+
+To build your own agent step by step, see the [Build an AI agent](/en/guides/ai-agent/) guide.
+
+## Next steps
+
+- [API key](/en/general/access-key/): create the agent's key with the right scopes
+- [Webhook](/en/messages/webhook/): receive messages for your agent to answer
+- [Event polling](/en/messages/polling/): an alternative to the webhook, when you do not have a public endpoint
+- [Mark as read](/en/other-features/mark-as-read/): what `mark_as_read` does on WhatsApp

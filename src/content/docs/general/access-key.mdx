@@ -5,19 +5,19 @@ description: Como criar, gerenciar e revogar chaves de acesso para autenticar su
 
 import DashboardLink from '@components/DashboardLink.astro';
 
-Para utilizar a API do Turbo Notify, é indispensável possuir uma chave de acesso válida.
+Para usar a API do Turbo Notify, você precisa de uma chave de acesso válida.
 
-O gerenciamento dessas chaves é feito de forma simples e segura pelo dashboard, permitindo total controle sobre quem pode interagir com sua conta e seus números.
+As chaves são gerenciadas pelo dashboard, onde você controla quem pode interagir com a sua conta e os seus números.
 
 ## Inclusão
 
-Novas chaves podem ser geradas diretamente no dashboard, acessando o menu <DashboardLink path="/api-keys">API Keys</DashboardLink>. Não há limite de chaves imposto pela API, facilitando integrações com diferentes sistemas ou equipes.
+Gere novas chaves no dashboard, pelo menu <DashboardLink path="/api-keys">API Keys</DashboardLink>. A API não limita a quantidade de chaves, então você pode ter uma para cada sistema ou equipe.
 
-O valor da chave é exibido apenas uma vez, no momento da criação. Por segurança, copie e armazene imediatamente, pois não será possível visualizar novamente.
+O valor da chave aparece apenas uma vez, no momento da criação. Copie e guarde a chave imediatamente: não será possível vê-la de novo.
 
 ## Cabeçalho
 
-Toda requisição à API deve conter o header `Authorization` com o valor da chave de acesso. Sem esse cabeçalho, nenhuma chamada será autorizada.
+Toda requisição à API deve conter o cabeçalho `Authorization` com o valor da chave de acesso. Sem esse cabeçalho, nenhuma chamada é autorizada.
 
 ```http
 Authorization: Bearer SUA_CHAVE
@@ -33,9 +33,9 @@ Se você precisa de uma pausa temporária no acesso, o caminho é **gerar uma no
 
 ## Permissão
 
-Não é possível limitar uma chave de acesso a um número específico: dentro dos escopos que ela carrega (veja [Escopos](#escopos)), toda chave alcança o número principal da conta e todos os números extras associados.
+Não é possível limitar uma chave de acesso a um número específico: dentro dos escopos que carrega (veja [Escopos](#escopos)), toda chave alcança o número principal da conta e todos os números extras.
 
-Caso precise restringir o acesso a determinados números, é necessário criar contas separadas para cada número desejado. Essa limitação existe para evitar uso indevido do Turbo Notify.
+Se você revende números para os seus clientes, mantenha a chave no servidor da sua plataforma e nunca a entregue a um cliente final. Identifique o número de cada cliente pelo `external_id` que você define ao [incluir o número](/numbers/add/): é a sua plataforma que decide qual cliente vê qual número. O [guia de revenda](/guides/resale/) mostra o fluxo completo.
 
 ## Escopos
 
@@ -57,7 +57,11 @@ A tabela de erros de cada endpoint indica o escopo exigido pela operação.
 
 Para conectar um agente pelo [Servidor MCP](/general/mcp-server/), crie uma chave com o template **Agente de IA (MCP)** no dashboard. Ele marca só o necessário para um atendente: `messages:send`, `messages:read`, `contacts:read`, `groups:read`, `numbers:read` e `events:read`. O [catálogo de ferramentas](/general/mcp-server/#ferramentas) mostra o escopo que cada ferramenta exige, caso você prefira ajustar a chave. Pelo servidor MCP, os dois erros `403` acima chegam ao agente como `unauthorized: not_authorized` e `unauthorized: insufficient_scope`.
 
+### Chave para revenda
+
+Se a sua plataforma vende números aos próprios clientes, crie a chave com o template **Revenda** no dashboard. Ele marca `numbers:read`, `numbers:write`, `messages:send`, `messages:read`, `contacts:read` e `events:read`: o que a plataforma precisa para criar, parear e acompanhar um número por cliente e enviar e receber mensagens por eles. Atenção: `numbers:write` permite que a chave crie números, e cada número criado gera cobrança no cartão da conta. Veja o [guia de revenda](/guides/resale/).
+
 ## Relacionado
 
-- [Início rápido](/general/getting-started/): primeiro envio usando a chave.
+- [Começo rápido](/guides/quickstart/): primeiro envio usando a chave.
 - [Organização](/organizations/overview/): endpoint que exige o escopo `organizations:read`.

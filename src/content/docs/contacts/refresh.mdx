@@ -1,6 +1,6 @@
 ---
-title: Forçar refresh do contato
-description: "Endpoint POST /v1/numbers/{alias}/contacts/{contact_id}/refresh: atualiza o nome do contato sob demanda. 202 Accepted com requested_at, resultado visível no próprio contato, rate-limited por tier."
+title: Atualizar contato
+description: "Endpoint POST /v1/numbers/{alias}/contacts/{contact_id}/refresh: atualiza o nome do contato sob demanda. Responde 202 com requested_at, o resultado aparece no próprio contato e há limite de velocidade por plano."
 sidebar:
   order: 4
 ---
@@ -8,11 +8,11 @@ sidebar:
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-Pede ao WhatsApp o nome atual de um contato. Dispara uma consulta real ao WhatsApp e consome o limite de refresh por tier. Por isso exige o escopo de escrita, não o de leitura. Retorna 202 imediatamente; a consulta termina em alguns segundos e o resultado aparece no próprio contato.
+Pede ao WhatsApp o nome atual de um contato. Cada pedido faz uma consulta real ao WhatsApp e conta no limite de atualizações do seu plano, por isso exige o escopo de escrita, não o de leitura. A resposta 202 é imediata; a consulta termina em alguns segundos e o resultado aparece no próprio contato.
 
-O refresh atualiza **somente o nome**. A foto de perfil não é atualizada por este endpoint: ela é reavaliada automaticamente na próxima troca de mensagens entre o número e o contato. O refresh também não muda nada na entrega das suas mensagens.
+A atualização muda **somente o nome**. A foto de perfil não é atualizada por este endpoint: ela é reavaliada automaticamente na próxima troca de mensagens entre o número e o contato. A atualização também não muda nada na entrega das suas mensagens.
 
-A consulta usa a conexão do número dono do contato (`main` ou o alias do número extra). Se esse número não estiver conectado, o refresh termina na hora com o resultado `number_not_connected`.
+A consulta usa a conexão do número dono do contato (`main` ou o alias do número extra). Se esse número não estiver conectado, a atualização termina na hora com o resultado `number_not_connected`.
 
 ## Endpoint
 
@@ -24,18 +24,18 @@ Para números extras: `POST /v1/numbers/{alias}/contacts/{contact_id}/refresh`
 
 **Escopo obrigatório:** `contacts:write`.
 
-## Rate limit
+## Limite de velocidade
 
-Refresh é mais caro que leitura: consulta o WhatsApp sob demanda e tem limite por tier:
+Cada atualização consulta o WhatsApp na hora, por isso tem um limite por minuto que depende do plano:
 
-| Tier       | Refresh/min |
+| Plano      | Atualizações/min |
 | ---------- | -----------:|
 | `FREE`     | 5   |
 | `SOLO`     | 30  |
 | `BUSINESS` | 120 |
 | `CUSTOM`   | 600 |
 
-Estourar o limite retorna `429 refresh_rate_limited` com `Retry-After`.
+Ao passar do limite, a resposta é `429 refresh_rate_limited` com o cabeçalho `Retry-After`.
 
 ## Exemplo
 
@@ -157,13 +157,13 @@ public class RefreshContato {
 />
 
 `requested_at` é o momento do pedido (UTC, precisão de segundos). Ele identifica
-este refresh no campo `refresh` do contato.
+este pedido no campo `refresh` do contato.
 
 ## Acompanhar o resultado
 
 Consulte o contato com [`GET /v1/contacts/{contact_id}`](/contacts/detail/) (ou
 `GET /v1/numbers/{alias}/contacts/{contact_id}`). O campo `refresh` mostra o
-último refresh que você pediu:
+último pedido de atualização que você fez:
 
 ```json
 "refresh": {
@@ -180,12 +180,12 @@ Quando ela termina, os dois são preenchidos:
 | --------- | --------------- | ----------- |
 | `updated` | O nome mudou no WhatsApp e o contato já mostra o nome novo. | Nada. O webhook `contact.name_changed` também é enviado. |
 | `unchanged` | O nome do contato já estava atualizado. | Nada. |
-| `number_not_connected` | O número dono do contato não estava conectado ao WhatsApp. | Reconecte o número e peça o refresh de novo. |
+| `number_not_connected` | O número dono do contato não estava conectado ao WhatsApp. | Reconecte o número e peça a atualização de novo. |
 | `unavailable` | O WhatsApp não respondeu sobre este contato, ou não foi possível iniciar a consulta. | Tente de novo em alguns minutos. |
 
 Um novo pedido substitui o anterior: `requested_at` passa a ser o do novo
 pedido e `completed_at`/`outcome` voltam a `null` até ele terminar. Se o nome
 mudou, você também recebe o webhook `contact.name_changed`; nenhum outro
-evento é enviado por causa do refresh.
+evento é enviado por causa da atualização.
 
 Veja [eventos de contato](/webhooks/contact-events/).

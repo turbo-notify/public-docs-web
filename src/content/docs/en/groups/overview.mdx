@@ -1,0 +1,310 @@
+---
+title: Groups overview
+description: How to receive and send messages in WhatsApp groups with Turbo Notify, and how to look up the groups of a number.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Turbo Notify treats WhatsApp groups as resources of their own: messages
+received in a group carry the conversation context, and sending to a group uses the
+public identifier `grp_{hex32}`.
+
+## Concepts
+
+### Public `grp_` identifier
+
+Every public reference to a group uses the format `grp_` followed by 32 hexadecimal
+characters, following the same pattern as the other public prefixes
+(`msg_`, `ct_`, `req_`, `evt_`).
+
+> The WhatsApp identifier (`120363xxxxx@g.us`) is **never** exposed
+> in responses, webhooks or polling: only the Turbo Notify `grp_{hex32}`.
+
+### The `to` field: three forms
+
+The kind of recipient is set by the key present in `to`, with no `kind` or `type` field:
+
+- **1:1**: `to: { "number": "+55..." }`, the recipient is a person.
+- **Group**: `to: { "group_id": "grp_..." }`, the recipient is a group.
+- **By contact**: `to: { "contact_id": "ct_..." }`, the phone comes from the contact registered in Turbo Notify.
+
+The same rule applies to webhook and polling payloads: when
+`to.group_id` is present, the recipient is the group.
+
+### The `from` field is always a person
+
+Whoever writes in a group is always a participant, never the group itself. So:
+
+- Received message: `from` is the participant who sent the message in the group.
+- Sent message: `from` is the Turbo Notify number that sent the message.
+
+`from` never carries a `group_id`.
+
+### Your number in the conversation (`number_alias` in the envelope)
+
+The Turbo Notify number taking part in the conversation (1:1 or group, received or
+sent) is identified by the **`number_alias` field in the envelope** of the event
+(`"main"` for the main number or the alias of an extra number). To get the
+details of that number, use `GET /v1/numbers/{alias}`.
+
+```jsonc
+// Group inbound (envelope + data)
+{
+  "number_alias": "main",
+  "data": {
+    "from": { "contact_id": "ct_...", "name": "Ana Souza", "number": "5511988887777" },
+    "to":   { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" }
+  }
+}
+
+// Outbound to a group (envelope + data)
+{
+  "number_alias": "main",
+  "data": {
+    "from": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "to":   { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" }
+  }
+}
+```
+
+To detect group messages, check whether `to.group_id` is present:
+
+```js
+const isGroup = "group_id" in data.to;
+```
+
+## Receiving group messages
+
+Each message received in a group is delivered as
+[`message.received`](/en/messages/webhook/#example-messagereceived-group)
+on the webhook and on polling. `from` is the participant who sent it; `to` carries the
+`group_id` and the group name at that moment; your number taking part
+in the group is identified by the `number_alias` in the envelope.
+
+## Sending to a group
+
+To send to a group from the main number, use `POST /v1/messages`. For extra numbers, use `POST /v1/numbers/{alias}/messages` where `{alias}` is the alias of the extra number. The `to` field takes the form `{ "group_id": "grp_..." }`.
+
+:::note[Requires the BUSINESS plan or higher]
+Sending a message to a `group_id` requires the `groups:messages` feature,
+available from the `BUSINESS` plan up. On `FREE`/`SOLO` the send is
+refused with `402 feature_not_available`. Receiving group messages and
+looking up group details keep working normally. See
+[Group limitations](/en/groups/limitations/) and
+[Quota and usage](/en/usage/quota/#sending-to-groups-requires-the-business-plan-or-higher).
+:::
+
+:::tip[Using extra numbers?]
+To send from an extra number to the group, use `/v1/numbers/{alias}/messages` where
+`{alias}` is the alias of your extra number. [Learn more](/en/numbers/add/).
+:::
+
+<Tabs>
+  <TabItem label="cURL">
+```bash
+curl -X POST "https://api.turbonotify.com/v1/messages" \
+  -H "Authorization: Bearer YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a" },
+    "content": { "text": "Good morning, team" }
+  }'
+```
+  </TabItem>
+  <TabItem label="Node">
+```javascript
+await fetch('https://api.turbonotify.com/v1/messages', {
+  method: 'POST',
+  headers: {
+    Authorization: 'Bearer YOUR_KEY',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    to: { group_id: 'grp_e442553a56b14e2695f6acfd7d651b1a' },
+    content: { text: 'Good morning, team' },
+  }),
+});
+```
+  </TabItem>
+  <TabItem label="Python">
+```python
+import httpx
+
+httpx.post(
+    "https://api.turbonotify.com/v1/messages",
+    headers={"Authorization": "Bearer YOUR_KEY"},
+    json={
+        "to": {"group_id": "grp_e442553a56b14e2695f6acfd7d651b1a"},
+        "content": {"text": "Good morning, team"},
+    },
+)
+```
+  </TabItem>
+  <TabItem label="Go">
+```go
+package main
+
+import (
+    "fmt"
+    "io"
+    "net/http"
+    "strings"
+)
+
+func main() {
+    payload := strings.NewReader(`{"to": {"group_id": "grp_e442553a56b14e2695f6acfd7d651b1a"}, "content": {"text": "Good morning, team"}}`)
+    req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/messages", payload)
+    req.Header.Set("Authorization", "Bearer YOUR_KEY")
+    req.Header.Set("Content-Type", "application/json")
+    resp, _ := http.DefaultClient.Do(req)
+    defer resp.Body.Close()
+    body, _ := io.ReadAll(resp.Body)
+    fmt.Println(string(body))
+}
+```
+  </TabItem>
+  <TabItem label="PHP">
+```php
+<?php
+$url = 'https://api.turbonotify.com/v1/messages';
+$data = [
+    'to' => ['group_id' => 'grp_e442553a56b14e2695f6acfd7d651b1a'],
+    'content' => ['text' => 'Good morning, team'],
+];
+
+$options = [
+    'http' => [
+        'header' => [
+            'Authorization: Bearer YOUR_KEY',
+            'Content-Type: application/json',
+        ],
+        'method' => 'POST',
+        'content' => json_encode($data),
+    ],
+];
+
+$context = stream_context_create($options);
+$result = file_get_contents($url, false, $context);
+$response = json_decode($result, true);
+var_dump($response);
+?>
+```
+  </TabItem>
+  <TabItem label="C#">
+```csharp
+using System.Text;
+using System.Text.Json;
+
+var client = new HttpClient();
+client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+var payload = new
+{
+    to = new { group_id = "grp_e442553a56b14e2695f6acfd7d651b1a" },
+    content = new { text = "Good morning, team" },
+};
+var content = new StringContent(
+    JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+var response = await client.PostAsync("https://api.turbonotify.com/v1/messages", content);
+var result = await response.Content.ReadAsStringAsync();
+Console.WriteLine(result);
+```
+  </TabItem>
+  <TabItem label="Java">
+```java
+import java.net.http.*;
+import java.net.URI;
+
+public class SendToGroup {
+    public static void main(String[] args) throws Exception {
+        var client = HttpClient.newHttpClient();
+        var body = """
+            {"to": {"group_id": "grp_e442553a56b14e2695f6acfd7d651b1a"}, "content": {"text": "Good morning, team"}}
+            """;
+
+        var request = HttpRequest.newBuilder()
+            .uri(URI.create("https://api.turbonotify.com/v1/messages"))
+            .header("Authorization", "Bearer YOUR_KEY")
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(body))
+            .build();
+
+        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.body());
+    }
+}
+```
+  </TabItem>
+</Tabs>
+
+Turbo Notify finds the WhatsApp group that matches the `grp_{hex32}` and
+sends the message through the number given in `{alias}`. For 1:1, the `to` field is an object `{ "number": "+5511988887777" }`.
+
+## Querying groups
+
+`GET /v1/numbers/{alias}/groups` lists the groups seen by a number,
+with cursor pagination. `GET /v1/numbers/{alias}/groups/{group_id}` returns the
+detail of a specific group. Both work on any plan and do not
+require the `groups:messages` feature.
+
+**Required scope:** `groups:read`.
+
+```http
+GET /v1/numbers/{alias}/groups?limit=20&cursor=<opaque>
+GET /v1/numbers/{alias}/groups/{group_id}
+```
+
+| Parameter (list) | Type | Description |
+| ---------------- | ---- | ----------- |
+| `cursor` | string | Opaque token returned in `cursor` by the previous page |
+| `limit` | int | 1 to 200 (default 50) |
+| `name` | string | Partial match on the group name |
+| `include_left` | bool | Includes groups the number has already left (default `false`) |
+
+Each item, both in the list (`data[]`) and in the detail, has this format:
+
+```json
+{
+  "id": "grp_9f6f0b37c98043e5835822eeae550e77",
+  "number_alias": "main",
+  "name": "Group A",
+  "description": "Support team",
+  "participants_count": 12,
+  "is_announce_only": false,
+  "is_locked": false,
+  "ephemeral_seconds": null,
+  "is_active": true,
+  "picture": { "kind": "unavailable", "reason": "peer_has_none" },
+  "created_at": "2026-05-25T10:00:00Z",
+  "updated_at": "2026-05-25T10:05:00Z"
+}
+```
+
+The list wraps the items in `{ "data": [...], "cursor": "...", "has_more": true }`.
+`is_active` is `false` when the number has already left the group (it only shows up in the
+list with `include_left=true`). `picture` has the same format
+used by the picture's own endpoint: see [Group picture](/en/groups/picture/).
+
+`GET /v1/numbers/{alias}/groups/{group_id}` returns `400 invalid_group_id`
+when the `group_id` does not match `^grp_[0-9a-f]{32}$` (the format is checked
+before the lookup). A **well-formed** `group_id` that does not exist, or that
+belongs to another number or organization, returns `404 group_not_found`.
+
+## Quota and rate limit
+
+A send to a group counts as **1 recipient** in the daily recipients
+limit, no matter how many participants the group has. The contact
+quota (`contact.*`) is **not** affected by sends to groups: groups
+never create contacts.
+
+## Group lifecycle
+
+Turbo Notify sends 10 dedicated webhooks when the state of a group
+changes. See [group lifecycle events](/en/groups/lifecycle-events/) for
+the full catalog.
+
+## Limitations
+
+See [Limitations](/en/groups/limitations/) for what the API does not
+offer (creating groups, managing groups and listing members).

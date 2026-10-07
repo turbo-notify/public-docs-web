@@ -1,11 +1,26 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
+/** Sidebar entry for a page: pt-BR label plus its English translation. */
+const page = (slug, pt, en) => ({ slug, label: pt, translations: { en } });
+
+/** Sidebar group: pt-BR label plus its English translation. */
+const group = (pt, en, items) => ({ label: pt, translations: { en }, items });
+
 export default defineConfig({
   site: 'https://docs.turbonotify.com',
+  vite: {
+    build: {
+      // The interactive API reference (Scalar) ships as one large chunk that
+      // only the two /api-reference/ pages load. Every other page stays small.
+      chunkSizeWarningLimit: 4096,
+    },
+  },
   integrations: [
     starlight({
       title: 'Turbo Notify',
+      description:
+        'Documentação do Turbo Notify: API de WhatsApp, agentes de IA pelo servidor MCP e revenda de números para os seus clientes.',
       favicon: '/favicon.svg',
       // Dark is the default color scheme across all Turbo Notify web surfaces.
       // Seed the stored preference for first-time visitors; the theme toggle still wins.
@@ -17,274 +32,105 @@ export default defineConfig({
         },
       ],
       logo: {
-        // Single-line horizontal lockup (icon + "Turbo Notify") — ADR 2026-06-29,
-        // shared with the dashboard + webhook-inspector headers for brand consistency.
+        // Single-line horizontal lockup (icon + "Turbo Notify"), shared with
+        // the dashboard and the webhook inspector headers.
         light: './src/assets/logo-lockup-light.svg',
         dark: './src/assets/logo-lockup-dark.svg',
         replacesTitle: true,
       },
+      social: {
+        github: 'https://github.com/turbo-notify/examples',
+      },
+      components: {
+        SocialIcons: './src/components/SocialIcons.astro',
+      },
       defaultLocale: 'root',
-      // EN/ES removed until real translations exist — most pages under en/
-      // and es/ were either stubs ("translation pending" banners pointing
-      // back to PT-BR) or missing outright. A partially-translated site is
-      // worse UX than a single, complete pt-BR site. Re-add the locales
-      // block (root + en + es) once full parity is translated.
       locales: {
-        root: {
-          label: 'Português',
-          lang: 'pt-BR',
-        },
+        root: { label: 'Português', lang: 'pt-BR' },
+        en: { label: 'English', lang: 'en' },
       },
       sidebar: [
-        {
-          label: 'Geral',
-          translations: { en: 'General', es: 'General' },
-          items: [
-            {
-              slug: 'general/getting-started',
-              label: 'Começo rápido',
-              translations: { en: 'Quick Start', es: 'Inicio rápido' },
-            },
-            {
-              slug: 'general/access-key',
-              label: 'Chave de acesso',
-              translations: { en: 'Access Key', es: 'Clave de Acceso' },
-            },
-            {
-              slug: 'general/abuse',
-              label: 'Abuso',
-              translations: { en: 'Abuse Prevention', es: 'Prevención de Abuso' },
-            },
-            {
-              slug: 'general/byo-storage-setup',
-              label: 'Armazenamento',
-              translations: { en: 'Storage', es: 'Almacenamiento' },
-            },
-            {
-              slug: 'general/mcp-server',
-              label: 'Servidor MCP',
-              translations: { en: 'MCP Server', es: 'Servidor MCP' },
-            },
-            {
-              slug: 'general/next-steps',
-              label: 'Próximos passos',
-              translations: { en: 'Next Steps', es: 'Próximos Pasos' },
-            },
-          ],
-        },
-        {
-          // The number-scoped messaging domain (ADR 2026-06-22): messages,
-          // contacts and groups all live below /v1/numbers/{alias}/…, so they
-          // are grouped under a single "Numbers" section. Number lifecycle
-          // (add/status/…) leads the section; the per-number resources follow.
-          label: 'Números',
-          translations: { en: 'Numbers', es: 'Números' },
-          items: [
-            {
-              label: 'Gerenciamento de números',
-              translations: { en: 'Number Management', es: 'Gestión de números' },
-              items: [
-                {
-                  slug: 'numbers/overview',
-                  label: 'Visão geral',
-                  translations: { en: 'Overview', es: 'Visión general' },
-                },
-                {
-                  slug: 'numbers/add',
-                  label: 'Inclusão',
-                  translations: { en: 'Add', es: 'Agregar' },
-                },
-                {
-                  slug: 'numbers/pairing',
-                  label: 'Pareamento',
-                  translations: { en: 'Pairing', es: 'Emparejamiento' },
-                },
-                {
-                  slug: 'numbers/status',
-                  label: 'Status',
-                  translations: { en: 'Status', es: 'Estado' },
-                },
-                {
-                  slug: 'numbers/list',
-                  label: 'Listagem',
-                  translations: { en: 'List', es: 'Listar' },
-                },
-                {
-                  slug: 'numbers/activation',
-                  label: 'Conexão',
-                  translations: { en: 'Connection', es: 'Conexión' },
-                },
-                {
-                  slug: 'numbers/update',
-                  label: 'Atualização',
-                  translations: { en: 'Update', es: 'Actualización' },
-                },
-                {
-                  slug: 'numbers/remove',
-                  label: 'Remoção',
-                  translations: { en: 'Remove', es: 'Eliminar' },
-                },
-                {
-                  slug: 'numbers/billing',
-                  label: 'Cobrança',
-                  translations: { en: 'Billing', es: 'Facturación' },
-                },
-              ],
-            },
-            {
-              label: 'Mensagens',
-              translations: { en: 'Messages', es: 'Mensajes' },
-              items: [
-                {
-                  slug: 'messages/send',
-                  label: 'Envio',
-                  translations: { en: 'Send', es: 'Envio' },
-                },
-                {
-                  slug: 'messages/send-media',
-                  label: 'Envio de mídia',
-                  translations: { en: 'Send Media', es: 'Envío de medios' },
-                },
-                {
-                  slug: 'messages/list',
-                  label: 'Listar',
-                  translations: { en: 'List', es: 'Listar' },
-                },
-                {
-                  slug: 'messages/get',
-                  label: 'Consultar',
-                  translations: { en: 'Get', es: 'Consultar' },
-                },
-                {
-                  slug: 'messages/status',
-                  label: 'Status',
-                  translations: { en: 'Status', es: 'Estado' },
-                },
-                {
-                  slug: 'messages/receipts',
-                  label: 'Recibos',
-                  translations: { en: 'Receipts', es: 'Recibos' },
-                },
-                {
-                  slug: 'messages/reactions',
-                  label: 'Consultar reações',
-                  translations: { en: 'Get Reactions', es: 'Consultar reacciones' },
-                },
-                {
-                  slug: 'messages/edit-delete',
-                  label: 'Editar e deletar',
-                  translations: { en: 'Edit & Delete', es: 'Editar y eliminar' },
-                },
-                {
-                  slug: 'messages/polling',
-                  label: 'Polling de eventos',
-                  translations: { en: 'Event Polling', es: 'Polling de eventos' },
-                },
-                {
-                  slug: 'messages/webhook',
-                  label: 'Webhook',
-                  translations: { en: 'Webhook', es: 'Webhook' },
-                },
-                {
-                  slug: 'messages/retention',
-                  label: 'Retenção',
-                  translations: { en: 'Retention', es: 'Retención' },
-                },
-                {
-                  slug: 'messages/rate-limits',
-                  label: 'Limites',
-                  translations: { en: 'Rate Limits', es: 'Limites' },
-                },
-              ],
-            },
-            {
-              label: 'Contatos',
-              translations: { en: 'Contacts', es: 'Contactos' },
-              items: [
-                { slug: 'contacts/overview', label: 'Visão geral', translations: { en: 'Overview', es: 'Visión General' } },
-                { slug: 'contacts/list', label: 'Listar', translations: { en: 'List', es: 'Listar' } },
-                { slug: 'contacts/detail', label: 'Detalhe', translations: { en: 'Detail', es: 'Detalle' } },
-                { slug: 'contacts/refresh', label: 'Refresh', translations: { en: 'Refresh', es: 'Refresh' } },
-                { slug: 'contacts/profile-picture', label: 'Foto de perfil', translations: { en: 'Profile Picture', es: 'Foto de Perfil' } },
-                { slug: 'contacts/errors', label: 'Erros', translations: { en: 'Errors', es: 'Errores' } },
-              ],
-            },
-            {
-              label: 'Grupos',
-              translations: { en: 'Groups', es: 'Grupos' },
-              items: [
-                {
-                  slug: 'groups/overview',
-                  label: 'Visão geral',
-                  translations: { en: 'Overview', es: 'Visión general' },
-                },
-                {
-                  slug: 'groups/picture',
-                  label: 'Foto do grupo',
-                  translations: { en: 'Group Picture', es: 'Foto del Grupo' },
-                },
-                {
-                  slug: 'groups/lifecycle-events',
-                  label: 'Eventos de ciclo de vida',
-                  translations: { en: 'Lifecycle Events', es: 'Eventos de ciclo de vida' },
-                },
-                {
-                  slug: 'groups/limitations',
-                  label: 'Limitações',
-                  translations: { en: 'Limitations', es: 'Limitaciones' },
-                },
-              ],
-            },
-          ],
-        },
-        {
-          label: 'Mais recursos',
-          translations: { en: 'More Features', es: 'Más Recursos' },
-          items: [
-            {
-              slug: 'other-features/reaction',
-              label: 'Enviar reação',
-              translations: { en: 'Send Reaction', es: 'Enviar reacción' },
-            },
-            {
-              slug: 'other-features/typing-indicator',
-              label: 'Indicador de digitação',
-              translations: { en: 'Typing Indicator', es: 'Indicador de Escritura' },
-            },
-            {
-              slug: 'other-features/mark-as-read',
-              label: 'Marcar como lida',
-              translations: { en: 'Mark as Read', es: 'Marcar como Leída' },
-            },
-          ],
-        },
-        {
-          label: 'Uso',
-          translations: { en: 'Usage', es: 'Uso' },
-          items: [
-            { slug: 'usage/quota', label: 'Quota', translations: { en: 'Quota', es: 'Quota' } },
-          ],
-        },
-        {
-          label: 'Organização',
-          translations: { en: 'Organization', es: 'Organización' },
-          items: [
-            { slug: 'organizations/overview', label: 'Visão geral', translations: { en: 'Overview', es: 'Visión General' } },
-          ],
-        },
-        {
-          // `messages/webhook` is deliberately listed here as well as under
-          // Números → Mensagens: it is the entry point for webhook setup
-          // (URL, HMAC signature, envelope, retries), so a reader who opens
-          // the section literally named "Webhooks" must find it here.
-          label: 'Webhooks',
-          translations: { en: 'Webhooks', es: 'Webhooks' },
-          items: [
-            { slug: 'messages/webhook', label: 'Configuração e envelope', translations: { en: 'Setup & Envelope', es: 'Configuración y envelope' } },
-            { slug: 'webhooks/contact-events', label: 'Eventos de contato', translations: { en: 'Contact Events', es: 'Eventos de Contacto' } },
-            { slug: 'webhooks/message-quota-events', label: 'Eventos de quota de mensagem', translations: { en: 'Message Quota Events', es: 'Eventos de Quota de Mensaje' } },
-          ],
-        },
+        group('Guias', 'Guides', [
+          page('guides/quickstart', 'Começo rápido', 'Quickstart'),
+          page('guides/ai-agent', 'Construa um agente de IA', 'Build an AI agent'),
+          page('guides/resale', 'Revenda para seus clientes', 'Resell to your customers'),
+        ]),
+        group('Fundamentos', 'Essentials', [
+          page('general/access-key', 'Chave de acesso', 'API key'),
+          page('general/mcp-server', 'Servidor MCP', 'MCP server'),
+          page('general/abuse', 'Evite bloqueios', 'Avoid blocks'),
+          page('general/byo-storage-setup', 'Armazenamento', 'Storage'),
+        ]),
+        // Messages, contacts and groups all live below /v1/numbers/{alias}/…,
+        // so they are grouped under a single "Numbers" section. Number
+        // management leads the section; the per-number resources follow.
+        group('Números', 'Numbers', [
+          group('Gerenciamento de números', 'Number management', [
+            page('numbers/overview', 'Visão geral', 'Overview'),
+            page('numbers/add', 'Inclusão', 'Add'),
+            page('numbers/pairing', 'Pareamento', 'Pairing'),
+            page('numbers/status', 'Status', 'Status'),
+            page('numbers/list', 'Listagem', 'List'),
+            page('numbers/activation', 'Conexão', 'Connection'),
+            page('numbers/update', 'Atualização', 'Update'),
+            page('numbers/remove', 'Remoção', 'Remove'),
+            page('numbers/billing', 'Cobrança', 'Billing'),
+          ]),
+          group('Mensagens', 'Messages', [
+            page('messages/send', 'Envio', 'Send'),
+            page('messages/send-media', 'Envio de mídia', 'Send media'),
+            page('messages/list', 'Listar', 'List'),
+            page('messages/get', 'Consultar', 'Get'),
+            page('messages/status', 'Status', 'Status'),
+            page('messages/receipts', 'Recibos', 'Receipts'),
+            page('messages/reactions', 'Consultar reações', 'Get reactions'),
+            page('messages/edit-delete', 'Editar e apagar', 'Edit and delete'),
+            page('messages/polling', 'Polling de eventos', 'Event polling'),
+            page('messages/webhook', 'Webhook', 'Webhook'),
+            page('messages/retention', 'Retenção', 'Retention'),
+            page('messages/rate-limits', 'Limites', 'Rate limits'),
+          ]),
+          group('Contatos', 'Contacts', [
+            page('contacts/overview', 'Visão geral', 'Overview'),
+            page('contacts/list', 'Listar', 'List'),
+            page('contacts/detail', 'Detalhe', 'Detail'),
+            page('contacts/refresh', 'Atualizar', 'Refresh'),
+            page('contacts/profile-picture', 'Foto de perfil', 'Profile picture'),
+            page('contacts/errors', 'Erros', 'Errors'),
+          ]),
+          group('Grupos', 'Groups', [
+            page('groups/overview', 'Visão geral', 'Overview'),
+            page('groups/picture', 'Foto do grupo', 'Group picture'),
+            page('groups/lifecycle-events', 'Eventos de ciclo de vida', 'Lifecycle events'),
+            page('groups/limitations', 'Limitações', 'Limitations'),
+          ]),
+        ]),
+        group('Mais recursos', 'More features', [
+          page('other-features/reaction', 'Enviar reação', 'Send a reaction'),
+          page('other-features/typing-indicator', 'Indicador de digitação', 'Typing indicator'),
+          page('other-features/mark-as-read', 'Marcar como lida', 'Mark as read'),
+        ]),
+        group('Uso', 'Usage', [page('usage/quota', 'Cota', 'Quota')]),
+        group('Organização', 'Organization', [
+          page('organizations/overview', 'Visão geral', 'Overview'),
+        ]),
+        // `messages/webhook` is listed here as well as under Números →
+        // Mensagens: it is the entry point for webhook setup (URL, signature,
+        // envelope, retries), so a reader who opens the section literally
+        // named "Webhooks" must find it here.
+        group('Webhooks', 'Webhooks', [
+          page('messages/webhook', 'Configuração e envelope', 'Setup and envelope'),
+          page('webhooks/contact-events', 'Eventos de contato', 'Contact events'),
+          page('webhooks/message-quota-events', 'Eventos de cota de mensagem', 'Message quota events'),
+        ]),
+        group('Referência', 'Reference', [
+          page('reference/api', 'Referência da API', 'API reference'),
+          page('reference/errors', 'Códigos de erro', 'Error codes'),
+        ]),
+        group('Ajuda', 'Help', [
+          page('help/support', 'Suporte', 'Support'),
+          page('help/changelog', 'Novidades', 'Changelog'),
+        ]),
       ],
       customCss: ['./src/styles/custom.css'],
     }),

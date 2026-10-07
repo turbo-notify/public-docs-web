@@ -1,13 +1,13 @@
 ---
 title: Atualização de números extras
-description: Como renomear ou alterar a descrição de números extras cadastrados no Turbo Notify.
+description: Como renomear um número extra ou alterar a descrição e o external_id dele no Turbo Notify.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 import DashboardLink from '@components/DashboardLink.astro';
 
-Atualize o alias (o identificador usado nas chamadas de API) ou a descrição de um número extra já cadastrado, sem precisar recriá-lo.
+Atualize o alias (o nome usado nas chamadas de API), a descrição ou o `external_id` de um número extra já cadastrado, sem precisar recriá-lo.
 
 ## Atualizar pelo dashboard
 
@@ -172,6 +172,7 @@ Faça uma requisição PATCH informando o alias atual do número na URL e, no co
   body={{
     alias: 'vendas_sp_2',
     description: 'Equipe de vendas SP (novo turno)',
+    external_id: 'cliente-4821',
     status: 'connected',
     at: '2025-07-16T10:00:00Z',
   }}
@@ -179,12 +180,25 @@ Faça uma requisição PATCH informando o alias atual do número na URL e, no co
 
 **Escopo obrigatório:** `numbers:write`
 
-Os dois campos do corpo são **opcionais e independentes**: envie apenas o que quiser alterar.
+Os campos do corpo são **opcionais e independentes**: envie apenas o que quiser alterar.
 
 | Campo | Tipo | Obrigatório | Descrição |
 | ----- | ---- | :---------: | ---------- |
 | `alias` | string | Não | Novo alias do número. Precisa começar com uma letra, ter no máximo 50 caracteres e não pode ser `"main"` (reservado para o número principal). Omita para manter o alias atual. |
 | `description` | string \| null | Não | Nova descrição do número. Envie `null` explicitamente para apagar a descrição atual; **omita o campo** para deixá-la como está. |
+| `external_id` | string \| null | Não | O seu identificador para este número, em geral o id do seu cliente no seu sistema. Envie um valor para definir ou trocar, `null` explicitamente para remover; **omita o campo** para mantê-lo. De 1 a 128 caracteres, sem caracteres de controle, espaços no início e no fim removidos, e não pode se repetir entre os números da sua organização. |
+
+Para definir ou trocar só o `external_id`:
+
+```json
+{ "external_id": "cliente-4821" }
+```
+
+Para remover:
+
+```json
+{ "external_id": null }
+```
 
 A resposta traz o estado atualizado do número:
 
@@ -192,12 +206,25 @@ A resposta traz o estado atualizado do número:
 | ----- | ---- | ---------- |
 | `alias` | string | Alias atual do número (o novo, se foi alterado). Use-o nas próximas chamadas a este número. |
 | `description` | string \| null | Descrição atual do número. |
+| `external_id` | string \| null | `external_id` atual do número. |
 | `status` | string | Estado atual do número, veja [Tabela de status](/numbers/status/#tabela-de-status). |
 | `at` | string | Timestamp ISO 8601 do momento desta atualização. |
 
 :::note[Renomear não afeta a conexão]
-Alterar o `alias` ou a `description` não desconecta, repareia nem reinicia o número: a conexão com o WhatsApp continua exatamente como estava. A partir da resposta, use o **novo** alias em qualquer chamada seguinte para este número.
+Alterar o `alias`, a `description` ou o `external_id` não desconecta, não exige parear de novo e não reinicia o número: a conexão com o WhatsApp continua exatamente como estava. A partir da resposta, use o **novo** alias em qualquer chamada seguinte para este número.
 :::
+
+:::tip[`external_id` é a chave estável]
+Renomear o alias mantém o `external_id`. Por isso ele é a forma estável de achar o número de um cliente: `GET /v1/numbers?external_id=cliente-4821` (veja [Filtros](/numbers/list/#filtros)) encontra o número mesmo depois de o alias mudar.
+:::
+
+## Número principal
+
+O número principal também aceita um `external_id`, e só ele: em `PATCH /v1/numbers/main`, envie apenas o `external_id` (um valor para definir ou trocar, `null` para remover). Enviar `alias` ou `description` para o número principal responde `403 main_number_update_not_allowed`.
+
+```json
+{ "external_id": "conta-principal" }
+```
 
 ## Erros possíveis
 
@@ -208,8 +235,9 @@ Alterar o `alias` ou a `description` não desconecta, repareia nem reinicia o n�
 | `402`  | `feature_not_available`         | O plano atual não suporta números extras.                       |
 | `403`  | `not_authorized`                | A chave de acesso está inválida ou ausente.                     |
 | `403`  | `insufficient_scope`            | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
-| `403`  | `main_number_update_not_allowed` | Esta chamada não se aplica ao número principal (path `main`).  |
+| `403`  | `main_number_update_not_allowed` | No número principal (`main`), só o `external_id` pode ser alterado; `alias` e `description` não. |
 | `404`  | `extra_number_not_found`        | O alias informado no path não corresponde a nenhum número cadastrado. |
 | `409`  | `alias_already_exists`          | Já existe outro número extra usando o alias informado.         |
-| `422`  | `validation_error`              | `alias` está vazio, não começa com letra, tem mais de 50 caracteres, ou algum campo de texto contém caractere inválido. A resposta traz `details.errors` com o campo e a mensagem específicos. |
+| `409`  | `external_id_already_used`      | Outro número da sua conta já usa este `external_id`.           |
+| `422`  | `validation_error`              | `alias` está vazio, não começa com letra ou tem mais de 50 caracteres, `external_id` está vazio, tem mais de 128 caracteres ou tem caractere de controle, ou algum campo de texto contém caractere inválido. A resposta traz `details.errors` com o campo e a mensagem específicos. |
 | `500`  | `internal_error`                | Erro interno inesperado no servidor.                            |

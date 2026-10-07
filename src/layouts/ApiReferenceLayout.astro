@@ -1,0 +1,162 @@
+---
+/**
+ * Full-page interactive API reference, rendered in the browser by Scalar from
+ * `/openapi.json` (the contract the public API serves, copied as is).
+ *
+ * It is a page of its own rather than a docs page because Scalar brings its own
+ * navigation and styles, which collide with the docs layout. A slim bar keeps
+ * the way back to the docs.
+ *
+ * Try-it requests go straight from the reader's browser to the public API with
+ * the reader's key: no proxy, no Scalar cloud feature (agent chat, MCP
+ * generator, hosted client), no telemetry.
+ */
+import logoDark from '../assets/logo-lockup-dark.svg';
+import logoLight from '../assets/logo-lockup-light.svg';
+import { localePrefix, ui, type DocsLocale } from '../i18n/locale';
+
+interface Props {
+  locale: DocsLocale;
+  description: string;
+}
+
+const { locale, description } = Astro.props;
+const t = ui[locale];
+const lang = locale === 'en' ? 'en' : 'pt-BR';
+const docsHome = `${localePrefix(locale)}/reference/api/`;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{t.apiReferenceTitle} | Turbo Notify</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap"
+    />
+    <script is:inline>
+      // Same color scheme the docs use (dark unless the reader chose light).
+      try {
+        const stored = localStorage.getItem('starlight-theme');
+        const light =
+          stored === 'light' ||
+          (stored === 'auto' && window.matchMedia('(prefers-color-scheme: light)').matches);
+        document.documentElement.dataset.theme = light ? 'light' : 'dark';
+      } catch {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    </script>
+  </head>
+  <body>
+    <header class="tn-bar">
+      <a class="tn-brand" href={docsHome} aria-label={`Turbo Notify, ${t.backToDocs}`}>
+        <img class="tn-logo tn-logo-dark" src={logoDark.src} alt="Turbo Notify" height="28" />
+        <img class="tn-logo tn-logo-light" src={logoLight.src} alt="Turbo Notify" height="28" />
+      </a>
+      <a class="tn-back" href={docsHome}>{t.backToDocs}</a>
+    </header>
+    <div id="api-reference" data-locale={locale}></div>
+    <script>
+      import { createApiReference } from '@scalar/api-reference';
+      import '@scalar/api-reference/style.css';
+
+      const el = document.getElementById('api-reference');
+      if (el) {
+        createApiReference(el, {
+          url: '/openapi.json',
+          servers: [{ url: 'https://api.turbonotify.com' }],
+          localization: { locale: el.dataset.locale ?? 'pt' },
+          forceDarkModeState: document.documentElement.dataset.theme === 'light' ? 'light' : 'dark',
+          hideDarkModeToggle: true,
+          showDeveloperTools: 'never',
+          // The sidebar button opens Scalar's hosted client on another site; the
+          // reader's key must stay on this page, so only the in-page test runs.
+          hideClientButton: true,
+          telemetry: false,
+          agent: { disabled: true },
+          mcp: { disabled: true },
+          documentDownloadType: 'json',
+          withDefaultFonts: false,
+        });
+      }
+    </script>
+    <style is:global>
+      :root {
+        --tn-bar-height: 56px;
+        --scalar-custom-header-height: var(--tn-bar-height);
+        --scalar-font: 'Manrope', system-ui, sans-serif;
+        --scalar-font-code: 'IBM Plex Mono', ui-monospace, monospace;
+      }
+      /* Scalar's palette aligned with the docs theme (same tokens as custom.css). */
+      .dark-mode {
+        --scalar-background-1: #0f1720;
+        --scalar-background-2: #16202b;
+        --scalar-background-3: #243140;
+        --scalar-border-color: rgba(201, 210, 220, 0.12);
+        --scalar-color-accent: #30b58d;
+      }
+      .light-mode {
+        --scalar-color-accent: #177d60;
+      }
+      html,
+      body {
+        margin: 0;
+      }
+      :root[data-theme='dark'] body {
+        background: #0f1720;
+      }
+      :root[data-theme='light'] body {
+        background: #ffffff;
+      }
+      .tn-bar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        height: var(--tn-bar-height);
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 1rem;
+        padding: 0 1rem;
+        font-family: 'Manrope', system-ui, sans-serif;
+        border-bottom: 1px solid rgba(201, 210, 220, 0.12);
+        background: #0f1720;
+      }
+      :root[data-theme='light'] .tn-bar {
+        background: #ffffff;
+        border-bottom-color: #e2e6ea;
+      }
+      .tn-brand {
+        display: flex;
+        align-items: center;
+      }
+      .tn-logo {
+        height: 28px;
+        width: auto;
+      }
+      :root[data-theme='dark'] .tn-logo-light,
+      :root[data-theme='light'] .tn-logo-dark {
+        display: none;
+      }
+      .tn-back {
+        padding-left: 1rem;
+        border-left: 1px solid rgba(201, 210, 220, 0.24);
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+        color: #30b58d;
+      }
+      :root[data-theme='light'] .tn-back {
+        color: #177d60;
+      }
+    </style>
+  </body>
+</html>

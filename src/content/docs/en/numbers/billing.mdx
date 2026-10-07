@@ -1,0 +1,100 @@
+---
+title: Extra number billing
+description: "How extra number billing works in Turbo Notify: price, billing cycle, pro-rata calculation by actual days, and the removal policy."
+---
+
+import DashboardLink from '@components/DashboardLink.astro';
+import Price from '@components/Price.astro';
+
+Extra numbers let you send messages from multiple WhatsApp numbers in the same account. They are ideal for companies with several locations, branches or departments, and for resale: a partner platform gives one number to each of its end customers (see the [resale guide](/en/guides/resale/)). This page explains how billing works.
+
+## Who can use extra numbers
+
+Extra numbers are available on the **Business** (`BUSINESS`) and **Custom** (`CUSTOM`) plans. On the Free (`FREE`) and Solo (`SOLO`) plans, adding an extra number returns `402 feature_not_available`. You need to change plans first.
+
+Each plan has a maximum number of simultaneous extra numbers: **1,000** on the Business and Custom plans. See the full plan table in [Quota and usage](/en/usage/quota/).
+
+## Price
+
+Each extra number costs **<Price item="extraNumber" />** per number, per month, on top of the Business plan. The currency follows the account: Brazilian real (BRL) in Brazil and US dollar (USD) everywhere else. The Custom plan negotiates the price based on the contracted volume. The exact amount for your account appears on the <DashboardLink path="/billing">Billing</DashboardLink> page of the dashboard.
+
+## How billing works
+
+- **Extra numbers added during the cycle** generate an **immediate pro-rata charge at activation**, covering the days left until the end of the current cycle. The calculation uses the actual days of the cycle (28 to 31, depending on the month), never a fixed 30-day month. This charge happens before the number becomes available: if it fails (card declined, no payment method on file), the number is not created.
+- **From the next cycle on**, if the extra number is still active, it is charged the full price (no pro-rata), on the same invoice as the base plan.
+
+**Formula (pro-rata charge at activation):**
+
+```
+amount = monthly_price × days_left_in_cycle / days_in_cycle
+```
+
+**Example:** in a 31-day cycle (January, for example), an extra number activated on day 11 has 20 days left until the end of the cycle. The pro-rata charge, made at activation, is <Price item="extraNumber" /> × 20 / 31 = **<Price item="extraNumber" prorate={{ days: 20, cycleDays: 31 }} />**.
+
+The pro-rata activation charge is a one-off charge. From the next cycle on, the extra number is part of the regular start-of-cycle invoice, together with the base plan.
+
+### Numbers removed right after activation may be refunded
+
+If you remove an extra number right after adding it, before using it, the pro-rata charge made at activation may be **refunded automatically**. The `DELETE` response tells you what happened, in `refund_eligible`, `refund_amount_cents` and `refund_status` (see [Removing extra numbers](/en/numbers/remove/)).
+
+When the removal is **scheduled** (until the end of the number's paid cycle), the number stays in the account and keeps being charged normally at the start of each cycle until the deletion runs, with no refund of the charge already made.
+
+Questions about a refund: write to billing@turbonotify.com.
+
+## Removing an extra number
+
+**Disconnect the number before removing it.** A `connected` number cannot be deleted: `DELETE /v1/numbers/{alias}` returns `400 invalid_status_for_deletion`. Call `POST /v1/numbers/{alias}/disconnect` first.
+
+Once the number is disconnected, the removal takes one of two paths, chosen automatically:
+
+**Immediate removal.** A number removed right after it was added, before it was used, may be removed on the spot, with no waiting period, and the activation charge refunded.
+
+**Scheduled removal.** In every other case, the number moves to status `pending_deletion` and stays active until the **end of the number's paid cycle**. The `scheduled_deletion_at` field in the response has the exact date. During that whole period you can reverse the decision with `POST /v1/numbers/{alias}/cancel-deletion`, and the number goes back to normal.
+
+Canceling the scheduled deletion, through that call or by reconnecting the number, can trigger a new pro-rata activation charge: this happens when the number was created before the start of the current billed cycle, because it was left out of that cycle's invoice. If that charge fails, the deletion stays scheduled.
+
+The `DELETE` response tells you which path was taken, in `refund_eligible` (`true` = immediate removal) and `scheduled_deletion_at`.
+
+The two paths affect the invoice differently:
+
+- **Immediate removal**: the number is deleted right away and the pro-rata charge made at activation is **refunded**. See [Numbers removed right after activation](#numbers-removed-right-after-activation-may-be-refunded).
+- **Scheduled removal**: the number stays in the account until the end of the paid cycle, so it **keeps being charged normally at the start of each cycle** in that interval, exactly like a number that is only disconnected (see [Pause instead of remove](#pause-instead-of-remove) below). Billing stops only when the deletion runs.
+
+### Pause instead of remove
+
+To stop using a number temporarily without losing it, **disconnect** it instead of removing it:
+
+- The number stays in the account with status `disconnected` and **keeps being charged normally** at the start of each cycle, for as long as it stays in the account.
+- It can be reconnected at any time, without adding it again.
+- It is the right choice for temporary pauses. Removal is for when you will not use the number anymore.
+
+## Extra number limit
+
+When you reach your plan's limit (1,000 active extra numbers), adding a new number returns:
+
+```json
+{
+  "error": "extra_numbers_limit_reached",
+  "details": { "limit": 1000, "current": 1000 }
+}
+```
+
+Remove an existing number to free up room, or talk to the sales team if your Custom plan needs a higher limit.
+
+## Frequently asked questions
+
+**Am I charged for disconnected numbers?**
+
+Yes. Disconnecting pauses the number, but it does not stop billing: the number keeps being charged at the start of each cycle. To stop being charged, you need to remove the number. When the removal is scheduled, billing only stops after the deletion runs, at the end of the number's paid cycle.
+
+**Can I add and remove numbers freely?**
+
+Yes, within your plan's limit. An extra number activated in the middle of the cycle generates an immediate pro-rata charge; if it is still in the account at the start of the next cycle, it is charged the full price together with the base plan. Only an immediate removal, right after adding the number and before using it, can refund the pro-rata activation charge.
+
+**Where can I see the billing details of my extra numbers?**
+
+On the <DashboardLink path="/billing">Billing</DashboardLink> page of the dashboard, each invoice lists the extra numbers charged in that period, with the number of active days used in the calculation.
+
+## Terms
+
+Use of extra numbers is subject to the Turbo Notify terms of service and to WhatsApp's policies. Misuse for spam or unsolicited messages may result in the account being blocked.

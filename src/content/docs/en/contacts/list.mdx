@@ -1,0 +1,191 @@
+---
+title: List contacts
+description: "GET /v1/numbers/{alias}/contacts endpoint: cursor pagination, available filters and examples."
+sidebar:
+  order: 2
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+List the contacts of a number, with filters and cursor pagination. Items come from the most recently updated to the oldest.
+
+Each contact belongs to a number: `{alias}` is `main` (main number) or the alias of an extra number, and the same phone reached by two different numbers corresponds to two distinct contacts.
+
+## Endpoint
+
+```http
+GET /v1/contacts?limit=20&cursor=<opaque>
+```
+
+For extra numbers: `GET /v1/numbers/{alias}/contacts?limit=20&cursor=<opaque>`
+
+:::tip[Using extra numbers?]
+To list the contacts of an extra number, use `/v1/numbers/{alias}/contacts` where
+`{alias}` is the alias of your extra number. [Learn more](/en/numbers/add/).
+:::
+
+**Required scope:** `contacts:read`.
+
+## Query parameters
+
+| Parameter | Type | Description |
+| --------- | ---- | ----------- |
+| `limit` | int | 1 to 200 (default 50) |
+| `cursor` | string | Opaque token returned in `cursor` |
+| `phone` | string | Exact match on E.164 (`+5511...`) |
+| `name` | string | Partial match on the contact name |
+| `source` | enum | `inbound \| outbound \| self \| mention`: `mention` is a contact first seen because it was **mentioned** in a message; contacts created by a mention do **not** take a slot of the contact quota |
+| `contacted_in_cycle` | bool | Returns only the contacts you talked to through Turbo Notify within the current billing cycle (new or returning). A send that did not reach WhatsApp does not count |
+
+## Request example
+
+<Tabs>
+<TabItem label="cURL">
+```bash
+curl -X GET "https://api.turbonotify.com/v1/contacts?limit=20" \
+  -H "Authorization: Bearer YOUR_KEY"
+```
+
+Only the contacts that took a slot of the current cycle's quota:
+
+```bash
+curl -X GET "https://api.turbonotify.com/v1/contacts?contacted_in_cycle=true" \
+  -H "Authorization: Bearer YOUR_KEY"
+```
+</TabItem>
+<TabItem label="Node">
+```ts
+const res = await fetch("https://api.turbonotify.com/v1/contacts?limit=20", {
+  headers: { Authorization: "Bearer YOUR_KEY" },
+});
+const { data, cursor, has_more } = await res.json();
+```
+</TabItem>
+<TabItem label="Python">
+```python
+import httpx
+r = httpx.get(
+    "https://api.turbonotify.com/v1/contacts",
+    params={"limit": 20},
+    headers={"Authorization": "Bearer YOUR_KEY"},
+)
+data = r.json()
+```
+</TabItem>
+<TabItem label="Go">
+```go
+package main
+
+import (
+    "fmt"
+    "io"
+    "net/http"
+)
+
+func main() {
+    req, _ := http.NewRequest(
+        "GET",
+        "https://api.turbonotify.com/v1/contacts?limit=20",
+        nil,
+    )
+    req.Header.Set("Authorization", "Bearer YOUR_KEY")
+    resp, _ := http.DefaultClient.Do(req)
+    defer resp.Body.Close()
+    body, _ := io.ReadAll(resp.Body)
+    fmt.Println(string(body))
+}
+```
+</TabItem>
+<TabItem label="PHP">
+```php
+<?php
+$url = 'https://api.turbonotify.com/v1/contacts?limit=20';
+
+$options = [
+    'http' => [
+        'header' => ['Authorization: Bearer YOUR_KEY'],
+        'method' => 'GET'
+    ]
+];
+
+$context = stream_context_create($options);
+$result = file_get_contents($url, false, $context);
+$response = json_decode($result, true);
+var_dump($response['data']);
+?>
+```
+</TabItem>
+<TabItem label="C#">
+```csharp
+var client = new HttpClient();
+client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+var response = await client.GetAsync(
+    "https://api.turbonotify.com/v1/contacts?limit=20"
+);
+var result = await response.Content.ReadAsStringAsync();
+Console.WriteLine(result);
+```
+</TabItem>
+<TabItem label="Java">
+```java
+import java.net.http.*;
+import java.net.URI;
+
+public class ListContacts {
+    public static void main(String[] args) throws Exception {
+        var client = HttpClient.newHttpClient();
+
+        var request = HttpRequest.newBuilder()
+            .uri(URI.create("https://api.turbonotify.com/v1/contacts?limit=20"))
+            .header("Authorization", "Bearer YOUR_KEY")
+            .GET()
+            .build();
+
+        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.body());
+    }
+}
+```
+</TabItem>
+</Tabs>
+
+## Response (200)
+
+<ApiResponse
+  status={200}
+  body={{
+    data: [
+      {
+        id: 'ct_a1b2c3d4e5f6789012345678901234ab',
+        number_alias: 'main',
+        phone_number: '+5511988887777',
+        name: 'João Silva',
+        is_self: false,
+        first_messaged_at: '2026-05-10T13:25:00Z',
+        last_interaction_at: '2026-05-10T13:42:00Z',
+        verified_on_whatsapp_at: '2026-05-10T13:25:00Z',
+        picture: { kind: 'unavailable', reason: 'peer_has_none' },
+        refresh: null,
+        created_at: '2026-05-10T13:25:00Z',
+        updated_at: '2026-05-10T13:42:00Z',
+      },
+    ],
+    cursor: 'eyJpZCI6ImN0XzAxIn0=',
+    has_more: true,
+  }}
+/>
+
+Each item is the same object returned by [Detail](/en/contacts/detail/). The
+`phone_number` is the **full E.164** (unmasked). The contact has its own
+dates (`created_at`, `updated_at`, `first_messaged_at` and the others), which
+do not repeat the dates of an event.
+
+`first_messaged_at` is when the first message from this number through Turbo Notify
+reached the contact on WhatsApp, and `last_interaction_at` is the last message
+actually exchanged with them, in either direction. `refresh` shows the last
+[refresh request](/en/contacts/refresh/) you made (`null` if you never made one). The
+details of each field are in [Detail](/en/contacts/detail/).
+
+See also: [Detail](/en/contacts/detail/) · [Errors](/en/contacts/errors/).

@@ -1,4 +1,6 @@
 ---
+import { localeFromPath, ui } from '../i18n/locale';
+
 interface Props {
   status: number;
   body?: unknown;
@@ -6,12 +8,13 @@ interface Props {
 }
 
 const { status, body, headers } = Astro.props;
-const bodyJson = body === null ? '<VAZIO>' : JSON.stringify(body, null, 2);
+const t = ui[localeFromPath(Astro.url.pathname)];
+const bodyJson = body === null ? t.emptyBody : JSON.stringify(body, null, 2);
 ---
 
 <div class="api-response">
   <div class="api-response-header">
-    <strong style="color: var(--sl-color-gray-2);">HTTP Status:</strong>
+    <strong style="color: var(--sl-color-gray-2);">{t.httpStatus}</strong>
     <span class="api-response-status" data-status={status}>
       {status}
     </span>

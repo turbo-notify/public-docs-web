@@ -10,23 +10,23 @@ import ExternalLink from '@components/ExternalLink.astro';
 Envie mensagens pelo Turbo Notify de forma simples, segura e em conformidade com as <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">políticas do WhatsApp</ExternalLink>.
 
 O corpo de `POST /v1/numbers/{alias}/messages` (ou o atalho
-`POST /v1/messages` para o número principal) usa um objeto
-**aninhado `content`** para transportar o payload da mensagem. O tipo é
-inferido automaticamente pelo campo âncora presente em `content`
-(`text`, `image_url`, `latitude`, `start_at`, …). **Não envie** um campo
-`content_type` no request: ele nunca é aceito (incluí-lo retorna `422`).
+`POST /v1/messages` para o número principal) leva o conteúdo da mensagem
+no objeto **`content`**. O tipo é reconhecido automaticamente pelo campo
+âncora presente em `content` (`text`, `image_url`, `latitude`,
+`start_at`, …). **Não envie** um campo `content_type` na requisição: ele
+nunca é aceito (incluí-lo retorna `422`).
 Suporta texto, localização, contato, calendário, mensagem com botão de
 link (`interactive_type`) e mídia (`image`, `video`, `audio`, `document`, `sticker`, veja
 [Envio de mídia](/messages/send-media/)).
 
-Para citar (responder) uma mensagem existente (qualquer variante de conteúdo), use o endpoint dedicado `POST /v1/messages/{message_id}/reply`, onde `{message_id}` é o id público da mensagem citada (`msg_{hex32}`). O body do reply contém apenas `content`. O webhook resultante é `message.replied` (em vez de `message.sent`); veja [Webhooks](/messages/webhook/#exemplo-messagereplied-inboundoutbound).
+Para citar (responder) uma mensagem existente (qualquer variante de conteúdo), use o endpoint dedicado `POST /v1/messages/{message_id}/reply`, onde `{message_id}` é o id público da mensagem citada (`msg_{hex32}`). O corpo dessa requisição contém apenas `content`. O webhook resultante é `message.replied` (em vez de `message.sent`); veja [Webhooks](/messages/webhook/#exemplo-messagereplied-inboundoutbound).
 
 A mensagem citada precisa estar **dentro da [janela de retenção de conteúdo](/messages/retention/)** do seu plano: responder a uma mensagem mais antiga que a janela retorna `404 not_found`: a mesma resposta de uma mensagem inexistente.
 
 Antes de enviar (ou de responder), o Turbo Notify abre a conversa como uma pessoa faria: o número aparece online, o histórico de mensagens não lidas do chat de destino é marcado como lido e só então a mensagem é enviada. Para marcar um chat como lido sem enviar nenhuma mensagem, veja [Marcar como lida](/other-features/mark-as-read/).
 
 :::tip[Roteamento por número]
-- **Número principal** → `POST /v1/messages` (rota plana) **ou** `POST /v1/numbers/main/messages`: as duas formas são idênticas.
+- **Número principal** → `POST /v1/messages` (rota curta) **ou** `POST /v1/numbers/main/messages`: as duas formas são idênticas.
 - **Número extra** → `POST /v1/numbers/{alias}/messages`, onde `{alias}` é o alias configurado no dashboard. [Saiba mais](/numbers/add/).
 :::
 
@@ -42,7 +42,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": {"number": "+5511999999999"},
+        "to": {"number": "+5511988887777"},
         "content": {
           "text": "Olá, esta é uma mensagem enviada pelo Turbo Notify!"
         }
@@ -58,7 +58,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: { number: '+5511999999999' },
+        to: { number: '+5511988887777' },
         content: {
           text: 'Olá, esta é uma mensagem enviada pelo Turbo Notify!'
         }
@@ -79,7 +79,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
         "Content-Type": "application/json"
     }
     data = {
-        "to": {"number": "+5511999999999"},
+        "to": {"number": "+5511988887777"},
         "content": {
             "text": "Olá, esta é uma mensagem enviada pelo Turbo Notify!"
         }
@@ -102,7 +102,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     )
 
     func main() {
-        payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "content": {"text": "Olá, esta é uma mensagem enviada pelo Turbo Notify!"}}`)
+        payload := strings.NewReader(`{"to": {"number": "+5511988887777"}, "content": {"text": "Olá, esta é uma mensagem enviada pelo Turbo Notify!"}}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/messages", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -118,7 +118,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     <?php
     $url = 'https://api.turbonotify.com/v1/messages';
     $data = [
-        'to' => ['number' => '+5511999999999'],
+        'to' => ['number' => '+5511988887777'],
         'content' => [
             'text' => 'Olá, esta é uma mensagem enviada pelo Turbo Notify!'
         ]
@@ -151,7 +151,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var data = new {
-        to = new { number = "+5511999999999" },
+        to = new { number = "+5511988887777" },
         content = new {
             text = "Olá, esta é uma mensagem enviada pelo Turbo Notify!"
         }
@@ -179,7 +179,7 @@ O envio mais simples exige apenas o número do destinatário e o texto da mensag
 
             var json = """
                 {
-                    "to": {"number": "+5511999999999"},
+                    "to": {"number": "+5511988887777"},
                     "content": {
                         "text": "Olá, esta é uma mensagem enviada pelo Turbo Notify!"
                     }
@@ -214,23 +214,23 @@ do telefone do contato em **dígitos E.164, sem `+`**.
 {
   "to": { "number": "+5511988887777" },
   "content": {
-    "text": "Olá @5511987650000, seu pedido chegou!"
+    "text": "Olá @5511977776666, seu pedido chegou!"
   }
 }
 ```
 
-Menções brilham em grupos. Mencione um participante pelo número:
+Em grupos, mencione um participante pelo número:
 
 ```json title="POST /v1/messages: grupo mencionando um participante"
 {
   "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a" },
   "content": {
-    "text": "Bom dia @5511987650000, pode validar o pedido de hoje?"
+    "text": "Bom dia @5511977776666, pode validar o pedido de hoje?"
   }
 }
 ```
 
-**Não existe campo `mentions` no request**: a detecção é **implícita**, pelo
+**Não existe campo `mentions` na requisição**: a detecção é **implícita**, pelo
 próprio texto (o mesmo modelo da inferência de tipo de conteúdo pelo campo
 âncora). Todo token válido vira uma menção real no dispositivo do destinatário.
 
@@ -238,12 +238,12 @@ próprio texto (o mesmo modelo da inferência de tipo de conteúdo pelo campo
 
 | Regra | Comportamento |
 |---|---|
-| Sintaxe | `@` + 7–15 dígitos, delimitado por fronteira de palavra: `nome@dominio.com`, `@@123`, sequências com mais de 15 dígitos e `@+55…` **não** viram menção |
-| Normalização | Números BR de 12 dígitos são normalizados para a forma canônica de 13 dígitos: o conteúdo persistido/devolvido carrega o token normalizado (ex.: `@551187650000` → `@5511987650000`) |
-| Fail-open | Dígitos inválidos ou não normalizáveis permanecem **texto puro**: o envio nunca falha por causa de uma menção |
-| Escopo | Funciona em 1:1 e em grupos, em `text` e em `caption` de `image`/`video`/`document` (`audio`/`sticker` não têm caption) |
-| Eco simétrico | O token `@<numero>` que você recebe em `message.received` pode ser colado de volta no envio: menciona corretamente sem transformação manual |
-| Quota | Mencionar alguém **nunca** consome quota de mensagens nem de contatos |
+| Sintaxe | `@` + 7 a 15 dígitos, delimitado por fronteira de palavra: `nome@dominio.com`, `@@123`, sequências com mais de 15 dígitos e `@+55…` **não** viram menção |
+| Normalização | Números BR de 12 dígitos são normalizados para a forma de 13 dígitos: o conteúdo guardado e devolvido traz o token normalizado (ex.: `@551177776666` → `@5511977776666`) |
+| Token inválido | Dígitos inválidos ou não normalizáveis ficam como **texto comum**: o envio nunca falha por causa de uma menção |
+| Onde funciona | Em 1:1 e em grupos, em `text` e em `caption` de `image`/`video`/`document` (`audio`/`sticker` não têm legenda) |
+| Reuso do token recebido | O token `@<numero>` que você recebe em `message.received` pode ser colado de volta no envio: a menção funciona sem nenhuma conversão |
+| Cota | Mencionar alguém **nunca** consome cota de mensagens nem de contatos |
 
 Depois do envio, a mensagem passa a carregar a estrutura `mentions`
 (lista de `{contact_id?, name?, number}`: `contact_id` e `name` são omitidos
@@ -253,13 +253,13 @@ eventos [`message.sent`/`message.replied`/`message.edited`](/messages/webhook/).
 Um `@<digitos>` literal no texto **só** é menção se constar dessa estrutura.
 
 As mesmas regras de detecção valem para `POST .../messages/{message_id}/reply`
-(o `text`/`caption` do reply) e para `POST .../messages/{message_id}/edit` (o
+(o `text`/`caption` da resposta) e para `POST .../messages/{message_id}/edit` (o
 novo `text` da edição substitui **todo** o conjunto de menções da mensagem,
 veja [Editar e deletar mensagens](/messages/edit-delete/#menções-em-edições)).
 
 ## Envio com número extra
 
-Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na sua conta, use o alias do número diretamente no path da URL.
+Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na sua conta, use o alias do número diretamente no caminho da URL.
 
 <Tabs>
   <TabItem label="cURL">
@@ -269,7 +269,7 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": {"number": "+5511999999999"},
+        "to": {"number": "+5511988887777"},
         "content": {
           "text": "Mensagem enviada a partir de um número extra."
         }
@@ -285,7 +285,7 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: { number: '+5511999999999' },
+        to: { number: '+5511988887777' },
         content: {
           text: 'Mensagem enviada a partir de um número extra.'
         }
@@ -306,7 +306,7 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
         "Content-Type": "application/json"
     }
     data = {
-        "to": {"number": "+5511999999999"},
+        "to": {"number": "+5511988887777"},
         "content": {
             "text": "Mensagem enviada a partir de um número extra."
         }
@@ -329,7 +329,7 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
     )
 
     func main() {
-        payload := strings.NewReader(`{"to": {"number": "+5511999999999"}, "content": {"text": "Mensagem enviada a partir de um número extra."}}`)
+        payload := strings.NewReader(`{"to": {"number": "+5511988887777"}, "content": {"text": "Mensagem enviada a partir de um número extra."}}`)
         req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/numbers/vendas-sp/messages", payload)
         req.Header.Set("Authorization", "Bearer SUA_CHAVE")
         req.Header.Set("Content-Type", "application/json")
@@ -345,7 +345,7 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
     <?php
     $url = 'https://api.turbonotify.com/v1/numbers/vendas-sp/messages';
     $data = [
-        'to' => ['number' => '+5511999999999'],
+        'to' => ['number' => '+5511988887777'],
         'content' => [
             'text' => 'Mensagem enviada a partir de um número extra.'
         ]
@@ -378,7 +378,7 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
     client.DefaultRequestHeaders.Add("Authorization", "Bearer SUA_CHAVE");
 
     var data = new {
-        to = new { number = "+5511999999999" },
+        to = new { number = "+5511988887777" },
         content = new {
             text = "Mensagem enviada a partir de um número extra."
         }
@@ -406,7 +406,7 @@ Para enviar a partir de um [número extra](/numbers/add/) cadastrado e ativo na 
 
             var json = """
                 {
-                    "to": {"number": "+5511999999999"},
+                    "to": {"number": "+5511988887777"},
                     "content": {
                         "text": "Mensagem enviada a partir de um número extra."
                     }
@@ -441,22 +441,22 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 | :----: | ----------------------- | ------------------------------------------------- |
 | `400`  | `contact_not_found`     | O `contact_id` informado não pertence à organização.  |
 | `400`  | `contacts_not_enabled`  | Envio por `contact_id` não configurado.           |
-| `400`  | `invalid_phone_number`  | O `to.number` informado não é um telefone válido em formato E.164 (ex.: `+5511999999999`). |
+| `400`  | `invalid_phone_number`  | O `to.number` informado não é um telefone válido em formato E.164 (ex.: `+5511988887777`). |
 | `400`  | `invalid_recipient`     | Não foi possível resolver o destinatário informado em `to` para um endereço de envio. Informar nenhum ou mais de um entre `number`, `group_id` e `contact_id` retorna `422 validation_error`. |
-| `400`  | `not_group_member`      | Sua linha não é mais participante do `group_id` informado, veja [Envio para grupo](#envio-para-grupo). |
+| `400`  | `not_group_member`      | Seu número não é mais participante do `group_id` informado, veja [Envio para grupo](#envio-para-grupo). |
 | `402`  | `feature_not_available` | Envio para grupo (`to.group_id`) requer plano `BUSINESS` ou superior, veja [Envio para grupo](#envio-para-grupo). |
-| `402`  | `subscription_inactive` | Assinatura com pagamento pendente, encerrada ou trial expirado (`details.status`). Bloqueia todo envio até a assinatura voltar a ficar ativa. |
-| `402`  | `contact_quota_exceeded` | Franquia de contatos distintos do ciclo atual esgotada, veja [Quota e uso](/usage/quota/). |
+| `402`  | `subscription_inactive` | Assinatura com pagamento pendente, encerrada ou com período de teste expirado (`details.status`). Bloqueia todo envio até a assinatura voltar a ficar ativa. |
+| `402`  | `contact_quota_exceeded` | Franquia de contatos distintos do ciclo atual esgotada, veja [Cota e uso](/usage/quota/). |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.       |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
 | `404`  | `number_not_found`      | O alias informado na URL não corresponde a nenhum número cadastrado na conta. |
 | `404`  | `group_not_found`       | O `group_id` informado em `to` não foi encontrado na conta. |
 | `409`  | `number_not_connected` | O número que envia não está conectado ao WhatsApp. Reconecte o número e tente de novo. |
 | `422`  | `validation_error`      | O corpo da requisição está malformado ou não passou na validação. A resposta traz `details.errors` com os campos rejeitados. |
-| `422`  | `group_not_owned_by_number` | O `group_id` informado pertence a outro número da conta, não ao alias do path. |
+| `422`  | `group_not_owned_by_number` | O `group_id` informado pertence a outro número da conta, não ao alias do caminho da URL. |
 | `422`  | `message_not_replyable` | *(apenas `POST .../messages/{message_id}/reply`)* A mensagem citada ainda não foi enviada ao WhatsApp ou já foi apagada. |
-| `429`  | `messages_quota_exceeded` | Franquia de mensagens do ciclo atual esgotada, veja [Quota e uso](/usage/quota/). |
-| `429`  | `send_rate_spacing`     | Envio antes do intervalo mínimo entre mensagens do seu tier, veja [Limites de uso](/messages/rate-limits/). |
+| `429`  | `messages_quota_exceeded` | Franquia de mensagens do ciclo atual esgotada, veja [Cota e uso](/usage/quota/). |
+| `429`  | `send_rate_spacing`     | Envio antes do intervalo mínimo entre mensagens do seu plano, veja [Limites de uso](/messages/rate-limits/). |
 | `429`  | `rate_limit_exceeded`   | Limite de requisições por segundo da API ultrapassado. Os demais limites de proteção do envio (`messages_per_minute_limit_exceeded`, `recipients_per_day_limit_exceeded`, `warmup_limit_exceeded`, `duplicate_burst_blocked`, `reply_ratio_too_low`) têm códigos próprios, veja [Limites de uso](/messages/rate-limits/#erros-relacionados). |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.              |
 
@@ -486,8 +486,8 @@ Para saber por quanto tempo as mensagens ficam disponíveis para consulta e oper
 
 `POST /v1/messages` aceita quatro variantes de
 conteúdo rico além de `text`. Cada variante tem um campo âncora próprio
-dentro do objeto `content` e é despachada para o WhatsApp como o tipo
-nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
+dentro do objeto `content` e chega ao WhatsApp como o tipo nativo
+correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
 
 ### Enviar localização
 
@@ -499,7 +499,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": {"number": "+5511999999999"},
+        "to": {"number": "+5511988887777"},
         "content": {
           "latitude": -23.5505,
           "longitude": -46.6333,
@@ -519,7 +519,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: { number: '+5511999999999' },
+        to: { number: '+5511988887777' },
         content: {
           latitude: -23.5505,
           longitude: -46.6333,
@@ -542,7 +542,7 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
             "Content-Type": "application/json",
         },
         json={
-            "to": {"number": "+5511999999999"},
+            "to": {"number": "+5511988887777"},
             "content": {
                 "latitude": -23.5505,
                 "longitude": -46.6333,
@@ -560,8 +560,8 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
 |---|---|---|---|
 | `content.latitude` | number | sim | `-90 ≤ x ≤ 90` |
 | `content.longitude` | number | sim | `-180 ≤ x ≤ 180` |
-| `content.name` | string | não | máx. 200 chars |
-| `content.address` | string | não | máx. 500 chars |
+| `content.name` | string | não | até 200 caracteres |
+| `content.address` | string | não | até 500 caracteres |
 | `content.url` | string | não | apenas `http://`/`https://` |
 
 ### Enviar contato
@@ -574,11 +574,11 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": {"number": "+5511999999999"},
+        "to": {"number": "+5511988887777"},
         "content": {
           "display_name": "João Silva",
           "phones": [
-            { "label": "Mobile", "number": "+5511988887777" },
+            { "label": "Mobile", "number": "+5511977776666" },
             { "label": "Work",   "number": "+551133334444" }
           ],
           "emails": [
@@ -600,11 +600,11 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: { number: '+5511999999999' },
+        to: { number: '+5511988887777' },
         content: {
           display_name: 'João Silva',
           phones: [
-            { label: 'Mobile', number: '+5511988887777' },
+            { label: 'Mobile', number: '+5511977776666' },
             { label: 'Work',   number: '+551133334444' }
           ],
           emails: [
@@ -629,11 +629,11 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
             "Content-Type": "application/json",
         },
         json={
-            "to": {"number": "+5511999999999"},
+            "to": {"number": "+5511988887777"},
             "content": {
                 "display_name": "João Silva",
                 "phones": [
-                    {"label": "Mobile", "number": "+5511988887777"},
+                    {"label": "Mobile", "number": "+5511977776666"},
                     {"label": "Work",   "number": "+551133334444"},
                 ],
                 "emails": [
@@ -651,17 +651,17 @@ nativo correspondente (`locationMessage`, `contactMessage`, `eventMessage`).
 
 | Campo | Tipo | Obrigatório | Notas |
 |---|---|---|---|
-| `content.display_name` | string | sim | 1–200 chars |
-| `content.phones[]` | array | sim | 1–10 itens; `number` em E.164 |
-| `content.phones[].label` | string | não | default `"Mobile"` (Mobile/Home/Work/...) |
-| `content.emails[]` | array | não | 0–10; `address` validado como email |
-| `content.emails[].label` | string | não | default `"Email"` |
-| `content.organization` | string | não | máx. 200 chars |
-| `content.title` | string | não | máx. 100 chars |
-| `content.address` | string | não | máx. 500 chars |
+| `content.display_name` | string | sim | 1 a 200 caracteres |
+| `content.phones[]` | array | sim | 1 a 10 itens; `number` em E.164 |
+| `content.phones[].label` | string | não | padrão `"Mobile"` (Mobile/Home/Work/...) |
+| `content.emails[]` | array | não | 0 a 10 itens; `address` validado como e-mail |
+| `content.emails[].label` | string | não | padrão `"Email"` |
+| `content.organization` | string | não | até 200 caracteres |
+| `content.title` | string | não | até 100 caracteres |
+| `content.address` | string | não | até 500 caracteres |
 
-O Turbo Notify gera o vCard server-side a partir desses campos.
-Você nunca precisa lidar com escaping vCard manualmente.
+O Turbo Notify monta o cartão de contato (vCard) a partir desses campos.
+Você não precisa escrever o vCard nem tratar caracteres especiais.
 
 ### Enviar evento de calendário
 
@@ -673,7 +673,7 @@ Você nunca precisa lidar com escaping vCard manualmente.
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": {"number": "+5511999999999"},
+        "to": {"number": "+5511988887777"},
         "content": {
           "name": "Sprint Planning",
           "description": "Planejamento da sprint 24.",
@@ -700,7 +700,7 @@ Você nunca precisa lidar com escaping vCard manualmente.
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: { number: '+5511999999999' },
+        to: { number: '+5511988887777' },
         content: {
           name: 'Sprint Planning',
           description: 'Planejamento da sprint 24.',
@@ -730,7 +730,7 @@ Você nunca precisa lidar com escaping vCard manualmente.
             "Content-Type": "application/json",
         },
         json={
-            "to": {"number": "+5511999999999"},
+            "to": {"number": "+5511988887777"},
             "content": {
                 "name": "Sprint Planning",
                 "description": "Planejamento da sprint 24.",
@@ -753,38 +753,38 @@ Você nunca precisa lidar com escaping vCard manualmente.
 
 | Campo | Tipo | Obrigatório | Notas |
 |---|---|---|---|
-| `content.name` | string | sim | título do evento; máx. 200 chars |
-| `content.description` | string | não | máx. 2000 chars |
+| `content.name` | string | sim | título do evento; até 200 caracteres |
+| `content.description` | string | não | até 2000 caracteres |
 | `content.start_at` | datetime | sim | ISO-8601 com timezone (campo âncora da variante `calendar`) |
 | `content.end_at` | datetime | não | ISO-8601 com timezone; deve ser > `start_at` |
 | `content.join_link` | string | não | apenas `http://`/`https://` |
-| `content.location` | object | não | esquema `location` aninhado |
-| `content.has_reminder` | bool | não | default `false` |
-| `content.reminder_offset_sec` | int | não | segundos antes do evento; só tem efeito com `has_reminder=true`: sem validação cruzada, é ignorado silenciosamente se enviado com `has_reminder=false`/omitido |
-| `content.extra_guests_allowed` | bool | não | default `false` |
+| `content.location` | object | não | mesmo formato do objeto `location` |
+| `content.has_reminder` | bool | não | padrão `false` |
+| `content.reminder_offset_sec` | int | não | segundos antes do evento; só tem efeito com `has_reminder=true` e é ignorado, sem erro, quando `has_reminder` é `false` ou ausente |
+| `content.extra_guests_allowed` | bool | não | padrão `false` |
 
 :::tip
-A nomenclatura interna do WhatsApp é "evento"; usamos
-`calendar` como variante de conteúdo no Turbo Notify para evitar
-ambiguidade com o termo "event" usado em webhooks.
+O WhatsApp chama esse tipo de mensagem de "evento". No Turbo Notify a
+variante se chama `calendar` para não ser confundida com os eventos de
+webhook.
 :::
 
-:::caution[Limitação de propagação: contas pessoais WhatsApp]
-A variante `calendar` (campo âncora `start_at`) é uma feature **WhatsApp Business** (`eventMessage`).
-Quando o destinatário é uma **conta pessoal** (não-Business), o servidor
-WhatsApp remove os timestamps (`startTime`/`endTime`) durante a entrega.
-O destinatário recebe a mensagem com todos os metadados úteis (`name`,
-`description`, `join_link`, `location`) mas **sem horário**. O webhook
-`message.received` correspondente preserva a variante `calendar` e
-omite o campo `start_at` do body. Não há reclassificação como
+:::caution[Contas pessoais do WhatsApp recebem o evento sem horário]
+A variante `calendar` (campo âncora `start_at`) é um recurso do **WhatsApp Business** (`eventMessage`).
+Quando o destinatário tem uma **conta pessoal** (não Business), o
+WhatsApp remove o horário de início e de fim (`startTime`/`endTime`) na
+entrega. O destinatário recebe a mensagem com as demais informações
+(`name`, `description`, `join_link`, `location`), mas **sem horário**. O
+webhook `message.received` correspondente mantém a variante `calendar`
+e omite o campo `start_at`. A mensagem não é reclassificada como
 `unsupported`.
 
 O envio (`message.sent`) e o status de entrega (`message.delivered` /
-`message.read`) funcionam normalmente; apenas o horário do card de
-evento fica ausente no cliente do peer. Mitigação: garantir que a
-conta destinatária seja WhatsApp Business antes de enviar `calendar`,
-ou usar a variante `text` com link ICS quando o destinatário for
-pessoal e o horário for crítico.
+`message.read`) funcionam normalmente; só o horário do cartão de evento
+fica ausente no aparelho do destinatário. Para evitar isso, confirme que
+a conta do destinatário é WhatsApp Business antes de enviar `calendar`,
+ou use a variante `text` com um link ICS quando o destinatário tiver
+conta pessoal e o horário for importante.
 :::
 
 ### Enviar botão com link
@@ -794,7 +794,7 @@ Uma mensagem com um botão que abre um link. O campo âncora é
 
 ```json title="POST /v1/messages: botão com link"
 {
-  "to": { "number": "+5511999999999" },
+  "to": { "number": "+5511988887777" },
   "content": {
     "interactive_type": "cta_url",
     "body": "Seu pedido foi enviado.",
@@ -815,10 +815,10 @@ Uma mensagem com um botão que abre um link. O campo âncora é
 
 ### Como aparece no destinatário
 
-Cada tipo aparece no WhatsApp do destinatário com a UI nativa:
-**localização** com mapa e botão "Ver no mapa", **contato** com card
-salvável, **calendário** com botão "Adicionar ao calendário", **botão
-com link** com o botão logo abaixo do texto.
+Cada tipo aparece no WhatsApp do destinatário com a interface nativa:
+**localização** com mapa e botão "Ver no mapa", **contato** com cartão
+que pode ser salvo, **calendário** com botão "Adicionar ao calendário",
+**botão com link** com o botão logo abaixo do texto.
 
 Para visualizar exatamente como o evento `message.sent` correspondente
 chega no seu webhook, abra o [Webhook Inspector](https://webhook.turbonotify.com/).
@@ -827,16 +827,16 @@ O painel "Enriched" renderiza esses tipos com cards dedicados.
 ## Envio para grupo
 
 Para enviar a um grupo, o campo `to`
-assume a forma de objeto `{ "group_id": "grp_..." }` em vez de
-`{ "number": "+5511999999999" }`, usada em 1:1. Veja
+recebe o objeto `{ "group_id": "grp_..." }` em vez de
+`{ "number": "+5511988887777" }`, usada em 1:1. Veja
 [Visão geral de grupos](/groups/overview/) para detalhes do modelo.
 
 :::note[Requer plano BUSINESS ou superior]
-Enviar mensagem (ou indicador de digitação) para um `group_id` exige a
-feature `groups:messages`, disponível a partir do tier `BUSINESS`. Em
+Enviar mensagem (ou indicador de digitação) para um `group_id` exige o
+recurso `groups:messages`, disponível a partir do plano `BUSINESS`. Em
 `FREE`/`SOLO` você ainda **recebe** mensagens de grupo, **lista grupos**
 (`GET /v1/numbers/{alias}/groups`) e consulta detalhes. Apenas o **envio**
-outbound para grupo é bloqueado com `402`:
+para grupo é bloqueado com `402`:
 
 <ApiResponse
   status={402}
@@ -845,7 +845,7 @@ outbound para grupo é bloqueado com `402`:
   }}
 />
 
-Veja [Quota e uso](/usage/quota/#envio-para-grupos-exige-plano-business-ou-superior)
+Veja [Cota e uso](/usage/quota/#envio-para-grupos-exige-plano-business-ou-superior)
 e [Limitações de grupos](/groups/limitations/).
 :::
 
@@ -862,7 +862,7 @@ O campo `to` é polimórfico. Aceita exatamente uma das três formas (sem `kind`
 
 | Forma de `to` | Destino |
 |---|---|
-| `{ "number": "+5511999999999" }` | Mensagem 1:1 (pessoa) |
+| `{ "number": "+5511988887777" }` | Mensagem 1:1 (pessoa) |
 | `{ "group_id": "grp_..." }` | Mensagem para grupo |
 | `{ "contact_id": "ct_..." }` | Mensagem 1:1 via ID de contato Turbo Notify |
 
@@ -870,35 +870,36 @@ O campo `to` é polimórfico. Aceita exatamente uma das três formas (sem `kind`
 - `group_id` é o identificador público `grp_{hex32}` recebido em
   webhooks/polling de `message.received` (`to.group_id`) ou nos
   eventos de [ciclo de vida de grupo](/groups/lifecycle-events/).
-- O objeto `content` usa o mesmo schema de envios 1:1 (texto, imagem,
-  vídeo, áudio, documento, sticker, location, contact, calendar,
-  interactive):
-  sem mudanças.
+- O objeto `content` usa o mesmo formato dos envios 1:1 (texto, imagem,
+  vídeo, áudio, documento, figurinha, localização, contato, calendário,
+  botão com link), sem diferenças.
 - Para citar uma mensagem dentro do grupo, use o endpoint dedicado
   `POST /v1/numbers/{alias}/messages/{message_id}/reply`.
 
-A resposta tem o shape padrão (`message_id`, `status`). O webhook
-`message.sent` correspondente usa `to.group_id` (mesmo valor que você
-enviou no request); o `number_alias` do envelope identifica a linha que
-enviou: útil para correlacionar entregas inbound e outbound no mesmo grupo.
+A resposta tem o formato padrão (`message_id`, `status`). O webhook
+`message.sent` correspondente usa `to.group_id` (o mesmo valor que você
+enviou na requisição); o `number_alias` do envelope identifica o número
+que enviou, o que ajuda a relacionar mensagens recebidas e enviadas no
+mesmo grupo.
 
 :::caution[A sua organização precisa estar no grupo]
-O Turbo Notify só envia para grupos onde sua linha (principal ou extra) é
-participante. Tentar enviar para um `group_id` em que você não está
-mais retorna 400 `not_group_member`. Re-entre no grupo via WhatsApp
-(o webhook `group.joined` confirma) e tente novamente.
+O Turbo Notify só envia para grupos dos quais o seu número (principal ou
+extra) é participante. Tentar enviar para um `group_id` em que você não
+está mais retorna 400 `not_group_member`. Volte a entrar no grupo pelo
+WhatsApp (o webhook `group.joined` confirma) e tente novamente.
 :::
 
-:::tip[Quota não é fan-out]
-Mensagem para grupo conta como **1 destinatário** no rate-limit diário,
-independente de quantos participantes o grupo tenha. Quota de contatos
-(`contact.quota.*`) não é afetada: grupos nunca materializam contatos.
+:::tip[Uma mensagem para um grupo conta uma vez]
+Uma mensagem para um grupo conta como **1 destinatário** no limite diário
+de destinatários, não importa quantos participantes o grupo tenha. A cota
+de contatos (`contact.quota.*`) não é afetada: participantes de grupo
+não viram contatos.
 :::
 
 ## Envio por contact_id
 
-Use `to.contact_id` para enviar a um contato do catálogo Turbo Notify sem informar o telefone.
-O número é resolvido automaticamente pelo servidor a partir da tabela de contatos.
+Use `to.contact_id` para enviar a um contato que o Turbo Notify já conhece, sem informar o telefone.
+O Turbo Notify usa o número registrado nesse contato.
 
 ```json
 {

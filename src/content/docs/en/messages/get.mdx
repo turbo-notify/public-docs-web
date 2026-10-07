@@ -1,0 +1,572 @@
+---
+title: Get a message
+description: How to retrieve the full content, delivery status and media reference of a message by its identifier.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+import DashboardLink from '@components/DashboardLink.astro';
+
+Retrieve the full content, delivery status and media reference of any message sent or received in your account, using its `id` as the identifier.
+
+Use `GET /v1/messages/{id}` for the main number. For extra numbers, use `GET /v1/numbers/{alias}/messages/{id}`, where `{alias}` is the `number_alias` present in the message's webhook/polling envelope.
+
+**Required scope:** `messages:read`
+
+## Get a message
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="get-message.sh"
+    curl -X GET \
+      https://api.turbonotify.com/v1/messages/msg_01993c5a1b24d3e9f01a2b3c4d5e6f70 \
+      -H "Authorization: Bearer YOUR_KEY"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="get-message.js"
+    const messageId = 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70';
+    const response = await fetch(
+      `https://api.turbonotify.com/v1/messages/${messageId}`,
+      {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer YOUR_KEY' }
+      }
+    );
+
+    const message = await response.json();
+    console.log(message);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="get_message.py"
+    import requests
+
+    message_id = "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70"
+    url = f"https://api.turbonotify.com/v1/messages/{message_id}"
+    headers = {"Authorization": "Bearer YOUR_KEY"}
+
+    response = requests.get(url, headers=headers)
+    message = response.json()
+    print(message)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="get_message.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        messageID := "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70"
+        req, _ := http.NewRequest("GET",
+            "https://api.turbonotify.com/v1/messages/"+messageID, nil)
+        req.Header.Set("Authorization", "Bearer YOUR_KEY")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="get-message.php"
+    <?php
+    $messageId = 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70';
+    $url = "https://api.turbonotify.com/v1/messages/{$messageId}";
+
+    $options = [
+        'http' => [
+            'header' => ['Authorization: Bearer YOUR_KEY'],
+            'method' => 'GET'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="GetMessage.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+    var messageId = "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70";
+    var response = await client.GetAsync(
+        $"https://api.turbonotify.com/v1/messages/{messageId}"
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="GetMessage.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class GetMessage {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+            var messageId = "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70";
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create(
+                    "https://api.turbonotify.com/v1/messages/" + messageId))
+                .header("Authorization", "Bearer YOUR_KEY")
+                .GET()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+## Response: text message (outbound)
+
+<ApiResponse
+  status={200}
+  body={{
+    id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70',
+    organization_id: 'org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+    number_alias: 'main',
+    from: { name: 'Turbo Notify', number: '5511973117056', alias: 'main' },
+    to: { name: 'João', number: '5511988887777' },
+    preview: 'Hello, your order is confirmed!',
+    text: 'Hello, your order is confirmed!',
+    content_type: 'text',
+    direction: 'outbound',
+    channel: 'whatsapp',
+    origin: 'tn',
+    at: '2026-06-01T13:00:05Z',
+    status: { state: 'delivered', at: '2026-06-01T13:01:00Z' },
+  }}
+/>
+
+## Response: image message (inbound)
+
+<ApiResponse
+  status={200}
+  body={{
+    id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f71',
+    organization_id: 'org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+    number_alias: 'main',
+    from: { name: 'João', number: '5511988887777' },
+    to: { name: 'Turbo Notify', number: '5511973117056', alias: 'main' },
+    preview: 'Product photo',
+    image: {
+      caption: 'Product photo',
+      kind: 'available',
+      url: 'https://your-bucket.r2.cloudflarestorage.com/organizations/.../image.jpeg?X-Amz-...',
+      expires_at: '2026-06-01T14:00:00Z',
+      mime_type: 'image/jpeg',
+      size_bytes: 123456,
+    },
+    content_type: 'image',
+    direction: 'inbound',
+    channel: 'whatsapp',
+    origin: 'native',
+    at: '2026-06-01T13:00:00Z',
+    status: { state: 'read', at: '2026-06-01T13:05:00Z' },
+  }}
+/>
+
+## Response fields
+
+`from` and `to` are objects whose format depends on the message direction, the same one used in webhooks. Your number in the conversation is identified by `number_alias`; its details are available at `GET /v1/numbers/{alias}`.
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `id` | string | Public identifier of the message (`msg_` + 32 hex) |
+| `organization_id` | string | Public identifier of your organization (`org_{hex32}`). Always present. |
+| `number_alias` | string | Identifier of the Turbo Notify number the message belongs to: `"main"` or the alias of an extra number. The number's details are available at `GET /v1/numbers/{alias}`. |
+| `from` | object | Sender: the format depends on the direction |
+| `to` | object | Recipient: the format depends on the direction |
+| `preview` | string | Opening excerpt of the content. It follows the same content retention window as the plan, see [About `preview`](#about-preview) |
+| _specific field_ | object\|string | Full content, named after the `content_type` (`text`, `image`, …). See the table below. |
+| `content_type` | string | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, `contact`, `interactive`. Polls and unrecognized types are stored as `text`. The `preview` keeps whatever text is available. |
+| `direction` | string | `outbound` (sent) or `inbound` (received) |
+| `channel` | string | Always `"whatsapp"` |
+| `origin` | string | `"tn"` (sent through the Turbo Notify API) or `"native"` (typed on the phone). Always present. |
+| `at` | string | ISO 8601 in UTC with a `Z` suffix and second precision (e.g. `2026-06-01T13:00:05Z`): the **stable occurrence time** of the message on WhatsApp (outbound: the actual send time; inbound: the time it was received). It **does not change** as the message moves `sent → delivered → read`. For the current delivery or read time, use `status.at`. |
+| `status` | object | `{state, at}`: current delivery state and the matching `status.at`. Unlike the root `at`, `status.at` **moves forward** with each transition (to `delivered`, then `read`). |
+| `mentions` | array | **Optional**: present only when the message mentions someone (inbound or outbound). List of mentioned contacts, items `{contact_id?, name?, number}` (same format as the inbound `from`), in the order of the tokens in the text, with no duplicates. A `@<digits>` in the text is a mention **only** if the number appears here. It remains present after the message body expires under retention. See [Mentions (@mentions)](/en/messages/send/#mentions-mentions). |
+
+### Fields by `content_type`
+
+Besides the common fields above, each `content_type` exposes a specific field with the full content:
+
+| `content_type` | Specific field | Description |
+|---|---|---|
+| `text` | `text` | Full message text |
+| `image` | `image` | Object with `caption?` and the media fields (`kind`, `url?`, `expires_at?`, …) directly |
+| `video` | `video` | Object with `caption?` and the media fields |
+| `audio` | `audio` | Object with the media fields and `transcription?` (BYO Speech-to-Text, if set up) |
+| `document` | `document` | Object with `filename?`, `caption?` and the media fields |
+| `sticker` | `sticker` | Object with the media fields |
+| `location` | `location` | Object with `latitude`, `longitude`, `name?`, `address?`, `url?`, `is_live?`, `accuracy_m?`, `comment?`, `thumbnail_b64?`. `is_live` appears **only when `true`** (live location). It never comes as `false`; treat a missing key as "not live". `accuracy_m` (GPS accuracy, in meters) and `comment` (a text note attached by the sender) appear only on **inbound** locations, when WhatsApp sends them. They cannot be sent through the API. |
+| `calendar` | `calendar` | Object with `name`, `description?`, `start_at?`, `end_at?`, `join_link?`, `location?`, `has_reminder?`, `reminder_offset_sec?`, `extra_guests_allowed?`. An **inbound** calendar can also carry `is_canceled?`/`is_scheduled_call?` (the organizer canceled the event / it is a scheduled call: flagged by WhatsApp itself, never sendable through the API). On an **inbound** calendar, `has_reminder`/`extra_guests_allowed`/`is_canceled`/`is_scheduled_call` appear **only when `true`**: treat a missing key as "no". On an **outbound calendar sent through the API**, the content is returned exactly as it was sent: `"has_reminder": false`, `"extra_guests_allowed": false` and explicitly `null` keys (`description`, `end_at`, `join_link`, `location`, `reminder_offset_sec`) **may** appear (`is_canceled`/`is_scheduled_call` never appear on outbound calendars). Treat `false`/`null`/missing key as equivalent. |
+| `contact` | `contact` | Structured vCard: the same fields accepted when sending ([Send a contact](/en/messages/send/#send-a-contact)): `display_name`, `phones[]`, `emails?`, `organization?`, `title?`, `address?` |
+| `interactive` | `interactive` | Object with `interactive_type` (always `"cta_url"`), `body`, `header?` (`{type: "text", text}`), `footer?`, `url_button: {display_text, url}` |
+
+For `replied` messages (quotes):
+
+| Field | Type | Description |
+|---|---|---|
+| `replied` | object | `{message_id: string, preview: string}`: id and excerpt of the quoted message |
+
+For `reacted` messages:
+
+| Field | Type | Description |
+|---|---|---|
+| `text` | string | The reaction emoji (e.g. `"👍"`) or `""` for a removal |
+
+### Example: text message
+
+```json title="GET /v1/numbers/{alias}/messages/{id}: text"
+{
+  "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "from": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+  "to": { "name": "João", "number": "5511988887777" },
+  "preview": "Hello, your order is confirmed!",
+  "text": "Hello, your order is confirmed!",
+  "content_type": "text",
+  "direction": "outbound",
+  "channel": "whatsapp",
+  "origin": "tn",
+  "at": "2026-06-01T13:00:05Z",
+  "status": { "state": "delivered", "at": "2026-06-01T13:01:00Z" }
+}
+```
+
+### Example: image message (inbound, BYO Storage active)
+
+```json title="GET /v1/numbers/{alias}/messages/{id}: image (available)"
+{
+  "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f71",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "from": { "name": "João", "number": "5511988887777" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "Product photo",
+  "image": {
+    "caption": "Product photo",
+    "kind": "available",
+    "url": "https://<bucket>.s3.amazonaws.com/...?X-Amz-Signature=...",
+    "expires_at": "2026-06-01T14:00:00Z",
+    "mime_type": "image/jpeg",
+    "size_bytes": 184320
+  },
+  "content_type": "image",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T13:00:00Z",
+  "status": { "state": "read", "at": "2026-06-01T13:05:00Z" }
+}
+```
+
+### Example: image message (without BYO Storage)
+
+```json title="GET /v1/numbers/{alias}/messages/{id}: image (unavailable)"
+{
+  "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f72",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "from": { "name": "João", "number": "5511988887777" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "[Image]",
+  "image": {
+    "kind": "unavailable",
+    "reason": "no_storage",
+    "mime_type": "image/jpeg",
+    "size_bytes": 184320,
+    "setup_hint": {
+      "setup_url": "https://dashboard.turbonotify.com/storage",
+      "docs_url": "https://docs.turbonotify.com/general/byo-storage-setup/",
+      "message": "Configure BYO Object Storage to receive media."
+    }
+  },
+  "content_type": "image",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T13:00:00Z",
+  "status": { "state": "delivered", "at": "2026-06-01T13:00:00Z" }
+}
+```
+
+### Example: location message
+
+```json title="GET /v1/numbers/{alias}/messages/{id}: location"
+{
+  "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f73",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "from": { "name": "João", "number": "5511988887777" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "Av. Paulista, Avenida Paulista, 1578, Bela Vista,",
+  "location": {
+    "latitude": -23.561414,
+    "longitude": -46.655881,
+    "name": "Av. Paulista",
+    "address": "Avenida Paulista, 1578, Bela Vista, São Paulo - SP",
+    "url": "https://maps.google.com/?q=-23.561414,-46.655881",
+    "thumbnail_b64": "..."
+  },
+  "content_type": "location",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T13:00:00Z",
+  "status": { "state": "delivered", "at": "2026-06-01T13:00:00Z" }
+}
+```
+
+### Example: calendar message
+
+```json title="GET /v1/numbers/{alias}/messages/{id}: calendar"
+{
+  "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f74",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "from": { "name": "João", "number": "5511988887777" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "Sprint Planning — Mon, 1 Jun 2026 17:00",
+  "calendar": {
+    "name": "Sprint Planning",
+    "description": "Sprint 24 planning.",
+    "start_at": "2026-06-01T14:00:00-03:00",
+    "end_at": "2026-06-01T15:00:00-03:00",
+    "join_link": "https://meet.example.com/sprint-planning",
+    "has_reminder": true,
+    "reminder_offset_sec": 600
+  },
+  "content_type": "calendar",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T13:00:00Z",
+  "status": { "state": "delivered", "at": "2026-06-01T13:00:00Z" }
+}
+```
+
+### Example: interactive message (cta_url)
+
+```json title="GET /v1/numbers/{alias}/messages/{id}: interactive"
+{
+  "id": "msg_d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "from": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+  "to": { "name": "João", "number": "5511988887777" },
+  "preview": "Click to learn more",
+  "interactive": {
+    "interactive_type": "cta_url",
+    "body": "Click to learn more",
+    "footer": "Turbo Notify",
+    "url_button": {
+      "display_text": "Open",
+      "url": "https://turbonotify.com"
+    }
+  },
+  "content_type": "interactive",
+  "direction": "outbound",
+  "channel": "whatsapp",
+  "origin": "tn",
+  "at": "2026-06-01T13:00:05Z",
+  "status": { "state": "delivered", "at": "2026-06-01T13:01:00Z" }
+}
+```
+
+The `url_button` opens the link directly on the recipient's side; `header` is optional (`{type: "text", text}`; text only, for now).
+
+### Example: message with mentions
+
+The text carries the normalized `@<number>` tokens; the `mentions` structure
+holds the matching contacts, already resolved:
+
+```json title="GET /v1/numbers/{alias}/messages/{id}: text with mentions"
+{
+  "id": "msg_c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "from": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+  "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "Sales Team" },
+  "preview": "Good morning @5511977776666, can you check today's order?",
+  "text": "Good morning @5511977776666, can you check today's order?",
+  "mentions": [
+    {
+      "contact_id": "ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+      "name": "Maria Santos",
+      "number": "5511977776666"
+    }
+  ],
+  "content_type": "text",
+  "direction": "outbound",
+  "channel": "whatsapp",
+  "origin": "tn",
+  "at": "2026-07-03T13:00:05Z",
+  "status": { "state": "delivered", "at": "2026-07-03T13:01:00Z" }
+}
+```
+
+The field appears on inbound **and** outbound messages, and remains present even
+after the message body expires under retention (the token in `preview`
+can still be matched against `mentions`).
+
+### Example: reply (quoted message)
+
+```json title="GET /v1/numbers/{alias}/messages/{id}: replied"
+{
+  "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "from": { "name": "João", "number": "5511988887777" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "Yes, that's the order!",
+  "text": "Yes, that's the order!",
+  "replied": {
+    "message_id": "msg_99887766554433221100ffeeddccbbaa",
+    "preview": "Order #1234 was approved."
+  },
+  "content_type": "text",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T13:00:00Z",
+  "status": { "state": "delivered", "at": "2026-06-01T13:00:00Z" }
+}
+```
+
+### Example: reaction
+
+```json title="GET /v1/numbers/{alias}/messages/{id}: reacted"
+{
+  "id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "from": { "name": "João", "number": "5511988887777" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "👍",
+  "text": "👍",
+  "content_type": "text",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T13:00:00Z",
+  "status": { "state": "delivered", "at": "2026-06-01T13:00:00Z" }
+}
+```
+
+## Media fields
+
+The media fields appear **directly** in the specific object (`image`, `video`, `audio`, `document`, `sticker`), with no `media` sub-object. The `kind` field tells you which of the formats below the media has:
+
+### `kind: "available"`
+
+Media available for download. Requires <DashboardLink path="/storage">Object Storage set up</DashboardLink>.
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `kind` | string | `"available"` |
+| `url` | string | Presigned download URL |
+| `expires_at` | `string \| null` | When access to the media expires. Get the message again to obtain a new URL after it expires. |
+| `mime_type` | `string \| null` | MIME type of the file (e.g. `image/jpeg`, `application/pdf`) |
+| `size_bytes` | `integer \| null` | File size in bytes |
+
+### `kind: "pending"`
+
+The media is still being copied to your bucket. Wait a few seconds and query again.
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `kind` | string | `"pending"` |
+| `mime_type` | `string \| null` | Detected MIME type |
+| `size_bytes` | `integer \| null` | File size in bytes |
+
+### `kind: "unavailable"`
+
+The media is not available. The `reason` field gives the cause.
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `kind` | string | `"unavailable"` |
+| `reason` | string | `no_storage`: no Object Storage set up; `storage_circuit_open`: your Object Storage had been failing repeatedly when the media arrived, and sending media to it was temporarily paused; `upload_failed`: the storage was healthy, but this item could not be saved; `deleted`: the message was deleted/revoked after the media had already been stored. The reason is recorded when the media is received or deleted and does not change afterwards. |
+| `mime_type` | `string \| null` | Detected MIME type |
+| `size_bytes` | `integer \| null` | File size in bytes |
+| `setup_hint` | `object \| null` | Present when `reason` is `no_storage` or `storage_circuit_open`. Contains `setup_url`, `docs_url` and `message`. |
+
+### `audio.transcription`
+
+When **BYO Speech-to-Text** is set up for the number, **inbound** audio messages get a `transcription` field inside the `audio` object, also identified by `kind` (omitted when transcription was not attempted, for example on outbound audio or when transcription is not set up). Same format as `data.transcription` in the `message.received` webhooks/polling:
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `kind` | string | `"available"`: transcription completed, or `"unavailable"`: not available. |
+| `text` | string | *(`available` only)* Transcribed text. |
+| `language` | `string \| null` | *(`available` only)* BCP-47 code of the detected/configured language, when available. |
+| `reason` | string | *(`unavailable` only)* One of these 6 values: `not_configured`, `provider_error`, `file_too_large` (audio over 24 MB), `timeout`, `no_adapter` or `internal_error`. |
+| `hint` | `string \| null` | *(`unavailable` only)* Optional guidance, written for whoever reads the event (with a link to the dashboard's **Transcription** screen when there is something to adjust there). |
+
+A transcription failure never blocks the message flow.
+
+## Message status
+
+The `status` field holds the current delivery state:
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `state` | string | Current state: `pending` (accepted with `202`, not yet sent to WhatsApp), `sent`, `delivered`, `read`, `failed` (outbound); `delivered`, `read` (inbound) |
+| `at` | string | ISO 8601: timestamp of the **current delivery state**; it **moves forward** with each transition (`sent → delivered → read`). Not to be confused with the root-level `at`, which is the stable occurrence time of the message. |
+| `error` | `object` | Structured error for the failure: present only when `state: "failed"`; **absent** (key omitted) in every other state. **Same format** as `data.error` in the `*.failed` webhooks. |
+| `error.code` | `string` | Stable code for your code to decide what to do. |
+| `error.message` | `string` | Readable description of the failure, for logs and debugging. It may include a WhatsApp diagnostic in English; personal identifiers (numbers, JIDs) never appear in it. The stable contract is the `code`, not this text. |
+| `error.hint` | `string` | Actionable guidance, derived from the `code`. **Absent** (key omitted, never `null`) when there is no guidance for the `code`. |
+
+## About `preview`
+
+The `preview` field follows **exactly the same content retention window** as your organization's plan, see [Message retention](/en/messages/retention/). It is not kept any longer than the rest of the content. While the message is within the window, `preview` holds an excerpt of the content, never splitting an emoji or accented character:
+- For `text`: the first ~50 characters of the text.
+- For `location`: humanized text without brackets (e.g. `Av. Paulista, Sao Paulo, SP`).
+- For `calendar`: a summary without brackets, with the weekday and month abbreviated **in English** and the time converted to **UTC** (e.g. `Sprint Planning — Mon, 1 Jun 2026 17:00`).
+- For media: the caption (when available) or the type label in English (`[Image]`, `[Video]`, `[Audio]`, `[Document]`, `[Sticker]`). **Document:** caption → **file name** → `[Document]`. **Audio with a transcription is the exception:** when a transcription is available, `preview` holds the **transcribed text** (truncated at 50 characters). `[Audio]` only appears when there is neither a transcription nor a caption.
+- For `interactive`: the message's `body` text, or `[Interactive]` when the body is empty.
+- For reactions: the emoji, or `""` for a removal.
+- Mentions: each `@<number>` token present in `mentions` counts as exactly
+  **1 character** toward the ~50 limit, and the excerpt never cuts a token in
+  half; a literal `@<digits>` outside `mentions` counts character by character.
+  The value is **identical** to `data.preview` in the webhooks/polling.
+
+Once the message leaves your plan's content retention window, this lookup returns `404 not_found` for the **entire** resource: `preview` is not returned separately from the rest of the content, and there is no way to get only the excerpt after that point. The same window redacts `data.preview` (along with the rest of the content) in the webhook payloads stored for redelivery, and makes `GET /v1/events` stop returning the event: lookup by id, webhook redelivery and polling follow **one single retention promise**, never two.
+
+## About `kind`
+
+To receive inbound media with `kind: "available"`, set up the <DashboardLink path="/storage">Object Storage integration</DashboardLink> in the dashboard. Without it, Turbo Notify has nowhere to store the media and returns `kind: "unavailable"` with `reason: "no_storage"`.
+
+When Object Storage is set up, Turbo Notify automatically copies each received media file to your bucket and returns a presigned URL with a configurable validity. Access to the media expires at `expires_at`. You can get a new URL by querying the message again.
+
+## Possible errors
+
+| Status | Error code | Description |
+| :----: | ---------- | ----------- |
+| `400` | `invalid_message_id` | The identifier does not match the `msg_` + 32 hex format. |
+| `403` | `not_authorized` | The API key is invalid or missing. |
+| `403` | `insufficient_scope` | The API key does not have the `messages:read` scope (the response includes `required_scope`). |
+| `404` | `not_found` | Message not found, belongs to another organization, is outside the plan's [content retention window](/en/messages/retention/), or (on the nested route `/numbers/{alias}/messages/{id}`) belongs to a number other than the alias in the URL: the same response as for a message that never existed. |
+| `404` | `message_not_found` | *(only on the shortcut route without `{alias}`, `GET /v1/messages/{id}`)* The `message_id` exists but belongs to an extra number, not to the main number. |
+| `404` | `number_not_found` | *(only on the route with `{alias}`)* The alias in the URL does not match any registered number. |
+| `429` | `rate_limit_exceeded` | Request limit exceeded. |
+| `500` | `internal_error` | Unexpected internal server error. |

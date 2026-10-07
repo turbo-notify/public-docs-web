@@ -1,12 +1,12 @@
 ---
-title: Editar e deletar mensagens
+title: Editar e apagar mensagens
 description: "Endpoints POST /v1/numbers/{alias}/messages/{id}/edit e /delete: editar o texto ou revogar uma mensagem já enviada."
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-Ambas as operações agem sobre uma mensagem **já enviada** por você (outbound). O `message_id` é o mesmo `msg_{hex32}` retornado pelo envio original ou visto em webhooks/polling. As duas retornam **202 Accepted** imediatamente; o resultado real chega de forma assíncrona via webhook.
+As duas operações agem sobre uma mensagem **já enviada** por você. O `message_id` é o mesmo `msg_{hex32}` retornado pelo envio original ou visto em webhooks/polling. As duas retornam **202 Accepted** imediatamente; o resultado real chega de forma assíncrona via webhook.
 
 Use `POST /v1/messages/{id}/edit` e `POST /v1/messages/{id}/delete` para o número principal. Para números extras, use `POST /v1/numbers/{alias}/messages/{id}/edit` e `.../delete`.
 
@@ -174,7 +174,7 @@ Substitui o texto de uma mensagem de texto já enviada (edição nativa do Whats
 
 | Campo | Tipo | Obrigatório | Notas |
 |---|---|---|---|
-| `text` | string | sim | 1–65.536 caracteres. Único campo aceito: corpo estrito (qualquer outro campo retorna `422`). |
+| `text` | string | sim | 1 a 65.536 caracteres. Único campo aceito: corpo estrito (qualquer outro campo retorna `422`). |
 
 ### Resposta (202)
 
@@ -192,15 +192,15 @@ O resultado real chega via webhook `message.edited` (sucesso) ou
 
 ### Menções em edições
 
-O novo `text` do edit também é varrido pela detecção implícita de tokens
-`@<numero>`, as mesmas regras de [Menções (@mentions)](/messages/send/#menções-mentions).
+O novo `text` da edição também passa pela detecção de menções `@<numero>`,
+com as mesmas regras de [Menções (@mentions)](/messages/send/#menções-mentions).
 A edição **substitui todo o conjunto de menções** da mensagem: o `mentions`
 retornado por `GET /v1/numbers/{alias}/messages/{id}` (e o `data.mentions` do
 webhook `message.edited`) passa a refletir só os tokens presentes no texto
 **novo**. Uma edição que remove todos os `@<numero>` do texto original faz
 `mentions` desaparecer da resposta.
 
-## Deletar (revogar) mensagem
+## Apagar (revogar) mensagem
 
 Revoga uma mensagem já enviada (equivalente a "Apagar para todos" no
 WhatsApp). O corpo da requisição é **vazio**.
@@ -365,8 +365,8 @@ Os dois endpoints compartilham o mesmo conjunto de erros:
 
 | Status | Código de erro          | Descrição                                                     |
 | :----: | ------------------------ | -------------------------------------------------------------- |
-| `400`  | `message_not_editable`   | *(apenas edit)* A mensagem é **inbound** (recebida de outra pessoa), foi enviada pelo próprio celular (`origin: "native"`), não é do tipo texto, ainda não foi enviada, já foi deletada, ou seu status atual (`failed`, por exemplo) não permite edição. |
-| `400`  | `message_not_deletable`  | *(apenas delete)* A mensagem é **inbound** (recebida de outra pessoa), foi enviada pelo próprio celular (`origin: "native"`), ainda não foi enviada, já foi deletada, ou seu status atual não permite exclusão. |
+| `400`  | `message_not_editable`   | *(apenas na edição)* A mensagem foi **recebida** (enviada por outra pessoa), foi enviada pelo próprio celular (`origin: "native"`), não é do tipo texto, ainda não foi enviada, já foi apagada, ou seu status atual (`failed`, por exemplo) não permite edição. |
+| `400`  | `message_not_deletable`  | *(apenas na exclusão)* A mensagem foi **recebida** (enviada por outra pessoa), foi enviada pelo próprio celular (`origin: "native"`), ainda não foi enviada, já foi apagada, ou seu status atual não permite exclusão. |
 | `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.                     |
 | `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
 | `404`  | `number_not_found`       | O alias informado na URL não corresponde a nenhum número cadastrado. |
@@ -376,30 +376,30 @@ Os dois endpoints compartilham o mesmo conjunto de erros:
 | `409`  | `number_not_connected` | O número que enviou a mensagem não está conectado ao WhatsApp. Reconecte o número e tente de novo. |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                            |
 
-## Quais mensagens podem ser editadas ou deletadas
+## Quais mensagens podem ser editadas ou apagadas
 
 Três critérios, e os três precisam ser satisfeitos: qualquer um que falhe é
 rejeitado **de forma síncrona**, com `400 message_not_editable` /
-`400 message_not_deletable`, antes de qualquer round-trip com o WhatsApp:
+`400 message_not_deletable`, antes de qualquer contato com o WhatsApp:
 
 1. **Enviada por este número, via esta API**: a mensagem precisa ter sido
    enviada pela API do Turbo Notify por este número (`direction: "outbound"`
-   e `origin: "tn"`). Duas mensagens ficam de fora por este critério:
-   - Mensagens **inbound** (recebidas): mensagens que um contato/participante
+   e `origin: "tn"`). Dois tipos de mensagem ficam de fora por este critério:
+   - Mensagens **recebidas**: mensagens que um contato ou participante
      enviou **para** você. Elas pertencem ao remetente, não a você, e o
      WhatsApp não permite que você edite ou revogue uma mensagem que não
      enviou.
-   - Mensagens outbound digitadas **no próprio celular** (`origin: "native"`),
+   - Mensagens digitadas **no próprio celular** (`origin: "native"`),
      enviadas fora da API, direto no aparelho. O Turbo Notify não
      é o cliente que originou essa mensagem, então também não pode editá-la
      ou revogá-la.
-2. **Tipo de conteúdo** *(apenas edit)*: o WhatsApp só suporta editar
+2. **Tipo de conteúdo** *(apenas na edição)*: o WhatsApp só permite editar
    mensagens de **texto**. Editar uma mensagem de mídia (imagem, vídeo,
-   áudio, documento, sticker) ou de outro tipo estruturado (localização,
+   áudio, documento, figurinha) ou de outro tipo estruturado (localização,
    calendário, contato, interativa) falha com `400 message_not_editable`.
 3. **Status**: apenas as mensagens que já estão em `sent`, `delivered` ou
-   `read`, e que ainda não foram deletadas, são aceitas. Mensagens ainda
-   `pending`, já `failed`, ou já deletadas retornam
+   `read`, e que ainda não foram apagadas, são aceitas. Mensagens ainda
+   `pending`, já `failed`, ou já apagadas retornam
    `400 message_not_editable` / `400 message_not_deletable`.
 
 Veja também: [Consultar mensagem](/messages/get/) · [Status da mensagem](/messages/status/) · [Webhook](/messages/webhook/).

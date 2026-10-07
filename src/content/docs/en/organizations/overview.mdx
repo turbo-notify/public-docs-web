@@ -1,0 +1,330 @@
+---
+title: Organization
+description: "The GET /v1/organizations and GET /v1/organizations/{id} endpoints: your own organization's data in Turbo Notify."
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+Each API key belongs to **exactly one organization**, and these two endpoints only let you read **your own** organization's data: there is no directory of other organizations.
+
+**Required scope:** `organizations:read` (you can select it when creating the API key in the dashboard).
+
+## List organization
+
+`GET /v1/organizations` always returns a collection with **a single item**: the
+authenticated organization, in the API's standard list format (`data`,
+`cursor`, `has_more`). `cursor` is always `null` and `has_more` is always
+`false`; there is no real pagination here.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="list-organization.sh"
+    curl -X GET \
+      https://api.turbonotify.com/v1/organizations \
+      -H "Authorization: Bearer YOUR_KEY"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="list-organization.js"
+    const response = await fetch('https://api.turbonotify.com/v1/organizations', {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer YOUR_KEY' }
+    });
+
+    const { data } = await response.json();
+    console.log(data[0]);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="list_organization.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/organizations"
+    headers = {"Authorization": "Bearer YOUR_KEY"}
+
+    response = requests.get(url, headers=headers)
+    result = response.json()
+    print(result["data"][0])
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="list_organization.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/v1/organizations", nil)
+        req.Header.Set("Authorization", "Bearer YOUR_KEY")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="list-organization.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/organizations';
+
+    $options = [
+        'http' => [
+            'header' => ['Authorization: Bearer YOUR_KEY'],
+            'method' => 'GET'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response['data'][0]);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="ListOrganization.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+    var response = await client.GetAsync("https://api.turbonotify.com/v1/organizations");
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="ListOrganization.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class ListOrganization {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/organizations"))
+                .header("Authorization", "Bearer YOUR_KEY")
+                .GET()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+### Response (200)
+
+<ApiResponse
+  status={200}
+  body={{
+    data: [
+      {
+        id: 'org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+        name: 'Alpha Clinic',
+        plan: 'business',
+        locale: 'pt-BR',
+        timezone: 'America/Sao_Paulo',
+        suspended_at: null,
+        created_at: '2026-03-01T09:00:00Z',
+        updated_at: '2026-06-20T14:30:00Z',
+      },
+    ],
+    cursor: null,
+    has_more: false,
+  }}
+/>
+
+## Organization details
+
+`GET /v1/organizations/{organization_id}` returns the same object, without the
+list envelope. The `{organization_id}` must be the `org_{hex32}` of the
+authenticated organization **itself**. It never returns another organization's data.
+
+Rejection happens in **two steps**, with different codes:
+
+- **`400 invalid_organization_id`**: the value does not match the format
+  `^org_[0-9a-f]{32}$`. Anything malformed lands here: a UUID with hyphens,
+  uppercase hex, an arbitrary string, a missing prefix. The format
+  check runs **before** the comparison with the authenticated organization.
+- **`404 organization_not_found`**: the value is a **well-formed**
+  `org_{hex32}`, but it is not the authenticated organization's (including a
+  valid `org_` of another organization).
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="get-organization.sh"
+    curl -X GET \
+      https://api.turbonotify.com/v1/organizations/org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4 \
+      -H "Authorization: Bearer YOUR_KEY"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="get-organization.js"
+    const organizationId = 'org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4';
+    const response = await fetch(
+      `https://api.turbonotify.com/v1/organizations/${organizationId}`,
+      {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer YOUR_KEY' }
+      }
+    );
+
+    const organization = await response.json();
+    console.log(organization);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="get_organization.py"
+    import requests
+
+    organization_id = "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
+    url = f"https://api.turbonotify.com/v1/organizations/{organization_id}"
+    headers = {"Authorization": "Bearer YOUR_KEY"}
+
+    response = requests.get(url, headers=headers)
+    organization = response.json()
+    print(organization)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="get_organization.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        organizationID := "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
+        req, _ := http.NewRequest("GET",
+            "https://api.turbonotify.com/v1/organizations/"+organizationID, nil)
+        req.Header.Set("Authorization", "Bearer YOUR_KEY")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="get-organization.php"
+    <?php
+    $organizationId = 'org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4';
+    $url = "https://api.turbonotify.com/v1/organizations/{$organizationId}";
+
+    $options = [
+        'http' => [
+            'header' => ['Authorization: Bearer YOUR_KEY'],
+            'method' => 'GET'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="GetOrganization.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+    var organizationId = "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4";
+    var response = await client.GetAsync(
+        $"https://api.turbonotify.com/v1/organizations/{organizationId}"
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="GetOrganization.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class GetOrganization {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+            var organizationId = "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4";
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create(
+                    "https://api.turbonotify.com/v1/organizations/" + organizationId))
+                .header("Authorization", "Bearer YOUR_KEY")
+                .GET()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+### Response (200)
+
+<ApiResponse
+  status={200}
+  body={{
+    id: 'org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+    name: 'Alpha Clinic',
+    plan: 'business',
+    locale: 'pt-BR',
+    timezone: 'America/Sao_Paulo',
+    suspended_at: null,
+    created_at: '2026-03-01T09:00:00Z',
+    updated_at: '2026-06-20T14:30:00Z',
+  }}
+/>
+
+## Response fields
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `id` | string | The organization's public identifier (`org_` + 32 hex) |
+| `name` | string | The organization's registered name |
+| `plan` | string | Identifier of the subscribed plan (e.g. `free`, `solo`, `business`, `custom`) |
+| `locale` | string | Configured language (e.g. `pt-BR`, `en`) |
+| `timezone` | string | IANA time zone configured for the account (e.g. `America/Sao_Paulo`). **It does not affect the format of API dates**: it is only used to group the dashboard charts |
+| `suspended_at` | string\|null | ISO 8601 date and time of suspension; `null` when the organization is active |
+| `created_at` | string | ISO 8601 date and time the organization was created |
+| `updated_at` | string | ISO 8601 date and time of the last update to the registration data |
+
+**Every date and time returned by the API** is in UTC, with a `Z` suffix and
+second precision (e.g. `2026-06-01T10:00:05Z`): `created_at` and `at` in webhooks,
+in event polling and in message responses, the registration fields in the table above, and the
+presigned URL expiration fields (`expires_at` / `url_expires_at` in the
+media and picture blocks). In event and message fields the format is guaranteed
+by validation (`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$`), and no value with
+an explicit time zone offset is ever returned, regardless of the
+`timezone` configured on the account.
+
+This endpoint only returns the registration data listed above: the organization's
+administrative settings do not appear in it.
+
+## Possible errors
+
+| Status | Error code                | Description                                              |
+| :----: | ------------------------- | -------------------------------------------------------- |
+| `400`  | `invalid_organization_id` | *(details only)* The `{organization_id}` given is not in the `org_` + 32 lowercase hex format (e.g. a UUID with hyphens, uppercase hex, an arbitrary string). |
+| `403`  | `not_authorized`          | The API key is invalid or missing.                       |
+| `403`  | `insufficient_scope`      | The API key does not have the `organizations:read` scope (the response includes `required_scope`). |
+| `404`  | `organization_not_found`  | *(details only)* The `{organization_id}` given is **well-formed**, but does not match the authenticated organization. An invalid format returns `400 invalid_organization_id`, not this code. |
+| `500`  | `internal_error`          | Unexpected internal server error.                        |
+
+See also: [API key](/en/general/access-key/) · [Numbers](/en/numbers/add/).

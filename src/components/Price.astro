@@ -1,0 +1,24 @@
+---
+/**
+ * A catalog price in the currency of the page: BRL on pt-BR pages, USD on
+ * English pages. `prorate` renders `price × days / cycleDays`, rounded to cents
+ * the way the invoice rounds it.
+ */
+import { formatPrice, pricing, type Currency, type PriceItem } from '../data/pricing';
+import { localeFromPath } from '../i18n/locale';
+
+interface Props {
+  item: PriceItem;
+  currency?: Currency;
+  prorate?: { days: number; cycleDays: number };
+}
+
+const { item, prorate } = Astro.props;
+const currency: Currency =
+  Astro.props.currency ?? (localeFromPath(Astro.url.pathname) === 'en' ? 'USD' : 'BRL');
+const monthly = pricing[item][currency];
+const amount = prorate
+  ? Math.round((monthly * prorate.days * 100) / prorate.cycleDays) / 100
+  : monthly;
+---
+{formatPrice(amount, currency)}

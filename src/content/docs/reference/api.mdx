@@ -1,0 +1,45 @@
+---
+title: Referência da API
+description: Referência interativa de todos os endpoints da API do Turbo Notify, gerada do contrato OpenAPI, com teste de requisição pelo navegador e a coleção para Insomnia.
+---
+
+import { LinkButton } from '@astrojs/starlight/components';
+import DashboardLink from '@components/DashboardLink.astro';
+
+A referência interativa lista todos os endpoints da API, com parâmetros, corpos de requisição, respostas e exemplos de código, e permite testar cada chamada pelo navegador com a sua própria chave. Ela é gerada do mesmo contrato OpenAPI que a API publica.
+
+<LinkButton href="/api-reference/" icon="right-arrow">Abrir a referência interativa</LinkButton>
+
+As descrições dos endpoints vêm do contrato e estão em inglês. Os guias e as páginas desta documentação explicam cada recurso em português.
+
+## Endereço e autenticação
+
+| | |
+|---|---|
+| Endereço base | `https://api.turbonotify.com` |
+| Autenticação | Cabeçalho `Authorization: Bearer SUA_CHAVE` em toda requisição |
+| Formato | JSON (`Content-Type: application/json`) |
+
+Crie a chave no dashboard, em <DashboardLink path="/api-keys">API Keys</DashboardLink>. Veja [Chave de acesso](/general/access-key/).
+
+As rotas de mensagens, contatos e grupos existem em duas formas: `/v1/numbers/{alias}/...` para qualquer número da conta e a forma curta sem `/numbers/{alias}` (por exemplo `/v1/messages`), que vale para o número principal.
+
+## Testar uma requisição
+
+1. Na referência interativa, abra o endpoint e clique no botão de teste.
+2. Em cabeçalhos, adicione `Authorization` com o valor `Bearer SUA_CHAVE`.
+3. Envie. A requisição sai do seu navegador direto para `api.turbonotify.com`: a chave não passa por nenhum outro servidor.
+
+:::caution[São chamadas reais]
+Um teste de envio manda uma mensagem de verdade e consome a cota do número, e criar um número extra cobra o cartão da conta. Para testar, prefira uma chave só com os escopos de leitura e revogue-a depois.
+:::
+
+## Downloads
+
+### Contrato OpenAPI
+
+[openapi.json](/openapi.json) descreve todos os endpoints no formato OpenAPI 3.1. Ferramentas como Postman, Insomnia e geradores de cliente importam o arquivo direto.
+
+### Coleção para Insomnia
+
+[turbo-notify-insomnia.yaml](/downloads/turbo-notify-insomnia.yaml) traz as requisições prontas, organizadas por recurso, com exemplos de corpo. No Insomnia, importe o arquivo, escolha o ambiente **Production** e preencha `apiKey` com a sua chave.

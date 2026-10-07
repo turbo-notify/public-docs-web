@@ -1,57 +1,58 @@
 ---
-title: Base técnica
-description: Referência técnica do Turbo Notify para autenticação, mensageria, webhooks, números e cobrança.
+title: Documentação do Turbo Notify
+description: Documentação do Turbo Notify. API de WhatsApp com REST e webhook, agentes de IA pelo servidor MCP e revenda de números para os clientes da sua plataforma.
 template: splash
 hero:
-  title: Base técnica
-  tagline: Referência objetiva para autenticação, mensageria, webhooks, números e cobrança, alinhada ao fluxo real do produto.
+  title: WhatsApp para a sua aplicação, o seu agente e os seus clientes
+  tagline: Envie e receba mensagens por uma API REST simples, dê ao seu agente de IA ferramentas prontas pelo servidor MCP e ofereça um número de WhatsApp a cada cliente da sua plataforma.
   actions:
-    - text: Começar
-      link: /general/getting-started/
+    - text: Começo rápido
+      link: /guides/quickstart/
       icon: right-arrow
       variant: primary
-    - text: Abrir dashboard
+    - text: Referência da API
+      link: /reference/api/
+      variant: secondary
+    - text: Abrir o dashboard
       link: https://dashboard.turbonotify.com/auth/login
       variant: minimal
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Escolha o seu caminho
 
 <CardGrid>
-  <Card title="Geral" icon="setting">
-    Autenticação, chave de acesso e fluxo de configuração inicial.
-    [Começar →](/general/getting-started/)
+  <Card title="API de WhatsApp" icon="rocket">
+    Envie texto, mídia, localização e botões por REST e receba cada mensagem por webhook ou polling. Conecte o seu número e faça o primeiro envio em minutos.
+
+    [Começo rápido](/guides/quickstart/)
   </Card>
-  <Card title="Números" icon="add-document">
-    Cadastrar, parear com o WhatsApp, acompanhar o status, conectar, remover e entender a cobrança de números.
-    [Abrir →](/numbers/overview/)
+  <Card title="Agentes de IA" icon="puzzle">
+    O servidor MCP dá ao seu agente 32 ferramentas para ler e responder no WhatsApp, autenticadas com a sua chave. Funciona com Claude, Cursor, Agno, n8n e outros.
+
+    [Construa um agente de IA](/guides/ai-agent/)
   </Card>
-  <Card title="Mensagens" icon="document">
-    Envio, status, recibos, reações, edição e recebimento.
-    [Abrir →](/messages/send/)
-  </Card>
-  <Card title="Contatos" icon="star">
-    Listagem, detalhe e refresh de contatos por número.
-    [Abrir →](/contacts/overview/)
-  </Card>
-  <Card title="Grupos" icon="open-book">
-    Envio, foto e eventos de ciclo de vida de grupos do WhatsApp.
-    [Abrir →](/groups/overview/)
-  </Card>
-  <Card title="Webhooks" icon="rocket">
-    Como receber eventos em tempo real: configuração e payloads.
-    [Abrir →](/messages/webhook/)
-  </Card>
-  <Card title="Servidor MCP" icon="seti:powershell">
-    A API como ferramentas prontas para o seu agente de IA usar.
-    [Abrir →](/general/mcp-server/)
-  </Card>
-  <Card title="Mais recursos" icon="puzzle">
-    Reações, indicador de digitação e recursos adicionais de operação.
-    [Explorar →](/other-features/reaction/)
-  </Card>
-  <Card title="Uso e cobrança" icon="information">
-    Quotas por número, ciclo de faturamento e limites por plano.
-    [Abrir →](/usage/quota/)
+  <Card title="Revenda" icon="star">
+    Ofereça WhatsApp aos clientes da sua plataforma: um número por cliente, pareado por código dentro da sua tela, com preço fixo por número. Você define quanto cobra.
+
+    [Revenda para seus clientes](/guides/resale/)
   </Card>
 </CardGrid>
+
+## Referência
+
+<CardGrid>
+  <LinkCard title="Números" description="Cadastro, pareamento, status, conexão e cobrança de números." href="/numbers/overview/" />
+  <LinkCard title="Mensagens" description="Envio, mídia, status, recibos, reações, edição e retenção." href="/messages/send/" />
+  <LinkCard title="Webhooks" description="Assinatura, envelope, tentativas de entrega e todos os eventos." href="/messages/webhook/" />
+  <LinkCard title="Servidor MCP" description="Conexão, ferramentas, escopos e limites para agentes de IA." href="/general/mcp-server/" />
+  <LinkCard title="Referência da API" description="Todos os endpoints, com teste de requisição pelo navegador." href="/reference/api/" />
+  <LinkCard title="Códigos de erro" description="Cada código de erro da API, o que significa e o que fazer." href="/reference/errors/" />
+</CardGrid>
+
+:::note[Não é a API oficial da Meta]
+O Turbo Notify conecta o seu número de WhatsApp como um dispositivo conectado, como o WhatsApp Web. Não é a API oficial do WhatsApp Business. O ritmo de envio da plataforma reduz o risco de bloqueio do número, mas não o elimina: veja [Evite bloqueios](/general/abuse/).
+:::
+
+Precisa de ajuda? Veja [Suporte](/help/support/).

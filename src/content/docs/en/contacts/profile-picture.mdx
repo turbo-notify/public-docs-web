@@ -1,0 +1,68 @@
+---
+title: Profile picture
+description: "GET /v1/numbers/{alias}/contacts/{contact_id}/profile-picture endpoint: 302 when the picture is available, 200 with the reason when it is not. Depends on your BYO Storage."
+sidebar:
+  order: 5
+---
+
+import ApiResponse from '@components/ApiResponse.astro';
+
+Returns the contact's profile picture. When the picture is available, the response is a **302 redirect** to a presigned URL; when it is not, the response is **200 OK** with a JSON body that explains why. This endpoint does **not** use 404 for "no picture" (see the table below).
+
+> The 302 points to a **presigned** URL in your BYO Storage (never the object key in the bucket). A picture marked `unavailable` while you had no storage configured is **checked again** on the next interaction with the contact after you enable BYO Storage. The [`contact.picture_changed`](/en/webhooks/contact-events/#example-contactpicture_changed) webhook is sent when the picture reaches your bucket.
+
+## Endpoint
+
+```http
+GET /v1/contacts/{contact_id}/profile-picture
+```
+
+**Required scope:** `contacts:read`.
+
+For extra numbers: `GET /v1/numbers/{alias}/contacts/{contact_id}/profile-picture`, where `{alias}` is the `number_alias` in the envelope of the contact event.
+
+## Behavior by `picture.kind`
+
+The returned `picture` has only two possible states: `available` (picture in your BYO Storage) or `unavailable` (any other situation, with the cause in `reason`, worked out at read time):
+
+| `picture.kind` | HTTP response |
+| --------------- | ------------- |
+| `available` | **302 Found**: `Location` points to the presigned BYO Storage URL (R2/S3/Supabase), never to the object key in the bucket |
+| `unavailable` | **200 OK**: JSON body `{ "kind": "unavailable", "reason": ..., "setup_hint"?: ... }` (see the `reason` field below) |
+
+A `404 contact_picture_unavailable` only happens in a rare case: the picture is already stored, but generating the presigned URL failed on this request (for example, a temporary provider error). It is not the response for "contact without a picture" or "no storage configured": those cases always return 200.
+
+## Example: picture available
+
+```bash
+curl -I "https://api.turbonotify.com/v1/contacts/ct_.../profile-picture" \
+  -H "Authorization: Bearer YOUR_KEY"
+
+HTTP/1.1 302 Found
+Location: https://<bucket>.r2.cloudflarestorage.com/...
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+```
+
+## Example: picture unavailable (no storage)
+
+<ApiResponse
+  status={200}
+  body={{
+    kind: 'unavailable',
+    reason: 'no_storage',
+    setup_hint: {
+      setup_url: 'https://dashboard.turbonotify.com/storage',
+      docs_url: 'https://docs.turbonotify.com/general/byo-storage-setup/',
+      message:
+        'Configure object storage (S3, Cloudflare R2, or Supabase Storage, free tiers available) to receive media. Visit your dashboard or read the docs.',
+    },
+  }}
+/>
+
+The `reason` field tells you the cause: `no_storage` (no storage configured), `storage_circuit_open` (your storage had been failing and uploads were paused for a while), `upload_failed` (uploading the picture to your bucket failed this time: **there is no immediate retry**; unlike message media, where the failure is final, the picture is **fetched again on the next interaction with the contact**) or `peer_has_none` (the contact has no picture on WhatsApp). `setup_hint` is only filled in for `no_storage` and `storage_circuit_open`. For `upload_failed` and `peer_has_none` it comes as `null`.
+
+## Cache
+
+- The response comes with `Cache-Control: no-store, no-cache, must-revalidate` and `Pragma: no-cache`. **It must not be cached**, including the `302` redirect. Call again whenever you need the current state. The **presigned URL given in `Location`** stays valid for its own lifetime, and that URL is the one to reuse if you want to avoid a new download.
+- The presigned URL is short-lived: **15 minutes by default** (configurable between 1 minute and 1 hour in your storage integration). Do not reuse the URL past that time; call again to get a new one.

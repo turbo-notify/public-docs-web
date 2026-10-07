@@ -1,70 +1,69 @@
 ---
 title: Limitações de grupos
-description: Recursos de grupos WhatsApp que o Turbo Notify NÃO suporta.
+description: O que o Turbo Notify oferece e o que NÃO oferece para grupos do WhatsApp, e qual plano é preciso para enviar.
 ---
 
-O Turbo Notify é uma plataforma de **mensageria transacional + observabilidade**.
-Suporte a grupos cobre o que a API precisa para enviar e ler mensagens, e
-para reagir a mudanças no grupo via webhooks. Operações administrativas
-de grupo (criação, gerenciamento de membros, alteração de configurações)
-**não** estão no escopo.
+O suporte a grupos do Turbo Notify cobre o que você precisa para enviar e ler
+mensagens e para reagir a mudanças no grupo por webhooks. Tarefas de
+administração do grupo (criar grupos, gerenciar membros, alterar configurações)
+**não** são oferecidas.
 
 ## Não suportado
 
 | Recurso | Estado | Por quê |
 |---|---|---|
-| Criar grupo via API | ❌ | Operação administrativa; foge do escopo transacional |
-| Adicionar/remover participante via API | ❌ | Idem |
-| Promover/rebaixar admin via API | ❌ | Idem |
-| Listar participantes de um grupo | ❌ | Privacidade; o webhook `group.participants_*` entrega quem foi alterado |
-| Editar nome/descrição/imagem do grupo | ❌ | Operação administrativa |
-| Gerar link de convite do grupo | ❌ | Operação administrativa |
-| Listas de transmissão (broadcast) | ❌ | Mecanismo distinto de grupo; fora do escopo |
-| Newsletters | ❌ | Idem |
+| Criar grupo pela API | ❌ | Tarefa de administração, fora do foco em envio e recebimento de mensagens |
+| Adicionar ou remover participante pela API | ❌ | Idem |
+| Promover ou rebaixar admin pela API | ❌ | Idem |
+| Listar participantes de um grupo | ❌ | Privacidade; os webhooks `group.participants_*` informam quem foi alterado |
+| Editar nome, descrição ou imagem do grupo | ❌ | Tarefa de administração |
+| Gerar link de convite do grupo | ❌ | Tarefa de administração |
+| Listas de transmissão | ❌ | Recurso diferente de grupo, não oferecido |
+| Canais (newsletters) | ❌ | Idem |
 
 ## Suportado
 
 | Recurso | Status |
 |---|---|
-| Receber mensagens de grupos | ✅ (webhook `message.received` com `to.group_id` + `to.name`) |
+| Receber mensagens de grupos | ✅ (webhook `message.received` com `to.group_id` e `to.name`) |
 | Enviar mensagens para grupos | ✅ (`POST /v1/numbers/{alias}/messages` com `to.group_id`), **requer plano `BUSINESS` ou superior** (veja abaixo) |
 | Enviar indicador de digitação para grupos | ✅ (`POST /v1/numbers/{alias}/typing-indicator` com `to.group_id`), **requer plano `BUSINESS` ou superior** (veja abaixo) |
-| Editar, deletar mensagens em grupo | ✅ |
+| Editar e apagar mensagens em grupo | ✅ |
 | Reagir a mensagens em grupo | ✅, requer plano que inclua reações (a reação exige plano em qualquer conversa, não só em grupo) |
 | Listar grupos do número (`GET /v1/numbers/{alias}/groups`) | ✅ (paginado por cursor: `cursor`, `limit`, `name`, `include_left`) |
-| Consultar detalhe de um grupo (`GET /v1/numbers/{alias}/groups/{id}`) | ✅ |
-| Receber notificação quando entra/sai de grupo | ✅ (`group.joined` / `group.left`) |
-| Receber notificação quando nome/descrição/imagem do grupo muda | ✅ |
-| Receber notificação quando membros são adicionados/removidos/promovidos/rebaixados | ✅ |
+| Consultar o detalhe de um grupo (`GET /v1/numbers/{alias}/groups/{id}`) | ✅ |
+| Receber aviso quando o número entra ou sai de um grupo | ✅ (`group.joined` / `group.left`) |
+| Receber aviso quando o nome, a descrição ou a imagem do grupo muda | ✅ |
+| Receber aviso quando membros são adicionados, removidos, promovidos ou rebaixados | ✅ |
 
 ## Envio de mensagens para grupo exige plano BUSINESS ou superior
 
-Receber mensagens de grupo, listar/consultar grupos via API
+Receber mensagens de grupo, listar e consultar grupos pela API
 (`GET /v1/numbers/{alias}/groups`) e receber os 10 webhooks de ciclo de
-vida funcionam em qualquer tier. Apenas o **envio** outbound para um
-`group_id` (mensagem ou indicador de digitação) exige a feature
-`groups:messages`, disponível a partir do tier `BUSINESS`. Em `FREE`/`SOLO`
+vida funcionam em qualquer plano. Apenas o **envio** para um
+`group_id` (mensagem ou indicador de digitação) exige o recurso
+`groups:messages`, disponível a partir do plano `BUSINESS`. Em `FREE`/`SOLO`
 o envio é recusado com `402 feature_not_available`. Veja
 [Envio para grupo](/messages/send/#envio-para-grupo),
 [Indicador de digitação em grupos](/other-features/typing-indicator/#indicador-de-digitação-em-grupos)
-e [Quota e uso](/usage/quota/#envio-para-grupos-exige-plano-business-ou-superior).
+e [Cota e uso](/usage/quota/#envio-para-grupos-exige-plano-business-ou-superior).
 
 ## Identificador público
 
-`grp_{hex32}` (32 caracteres hexadecimais, derivado de um identificador
-interno). O identificador bruto do WhatsApp (`120363...@g.us`) **nunca** é
-exposto via API ou webhook: apenas o formato do Turbo Notify.
+`grp_{hex32}` (32 caracteres hexadecimais). O identificador do WhatsApp
+(`120363...@g.us`) **nunca** aparece na API ou nos webhooks: apenas o formato
+do Turbo Notify.
 
-## Quota e rate-limit
+## Cota e limite de velocidade
 
-Mensagem para grupo = **1 destinatário** no rate-limit diário,
-independente do tamanho do grupo. Não conta na quota de contatos.
+Uma mensagem para grupo conta como **1 destinatário** no limite diário de
+destinatários, não importa o tamanho do grupo. Ela não conta na cota de contatos.
 
 ## Recuperação
 
-Se você perder o nome de um grupo (ex: webhook caiu antes de
-ser entregue), aguarde a próxima mensagem inbound: o webhook
-`message.received` carrega `to.name` (o nome do grupo) resolvido.
-Alternativamente, consulte
+Se você perder o nome de um grupo (por exemplo, se um webhook não foi
+entregue), espere a próxima mensagem recebida no grupo: o webhook
+`message.received` traz `to.name` (o nome do grupo).
+Você também pode consultar
 [`GET /v1/numbers/{alias}/groups/{id}`](/groups/overview/#consultando-grupos) a
 qualquer momento.

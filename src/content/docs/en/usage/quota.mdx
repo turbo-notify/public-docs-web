@@ -1,0 +1,340 @@
+---
+title: Quota and usage
+description: "GET /v1/usage and the per-number quotas: messages and contacts measured against the organization's current billing cycle. Limits per plan, content retention and errors."
+sidebar:
+  order: 1
+---
+
+import ApiResponse from '@components/ApiResponse.astro';
+
+Turbo Notify measures **two independent quotas** per linked number (`main` or an
+extra alias): messages sent and distinct contacts reached. Both
+quotas are **per number**: each number has its own allowance, and an
+organization with N numbers has N times the plan's allowance.
+
+Only what goes out **through Turbo Notify** (`origin: "tn"`) uses quota;
+messages sent directly from the phone (`origin: "native"`) do not count.
+
+## Billing cycle: when the quota resets
+
+Both quotas are measured over the organization's **current billing cycle**
+(from `cycle_start` to `cycle_end`, the subscription's current period).
+`resets_at` always matches `cycle_end`: the quota resets when the
+cycle turns over.
+
+- **`used`** and **`quota`** are always measured against the cycle that is open.
+- When the cycle closes (subscription renewal), the counters go back to zero and a new
+  period `[cycle_start, cycle_end)` starts.
+- `cycle_start` and `cycle_end` are the **same for every number** in the
+  organization (the cycle belongs to the subscription, not to the number); only `used` and `quota`
+  vary per number.
+
+## Plan table (per number, per cycle)
+
+Mapping to the commercial plan names: Free = `FREE` · Solo = `SOLO` · Business = `BUSINESS` · Custom = `CUSTOM`.
+
+| Plan       | Messages/cycle  | Distinct contacts/cycle  | Extra numbers (max.)  |
+| ---------- | --------------: | -----------------------: | ---------------------:|
+| `FREE`     | 300             | 2                         | 0                      |
+| `SOLO`     | 1,800           | 100                       | 0                      |
+| `BUSINESS` | 50,000          | 5,000                     | 1,000                  |
+| `CUSTOM`   | 500,000         | 50,000                    | 1,000                  |
+
+Prices for each plan are on the **Billing** page of the dashboard and at
+[turbonotify.com](https://turbonotify.com). Your organization can ask
+support for a custom limit, which replaces the plan's per-number ceiling.
+
+The `tier` field in the responses below is always one of the 4 values above, in
+**uppercase** (`"FREE"`, `"SOLO"`, `"BUSINESS"`, `"CUSTOM"`).
+
+## Groups and received messages
+
+- A send to a **group** uses **1 unit of message quota** and **zero**
+  contact quota: a group is not a contact.
+- **Received** messages do not use either quota.
+- Only sends with `origin: "tn"` use message quota;
+  only contacts reached **through Turbo Notify** use contact quota.
+
+## What counts toward the quota
+
+A send through Turbo Notify only uses the message unit and the contact
+unit if it **reaches WhatsApp** (or while it is still on its way there).
+
+- **The API refused the send** (for example `429` for spacing between sends,
+  a repeated message or the recipients-per-day limit): nothing is used.
+  A refused attempt does not spend your quota.
+- **The send was accepted (`202`) but failed before reaching WhatsApp** (for
+  example `message.send.failed` with `number_not_connected` or a failure downloading the
+  media): both units are given back shortly after the failure, within a few
+  minutes. `used` goes back to reflecting only what got through.
+- **The send was not confirmed within the confirmation time limit**
+  (`message.send.failed` with `message_timeout`): the unit is **not** given back,
+  because the message may still have left your number. If it reaches
+  WhatsApp later, the send moves to `sent` and keeps counting; if you
+  send it again, the new send counts on its own.
+- **The message reached WhatsApp and delivery failed afterwards**: it counts, like
+  any message that left your number.
+
+Test messages sent from the Turbo Notify dashboard do not use
+message quota or contact quota.
+
+The sending pace limits (spacing, messages per minute, recipients
+per day) count attempts, not deliveries: a refused attempt still
+counts toward those limits.
+
+## Sending to groups requires the BUSINESS plan or higher
+
+Sending a message or a typing indicator to a `group_id` requires the
+`groups:messages` feature, available from the `BUSINESS` plan. On `FREE`/`SOLO` you
+can still **receive** group messages, list groups and get group details.
+Only **sending** to a group is blocked:
+
+<ApiResponse
+  status={402}
+  body={{
+    error: 'feature_not_available',
+  }}
+/>
+
+See [Groups: Overview](/en/groups/overview/) and [Group limitations](/en/groups/limitations/).
+
+## Endpoint: account-wide usage
+
+```http
+GET /v1/usage
+```
+
+**Required scope:** none: any valid API key.
+
+**Caching:** the response is returned with `Cache-Control: no-store, no-cache,
+must-revalidate` and `Pragma: no-cache`, meaning it **cannot be cached**. Do not
+cache the body; call again whenever you need up-to-date
+data.
+
+`GET /v1/usage` is the **account total**: `messages` and `contacts` at the root level
+add up the usage of **all numbers** in the organization, and `quota` is the **sum of
+each number's allowance** (an organization with 2 numbers on a plan of
+100 per cycle reports `quota: 200`). `resets_at` is the `cycle_end` of the organization's
+current cycle (the same for every number). The response also includes `numbers[]`:
+one entry per **active** number (main and extras), with the
+`used`/`quota`/`remaining` breakdown of each quota, without `resets_at` or `tier` per entry
+(both already apply to all at the root level).
+
+<ApiResponse
+  status={200}
+  body={{
+    messages: {
+      used: 1234,
+      quota: 1800,
+      remaining: 566,
+      resets_at: '2026-07-01T00:00:00Z',
+      tier: 'SOLO',
+    },
+    contacts: {
+      used: 87,
+      quota: 100,
+      remaining: 13,
+      resets_at: '2026-07-01T00:00:00Z',
+      tier: 'SOLO',
+    },
+    numbers: [
+      {
+        alias: 'main',
+        messages: { used: 1234, quota: 1800, remaining: 566 },
+        contacts: { used: 87, quota: 100, remaining: 13 },
+      },
+    ],
+  }}
+/>
+
+### `GET /v1/usage/messages`
+
+The same account total, for the message quota only, also with its
+own `numbers[]` (entries with `messages` only), for when you only need that
+quota and not the contact total:
+
+<ApiResponse
+  status={200}
+  body={{
+    messages: {
+      used: 1234,
+      quota: 1800,
+      remaining: 566,
+      resets_at: '2026-07-01T00:00:00Z',
+      tier: 'SOLO',
+    },
+    numbers: [
+      { alias: 'main', messages: { used: 1234, quota: 1800, remaining: 566 } },
+    ],
+  }}
+/>
+
+## Per-number endpoints
+
+- `GET /v1/numbers/{alias}/messages/quota`: the number's **message** quota
+  (flat route for the main number: `GET /v1/messages/quota`, equivalent to
+  `GET /v1/numbers/main/messages/quota`).
+- `GET /v1/numbers/{alias}/contacts/quota`: the number's **contact** quota
+  (flat route for the main number: `GET /v1/contacts/quota`).
+
+Both return the same format: the state of **that number** in the current cycle.
+
+<ApiResponse
+  status={200}
+  body={{
+    used: 1234,
+    quota: 1800,
+    remaining: 566,
+    cycle_start: '2026-06-01T00:00:00Z',
+    cycle_end: '2026-07-01T00:00:00Z',
+    resets_at: '2026-07-01T00:00:00Z',
+    tier: 'SOLO',
+  }}
+/>
+
+`resets_at` always repeats `cycle_end`, for convenience if you only
+look at one field. These two endpoints (unlike `GET /v1/usage`) return
+`cycle_start` and `cycle_end` explicitly because they describe **one**
+number, not the total of several.
+
+Through the [MCP server](/en/general/mcp-server/), an agent gets the same data with
+`get_usage`, `get_message_quota` and `get_contact_quota`. These three tools
+need no scope: any valid key can use them.
+
+## Content retention window
+
+Besides the quota, each plan sets how many days a message's **content**
+(text, caption, media reference) stays available through the API.
+It is not just a read filter: once that window has passed, Turbo Notify permanently
+deletes the content. Messages older than the window
+no longer exist for the API, both for reading and for the actions that
+depend on the id (reply, edit, delete, react).
+
+- `GET /v1/numbers/{alias}/messages` (cursor-based list) **filters out** messages
+  outside the window: they simply do not appear on the page.
+- **Every** request that addresses the message by id returns **404**
+  (indistinguishable from "never existed") when it is older than the plan's
+  window: the lookup `.../messages/{id}`, the sub-resources `.../status`,
+  `.../receipts` and `.../reactions`, and the actions `.../reply`, `.../edit`,
+  `.../delete` and `.../react`, on both the nested and the flat routes.
+- This window is about **content**; the message record (metadata:
+  status, dates, participants) is kept for a fixed retention of 12
+  months, the same for every plan, regardless of the content window
+  chosen.
+
+The values per plan (and the options to extend the window on the `BUSINESS` plan)
+are on the [Message retention](/en/messages/retention/) page:
+see it for the full lifecycle of content and metadata.
+
+## Errors
+
+### 402: inactive subscription
+
+Returned when you try to send while the organization's subscription does not allow
+using features (`ACTIVE`, and `TRIALING` within the trial period, are
+the only states that pass without restriction):
+
+<ApiResponse
+  status={402}
+  body={{
+    error: 'subscription_inactive',
+    message: 'Subscription is not active',
+    details: { status: 'trial_expired' },
+  }}
+/>
+
+`details.status` is one of these values: `trial_expired` (trial period ended without
+a paid plan), `past_due` (payment overdue: sending stays blocked until the
+payment goes through) or `missing` (organization without an active subscription).
+
+Active subscriptions and subscriptions within their trial period do not get this error. A
+**scheduled** move to a smaller plan or a scheduled cancellation also keeps working
+as usual until the end of the period already paid for: the schedule does not block sending.
+
+### 402: feature not available on the plan
+
+<ApiResponse
+  status={402}
+  body={{
+    error: 'feature_not_available',
+  }}
+/>
+
+Today the features restricted by plan are: reactions (`reactions`, SOLO+); typing
+indicator (`typing_indicator`, SOLO+, the base restriction, applied to every call); sending
+a message or typing indicator to a group (`groups:messages`, BUSINESS+, see
+[above](#sending-to-groups-requires-the-business-plan-or-higher)); detailed
+receipt history (`read_receipts`, BUSINESS+, see
+[Receipts](/en/messages/receipts/)); creating extra numbers (`extra_numbers`,
+not available on FREE/SOLO, see [Extra numbers](/en/numbers/add/)); and
+**webhook redelivery** (`webhooks:retries`, BUSINESS+; on `SOLO` each
+event gets **a single delivery attempt** and, if it fails, there is no other; see
+[Events via webhook](/en/messages/webhook/); on `FREE` there are no webhooks, use
+`GET /v1/events`, available on every plan).
+
+### 402: extra number limit reached
+
+Returned by `POST /v1/numbers` when the organization already has
+`max_extra_numbers` active extra numbers for its plan (BUSINESS 1,000, CUSTOM
+1,000; FREE and SOLO have no access to extra numbers):
+
+<ApiResponse
+  status={402}
+  body={{
+    error: 'extra_numbers_limit_reached',
+    message: 'Extra numbers limit reached for the current plan (1000/1000).',
+    details: { limit: 1000, current: 1000 },
+  }}
+/>
+
+`details.limit` is the plan's `max_extra_numbers` ceiling; `details.current` is the
+organization's current number of active extra numbers.
+
+### 402: contact quota exceeded
+
+<ApiResponse
+  status={402}
+  body={{
+    error: 'contact_quota_exceeded',
+    message: 'Distinct-contacts quota exceeded for tier BUSINESS (5000/5000 this cycle)',
+    details: { quota: 5000, used: 5000, resets_at: '2026-07-01T00:00:00Z', tier: 'BUSINESS' },
+  }}
+/>
+
+### 429: message quota exceeded
+
+<ApiResponse
+  status={429}
+  headers={{ 'Retry-After': '1296000' }}
+  body={{
+    error: 'messages_quota_exceeded',
+  }}
+/>
+
+Unlike the contacts 402, this 429 does **not** carry `details` with
+`used`/`quota`/`resets_at` in the body. Call
+`GET /v1/numbers/{alias}/messages/quota` (or `GET /v1/usage/messages`) for the
+full state and the actual `resets_at`. The `Retry-After` header gives how many
+seconds are left until the number's quota renews, that is, until `resets_at` (in the
+example, 15 days). Retrying the send before then gets the same 429; to send
+right away, use another number or change plans.
+
+### 402 vs 429: when they appear
+
+| | 402 (contacts) | 429 (messages) |
+| - | ------------- | ------------- |
+| Signal | Move to a bigger plan | Cycle quota used up |
+| `Retry-After` header | Absent | Present: seconds until `resets_at` |
+| Body with `used`/`quota`/`resets_at` | Yes (`details`) | No: call the quota endpoint |
+| Resets at | `resets_at` (end of the current cycle) or when moving to a bigger plan | `resets_at` (end of the current cycle) |
+
+## Quota webhooks
+
+- `contact.quota.warning` at 80/90/95%.
+- `contact.quota.exceeded` when exceeded.
+- `message.quota.warning` at 80/90/95%.
+- `message.quota.exceeded` when exceeded.
+
+Both families carry `cycle_start`/`cycle_end` in `data`. See
+[Message quota events](/en/webhooks/message-quota-events/),
+[Contact events](/en/webhooks/contact-events/) and [Usage limits](/en/messages/rate-limits/).

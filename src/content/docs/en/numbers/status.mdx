@@ -1,0 +1,276 @@
+---
+title: Extra number status
+description: How to check the pairing and connection status of the extra numbers registered in Turbo Notify.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+Track the status of each extra number in your account to make sure it is active and ready to send.
+
+## Check the status
+
+To check the status of a specific extra number, make a GET request with the number's alias.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X GET \
+      https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS \
+      -H "Authorization: Bearer YOUR_KEY"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch('https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer YOUR_KEY'
+      }
+    });
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS"
+    headers = {
+        "Authorization": "Bearer YOUR_KEY"
+    }
+
+    response = requests.get(url, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS", nil)
+        req.Header.Set("Authorization", "Bearer YOUR_KEY")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS';
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer YOUR_KEY'
+            ],
+            'method' => 'GET'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+    var response = await client.GetAsync(
+        "https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS"
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS"))
+                .header("Authorization", "Bearer YOUR_KEY")
+                .GET()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+**Required scope:** `numbers:read`
+
+<ApiResponse
+  status={200}
+  body={{
+    contact_id: 'ct_c7abb1f5ee9640bf86a0a20290810ae9',
+    name: 'Condomínio Alpha',
+    type: 'extra',
+    alias: 'condominio_1',
+    number: '5511988887777',
+    status: 'connected',
+    at: '2025-07-16T10:01:00Z',
+    description: null,
+    external_id: 'customer-4821',
+    scheduled_deletion_at: null,
+    reason: null,
+    pairing: null,
+  }}
+/>
+
+:::note[Main number status]
+The main number has its own status route, `GET /v1/numbers/main` (same
+scope, `numbers:read`), with a shorter response: without the
+`description`, `scheduled_deletion_at`, `reason` and `pairing` fields,
+because the main number is paired only in the dashboard. `external_id` carries
+the value set with `PATCH /v1/numbers/main` (see [Update](/en/numbers/update/#main-number)), or `null`:
+
+```json
+{
+  "contact_id": "ct_c7abb1f5ee9640bf86a0a20290810ae9",
+  "name": "Laboratório Central",
+  "type": "main",
+  "alias": "main",
+  "number": "5511973117056",
+  "status": "connected",
+  "at": "2026-04-07T10:00:00Z",
+  "external_id": null
+}
+```
+:::
+
+:::note[`description` and `scheduled_deletion_at` are always `null` here]
+Unlike [List](/en/numbers/list/), which returns the actual `description`
+you set, this endpoint (`GET /v1/numbers/{alias}`) currently returns
+`description` and `scheduled_deletion_at` as `null`, whatever their actual
+value. When the number has `status: "pending_deletion"`, the time of the
+scheduled deletion appears in the `at` field (not in
+`scheduled_deletion_at`). For the description you set, use
+[List](/en/numbers/list/). `external_id`, on the other hand, returns the
+value you set.
+:::
+
+:::note[`at` follows the current status]
+`at` is the moment the number **entered its current status**: it updates
+on every transition (pairing, connection, connection drop, reconnection,
+failure, revocation). A `disconnected`, `failed`, `reconnecting` (and so on)
+number reports the moment of that transition, so `disconnected since {at}` /
+`failed at {at}` show the right time directly.
+
+During an automatic reconnection (the connection to WhatsApp dropped, or
+Turbo Notify moved the number's connection internally), the status is
+`reconnecting` and `at` is the moment the number went offline, the same as
+the `at` of the `number.disconnected` webhook. If the number does not come
+back within about one minute, you receive the `number.disconnected` webhook
+with that same `at`. After a drop of the connection to WhatsApp, the status
+stays `reconnecting` while Turbo Notify tries to reconnect; only after an
+interruption on Turbo Notify's side does it change to `disconnected`, with
+the same `at`. If the number comes back within the window, `at` becomes the
+moment it came back and no webhook is sent.
+
+A newly added number (`status: "pending"`) has the time it was added in
+`at`.
+
+The only exception is `status: "pending_deletion"`, where `at` holds the time
+of the scheduled deletion (see the note above).
+:::
+
+## Response fields
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `contact_id` | string\|null | Public identifier (`ct_…`) of the number's own contact; `null` until resolved |
+| `name` | string\|null | Name of the number's WhatsApp account (captured on connection); `null` until a connection has been established |
+| `type` | string | Always `"extra"` on this endpoint (extra numbers); for the main number use `GET /v1/numbers/main` |
+| `alias` | string | Unique identifier of the extra number in the account |
+| `number` | string | Phone number in E.164 digits (no `+`) |
+| `status` | string | Current status, see [Status table](#status-table) |
+| `at` | string | ISO 8601 timestamp of the moment the number **entered its current status** (`status`): updates on every transition. Exception: when `status = "pending_deletion"`, it is the time of the scheduled deletion. |
+| `description` | string\|null | Currently always `null` on this endpoint, see the note above |
+| `external_id` | string\|null | Your own identifier for this number, set when [adding](/en/numbers/add/) or [updating](/en/numbers/update/) it; `null` when not set |
+| `scheduled_deletion_at` | string\|null | Currently always `null` on this endpoint, see the note above |
+| `reason` | string\|null | Failure reason when `status` is `"failed"`, see [Failure reasons](#failure-reasons); `null` in any other status |
+| `pairing` | object\|null | Pairing information: present only while the number is being paired |
+
+### Pairing block (`pairing`)
+
+Present when `status` is `pairing` and the code is ready (see
+[Pairing extra numbers](/en/numbers/pairing/#show-the-code)):
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `method` | string | Pairing method: `"pairing_code"` |
+| `data` | string | 8-character alphanumeric code to enter in WhatsApp (shown with a hyphen, e.g. `Z5X7-LTYL`) |
+| `expires_at` | string | ISO 8601 timestamp when the code expires |
+
+## Status table
+
+| Status              | Description                                                               |
+| -------------------- | -------------------------------------------------------------------------- |
+| `pending`            | Number registered; waiting for pairing to start.                          |
+| `pairing`            | Pairing in progress: the code is being generated or is waiting to be typed in WhatsApp. |
+| `inactive`           | Authentication obtained, but the connection has not been established yet. |
+| `connecting`         | Connection being established (`POST .../connect` accepted).               |
+| `connected`          | The number is linked and ready to send messages.                          |
+| `disconnected`       | Connection lost or turned off; authentication is kept so you can reconnect. |
+| `reconnecting`       | Turbo Notify is reconnecting the number on its own, after a connection drop or an internal move. You do not need to do anything. If the number does not come back within about one minute, you receive `number.disconnected` and Turbo Notify keeps trying; after a drop of the connection to WhatsApp, the status stays `reconnecting` while it tries. |
+| `failed`             | Pairing failed. The reason is in `reason`, see below.                     |
+| `revoked`            | The device was unlinked by WhatsApp.                                      |
+| `pending_deletion`   | Deletion scheduled (`DELETE /v1/numbers/{alias}`): overrides any other status until the deletion. |
+
+## Failure reasons
+
+When `status` is `"failed"`, the `reason` field tells you what happened, so
+you can show the right message to your customer. The same value arrives in
+the [`number.connect.failed`](/en/messages/webhook/) event. In any other
+status, `reason` is `null`.
+
+| Reason                   | What happened and what to do |
+| ------------------------ | ---------------------------- |
+| `pairing_timeout`        | The code was generated but not used in time. Request a new code. |
+| `paired_phone_mismatch`  | Another WhatsApp completed the pairing. Pair again using the phone of the registered number. |
+| `phone_already_bound`    | This number is already in use in the account. |
+| `main_number_not_connected` | The account's main number must be connected to pair extra numbers. Reconnect the main number and pair again. |
+| `code_generation_failed` | WhatsApp did not generate the code at that moment. Try again shortly. |
+| `connection_lost`        | The number lost its connection to WhatsApp and needs to be paired again. |
+| `pairing_failed`         | Any other failure. Pair again. |
+
+New reasons may be added. Treat a value you do not recognize as
+`pairing_failed`. To build your customer's pairing screen, see
+[Pairing extra numbers](/en/numbers/pairing/#recommended-pairing-experience).
+
+## Possible errors
+
+| Status | Error code              | Description                                         |
+| :----: | ----------------------- | --------------------------------------------------- |
+| `402`  | `feature_not_available` | The current plan does not support extra numbers.    |
+| `403`  | `not_authorized`        | The API key is invalid or missing.                  |
+| `403`  | `insufficient_scope`    | The API key does not have the `numbers:read` scope (the response includes `required_scope`). |
+| `404`  | `extra_number_not_found` | The alias was not found in the account.            |
+| `500`  | `internal_error`        | Unexpected internal server error.                   |

@@ -1,0 +1,161 @@
+---
+title: Error codes
+description: Every Turbo Notify API error code, grouped by HTTP status, with what each one means and what to do, plus message failures and the MCP server's connection errors.
+---
+
+Every error response carries its code in the `error` field. Base your logic on the code, which is stable; supporting text may change. Some errors carry extra fields, such as `required_scope`, `details` or the `Retry-After` header.
+
+```json
+{
+  "error": "insufficient_scope",
+  "required_scope": "messages:send"
+}
+```
+
+Each endpoint page lists the errors of that route. This page gathers all of them in one place.
+
+## 400: invalid request
+
+| Status | Code | What it means and what to do |
+| :----: | ---- | ---------------------------- |
+| `400` | `invalid_json` | The body is not valid JSON. Check the syntax and the `Content-Type: application/json` header. |
+| `400` | `invalid_phone_number` | The phone number is not valid. Send it with the country code, such as `+5511988887777`. |
+| `400` | `invalid_recipient` | The recipient given in `to` could not be found. |
+| `400` | `contact_not_found` | The `contact_id` given in `to` does not belong to the account. |
+| `400` | `contacts_not_enabled` | Sending by `contact_id` is unavailable right now. Try again later. |
+| `400` | `groups_not_enabled` | Group features are unavailable right now. Try again later. |
+| `400` | `not_group_member` | The number is no longer a member of the given group. |
+| `400` | `invalid_message_id` | The message identifier is not in the `msg_…` format. |
+| `400` | `invalid_contact_id` | The contact identifier is not in the `ct_…` format. |
+| `400` | `invalid_event_id` | The event identifier is not in the `evt_…` format. |
+| `400` | `invalid_request_id` | The request identifier is not in the `req_…` format. |
+| `400` | `invalid_organization_id` | The organization identifier is not in the `org_…` format. |
+| `400` | `invalid_cursor` | The pagination cursor is invalid. Use the value returned by the previous page. |
+| `400` | `invalid_alias` | The alias is not valid. It starts with a letter and has up to 50 characters. |
+| `400` | `reserved_alias` | The alias `main` is reserved for the main number. |
+| `400` | `no_changes` | The update changes nothing. Send at least one field with a new value. |
+| `400` | `invalid_status_for_deletion` | The number cannot be removed in its current status. Disconnect it first. |
+| `400` | `not_pending_deletion` | The number has no scheduled removal to cancel. |
+| `400` | `message_not_editable` | The message can no longer be edited. See [Edit and delete](/en/messages/edit-delete/). |
+| `400` | `message_not_deletable` | The message can no longer be deleted. |
+| `400` | `no_payment_method` | The account has no payment method on file. Add one in the dashboard. |
+
+## 401: not authenticated
+
+| Status | Code | What it means and what to do |
+| :----: | ---- | ---------------------------- |
+| `401` | `unauthorized` | MCP server: a streaming connection was opened without a key. Send the `Authorization` header on the connection too. |
+
+## 402: plan, quota or payment
+
+| Status | Code | What it means and what to do |
+| :----: | ---- | ---------------------------- |
+| `402` | `feature_not_available` | The current plan does not include the feature (for example extra numbers or sending to groups). See [Quota and usage](/en/usage/quota/). |
+| `402` | `subscription_inactive` | The subscription is not active (`details.status` says why). Sort it out under Billing in the dashboard. |
+| `402` | `contact_quota_exceeded` | The number's contact quota for the cycle is used up. It resets when the cycle turns. |
+| `402` | `extra_numbers_limit_reached` | The account reached the plan's maximum of extra numbers (`details.limit`). |
+| `402` | `payment_declined` | The card declined the charge. Nothing was created. Update the payment method. |
+| `402` | `payment_requires_authentication` | The card requires extra authentication and cannot be charged automatically. Nothing was created. |
+
+## 403: not allowed
+
+| Status | Code | What it means and what to do |
+| :----: | ---- | ---------------------------- |
+| `403` | `not_authorized` | The key is missing, invalid or revoked. See [API key](/en/general/access-key/). |
+| `403` | `insufficient_scope` | The key lacks the route's scope (`required_scope` names it). |
+| `403` | `main_number_pair_not_allowed` | The main number is paired only from the dashboard. |
+| `403` | `main_number_update_not_allowed` | The operation applies only to extra numbers, not to `main`. |
+| `403` | `no_device_link` | The extra number has not been paired yet. Pair it before connecting. |
+| `403` | `extra_number_not_paired` | The extra number lost its pairing. Pair it again. |
+
+## 404: not found
+
+| Status | Code | What it means and what to do |
+| :----: | ---- | ---------------------------- |
+| `404` | `not_found` | The resource does not exist in the account. |
+| `404` | `number_not_found` | The alias in the URL does not match any number of the account. |
+| `404` | `extra_number_not_found` | The alias does not match any extra number of the account. |
+| `404` | `message_not_found` | The message does not exist on this number. Check the `number_alias` together with the id. |
+| `404` | `contact_not_found` | The contact does not exist on this number. |
+| `404` | `group_not_found` | The group does not exist on this number. |
+| `404` | `organization_not_found` | The organization does not exist or is not your key's. |
+| `404` | `request_not_found` | The given `request_id` does not match a known request. |
+| `404` | `contact_picture_unavailable` | The contact's picture is not available. See [Profile picture](/en/contacts/profile-picture/). |
+| `404` | `group_picture_unavailable` | The group's picture is not available. See [Group picture](/en/groups/picture/). |
+
+## 409: conflict with the current state
+
+| Status | Code | What it means and what to do |
+| :----: | ---- | ---------------------------- |
+| `409` | `number_not_connected` | The number that has to act is not connected to WhatsApp. Reconnect it and try again. |
+| `409` | `already_connected` | The number is already connected. Nothing to do. |
+| `409` | `already_connecting` | The connection is already in progress. Wait for it. |
+| `409` | `already_disconnected` | The number is already disconnected. Nothing to do. |
+| `409` | `already_paired_or_connected` | The number is already paired or connected. |
+| `409` | `not_pairing` | There is no pairing in progress to cancel (or the phone just completed it). |
+| `409` | `number_already_exists` | The alias or the phone number is already registered in the account. |
+| `409` | `alias_already_exists` | Another number of the account already uses that alias. |
+| `409` | `external_id_already_used` | Another number of the account already uses that `external_id`. See [Add](/en/numbers/add/). |
+| `409` | `activation_already_in_progress` | Another creation of the same number is being charged right now. Wait for its result. |
+
+## 422: data that fails validation
+
+| Status | Code | What it means and what to do |
+| :----: | ---- | ---------------------------- |
+| `422` | `validation_error` | A field is missing, malformed or out of range. `details.errors` says which. |
+| `422` | `sender_not_found` | The given sender does not match any number of the account. |
+| `422` | `group_not_owned_by_number` | The group belongs to another number of the account, not to the alias in the URL. |
+| `422` | `message_not_replyable` | The quoted message has not reached WhatsApp yet or was deleted. |
+| `422` | `message_not_reactable` | The message has not reached WhatsApp yet or was deleted. |
+| `422` | `no_main_number_configured` | The main number has not been connected yet. Connect it from the dashboard. |
+| `422` | `main_number_not_paired` | The main number lost its pairing. Connect it again from the dashboard. |
+
+## 429: rate limits and message quota
+
+All of them carry the `Retry-After` header when there is a known waiting time. Wait that long instead of retrying right away.
+
+| Status | Code | What it means and what to do |
+| :----: | ---- | ---------------------------- |
+| `429` | `rate_limit_exceeded` | Too many requests in a short time (including extra number creations and MCP server calls). |
+| `429` | `send_rate_spacing` | The send came before the number's minimum interval between messages. See [Rate limits](/en/messages/rate-limits/). |
+| `429` | `messages_quota_exceeded` | The number's message quota for the cycle is used up. It resets when the cycle turns. |
+| `429` | `messages_per_minute_limit_exceeded` | The number went over its messages-per-minute limit. |
+| `429` | `recipients_per_day_limit_exceeded` | The number went over the daily limit of messages to the same recipient. |
+| `429` | `warmup_limit_exceeded` | The number is new and still warming up, with a lower daily volume. |
+| `429` | `duplicate_burst_blocked` | The same message was sent to too many recipients in a row. |
+| `429` | `reply_ratio_too_low` | The number sends far more messages than it gets replies. Wait for replies before sending more. |
+| `429` | `refresh_rate_limited` | Too many contact refreshes per minute. |
+| `429` | `pairing_rate_limited` | Too many pairing code requests. See [Pairing](/en/numbers/pairing/). |
+| `429` | `too_many_streams` | MCP server: too many open streaming connections for the key or the source address. |
+
+## 500 and 503: failure on our side
+
+| Status | Code | What it means and what to do |
+| :----: | ---- | ---------------------------- |
+| `500` | `internal_error` | Unexpected error. Try again; if it persists, contact [support](/en/help/support/). |
+| `503` | `payment_gateway_unavailable` | The charge could not be confirmed in time. Nothing was created. Try again. |
+| `503` | `plan_lookup_failed` | The account's plan could not be checked just now. Try again in a moment. |
+
+## Message failures
+
+A message accepted with `202` can fail later, on WhatsApp. In that case its status becomes `failed` and the `error` object carries `code`, `message` and, when there is guidance, `hint`. The same object arrives in `message.*.failed` events. See [Message status](/en/messages/status/).
+
+| Code | What it means and what to do |
+| ---- | ---------------------------- |
+| `number_not_connected` | The number was not connected when the message was sent. Reconnect it and send again. |
+| `message_timeout` | WhatsApp did not confirm the send in time. The message may have gone out: check before resending. |
+| `whatsapp_send_failed` | WhatsApp refused the message. See `error.message`. |
+| `media_fetch_failed` | The media could not be downloaded from the URL. It must be public and reachable. |
+| `media_too_large` | The media exceeds the maximum size for its type. See [Send media](/en/messages/send-media/). |
+| `unsupported_media_format` | The file format is not accepted for that media type. |
+| `unknown_magic_bytes` | The file format could not be recognized. Check that the URL returns a media file. |
+| `sticker_decode_failed` | The sticker is not a valid WebP image. |
+| `sticker_invalid_dimensions` | Stickers must be exactly 512×512 pixels. |
+| `media_storage_required` | The account has no storage connected for that media. See [Storage](/en/general/byo-storage-setup/). |
+| `reaction_lid_unavailable` | WhatsApp did not allow a reaction to that contact just now. Try again later. |
+
+New codes may appear. Treat an unknown code as a permanent failure and log `error.message`.
+
+## MCP server errors
+
+When an MCP tool cannot do what was asked, the agent receives the API code in the tool result itself, as `kind: code` (for example `conflict: number_not_connected` or `payment_required: messages_quota_exceeded`). The codes are the ones on this page. See [MCP server: Errors](/en/general/mcp-server/#errors).

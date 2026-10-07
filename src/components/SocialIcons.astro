@@ -1,0 +1,27 @@
+---
+/**
+ * Header right group: a link back to the Turbo Notify website (in the page's
+ * language) followed by Starlight's own social links (the public examples
+ * repository on GitHub).
+ */
+import Default from '@astrojs/starlight/components/SocialIcons.astro';
+import type { Props } from '@astrojs/starlight/props';
+import { localeFromPath, ui } from '../i18n/locale';
+
+const t = ui[localeFromPath(Astro.url.pathname)];
+---
+<a class="tn-website-link" href={t.landingUrl} aria-label={t.websiteLabel}>{t.website}</a>
+<Default {...Astro.props as Props} />
+
+<style>
+  .tn-website-link {
+    color: var(--sl-color-gray-2);
+    font-size: var(--sl-text-sm);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .tn-website-link:hover {
+    color: var(--sl-color-white);
+  }
+</style>

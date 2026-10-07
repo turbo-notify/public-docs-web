@@ -147,24 +147,24 @@ Para listar o histórico de recibos de uma mensagem, faça uma requisição `GET
   body={{
     message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
     receipts: [
-      { from: { contact_id: 'ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4', name: 'João Silva', number: '5511999990000' }, status: 'delivered', at: '2025-07-16T10:00:05Z' },
-      { from: { contact_id: 'ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4', name: 'João Silva', number: '5511999990000' }, status: 'read',      at: '2025-07-16T10:01:12Z' }
+      { from: { contact_id: 'ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4', name: 'Ana Souza', number: '5511988887777' }, status: 'delivered', at: '2025-07-16T10:00:05Z' },
+      { from: { contact_id: 'ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4', name: 'Ana Souza', number: '5511988887777' }, status: 'read',      at: '2025-07-16T10:01:12Z' }
     ]
   }}
 />
 
 ### Em grupo (múltiplos destinatários)
 
-O campo `contact_id` aparece apenas para participantes cujo contato já esteja registrado no Turbo Notify. O campo `name` (push_name do WhatsApp) é independente: pode aparecer mesmo sem `contact_id`. No exemplo abaixo, Ana Costa tem contato resolvido; Carlos Lima tem push_name mas ainda sem registro de contato.
+O campo `contact_id` aparece apenas para participantes cujo contato já esteja registrado no Turbo Notify. O campo `name` (o nome de exibição no WhatsApp) é independente: pode aparecer mesmo sem `contact_id`. No exemplo abaixo, Ana Souza já é um contato registrado; Carlos Lima tem nome de exibição, mas ainda não é um contato registrado.
 
 <ApiResponse
   status={200}
   body={{
     message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
     receipts: [
-      { from: { contact_id: 'ct_b1c2d3e4f5a6b1c2d3e4f5a6b1c2d3e4', name: 'Ana Costa',   number: '5511999990001' }, status: 'delivered', at: '2025-07-16T10:00:05Z' },
-      { from: { name: 'Carlos Lima', number: '5511999990002' }, status: 'delivered', at: '2025-07-16T10:00:08Z' },
-      { from: { contact_id: 'ct_b1c2d3e4f5a6b1c2d3e4f5a6b1c2d3e4', name: 'Ana Costa',   number: '5511999990001' }, status: 'read',      at: '2025-07-16T10:01:12Z' }
+      { from: { contact_id: 'ct_b1c2d3e4f5a6b1c2d3e4f5a6b1c2d3e4', name: 'Ana Souza',   number: '5511988887777' }, status: 'delivered', at: '2025-07-16T10:00:05Z' },
+      { from: { name: 'Carlos Lima', number: '5511977776666' }, status: 'delivered', at: '2025-07-16T10:00:08Z' },
+      { from: { contact_id: 'ct_b1c2d3e4f5a6b1c2d3e4f5a6b1c2d3e4', name: 'Ana Souza',   number: '5511988887777' }, status: 'read',      at: '2025-07-16T10:01:12Z' }
     ]
   }}
 />
@@ -185,12 +185,12 @@ O campo `contact_id` aparece apenas para participantes cujo contato já esteja r
 | ------------------------ | ------- | ------------------------------------------------------------------ |
 | `message_id`             | string  | Identificador público da mensagem.                                 |
 | `receipts`               | array   | Lista de transições de status, em ordem cronológica crescente.     |
-| `receipts[].from`            | object  | Parte que emitiu o recibo. Omitido quando o WhatsApp não informa nenhum dado de quem confirmou o recibo. |
+| `receipts[].from`            | object  | Quem confirmou o recibo. Omitido quando o WhatsApp não informa nenhum dado de quem confirmou o recibo. |
 | `receipts[].from.contact_id` | string  | Identificador público do contato (`ct_{hex32}`). Omitido quando não disponível. |
-| `receipts[].from.name`       | string  | Nome de exibição do WhatsApp (PII: propriedade da organização). Omitido quando não disponível. |
+| `receipts[].from.name`       | string  | Nome de exibição no WhatsApp (dado pessoal, sob responsabilidade da sua organização). Omitido quando não disponível. |
 | `receipts[].from.number`     | string  | Número E.164 sem `+` de quem confirmou o recibo. Omitido quando o WhatsApp não revela o número de quem confirmou o recibo. |
 | `receipts[].status`      | string  | Status atingido nesta transição (`delivered` ou `read`).           |
-| `receipts[].at`          | string  | Timestamp ISO 8601 de quando o status foi registrado.              |
+| `receipts[].at`          | string  | Data e hora ISO 8601 em que o status foi registrado.              |
 
 ## Tabela de status
 
@@ -203,7 +203,7 @@ O campo `contact_id` aparece apenas para participantes cujo contato já esteja r
 
 ## Exige plano BUSINESS ou superior
 
-O histórico detalhado de recibos (`GET .../messages/{id}/receipts`) requer a feature `read_receipts`, disponível a partir do tier `BUSINESS`. Organizações em `FREE`/`SOLO` recebem:
+O histórico detalhado de recibos (`GET .../messages/{id}/receipts`) requer o recurso `read_receipts`, disponível a partir do plano `BUSINESS`. Organizações em `FREE`/`SOLO` recebem:
 
 <ApiResponse
   status={402}
@@ -212,15 +212,15 @@ O histórico detalhado de recibos (`GET .../messages/{id}/receipts`) requer a fe
   }}
 />
 
-Essa restrição vale para as duas rotas (a aninhada `/v1/numbers/{alias}/messages/{id}/receipts` e a rota plana `/v1/messages/{id}/receipts` do número principal). As duas são bloqueadas juntas. A restrição **não** afeta o status geral da mensagem: [`GET .../messages/{id}/status`](/messages/status/) continua disponível em **todos** os tiers, inclusive `FREE`/`SOLO`: apenas o histórico **detalhado**, transição a transição, exige BUSINESS+.
+Essa restrição vale para as duas rotas (a aninhada `/v1/numbers/{alias}/messages/{id}/receipts` e a rota curta `/v1/messages/{id}/receipts` do número principal). A restrição **não** afeta o status geral da mensagem: [`GET .../messages/{id}/status`](/messages/status/) continua disponível em **todos** os planos, inclusive `FREE`/`SOLO`. Só o histórico **detalhado**, mudança a mudança, exige BUSINESS ou superior.
 
-Veja [Quota e uso](/usage/quota/) para os limites e restrições de cada plano.
+Veja [Cota e uso](/usage/quota/) para os limites e restrições de cada plano.
 
 ## Erros possíveis
 
 | Status | Código de erro          | Descrição                                                                    |
 | :----: | ------------------------ | ------------------------------------------------------------------------------ |
-| `402`  | `feature_not_available` | Organização em plano `FREE`/`SOLO`: histórico de recibos exige `BUSINESS`+.   |
+| `402`  | `feature_not_available` | Organização em plano `FREE`/`SOLO`: o histórico de recibos exige `BUSINESS` ou superior. |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.                                    |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:read`.                         |
 | `404`  | `not_found`             | A mensagem não foi encontrada, pertence a outra organização, está fora da [janela de retenção de conteúdo](/messages/retention/) do plano, ou (na rota aninhada `/numbers/{alias}/messages/.../receipts`) pertence a um número diferente do alias informado na URL: todos esses casos devolvem a mesma resposta, sem distinção. |

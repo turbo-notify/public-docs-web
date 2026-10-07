@@ -22,10 +22,10 @@ número são apagados da sua conta.
 
 O efeito na fatura depende de qual dos dois caminhos de remoção foi tomado:
 
-- **Remoção imediata** (elegível a reembolso: menos de **72 horas** desde a primeira conexão **e** menos de **10 mensagens** enviadas): o número é excluído na hora e a cobrança pro-rata feita na ativação é **estornada automaticamente**. Ele não entra na fatura do próximo ciclo.
-- **Remoção agendada**: o número permanece na conta até o **fim do ciclo de uso atual do número** (veja `scheduled_deletion_at` na resposta), então **qualquer novo ciclo que comece nesse intervalo ainda o cobra pelo valor cheio de renovação**, exatamente como um número apenas desconectado. A cobrança só cessa quando a exclusão é de fato executada.
+- **Remoção imediata**: remover um número extra logo depois de adicioná-lo, antes de usá-lo, pode excluí-lo na hora e **reembolsar automaticamente** a cobrança pro-rata feita na ativação. Ele não entra na fatura do próximo ciclo.
+- **Remoção agendada**: nos demais casos, o número continua ativo até o **fim do ciclo pago do número** (veja `scheduled_deletion_at` na resposta), com status `pending_deletion`, e então é removido. **Um novo ciclo que comece nesse intervalo ainda o cobra pelo valor cheio de renovação**, exatamente como um número apenas desconectado. A cobrança só para quando a exclusão é executada. Até lá, você pode [cancelar a exclusão](#cancelar-exclusão-agendada).
 
-O campo `refund_eligible` na resposta do `DELETE` informa qual caminho foi tomado (`true` = remoção imediata). Para mais detalhes, consulte a documentação de [Cobrança de números extras](/numbers/billing/).
+A resposta do `DELETE` diz o que aconteceu, em `refund_eligible`, `refund_amount_cents`, `refund_status` e `scheduled_deletion_at`. Dúvidas sobre um reembolso: escreva para billing@turbonotify.com. Para mais detalhes, consulte [Cobrança de números extras](/numbers/billing/).
 
 ## Remover pelo dashboard
 
@@ -151,7 +151,6 @@ Acesse a página de <DashboardLink path="/numbers">Números</DashboardLink> no d
     scheduled_deletion_at: '2025-07-16T10:00:00Z',
     refund_eligible: true,
     refund_amount_cents: 2252,
-    messages_sent: 3,
     refund_status: 'succeeded',
   }}
 />
@@ -163,10 +162,9 @@ A resposta descreve o **resultado da exclusão**, não o número em si:
 | Campo | Tipo | Descrição |
 | ----- | ---- | --------- |
 | `scheduled_deletion_at` | string | Timestamp ISO 8601 de quando o número é removido da conta. |
-| `refund_eligible` | boolean | `true` quando o número se qualifica para reembolso imediato (janela de 72h, poucas mensagens enviadas): nesse caso a exclusão é **imediata** e `scheduled_deletion_at` é o momento atual. `false` quando a exclusão é agendada: nesse caso `scheduled_deletion_at` fica no **fim do ciclo de uso atual do número** (ciclo de 30 dias ancorado na primeira conexão do número, não uma contagem fixa de 30 dias a partir de agora). |
-| `refund_amount_cents` | integer | Valor reembolsado em centavos: o mesmo valor da cobrança pro-rata feita na ativação deste número. `0` quando `refund_eligible` é `false`, ou quando `refund_status` é `not_applicable`/`failed` (ver abaixo). |
-| `messages_sent` | integer | Total de mensagens já enviadas por este número, usado para determinar elegibilidade de reembolso. |
-| `refund_status` | string \| null | O resultado real da tentativa de reembolso: `succeeded` (reembolso processado; `refund_amount_cents` reflete o valor real), `not_applicable` (nenhum reembolso era devido: ou nenhuma cobrança de ativação existia para este número, ou uma requisição concorrente para o mesmo número já está processando o reembolso, caso em que o valor é ou foi reembolsado corretamente por essa outra requisição; nunca um erro), ou `failed` (havia uma cobrança real e a chamada ao gateway de pagamento falhou; a exclusão do número **não é bloqueada por isso**. Entre em contato com o suporte se `failed` aparecer, para reembolso manual). `null` quando `refund_eligible` é `false` (nenhum reembolso foi tentado). |
+| `refund_eligible` | boolean | `true` quando a remoção foi **imediata** e a cobrança de ativação é reembolsada; nesse caso `scheduled_deletion_at` é o momento atual. `false` quando a exclusão foi agendada; nesse caso `scheduled_deletion_at` fica no **fim do ciclo pago do número**. |
+| `refund_amount_cents` | integer | Valor reembolsado em centavos: o mesmo valor da cobrança pro-rata feita na ativação deste número. `0` quando `refund_eligible` é `false`, ou quando `refund_status` é `not_applicable` ou `failed` (veja abaixo). |
+| `refund_status` | string \| null | O resultado da tentativa de reembolso: `succeeded` (reembolso processado; `refund_amount_cents` traz o valor reembolsado), `not_applicable` (nada a reembolsar nesta resposta: não havia cobrança de ativação para este número, ou outra requisição simultânea para o mesmo número já está cuidando do reembolso; não é um erro) ou `failed` (havia uma cobrança e o reembolso não pôde ser processado; a exclusão do número **não é bloqueada por isso**. Escreva para billing@turbonotify.com para receber o reembolso). `null` quando `refund_eligible` é `false` (nenhum reembolso foi tentado). |
 
 A chamada é **idempotente**: repetir a requisição para um número já agendado
 para exclusão retorna o mesmo agendamento (sem gerar um novo reembolso).
