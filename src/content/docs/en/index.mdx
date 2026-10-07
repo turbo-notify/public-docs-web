@@ -1,0 +1,58 @@
+---
+title: Turbo Notify documentation
+description: Turbo Notify documentation. A WhatsApp API with REST and webhooks, AI agents through the MCP server, and number resale for your platform's customers.
+template: splash
+hero:
+  title: WhatsApp for your application, your agent and your customers
+  tagline: Send and receive messages through a simple REST API, give your AI agent ready-made tools through the MCP server, and offer a WhatsApp number to every customer of your platform.
+  actions:
+    - text: Quickstart
+      link: /en/guides/quickstart/
+      icon: right-arrow
+      variant: primary
+    - text: API reference
+      link: /en/reference/api/
+      variant: secondary
+    - text: Open the dashboard
+      link: https://dashboard.turbonotify.com/auth/login
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Choose your path
+
+<CardGrid>
+  <Card title="WhatsApp API" icon="rocket">
+    Send text, media, locations and buttons over REST and receive every message by webhook or polling. Connect your number and make your first send in minutes.
+
+    [Quickstart](/en/guides/quickstart/)
+  </Card>
+  <Card title="AI agents" icon="puzzle">
+    The MCP server gives your agent 32 tools to read and reply on WhatsApp, authenticated with your key. It works with Claude, Cursor, Agno, n8n and others.
+
+    [Build an AI agent](/en/guides/ai-agent/)
+  </Card>
+  <Card title="Resell" icon="star">
+    Offer WhatsApp to your platform's customers: one number per customer, paired by code inside your own screen, at a fixed price per number. You set what you charge.
+
+    [Resell to your customers](/en/guides/resale/)
+  </Card>
+</CardGrid>
+
+## Reference
+
+<CardGrid>
+  <LinkCard title="Numbers" description="Adding, pairing, status, connection and billing of numbers." href="/en/numbers/overview/" />
+  <LinkCard title="Messages" description="Sending, media, status, receipts, reactions, editing and retention." href="/en/messages/send/" />
+  <LinkCard title="Webhooks" description="Signature, envelope, delivery attempts and every event." href="/en/messages/webhook/" />
+  <LinkCard title="MCP server" description="Connection, tools, scopes and limits for AI agents." href="/en/general/mcp-server/" />
+  <LinkCard title="API reference" description="Every endpoint, with request testing from the browser." href="/en/reference/api/" />
+  <LinkCard title="Error codes" description="Every API error code, what it means and what to do." href="/en/reference/errors/" />
+</CardGrid>
+
+:::note[Not the official Meta API]
+Turbo Notify connects your WhatsApp number as a linked device, like WhatsApp Web. It is not the official WhatsApp Business API. The platform's sending pace reduces the risk of your number being blocked, but does not remove it: see [Avoid blocks](/en/general/abuse/).
+:::
+
+Need help? See [Support](/en/help/support/).

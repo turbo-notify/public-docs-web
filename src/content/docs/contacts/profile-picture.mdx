@@ -1,15 +1,15 @@
 ---
 title: Foto de perfil
-description: "Endpoint GET /v1/numbers/{alias}/contacts/{contact_id}/profile-picture: 302 quando disponível, 200 com motivo quando não; comportamento depende da configuração BYO Storage."
+description: "Endpoint GET /v1/numbers/{alias}/contacts/{contact_id}/profile-picture: 302 quando a foto está disponível, 200 com o motivo quando não está. Depende do seu BYO Storage."
 sidebar:
   order: 5
 ---
 
 import ApiResponse from '@components/ApiResponse.astro';
 
-Retorna a foto de perfil do contato. Quando a foto está disponível, a resposta é um **302 redirect** para uma URL pré-assinada; quando não está, a resposta é **200 OK** com um corpo JSON descrevendo o motivo: este endpoint **não** usa 404 para "sem foto" (veja a tabela abaixo).
+Retorna a foto de perfil do contato. Quando a foto está disponível, a resposta é um **redirecionamento 302** para uma URL pré-assinada; quando não está, a resposta é **200 OK** com um corpo JSON que explica o motivo. Este endpoint **não** usa 404 para "sem foto" (veja a tabela abaixo).
 
-> O 302 aponta para uma URL **pré-assinada** do seu BYO Storage (nunca a object key crua). Uma foto marcada como `unavailable` enquanto o storage estava ausente é **reavaliada** na próxima interação com o contato depois que você habilita o BYO Storage. O webhook [`contact.picture_changed`](/webhooks/contact-events/#exemplo-contactpicture_changed) é emitido quando a foto chega ao seu bucket.
+> O 302 aponta para uma URL **pré-assinada** do seu BYO Storage (nunca a chave do objeto no bucket). Uma foto marcada como `unavailable` enquanto você não tinha armazenamento configurado é **reavaliada** na próxima interação com o contato depois que você habilita o BYO Storage. O webhook [`contact.picture_changed`](/webhooks/contact-events/#exemplo-contactpicture_changed) é enviado quando a foto chega ao seu bucket.
 
 ## Endpoint
 
@@ -23,14 +23,14 @@ Para números extras: `GET /v1/numbers/{alias}/contacts/{contact_id}/profile-pic
 
 ## Comportamento por `picture.kind`
 
-O corpo `picture` retornado ao cliente tem apenas dois estados possíveis: `available` (foto no seu BYO Storage) ou `unavailable` (qualquer outra situação, com a causa detalhada em `reason`, computada no momento da leitura):
+O `picture` retornado tem apenas dois estados possíveis: `available` (foto no seu BYO Storage) ou `unavailable` (qualquer outra situação, com a causa em `reason`, calculada no momento da leitura):
 
 | `picture.kind` | Resposta HTTP |
 | --------------- | ------------- |
-| `available` | **302 Found**: `Location` aponta para a URL pré-assinada do BYO Storage (R2/S3/Supabase); nunca a object key crua |
+| `available` | **302 Found**: `Location` aponta para a URL pré-assinada do BYO Storage (R2/S3/Supabase), nunca para a chave do objeto no bucket |
 | `unavailable` | **200 OK**: corpo JSON `{ "kind": "unavailable", "reason": ..., "setup_hint"?: ... }` (ver campo `reason` abaixo) |
 
-Um `404 contact_picture_unavailable` só ocorre em uma situação-limite rara: a foto já está armazenada, mas a geração da URL pré-assinada falhou nesta requisição (ex.: erro transitório do provedor). Não é o caminho usado para "contato sem foto" ou "sem storage configurado": esses casos sempre retornam 200.
+Um `404 contact_picture_unavailable` só ocorre em um caso raro: a foto já está armazenada, mas a geração da URL pré-assinada falhou nesta requisição (por exemplo, um erro passageiro do provedor). Não é a resposta para "contato sem foto" nem para "sem armazenamento configurado": esses casos sempre retornam 200.
 
 ## Exemplo: foto disponível
 
@@ -44,7 +44,7 @@ Cache-Control: no-store, no-cache, must-revalidate
 Pragma: no-cache
 ```
 
-## Exemplo: foto indisponível (sem storage)
+## Exemplo: foto indisponível (sem armazenamento)
 
 <ApiResponse
   status={200}
@@ -60,9 +60,9 @@ Pragma: no-cache
   }}
 />
 
-O campo `reason` discrimina a causa: `no_storage` (sem storage configurado), `storage_circuit_open` (o seu storage vinha falhando e o envio foi suspenso temporariamente), `upload_failed` (a tentativa de upload deste ciclo falhou: **sem retry imediato**; diferente da mídia de mensagem, que é terminal, a foto é **re-resolvida na próxima interação do contato**) ou `peer_has_none` (o contato não tem foto no WhatsApp). O `setup_hint` só é preenchido para `no_storage` e `storage_circuit_open`. Para `upload_failed` e `peer_has_none` ele vem como `null`.
+O campo `reason` indica a causa: `no_storage` (sem armazenamento configurado), `storage_circuit_open` (o seu armazenamento vinha falhando e o envio foi suspenso temporariamente), `upload_failed` (o envio da foto para o seu bucket falhou desta vez: **não há nova tentativa imediata**; ao contrário da mídia de mensagem, em que a falha é definitiva, a foto é **buscada de novo na próxima interação com o contato**) ou `peer_has_none` (o contato não tem foto no WhatsApp). O `setup_hint` só é preenchido para `no_storage` e `storage_circuit_open`. Para `upload_failed` e `peer_has_none` ele vem como `null`.
 
 ## Cache
 
-- A resposta é retornada com `Cache-Control: no-store, no-cache, must-revalidate` e `Pragma: no-cache`. **Não é cacheável**, inclusive o redirect `302`. Não armazene a resposta em cache; refaça a chamada sempre que precisar do estado atual. Na prática, cada leitura refaz a requisição, mas a **URL pré-assinada apontada pelo `Location`** continua válida pelo seu próprio TTL, e é ela que você deve reutilizar se quiser evitar um novo download.
-- A URL pré-assinada tem validade curta: **15 minutos por padrão** (configurável entre 1 minuto e 1 hora na sua integração de storage). Não reutilize a URL além desse prazo; refaça a chamada para obter uma nova.
+- A resposta vem com `Cache-Control: no-store, no-cache, must-revalidate` e `Pragma: no-cache`. **Ela não deve ser guardada em cache**, inclusive o redirecionamento `302`. Refaça a chamada sempre que precisar do estado atual. A **URL pré-assinada indicada em `Location`** continua válida pelo próprio prazo dela, e é essa URL que você deve reutilizar se quiser evitar um novo download.
+- A URL pré-assinada tem validade curta: **15 minutos por padrão** (configurável entre 1 minuto e 1 hora na sua integração de armazenamento). Não reutilize a URL além desse prazo; refaça a chamada para obter uma nova.

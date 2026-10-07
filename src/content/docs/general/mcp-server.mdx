@@ -27,9 +27,9 @@ Um agente de atendimento costuma combinar os dois lados: o webhook avisa a sua a
 |---|---|
 | Endereço | `https://mcp.turbonotify.com` |
 | Transporte | Streamable HTTP |
-| Autenticação | Header `Authorization: Bearer SUA_CHAVE` em **toda** requisição |
+| Autenticação | Cabeçalho `Authorization: Bearer SUA_CHAVE` em **toda** requisição |
 
-A tela <DashboardLink path="/mcp">MCP</DashboardLink> do dashboard traz as configurações abaixo prontas para copiar e mostra quais ferramentas cada uma das suas chaves alcança.
+A tela <DashboardLink path="/mcp">Agentes de IA (MCP)</DashboardLink> do dashboard traz as configurações abaixo prontas para copiar e mostra quais ferramentas cada uma das suas chaves alcança.
 
 <Tabs>
   <TabItem label="Claude Code">
@@ -95,7 +95,7 @@ A tela <DashboardLink path="/mcp">MCP</DashboardLink> do dashboard traz as confi
     Reinicie o Claude Desktop depois de salvar o arquivo.
   </TabItem>
   <TabItem label="Frameworks de agente">
-    Configure o cliente MCP do framework com o endereço acima, transporte Streamable HTTP e o header de autorização. O nome da opção de transporte muda de um para outro: `streamable-http` no Agno e no CrewAI, `streamable_http` no LangGraph (via `langchain-mcp-adapters`).
+    Configure o cliente MCP do framework com o endereço acima, transporte Streamable HTTP e o cabeçalho de autorização. O nome da opção de transporte muda de um para outro: `streamable-http` no Agno e no CrewAI, `streamable_http` no LangGraph (via `langchain-mcp-adapters`).
 
     ```python title="agno_agent.py"
     from agno.tools.mcp import MCPTools
@@ -117,7 +117,7 @@ O endereço do servidor é o mesmo para todos os clientes do Turbo Notify. O que
 
 Use uma <DashboardLink path="/api-keys">chave de acesso</DashboardLink> comum. Uma chave com o template **Acesso total** alcança as 32 ferramentas, mas para um agente o recomendado é uma chave só com o necessário.
 
-Ao criar a chave no dashboard, o template **Agente de IA (MCP)** já marca o conjunto recomendado para um atendente: `messages:send`, `messages:read`, `contacts:read`, `groups:read`, `numbers:read` e `events:read`. Ele deixa de fora, de propósito:
+Ao criar a chave no dashboard, o template **Agente de IA (MCP)** já marca o conjunto recomendado para um atendente: `messages:send`, `messages:read`, `contacts:read`, `groups:read`, `numbers:read` e `events:read`. Ele deixa de fora:
 
 - `numbers:write`: reconectar e desconectar número é decisão de quem opera a conta, e reconectar pode gerar cobrança (veja [Reconectar pode cobrar](#reconectar-pode-cobrar)).
 - `contacts:write`: atualizar um contato faz uma consulta real ao WhatsApp.
@@ -185,8 +185,8 @@ Ao responder, reagir, editar, apagar ou começar a digitar, o número abre a con
 
 | Ferramenta | O que faz | Escopo |
 |---|---|---|
-| `list_numbers` | Lista o número principal e os extras | `numbers:read` |
-| `get_number` | Consulta o status de um número | `numbers:read` |
+| `list_numbers` | Lista o número principal e os extras, com o `external_id` de cada um (o identificador que você mesmo define, veja [Inclusão de números extras](/numbers/add/)). Aceita os filtros `status` e `external_id`, como a [listagem](/numbers/list/#filtros) | `numbers:read` |
+| `get_number` | Consulta o status de um número e o seu `external_id` | `numbers:read` |
 | `connect_number` | Reconecta um número desconectado, sem QR code | `numbers:write` |
 | `disconnect_number` | Desconecta um número sem desfazer a vinculação com o celular | `numbers:write` |
 
@@ -223,7 +223,7 @@ Para essas operações, use o <DashboardLink path="/numbers">dashboard</Dashboar
 
 ## Envio sem duplicar
 
-As ferramentas de envio e `reply_to_message` aceitam `idempotency_key`: qualquer texto ASCII imprimível de 1 a 255 caracteres, escolhido por você. Se a chamada falhar por tempo esgotado e o agente tentar de novo **com a mesma chave, no mesmo número**, a mensagem não é enviada duas vezes. Sem ela, repetir após um timeout pode entregar a mensagem em dobro, e o destinatário vê as duas.
+As ferramentas de envio e `reply_to_message` aceitam `idempotency_key`: qualquer texto ASCII imprimível de 1 a 255 caracteres, escolhido por você. Se a chamada falhar por tempo esgotado e o agente tentar de novo **com a mesma chave, no mesmo número**, a mensagem não é enviada duas vezes. Sem ela, repetir depois de um tempo esgotado pode entregar a mensagem em dobro, e o destinatário vê as duas.
 
 Use uma chave nova para cada mensagem nova, derivada de algo estável do seu lado (por exemplo o `id` do evento que o agente está respondendo). Uma chave fora do formato é recusada com uma mensagem que nomeia o campo.
 
@@ -242,7 +242,7 @@ dos dois se esgota. Ele é maior para comportar várias chaves atrás da mesma s
 exemplo, uma plataforma que hospeda agentes de vários clientes), mas, somadas, elas não passam de
 3000 requisições por minuto nem de 64 conexões de streaming. Os limites da própria API (ritmo
 de envio, cotas do plano) continuam valendo por trás de cada ferramenta: veja
-[Limites](/messages/rate-limits/) e [Quota e uso](/usage/quota/).
+[Limites](/messages/rate-limits/) e [Cota e uso](/usage/quota/).
 
 ## Erros
 
@@ -252,16 +252,16 @@ Quando uma ferramenta não consegue fazer o que foi pedido, o agente recebe o mo
 
 | Situação | O agente recebe | O que fazer |
 |---|---|---|
-| Chamada sem chave | Uma mensagem pedindo a chave no header `Authorization: Bearer` | Configure o header no cliente MCP. |
+| Chamada sem chave | Uma mensagem pedindo a chave no cabeçalho `Authorization: Bearer` | Configure o cabeçalho no cliente MCP. |
 | Argumento recusado antes de chegar à API | Uma mensagem que nomeia o campo | Corrija o argumento indicado. |
 | Argumento inválido | `invalid_request: <código>` | Corrija os argumentos e tente de novo. |
 | Número desconectado | `conflict: number_not_connected`, com a orientação para reconectar | Reconecte o número com `connect_number` (ou pelo dashboard, se o celular precisar ler um código de novo) e tente de novo. |
 | Número já no estado pedido | `conflict: already_connected`, `conflict: already_connecting` ou `conflict: already_disconnected` | Nada a fazer: numa repetição de `connect_number` ou `disconnect_number`, o número já está no estado pedido. |
 | Chave inválida ou revogada | `unauthorized: not_authorized` | Gere uma nova chave no dashboard. |
 | Chave sem o escopo da ferramenta | `unauthorized: insufficient_scope` | Veja o escopo na tabela de [ferramentas](#ferramentas) e use uma chave que o tenha. |
-| Cota, plano ou pagamento | `payment_required: <código>` e o objeto `details` completo | Veja [Quota e uso](/usage/quota/#erros). |
+| Cota, plano ou pagamento | `payment_required: <código>` e o objeto `details` completo | Veja [Cota e uso](/usage/quota/#erros). |
 | Não encontrado | `not_found: <código>` | Confira o identificador ou o `number_alias`. |
-| Limite de ritmo da API | `rate_limited: <código>`, com o tempo de espera quando houver | Espere o tempo indicado. |
+| Limite de velocidade da API | `rate_limited: <código>`, com o tempo de espera quando houver | Espere o tempo indicado. |
 | Falha temporária | `service_unavailable` | Tente de novo em instantes. |
 
 O `details` vai completo, sem resumo: é o que distingue uma cota que reseta no fim do ciclo de um recurso que o plano não inclui.
@@ -272,13 +272,15 @@ Estes são respondidos antes de qualquer ferramenta rodar, então quem os vê é
 
 | Resposta | O que aconteceu | O que fazer |
 |---|---|---|
-| `401 unauthorized` | Uma conexão de streaming foi aberta sem chave. | Envie o header `Authorization` também na conexão, não só nas chamadas. |
+| `401 unauthorized` | Uma conexão de streaming foi aberta sem chave. | Envie o cabeçalho `Authorization` também na conexão, não só nas chamadas. |
 | `429 too_many_streams` | Esta chave já mantém 8 conexões de streaming abertas, ou o endereço de origem já mantém 64. | Feche as que não usa, ou reduza os processos conectados com a mesma chave ou o mesmo endereço. |
 | `429 rate_limit_exceeded` | Mais de 600 requisições em um minuto com esta chave, ou mais de 3000 em um minuto vindas do mesmo endereço. | Respeite o `Retry-After` da resposta. |
 
 ## Exemplo completo
 
 O repositório <ExternalLink href="https://github.com/turbo-notify/examples">turbo-notify/examples</ExternalLink> traz um atendente de WhatsApp funcional construído sobre este servidor: recebe a mensagem pelo webhook, decide com um modelo e responde com `reply_to_message`. É código pequeno e comentado, feito para ser lido antes de ser rodado.
+
+Para montar o seu próprio agente, passo a passo, veja o guia [Construa um agente de IA](/guides/ai-agent/).
 
 ## Próximos passos
 

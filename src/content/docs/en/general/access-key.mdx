@@ -1,0 +1,67 @@
+---
+title: API key
+description: How to create, manage and revoke API keys to authenticate your requests to the Turbo Notify API.
+---
+
+import DashboardLink from '@components/DashboardLink.astro';
+
+To use the Turbo Notify API, you need a valid API key.
+
+Keys are managed in the dashboard, where you control who can interact with your account and your numbers.
+
+## Creating a key
+
+Create new keys in the dashboard, from the <DashboardLink path="/api-keys">API Keys</DashboardLink> menu. The API does not limit how many keys you have, so you can keep one per system or team.
+
+The key value is shown only once, when the key is created. Copy and store it right away: you will not be able to see it again.
+
+## Header
+
+Every API request must include the `Authorization` header with the API key. Without this header, no call is authorized.
+
+```http
+Authorization: Bearer YOUR_KEY
+```
+
+## Revocation
+
+Revoking an API key is **final and irreversible**. There is no temporary deactivation: once revoked, a key cannot be reactivated.
+
+Revoke the key in the dashboard. From then on, every request made with it is permanently blocked. The key still shows in the list with status `revoked` (for auditing), but it never works again.
+
+If you need to pause access temporarily, the way to do it is to **create a new key and revoke the old one** (rotation). Since there is no limit on keys per account, you can create the new one, migrate your integrations and only then revoke the previous one, with no downtime.
+
+## Permissions
+
+You cannot limit an API key to a specific number: within the scopes it carries (see [Scopes](#scopes)), every key reaches the account's main number and all of its extra numbers.
+
+If you resell numbers to your customers, keep the key on your platform's server and never hand it to an end customer. Identify each customer's number by the `external_id` you set when you [add the number](/en/numbers/add/): your platform decides which customer sees which number. The [resale guide](/en/guides/resale/) walks through the full flow.
+
+## Scopes
+
+Each key carries **permission scopes** that determine which operations it can call (for example `messages:send`, `messages:read`, `numbers:read`, `numbers:write`, `events:read`, `contacts:read`, `contacts:write`, `groups:read` and `organizations:read`). The API returns two different `403` errors:
+
+- `not_authorized`: the key is missing, invalid or revoked.
+- `insufficient_scope`: the key is valid but lacks the scope the endpoint requires. The response includes a `required_scope` field with the scope you need:
+
+```json
+{
+  "error": "insufficient_scope",
+  "required_scope": "messages:send"
+}
+```
+
+Each endpoint's error table lists the scope the operation requires.
+
+### Key for an AI agent
+
+To connect an agent through the [MCP server](/en/general/mcp-server/), create a key with the **AI agent (MCP)** template in the dashboard. It selects only what a support agent needs: `messages:send`, `messages:read`, `contacts:read`, `groups:read`, `numbers:read` and `events:read`. The [tool catalog](/en/general/mcp-server/#tools) shows the scope each tool requires, in case you prefer to adjust the key. Through the MCP server, the two `403` errors above reach the agent as `unauthorized: not_authorized` and `unauthorized: insufficient_scope`.
+
+### Key for resale
+
+If your platform sells numbers to its own customers, create the key with the **Resale** template in the dashboard. It selects `numbers:read`, `numbers:write`, `messages:send`, `messages:read`, `contacts:read` and `events:read`: what a platform needs to create, pair and follow one number per customer, and to send and receive messages on them. Note that `numbers:write` lets the key create numbers, and every number created is charged to the account's card. See the [resale guide](/en/guides/resale/).
+
+## Related
+
+- [Quickstart](/en/guides/quickstart/): your first send using the key.
+- [Organization](/en/organizations/overview/): an endpoint that requires the `organizations:read` scope.

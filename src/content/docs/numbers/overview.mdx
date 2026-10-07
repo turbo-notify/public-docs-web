@@ -54,15 +54,22 @@ Duas formas, que podem ser combinadas:
 
 - **Webhooks** `number.*` avisam assim que o número conecta, desconecta,
   falha, é revogado ou tem a remoção agendada, cancelada ou concluída, veja
-  [Webhook](/messages/webhook/).
+  [Webhook](/messages/webhook/). Todo evento `number.*` traz
+  `data.external_id` (texto ou `null`), o identificador que você deu ao número
+  no cadastro, para você encaminhar o evento ao cliente certo sem consultar
+  nada.
 - **Consulta** `GET /v1/numbers/{alias}` devolve o status atual e, durante o
   pareamento, o código a ser digitado. É a forma certa de mostrar o código,
   que não é enviado por webhook.
 
 ## Se você revende números
 
-Quando os números da sua conta pertencem aos seus clientes, é o seu cliente
-quem digita o código no celular dele. A página de
+Quando os números da sua conta pertencem aos seus clientes, cadastre cada
+número com o `external_id` do cliente no seu sistema: ele aparece nas
+consultas, nos webhooks e serve de filtro na listagem. O
+[guia de revenda](/guides/resale/) mostra o fluxo completo.
+
+É o seu cliente quem digita o código no celular dele. A página de
 [Pareamento](/numbers/pairing/#experiência-de-pareamento-recomendada)
 descreve a tela que permite a ele concluir sozinho: novo código a qualquer
 momento, mensagem certa para cada motivo de falha e o limite de tentativas

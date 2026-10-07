@@ -1,0 +1,97 @@
+---
+title: Message retention
+description: Two independent horizons, content (message text/media, per plan, 3 to 90 days) and metadata (that the message existed, fixed at 12 months). The same content window governs lookup by id, listing and webhook redelivery.
+---
+
+import ApiResponse from '@components/ApiResponse.astro';
+import DashboardLink from '@components/DashboardLink.astro';
+
+Turbo Notify applies two independent retention horizons to every message: one for the **content** (the text, caption or media reference, which is what lets you recover what was said) and another, much longer one, for the **metadata** (the record that the message existed: status, dates and times, participants). The two are never merged into a single number.
+
+## The two horizons
+
+- **Content retention (per plan, short):** how long `text`/`image`/`audio`/`video`/`document`/etc. (the field specific to the `content_type`) stays available through the API. After that period, Turbo Notify permanently removes the content from the database. It is not a read filter: the data is destroyed. **This is the shortest period Turbo Notify offers.**
+- **Metadata retention (fixed, 12 months, every plan):** how long the message record itself survives: that it existed, its final status, when it was sent/received, who took part. This horizon is **the same for every plan and cannot be adjusted**: it is an operational retention of Turbo Notify (auditing, billing reconciliation, quota history), not a plan benefit. A message outside the content window but within the 12 months still exists as a record, just without the content itself.
+
+Once a message leaves your plan's content window, the `preview` (a snippet of up to ~50 characters, see [About `preview`](/en/messages/get/#about-preview) in [Get a message](/en/messages/get/)) follows the **same window** as the rest of the content. `GET /v1/numbers/{alias}/messages/{id}` answers `404` for the whole resource, without returning `preview` separately, and the same window redacts `data.preview` in stored webhook redeliveries and removes the event from `GET /v1/events` responses. There is no path that still recovers the `preview` after that point.
+
+## Content retention window per plan
+
+| Plan | Content retention | Adjustable? |
+| ---- | -----------------:| ----------- |
+| `FREE`     | 3 days  | No |
+| `SOLO`     | 3 days  | No |
+| `BUSINESS` | 3 days (default), with the option of 30 or 90 days, your choice | Yes, in the <DashboardLink path="/billing">Billing settings of the dashboard</DashboardLink> |
+| `CUSTOM`   | Set by contract | No (set by the Turbo Notify team, not self-service) |
+
+Every plan starts at the same **3-day** floor, including `BUSINESS`, which can extend the window to 30 or 90 days when the use case calls for it (support, disputes, internal compliance). Extending the window is an explicit choice of your organization, not the platform default: the default on every plan is to keep as little as possible.
+
+With 3 days, every automatic webhook redelivery still carries the message's real content.
+
+`CUSTOM` keeps a longer fixed window, set by contract. It is a negotiated value, not self-service.
+
+## A single window governs lookup and webhook redelivery
+
+Content retention **is not two concepts disguised as one**: with the same number, it governs three things at once:
+
+1. Whether `GET /v1/numbers/{alias}/messages/{id}` still returns the message's full content.
+2. Whether that same lookup answers `404` (window expired) or `200` (within the window).
+3. Whether a **webhook redelivery attempt** (`message.*`) still carries the real content in the stored payload, or it has already been redacted.
+
+You will never see content present on one path and missing on the other for the same message. Looking up the message through the API and redelivering its webhook are, in practice, two ways of retrieving the same data Turbo Notify keeps on your behalf, and both follow exactly the same window.
+
+## Behavior of operations by id
+
+`GET /v1/numbers/{alias}/messages/{id}` (and the short route `GET /v1/messages/{id}` for the main number) returns **404** when the `id` is outside your plan's content retention window. It is the same response as for a message that never existed, without revealing that it once existed:
+
+<ApiResponse
+  status={404}
+  body={{
+    error: 'not_found',
+  }}
+/>
+
+This 404 **is not exclusive to the detail lookup**. Every route that takes a `{message_id}` applies the content retention window **before** running its own operation. That is why the window reaches, without exception, every operation below, both in the nested form and in the equivalent short route of the main number:
+
+| Operation            | Nested route                                           |
+| -------------------- | ------------------------------------------------------ |
+| Get message          | `GET /v1/numbers/{alias}/messages/{id}`                 |
+| Get status           | `GET /v1/numbers/{alias}/messages/{id}/status`          |
+| Receipt history      | `GET /v1/numbers/{alias}/messages/{id}/receipts`        |
+| List reactions       | `GET /v1/numbers/{alias}/messages/{id}/reactions`       |
+| Reply                | `POST /v1/numbers/{alias}/messages/{id}/reply`          |
+| Edit                 | `POST /v1/numbers/{alias}/messages/{id}/edit`           |
+| Delete               | `POST /v1/numbers/{alias}/messages/{id}/delete`         |
+| React                | `POST /v1/numbers/{alias}/messages/{id}/react`          |
+
+In all of them the response is the same `404 not_found`: **indistinguishable** from a message that never existed. In practice: you **cannot** check the status, fetch receipts or reactions, reply to, edit, delete or react to a message older than your plan's content window.
+
+## Behavior in listing
+
+`GET /v1/numbers/{alias}/messages` (cursor listing) **filters out** messages outside the content retention window: they simply do not appear on any page, without affecting the pagination of the messages still within the window.
+
+## Metadata survives 12 months, always
+
+Regardless of your plan or of the content window you chose, the message **record** (status, dates and times, participants, quota and billing link) is kept for **12 months, fixed and the same for every plan**: this metadata horizon cannot be configured, does not change when you switch plans, and is an operational retention of Turbo Notify (auditing, reconciliation, history), not a plan benefit. Moving to a higher plan or extending content retention **does not recover** content that was already removed for having passed the window in force at the time. The content horizon is, by definition, shorter than or equal to the metadata horizon, never the other way around.
+
+## Media durability (BYO Storage)
+
+For messages with media (image, video, audio, document, sticker), the durability of the **bytes** is independent of the content window above and is a privacy choice of Turbo Notify. Turbo Notify never runs a shared bucket where customers' media piles up:
+
+- **With [BYO Object Storage](/en/general/byo-storage-setup/) configured**: the bytes are copied to your bucket as soon as the message is received. They stay available for as long as your bucket keeps the object: under your full control, even after the message leaves the content retention window (the media reference is destroyed along with the rest of the content, but the bytes already live in your own bucket).
+- **Without BYO Storage**: only the metadata (mime type, size, hash, caption) is stored. The bytes are NOT relayed or stored by Turbo Notify. There is never a "we keep it for you in the meantime" mode. The media block (`image`/`video`/`audio`/`document`/`sticker`) returns `kind: "unavailable"` with a `setup_hint` object that explains how to set it up.
+
+There is no separate 24h window through the WhatsApp CDN. This is the only behavior. Details in [BYO Object Storage](/en/general/byo-storage-setup/).
+
+## Practical implications
+
+- Check the message status as soon as possible after sending. Do not rely on your plan's content retention window for long-term archiving.
+- Set up a [webhook](/en/messages/webhook/) to receive updates in real time instead of relying only on manual lookups.
+- Store in your system the data that matters to your business, such as the `message_id` and the final status. The API is not long-term storage for your conversation history.
+- Operations that depend on the original message ([reply](/en/messages/send/), [edit or delete](/en/messages/edit-delete/) and [react](/en/other-features/reaction/)) are **also** subject to the content retention window: trying any of them on a message outside the window returns `404 not_found`. If the `BUSINESS` plan extends the window to 30 or 90 days, these operations stay available for that longer period.
+- If you redeliver webhook deliveries manually from the dashboard, keep in mind that a redelivery made after the content window expired carries the redacted content, not the original. It is the same rule as the lookup by id.
+- The message and contact quotas per cycle are a different concept from retention: see [Quota and usage](/en/usage/quota/).
+
+## Status lookup
+
+To check the status of a message **within** your plan's content retention window, see the [Status](/en/messages/status/) documentation. Once the message leaves the window, that endpoint answers `404 not_found` like any other operation by id. That is why it pays to check (or receive via [webhook](/en/messages/webhook/)) and archive the final status as soon as possible.

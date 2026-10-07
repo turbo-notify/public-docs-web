@@ -1,0 +1,193 @@
+---
+title: Contact detail
+description: "GET /v1/numbers/{alias}/contacts/{contact_id} endpoint: the full payload, including the phone and the profile picture."
+sidebar:
+  order: 3
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+Returns the full payload of a contact, including the phone and the profile picture metadata.
+
+## Endpoint
+
+```http
+GET /v1/contacts/{contact_id}
+```
+
+For extra numbers: `GET /v1/numbers/{alias}/contacts/{contact_id}`
+
+**Required scope:** `contacts:read`.
+
+## Path parameter
+
+| Parameter | Type | Format |
+| --------- | ---- | ------ |
+| `contact_id` | string | `ct_{hex32}`: regex `^ct_[0-9a-f]{32}$` |
+
+## Example
+
+<Tabs>
+<TabItem label="cURL">
+```bash
+curl "https://api.turbonotify.com/v1/contacts/ct_a1b2c3d4e5f6789012345678901234ab" \
+  -H "Authorization: Bearer YOUR_KEY"
+```
+</TabItem>
+<TabItem label="Node">
+```ts
+const id = "ct_a1b2c3d4e5f6789012345678901234ab";
+
+const res = await fetch(`https://api.turbonotify.com/v1/contacts/${id}`, {
+  headers: { Authorization: "Bearer YOUR_KEY" },
+});
+const contact = await res.json();
+```
+</TabItem>
+<TabItem label="Python">
+```python
+import httpx
+
+contact_id = "ct_a1b2c3d4e5f6789012345678901234ab"
+
+r = httpx.get(
+    f"https://api.turbonotify.com/v1/contacts/{contact_id}",
+    headers={"Authorization": "Bearer YOUR_KEY"},
+)
+contact = r.json()
+```
+</TabItem>
+<TabItem label="Go">
+```go
+package main
+
+import (
+    "fmt"
+    "io"
+    "net/http"
+)
+
+func main() {
+    req, _ := http.NewRequest(
+        "GET",
+        "https://api.turbonotify.com/v1/contacts/ct_a1b2c3d4e5f6789012345678901234ab",
+        nil,
+    )
+    req.Header.Set("Authorization", "Bearer YOUR_KEY")
+    resp, _ := http.DefaultClient.Do(req)
+    defer resp.Body.Close()
+    body, _ := io.ReadAll(resp.Body)
+    fmt.Println(string(body))
+}
+```
+</TabItem>
+<TabItem label="PHP">
+```php
+<?php
+$url = 'https://api.turbonotify.com/v1/contacts/ct_a1b2c3d4e5f6789012345678901234ab';
+
+$options = [
+    'http' => [
+        'header' => ['Authorization: Bearer YOUR_KEY'],
+        'method' => 'GET'
+    ]
+];
+
+$context = stream_context_create($options);
+$result = file_get_contents($url, false, $context);
+$contact = json_decode($result, true);
+var_dump($contact);
+?>
+```
+</TabItem>
+<TabItem label="C#">
+```csharp
+var client = new HttpClient();
+client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+var response = await client.GetAsync(
+    "https://api.turbonotify.com/v1/contacts/ct_a1b2c3d4e5f6789012345678901234ab"
+);
+var result = await response.Content.ReadAsStringAsync();
+Console.WriteLine(result);
+```
+</TabItem>
+<TabItem label="Java">
+```java
+import java.net.http.*;
+import java.net.URI;
+
+public class ContactDetail {
+    public static void main(String[] args) throws Exception {
+        var client = HttpClient.newHttpClient();
+
+        var request = HttpRequest.newBuilder()
+            .uri(URI.create("https://api.turbonotify.com/v1/contacts/ct_a1b2c3d4e5f6789012345678901234ab"))
+            .header("Authorization", "Bearer YOUR_KEY")
+            .GET()
+            .build();
+
+        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.body());
+    }
+}
+```
+</TabItem>
+</Tabs>
+
+## Response (200)
+
+<ApiResponse
+  status={200}
+  body={{
+    id: 'ct_a1b2c3d4e5f6789012345678901234ab',
+    number_alias: 'main',
+    phone_number: '+5511988887777',
+    name: 'João Silva',
+    is_self: false,
+    first_messaged_at: '2026-05-10T13:25:00Z',
+    last_interaction_at: '2026-05-10T13:42:00Z',
+    verified_on_whatsapp_at: '2026-05-10T13:25:00Z',
+    picture: {
+      kind: 'available',
+      url: 'https://cdn.example.com/contacts/ct_a1b2.jpg',
+      url_expires_at: '2026-05-10T14:25:00Z',
+      hash: 'a3f1c9...',
+      fetched_at: '2026-05-10T13:25:00Z',
+    },
+    refresh: {
+      requested_at: '2026-05-10T13:40:00Z',
+      completed_at: '2026-05-10T13:40:06Z',
+      outcome: 'updated',
+    },
+    created_at: '2026-05-10T13:25:00Z',
+    updated_at: '2026-05-10T13:42:00Z',
+  }}
+/>
+
+The `number_alias` (right after `id`) identifies the Turbo Notify number this
+contact belongs to: `"main"` or the alias of an extra number (the same
+phone reached by two different numbers produces two distinct contacts). The
+`phone_number` is the **full E.164** (unmasked), the same number that
+appears in `message.from`/`message.to`. The `name` field is the name the
+contact set in their WhatsApp profile (the same `{id, name, number}` trio
+used by the `contact.*` events). The shape of `picture` depends on `kind`
+(`available` or `unavailable`), just like the media block of the
+events; when `kind` is `available`, the block itself carries `fetched_at`.
+The `pending` value only appears in webhook payloads: this read endpoint
+never returns it.
+
+### Interaction and refresh dates
+
+| Field | Meaning |
+| ----- | ------- |
+| `first_messaged_at` | When the first message sent by this number through Turbo Notify reached the contact on WhatsApp. `null` while none has arrived. A send that failed before reaching WhatsApp does not fill in this field. |
+| `last_interaction_at` | The last message actually exchanged with the contact, in either direction: received, sent from the phone, or sent through Turbo Notify and delivered to WhatsApp. A send that did not reach WhatsApp does not change this field. |
+| `refresh` | The last [refresh request](/en/contacts/refresh/) you made for this contact. `null` if you never made one. Carries `requested_at`, `completed_at` and `outcome`; the last two stay `null` while the refresh is in progress. |
+
+## Errors
+
+- `404 contact_not_found`: the contact does not exist, or belongs to another organization or to another number. A `contact_id` outside the `ct_{hex32}` format returns `400 invalid_contact_id`.
+
+See the [error reference](/en/contacts/errors/).

@@ -8,9 +8,9 @@ sidebar:
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-Liste os contatos de um número. Suporta filtros e paginação por cursor; os itens vêm do atualizado mais recentemente para o mais antigo.
+Liste os contatos de um número, com filtros e paginação por cursor. Os itens vêm do atualizado mais recentemente para o mais antigo.
 
-Os contatos são escopados por número: `{alias}` é `main` (número principal) ou o alias de um número extra, e o mesmo telefone alcançado por dois números diferentes corresponde a dois contatos distintos.
+Cada contato pertence a um número: `{alias}` é `main` (número principal) ou o alias de um número extra, e o mesmo telefone alcançado por dois números diferentes corresponde a dois contatos distintos.
 
 ## Endpoint
 
@@ -31,12 +31,12 @@ Para listar contatos de um número extra, use `/v1/numbers/{alias}/contacts` ond
 
 | Parâmetro | Tipo | Descrição |
 | --------- | ---- | --------- |
-| `limit` | int | 1–200 (default 50) |
+| `limit` | int | 1 a 200 (padrão 50) |
 | `cursor` | string | Token opaco retornado em `cursor` |
 | `phone` | string | Filtro exato por E.164 (`+5511...`) |
 | `name` | string | Correspondência parcial sobre o nome do contato |
-| `source` | enum | `inbound \| outbound \| self \| mention`: `mention` é o contato observado pela primeira vez por ter sido **mencionado** em uma mensagem; contatos criados por menção **não** consomem quota de contatos |
-| `contacted_in_cycle` | bool | Considera apenas contatos contactados via Turbo Notify dentro do ciclo de faturamento avaliado (novos ou recorrentes). Um envio que não chegou ao WhatsApp não conta |
+| `source` | enum | `inbound \| outbound \| self \| mention`: `mention` é o contato observado pela primeira vez por ter sido **mencionado** em uma mensagem; contatos criados por menção **não** ocupam a cota de contatos |
+| `contacted_in_cycle` | bool | Retorna apenas os contatos com quem você falou pelo Turbo Notify dentro do ciclo de faturamento atual (novos ou recorrentes). Um envio que não chegou ao WhatsApp não conta |
 
 ## Exemplo de request
 
@@ -47,7 +47,7 @@ curl -X GET "https://api.turbonotify.com/v1/contacts?limit=20" \
   -H "Authorization: Bearer SUA_CHAVE"
 ```
 
-Só os contatos que consumiram a quota do ciclo atual:
+Só os contatos que ocuparam a cota do ciclo atual:
 
 ```bash
 curl -X GET "https://api.turbonotify.com/v1/contacts?contacted_in_cycle=true" \
@@ -178,14 +178,14 @@ public class ListarContatos {
 />
 
 Cada item é o mesmo objeto retornado por [Detalhe](/contacts/detail/). O
-`phone_number` é o **E.164 completo** (sem máscara). A entidade de contato
-mantém seus timestamps de ciclo de vida distintos
-(`created_at`/`updated_at`/`first_messaged_at`/…), não é o eco de um evento.
+`phone_number` é o **E.164 completo** (sem máscara). O contato tem as suas
+próprias datas (`created_at`, `updated_at`, `first_messaged_at` e as demais),
+que não repetem as datas de um evento.
 
 `first_messaged_at` é quando a primeira mensagem deste número via Turbo Notify
 chegou ao contato no WhatsApp, e `last_interaction_at` é a última mensagem
 trocada de fato com ele, em qualquer direção. `refresh` mostra o último
-[refresh](/contacts/refresh/) que você pediu (`null` se nunca pediu). Os
+[pedido de atualização](/contacts/refresh/) que você fez (`null` se nunca fez). Os
 detalhes de cada campo estão em [Detalhe](/contacts/detail/).
 
 Veja também: [Detalhe](/contacts/detail/) · [Erros](/contacts/errors/).

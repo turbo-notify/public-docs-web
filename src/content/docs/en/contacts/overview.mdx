@@ -1,0 +1,69 @@
+---
+title: Contacts overview
+description: Learn what a Turbo Notify contact is, how it is created automatically from your messages, and which details are filled in for it.
+sidebar:
+  order: 1
+---
+
+A **Turbo Notify contact** is a record created automatically from the messages exchanged between a number in your organization and other people. It is not a CRM. The WhatsApp address book is not synced, and there are no endpoints to create or delete contacts manually.
+
+Each contact belongs to a number. For the **main number**, use the routes without an alias (`/v1/contacts`, `/v1/contacts/{id}`, `/v1/contacts/quota`, etc.) or the form with the `main` alias (`/v1/numbers/main/contacts`, `/v1/numbers/main/contacts/{id}`, etc.). Both are equivalent. For **extra numbers**, use `/v1/numbers/{alias}/contacts`. The same phone reached by two different numbers produces two distinct contacts.
+
+## Concept
+
+| Aspect | Behavior |
+| ------ | -------- |
+| Source | Messages (`inbound` or `outbound`), your own number (`self`) or a mention in a message (`mention`) |
+| Creation | Automatic, the first time the (number, phone) pair shows up in your organization |
+| Identifier | `ct_{hex32}`: stable public identifier |
+| Scope | Per number: the same phone reached by two numbers in the same organization produces **two distinct contacts**, with different `ct_` ids (the same goes for the same phone in different organizations) |
+| Persistence | No expiration: the contact stays as long as the organization exists |
+
+## Lifecycle
+
+```
+[Inbound] message.received ────────┐
+                                   ▼
+[Outbound] POST /v1/numbers/{alias}/messages ──► Contact created ──► Enrichment (name, picture)
+                                   ▲                            ▼
+[Self] number.connected ───────────┘                 Webhook: contact.created
+```
+
+1. **Discovery**: the first time the (number, phone) pair shows up in your organization, the contact is created with the matching `source`.
+2. **Additional details**: next, Turbo Notify fills in `name` and `picture`. If that step fails, the contact exists anyway, just without those details.
+3. **Quota**: each distinct contact you talk to through Turbo Notify within the current billing cycle (from `cycle_start` to `cycle_end`) takes one slot of the quota, whether the contact is new or returning. The quota only goes back to zero at `resets_at`.
+
+## Quota per plan
+
+| Plan       | Distinct contacts/cycle | Messages/cycle |
+| ---------- | -----------------------:| --------------:|
+| `FREE`     | 2        | 300        |
+| `SOLO`     | 100      | 1,800      |
+| `BUSINESS` | 5,000    | 50,000     |
+| `CUSTOM`   | 50,000   | 500,000    |
+
+Both quotas are **per number**: each number in the organization has its own
+allowance. Support can adjust an organization's allowance, always per number,
+never as a single cap for the whole account.
+
+## Sources (source)
+
+- `inbound`: first message received from that phone.
+- `outbound`: first message sent to that phone.
+- `self`: a number of your own organization (main or extra). Comes with `is_self=TRUE`.
+- `mention`: phone first seen when it was **mentioned** in a message. No messages were exchanged with it: the contact exists only as a reference and **does not take a slot of the contact quota**.
+
+## Out of scope
+
+- There is no `POST /v1/numbers/{alias}/contacts`: contacts come from messages.
+- There is no `DELETE /v1/numbers/{alias}/contacts/{id}`: contacts are not deleted manually.
+- The WhatsApp address book is not synced.
+
+## Next steps
+
+- [List contacts](/en/contacts/list/)
+- [Contact detail](/en/contacts/detail/)
+- [Profile picture](/en/contacts/profile-picture/)
+- [Send a message by contact\_id](/en/messages/send/#sending-by-contact_id)
+- [Webhook events](/en/webhooks/contact-events/)
+- [Quota and usage](/en/usage/quota/)

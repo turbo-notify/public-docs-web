@@ -133,6 +133,7 @@ Liste todos os números da sua conta (o principal e os extras) para consultar al
         alias: 'main',
         number: '5511973117056',
         description: null,
+        external_id: null,
         status: { status: 'connected', at: '2025-07-16T09:00:00Z', reason: null },
       },
       {
@@ -140,8 +141,9 @@ Liste todos os números da sua conta (o principal e os extras) para consultar al
         name: 'Condomínio Alpha',
         type: 'extra',
         alias: 'condominio_1',
-        number: '5511999999997',
+        number: '5511988887777',
         description: 'Avisos do condomínio 1',
+        external_id: 'cliente-4821',
         status: { status: 'connected', at: '2025-07-16T10:01:00Z', reason: null },
       },
       {
@@ -149,8 +151,9 @@ Liste todos os números da sua conta (o principal e os extras) para consultar al
         name: null,
         type: 'extra',
         alias: 'condominio_2',
-        number: '5511999999998',
+        number: '5511977776666',
         description: null,
+        external_id: 'cliente-4822',
         status: { status: 'connecting', at: '2025-07-16T10:05:00Z', reason: null },
       },
       {
@@ -158,8 +161,9 @@ Liste todos os números da sua conta (o principal e os extras) para consultar al
         name: null,
         type: 'extra',
         alias: 'condominio_3',
-        number: '5511999999999',
+        number: '5511966665555',
         description: null,
+        external_id: null,
         status: { status: 'pending', at: '2025-07-16T10:10:00Z', reason: null },
       },
     ],
@@ -168,8 +172,9 @@ Liste todos os números da sua conta (o principal e os extras) para consultar al
   }}
 />
 
-`GET /v1/numbers` sempre retorna **todos** os números vivos da organização:
-o **principal primeiro**, seguido pelos extras em ordem de criação.
+Sem filtros, `GET /v1/numbers` retorna **todos** os números cadastrados
+na organização: o **principal primeiro**, seguido pelos extras em ordem de
+criação.
 
 :::note[`status.at` acompanha o status atual]
 `status.at` é o momento em que o número **entrou no status atual**:
@@ -193,6 +198,30 @@ traz o momento da **exclusão agendada**, não uma transição de conexão.
 
 **Escopo obrigatório:** `numbers:read`
 
+## Filtros
+
+Dois filtros opcionais na query string reduzem a lista:
+
+| Parâmetro | Descrição |
+| --------- | --------- |
+| `status` | Só os números neste status. Aceita um dos valores da [Tabela de status](/numbers/status/#tabela-de-status), por exemplo `?status=failed`. Um valor fora da tabela responde `422 validation_error`. |
+| `external_id` | Só o número com este `external_id`, comparado de forma exata, por exemplo `?external_id=cliente-4821`. |
+
+Os dois filtros juntos se combinam: o número precisa atender aos dois. O
+número principal só aparece na lista quando atende aos filtros.
+
+```bash title="turbo-notify.sh"
+# Números da conta que falharam no pareamento
+curl -X GET \
+  "https://api.turbonotify.com/v1/numbers?status=failed" \
+  -H "Authorization: Bearer SUA_CHAVE"
+
+# O número do seu cliente 4821
+curl -X GET \
+  "https://api.turbonotify.com/v1/numbers?external_id=cliente-4821" \
+  -H "Authorization: Bearer SUA_CHAVE"
+```
+
 ## Campos da resposta
 
 | Campo | Tipo | Descrição |
@@ -205,7 +234,8 @@ traz o momento da **exclusão agendada**, não uma transição de conexão.
 | `data[].type` | string | `"main"` para o número principal (sempre o primeiro item) ou `"extra"` para números extras |
 | `data[].alias` | string | Identificador único do número na conta (`"main"` para o principal) |
 | `data[].number` | string | Número de telefone em dígitos E.164 (sem `+`) |
-| `data[].description` | string\|null | Descrição livre definida pelo usuário |
+| `data[].description` | string\|null | Descrição livre definida por você |
+| `data[].external_id` | string\|null | O seu identificador para este número, definido no [cadastro](/numbers/add/) ou na [atualização](/numbers/update/); `null` quando não definido |
 | `data[].status` | object | `{status, at, reason?}`: estado atual do número |
 | `data[].status.status` | string | `pending`, `pairing`, `inactive`, `connecting`, `connected`, `disconnected`, `reconnecting`, `failed`, `revoked` ou `pending_deletion`, veja [Tabela de status](/numbers/status/#tabela-de-status) |
 | `data[].status.at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`data[].status.status`): atualiza a cada transição. Exceção: em `status: "pending_deletion"`, é o momento da exclusão agendada. |
@@ -223,11 +253,12 @@ plano**. Todas as demais ([criar](/numbers/add/#erros-possíveis),
 [conectar/desconectar](/numbers/activation/#erros-possíveis) e
 [remover](/numbers/remove/#erros-possíveis)) exigem um plano com suporte a
 números extras e retornam `402 feature_not_available` caso contrário. Em uma
-conta que fez downgrade, você continua enxergando os números extras
-existentes, mas não consegue gerenciá-los.
+conta que mudou para um plano sem números extras, você continua enxergando
+os números extras existentes, mas não consegue gerenciá-los.
 
 | Status | Código de erro          | Descrição                                           |
 | :----: | ----------------------- | --------------------------------------------------- |
 | `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.         |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `numbers:read` (resposta inclui `required_scope`). |
+| `422`  | `validation_error`      | O filtro `status` tem um valor que não está na [Tabela de status](/numbers/status/#tabela-de-status). |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.                |

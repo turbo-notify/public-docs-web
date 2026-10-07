@@ -1,0 +1,69 @@
+---
+title: Group limitations
+description: What Turbo Notify offers and does NOT offer for WhatsApp groups, and which plan you need to send to them.
+---
+
+Turbo Notify's group support covers what you need to send and read
+messages and to react to group changes through webhooks. Group
+administration tasks (creating groups, managing members, changing settings)
+are **not** offered.
+
+## Not supported
+
+| Feature | State | Why |
+|---|---|---|
+| Create a group through the API | ❌ | Administration task, outside the focus on sending and receiving messages |
+| Add or remove a participant through the API | ❌ | Same as above |
+| Promote or demote an admin through the API | ❌ | Same as above |
+| List the participants of a group | ❌ | Privacy; the `group.participants_*` webhooks tell you who changed |
+| Edit the group name, description or image | ❌ | Administration task |
+| Generate a group invite link | ❌ | Administration task |
+| Broadcast lists | ❌ | A different feature from groups, not offered |
+| Channels (newsletters) | ❌ | Same as above |
+
+## Supported
+
+| Feature | Status |
+|---|---|
+| Receive messages from groups | ✅ (`message.received` webhook with `to.group_id` and `to.name`) |
+| Send messages to groups | ✅ (`POST /v1/numbers/{alias}/messages` with `to.group_id`), **requires the `BUSINESS` plan or higher** (see below) |
+| Send a typing indicator to groups | ✅ (`POST /v1/numbers/{alias}/typing-indicator` with `to.group_id`), **requires the `BUSINESS` plan or higher** (see below) |
+| Edit and delete messages in a group | ✅ |
+| React to messages in a group | ✅, requires a plan that includes reactions (reactions need a plan in any conversation, not only in groups) |
+| List the number's groups (`GET /v1/numbers/{alias}/groups`) | ✅ (cursor pagination: `cursor`, `limit`, `name`, `include_left`) |
+| Look up the detail of a group (`GET /v1/numbers/{alias}/groups/{id}`) | ✅ |
+| Get notified when the number joins or leaves a group | ✅ (`group.joined` / `group.left`) |
+| Get notified when the group name, description or image changes | ✅ |
+| Get notified when members are added, removed, promoted or demoted | ✅ |
+
+## Sending messages to a group requires the BUSINESS plan or higher
+
+Receiving group messages, listing and looking up groups through the API
+(`GET /v1/numbers/{alias}/groups`) and receiving the 10 lifecycle
+webhooks work on any plan. Only **sending** to a
+`group_id` (message or typing indicator) requires the
+`groups:messages` feature, available from the `BUSINESS` plan up. On `FREE`/`SOLO`
+the send is refused with `402 feature_not_available`. See
+[Send to a group](/en/messages/send/#sending-to-a-group),
+[Typing indicator in groups](/en/other-features/typing-indicator/#typing-indicator-in-groups)
+and [Quota and usage](/en/usage/quota/#sending-to-groups-requires-the-business-plan-or-higher).
+
+## Public identifier
+
+`grp_{hex32}` (32 hexadecimal characters). The WhatsApp identifier
+(`120363...@g.us`) **never** appears in the API or in webhooks: only the Turbo
+Notify format.
+
+## Quota and rate limit
+
+A message to a group counts as **1 recipient** in the daily recipients
+limit, no matter the size of the group. It does not count against the contact quota.
+
+## Recovery
+
+If you lose the name of a group (for example, if a webhook was not
+delivered), wait for the next message received in the group: the
+`message.received` webhook carries `to.name` (the group name).
+You can also call
+[`GET /v1/numbers/{alias}/groups/{id}`](/en/groups/overview/#querying-groups) at
+any time.

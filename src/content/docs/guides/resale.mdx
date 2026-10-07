@@ -1,0 +1,122 @@
+---
+title: Revenda para seus clientes
+description: Guia completo para plataformas que revendem WhatsApp. Um número por cliente com external_id, pareamento por código dentro da sua tela, eventos roteados por cliente, cobrança por número e remoção.
+---
+
+import DashboardLink from '@components/DashboardLink.astro';
+import Price from '@components/Price.astro';
+
+Se a sua plataforma (um CRM, um sistema de agendamento, um agente de IA) quer oferecer WhatsApp aos clientes dela, você pode fazer isso com uma única conta Turbo Notify: cada cliente final ganha um **número extra** na sua conta, pareado pelo celular dele, de dentro da sua tela. Você paga ao Turbo Notify um valor fixo por número e cobra dos seus clientes o que quiser.
+
+## Como funciona
+
+| Etapa | Quem faz | Como |
+|---|---|---|
+| Cadastrar o número do cliente | Sua plataforma | `POST /v1/numbers` com o `external_id` do cliente |
+| Parear | O cliente, no celular dele | Digita o código que a sua tela mostra |
+| Enviar e receber | Sua plataforma | API REST ou servidor MCP no alias do número, eventos no seu webhook |
+| Cobrar o cliente | Sua plataforma | O preço é seu |
+| Remover | Sua plataforma | `DELETE /v1/numbers/{alias}` |
+
+## O que você precisa
+
+- **Plano Empresarial (`BUSINESS`).** Números extras existem nos planos Empresarial e Personalizado. Uma conta comporta até **1.000** números extras; para mais, fale com sales@turbonotify.com sobre o plano Personalizado.
+- **Número principal conectado.** O pareamento de um número extra só acontece com o número principal da conta conectado; sem ele, o pareamento falha com `reason: "main_number_not_connected"`. Conecte-o como no [Começo rápido](/guides/quickstart/#2-conecte-o-número-principal) e acompanhe-o (`number.disconnected` e `number.revoked` com `alias: "main"`).
+- **Uma chave com o template Revenda.** Em <DashboardLink path="/api-keys">API Keys</DashboardLink>, o template **Revenda** marca `numbers:read`, `numbers:write`, `messages:send`, `messages:read`, `contacts:read` e `events:read`. A chave fica no servidor da sua plataforma; nunca a entregue a um cliente final. Veja [Chave de acesso](/general/access-key/).
+
+## Quanto custa
+
+Cada número extra custa <Price item="extraNumber" /> por mês, além do plano Empresarial (<Price item="businessPlan" /> por mês). Os valores aparecem na moeda da sua conta: real para contas no Brasil, dólar para os demais países. Cada número extra tem a franquia completa do plano, que no Empresarial é de 50.000 mensagens por ciclo, e não divide cota com os outros números.
+
+Você define quanto cobra de cada cliente. O Turbo Notify não cobra comissão sobre a sua venda.
+
+Ao cadastrar um número no meio do ciclo, a conta paga na hora o valor proporcional aos dias que faltam; a partir do ciclo seguinte, o número entra na fatura pelo valor cheio. O número só é criado se essa cobrança for aprovada. Detalhes em [Cobrança de números extras](/numbers/billing/).
+
+## 1. Cadastre um número por cliente
+
+Use o `external_id` para guardar o identificador do cliente no seu sistema. Ele é seu, não muda quando o alias muda e volta em todas as consultas e em todos os eventos `number.*`:
+
+```bash
+curl -X POST https://api.turbonotify.com/v1/numbers \
+  -H "Authorization: Bearer SUA_CHAVE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phone_number": "+5511988887777",
+    "alias": "cliente_4821",
+    "external_id": "4821",
+    "description": "Clínica Ana Souza"
+  }'
+```
+
+O mesmo exemplo em Node, Python, Go, PHP, C# e Java está em [Inclusão de números extras](/numbers/add/).
+
+- `alias` endereça o número em todas as rotas (`/v1/numbers/cliente_4821/messages`). Começa com uma letra e tem até 50 caracteres.
+- `external_id` tem de 1 a 128 caracteres e é único entre os números da conta. Repetir um que já está em uso responde `409 external_id_already_used`.
+- O número nasce com `status: "pending"`.
+
+Cada cadastro é uma cobrança real no cartão, então o ritmo de cadastros por conta é limitado: acima dele, a resposta é `429 number_creation_rate_limited` com o cabeçalho `Retry-After`, e nada é cobrado. Detalhes em [Inclusão de números extras](/numbers/add/).
+
+## 2. Pareie pelo celular do cliente
+
+O cliente conclui o pareamento sozinho, na sua tela, sem falar com você:
+
+1. Peça o código com `POST /v1/numbers/cliente_4821/pair`.
+2. Consulte `GET /v1/numbers/cliente_4821` a cada 2 segundos. Quando o bloco `pairing` vier preenchido, mostre `pairing.data` (o código, como `Z5X7-LTYL`) e a contagem regressiva até `pairing.expires_at`.
+3. Mostre ao cliente o caminho no celular: **WhatsApp > Dispositivos conectados > Conectar dispositivo > Conectar com número de telefone**, e digitar o código.
+4. Deixe **Gerar novo código** sempre visível. Um código digitado errado é invalidado na hora pelo WhatsApp, sem aviso a ninguém; o botão chama `POST .../pair` de novo e o novo código substitui o anterior.
+5. Encerre pelo resultado: `status: "connected"` é sucesso; `status: "failed"` traz o motivo em `reason`.
+
+Os pedidos de código são limitados por número e por conta, para que o próprio WhatsApp não bloqueie novos códigos. Em um `429 pairing_rate_limited`, mostre o tempo do cabeçalho `Retry-After` em vez de repetir. O passo a passo completo, com exemplos, está em [Pareamento](/numbers/pairing/#experiência-de-pareamento-recomendada).
+
+Depois de pareado, o número aparece em **Dispositivos conectados** no celular do cliente com o nome da sua organização.
+
+### O que dizer ao cliente quando falha
+
+| `reason` | Mensagem para o cliente |
+|---|---|
+| `pairing_timeout` | O código expirou antes de ser usado. Gere um novo código e digite em seguida. |
+| `paired_phone_mismatch` | O código foi digitado em outro WhatsApp. Use o celular do número cadastrado. |
+| `phone_already_bound` | Este número já está em uso. Fale com o suporte da plataforma. |
+| `main_number_not_connected` | Estamos com uma instabilidade. Tente de novo em alguns minutos. (Para você: reconecte o número principal.) |
+| `code_generation_failed` | O WhatsApp não gerou o código agora. Tente de novo em instantes. |
+| `connection_lost` | A conexão caiu durante o pareamento. Pareie de novo. |
+| `pairing_failed` | Não foi possível concluir. Tente de novo. |
+
+Trate um `reason` que você não conhece como `pairing_failed`. O mesmo motivo chega no webhook `number.connect.failed`.
+
+## 3. Um webhook para todos os clientes
+
+Cadastre um único webhook da conta em <DashboardLink path="/webhooks">Webhooks</DashboardLink>. Ele recebe os eventos de todos os números, e cada evento diz de qual número veio:
+
+- Os eventos `number.*` (conectado, desconectado, revogado, falha de pareamento, remoção) trazem `data.external_id`: encaminhe direto para o cliente certo.
+- Os eventos de mensagem trazem o `number_alias` no envelope. Guarde o par alias e `external_id` quando cadastrar o número, ou consulte `GET /v1/numbers?external_id=4821`.
+
+Para acompanhar a sua base, `GET /v1/numbers?status=failed` ou `?status=disconnected` lista os números que precisam de atenção. Quando um número é revogado no celular (`number.revoked`), avise o cliente e ofereça parear de novo.
+
+## 4. Envie e receba em nome do cliente
+
+Toda rota de mensagens, contatos e grupos fica debaixo do alias do número: `POST /v1/numbers/cliente_4821/messages`. Pelo [servidor MCP](/general/mcp-server/), as ferramentas aceitam `number_alias`. As cotas são de cada número, então o uso de um cliente não consome a franquia de outro.
+
+## 5. Remova quando o cliente sair
+
+1. Desconecte: `POST /v1/numbers/cliente_4821/disconnect`.
+2. Remova: `DELETE /v1/numbers/cliente_4821`.
+
+Se você remover um número logo depois de cadastrá-lo, antes de usá-lo, a cobrança do cadastro pode ser reembolsada automaticamente. Nos outros casos, o número continua ativo até o fim do ciclo já pago e é removido em seguida; até lá, a remoção pode ser cancelada. A resposta do `DELETE` diz o que aconteceu (`refund_eligible`, `refund_amount_cents`, `refund_status`, `scheduled_deletion_at`). Dúvidas sobre reembolso: billing@turbonotify.com. Veja [Remoção](/numbers/remove/).
+
+## Risco de bloqueio
+
+O Turbo Notify conecta cada número como um dispositivo, não usa a API oficial do WhatsApp Business (Meta). O ritmo de envio da plataforma reduz o risco de bloqueio, mas não o elimina, e quem decide é o WhatsApp. Oriente os seus clientes:
+
+- Enviar só para quem conhece o número e aceitou receber mensagens.
+- Começar devagar com um número novo; o Turbo Notify limita o volume dos primeiros dias.
+- Evitar a mesma mensagem para muitos destinatários em sequência.
+
+As práticas completas estão em [Evite bloqueios](/general/abuse/).
+
+## Próximos passos
+
+- [Pareamento](/numbers/pairing/): tela recomendada, limite de tentativas e cancelamento.
+- [Webhook](/messages/webhook/): todos os eventos `number.*` e os motivos de cada queda.
+- [Listagem de números](/numbers/list/): filtros por `status` e `external_id`.
+- [Cobrança de números extras](/numbers/billing/): valor proporcional, renovação e remoção.

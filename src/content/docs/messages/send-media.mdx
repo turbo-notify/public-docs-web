@@ -8,7 +8,7 @@ import ApiResponse from '@components/ApiResponse.astro';
 
 Mídia (imagens, áudios, vídeos, documentos e figurinhas) é enviada
 pelo mesmo endpoint `POST /v1/messages` usado para texto. Os campos de
-mídia ficam dentro do objeto **aninhado `content`**. O tipo é inferido
+mídia ficam dentro do objeto **`content`**. O tipo é reconhecido
 automaticamente pelo campo âncora presente (`image_url`, `video_url`,
 `audio_url`, `document_url` ou `sticker_url`).
 
@@ -32,8 +32,8 @@ Para enviar mídia a partir de um número extra, use `/v1/numbers/{alias}/messag
 
 ## Modalidade: URL pública
 
-Forneça uma URL HTTPS acessível publicamente. O Turbo Notify busca o
-arquivo antes de entregar ao WhatsApp.
+Informe uma URL HTTPS acessível publicamente. O Turbo Notify baixa o
+arquivo antes de entregá-lo ao WhatsApp.
 
 ### Imagem
 
@@ -45,7 +45,7 @@ arquivo antes de entregar ao WhatsApp.
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": {"number": "+5511999999999"},
+        "to": {"number": "+5511988887777"},
         "content": {
           "image_url": "https://cdn.exemplo.com/foto-produto.jpg",
           "mime_type": "image/jpeg",
@@ -63,7 +63,7 @@ arquivo antes de entregar ao WhatsApp.
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: { number: '+5511999999999' },
+        to: { number: '+5511988887777' },
         content: {
           image_url: 'https://cdn.exemplo.com/foto-produto.jpg',
           mime_type: 'image/jpeg',
@@ -84,7 +84,7 @@ arquivo antes de entregar ao WhatsApp.
             "Content-Type": "application/json",
         },
         json={
-            "to": {"number": "+5511999999999"},
+            "to": {"number": "+5511988887777"},
             "content": {
                 "image_url": "https://cdn.exemplo.com/foto-produto.jpg",
                 "mime_type": "image/jpeg",
@@ -96,10 +96,11 @@ arquivo antes de entregar ao WhatsApp.
   </TabItem>
 </Tabs>
 
-:::tip[Menções no caption]
+:::tip[Menções na legenda]
 O `caption` de imagem aceita tokens de menção `@<numero>` (por exemplo
-`"caption": "Confere essa foto, @5511987650000?"`) com as mesmas regras do
-`text` (detecção implícita, dígitos E.164 sem `+`, fail-open).
+`"caption": "Confere essa foto, @5511977776666?"`) com as mesmas regras do
+`text`: a menção é detectada no próprio texto, os dígitos vão em E.164 sem `+`
+e um token inválido fica como texto comum, sem impedir o envio.
 Veja [Menções (@mentions)](/messages/send/#menções-mentions).
 :::
 
@@ -113,7 +114,7 @@ Veja [Menções (@mentions)](/messages/send/#menções-mentions).
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": {"number": "+5511999999999"},
+        "to": {"number": "+5511988887777"},
         "content": {
           "video_url": "https://cdn.exemplo.com/clip-produto.mp4",
           "mime_type": "video/mp4",
@@ -131,7 +132,7 @@ Veja [Menções (@mentions)](/messages/send/#menções-mentions).
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: { number: '+5511999999999' },
+        to: { number: '+5511988887777' },
         content: {
           video_url: 'https://cdn.exemplo.com/clip-produto.mp4',
           mime_type: 'video/mp4',
@@ -152,7 +153,7 @@ Veja [Menções (@mentions)](/messages/send/#menções-mentions).
             "Content-Type": "application/json",
         },
         json={
-            "to": {"number": "+5511999999999"},
+            "to": {"number": "+5511988887777"},
             "content": {
                 "video_url": "https://cdn.exemplo.com/clip-produto.mp4",
                 "mime_type": "video/mp4",
@@ -176,7 +177,7 @@ O `caption` de vídeo também aceita [menções `@<numero>`](/messages/send/#men
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": {"number": "+5511999999999"},
+        "to": {"number": "+5511988887777"},
         "content": {
           "audio_url": "https://cdn.exemplo.com/audio.ogg",
           "mime_type": "audio/ogg"
@@ -193,7 +194,7 @@ O `caption` de vídeo também aceita [menções `@<numero>`](/messages/send/#men
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: { number: '+5511999999999' },
+        to: { number: '+5511988887777' },
         content: {
           audio_url: 'https://cdn.exemplo.com/audio.ogg',
           mime_type: 'audio/ogg'
@@ -213,7 +214,7 @@ O `caption` de vídeo também aceita [menções `@<numero>`](/messages/send/#men
             "Content-Type": "application/json",
         },
         json={
-            "to": {"number": "+5511999999999"},
+            "to": {"number": "+5511988887777"},
             "content": {
                 "audio_url": "https://cdn.exemplo.com/audio.ogg",
                 "mime_type": "audio/ogg",
@@ -244,7 +245,7 @@ descreve o formato.
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": {"number": "+5511999999999"},
+        "to": {"number": "+5511988887777"},
         "content": {
           "document_url": "https://cdn.exemplo.com/fatura.pdf",
           "mime_type": "application/pdf",
@@ -263,7 +264,7 @@ descreve o formato.
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: { number: '+5511999999999' },
+        to: { number: '+5511988887777' },
         content: {
           document_url: 'https://cdn.exemplo.com/fatura.pdf',
           mime_type: 'application/pdf',
@@ -285,7 +286,7 @@ descreve o formato.
             "Content-Type": "application/json",
         },
         json={
-            "to": {"number": "+5511999999999"},
+            "to": {"number": "+5511988887777"},
             "content": {
                 "document_url": "https://cdn.exemplo.com/fatura.pdf",
                 "mime_type": "application/pdf",
@@ -311,7 +312,7 @@ de documento também aceita [menções `@<numero>`](/messages/send/#menções-me
       -H "Authorization: Bearer SUA_CHAVE" \
       -H "Content-Type: application/json" \
       -d '{
-        "to": {"number": "+5511999999999"},
+        "to": {"number": "+5511988887777"},
         "content": {
           "sticker_url": "https://cdn.exemplo.com/sticker-animado.webp",
           "mime_type": "image/webp"
@@ -328,7 +329,7 @@ de documento também aceita [menções `@<numero>`](/messages/send/#menções-me
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        to: { number: '+5511999999999' },
+        to: { number: '+5511988887777' },
         content: {
           sticker_url: 'https://cdn.exemplo.com/sticker-animado.webp',
           mime_type: 'image/webp'
@@ -348,7 +349,7 @@ de documento também aceita [menções `@<numero>`](/messages/send/#menções-me
             "Content-Type": "application/json",
         },
         json={
-            "to": {"number": "+5511999999999"},
+            "to": {"number": "+5511988887777"},
             "content": {
                 "sticker_url": "https://cdn.exemplo.com/sticker-animado.webp",
                 "mime_type": "image/webp",
@@ -365,7 +366,7 @@ rejeitada mesmo que o WebP seja válido) e respeitar o limite de 500 KB.
 
 ## Esquema de campos (todos os tipos)
 
-Os campos de mídia ficam dentro do objeto `content`. O campo âncora (ex.: `image_url`) determina a variante. Todo envio de mídia é feito por URL pública; não existe modalidade de envio direto por chave de objeto do seu BYO Storage.
+Os campos de mídia ficam dentro do objeto `content`. O campo âncora (ex.: `image_url`) determina a variante. Todo envio de mídia é feito por URL pública; não é possível enviar um arquivo informando apenas a chave dele no seu BYO Storage.
 
 | Campo em `content` | Tipo | Obrigatório | Notas |
 |---|---|---|---|
@@ -395,7 +396,7 @@ A confirmação real chega via webhook `message.sent`. Em caso de falha
 ## Webhook outbound
 
 Quando o envio é confirmado pelo WhatsApp, o webhook `message.sent`
-carrega `content_type` e `preview` (mesmo shape de `message.received`):
+traz `content_type` e `preview` (mesmo formato de `message.received`):
 
 ```json title="webhook-message-sent.json"
 {
@@ -406,8 +407,8 @@ carrega `content_type` e `preview` (mesmo shape de `message.received`):
   "created_at": "2026-04-27T10:00:08Z",
   "data": {
     "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e8f90",
-    "from": { "alias": "main", "number": "5511999990001" },
-    "to":   { "number": "5511999999999" },
+    "from": { "alias": "main", "number": "5511973117056" },
+    "to":   { "number": "5511988887777" },
     "preview": "Foto do produto",
     "content_type": "image",
     "direction": "outbound",
@@ -429,4 +430,4 @@ pré-assinada de download.
 
 - [Envio de mensagens](/messages/send/): texto, localização, contato, calendário (mesmo endpoint).
 - [Webhook outbound](/messages/webhook/): payloads de `message.sent` e `message.delivered`.
-- [Consultar mensagem](/messages/get/): obter o body completo, inclusive mídia.
+- [Consultar mensagem](/messages/get/): obter o conteúdo completo, inclusive mídia.

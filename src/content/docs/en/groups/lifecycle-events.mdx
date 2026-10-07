@@ -1,0 +1,294 @@
+---
+title: Group lifecycle events
+description: The 10 webhooks Turbo Notify sends when your number joins or leaves a WhatsApp group or when the group changes.
+---
+
+Turbo Notify sends 10 dedicated webhooks when your number joins or leaves
+groups or when the state of a group changes. They all follow the
+`group.{action}` format, with the action in the past tense (as in
+`contact.name_changed`).
+
+| Type | When |
+|---|---|
+| `group.joined` | Your number was added to a group (or created one) |
+| `group.left` | Your number was removed, left, or the group was disbanded |
+| `group.name_changed` | The group name changed |
+| `group.description_changed` | The group description changed |
+| `group.picture_changed` | The group picture changed |
+| `group.settings_changed` | A setting changed (`announce`, `locked`, `ephemeral`, `parent`) |
+| `group.participants_added` | Other participants were added to the group |
+| `group.participants_removed` | Other participants were removed |
+| `group.participants_promoted` | Participants were promoted to admin |
+| `group.participants_demoted` | Admins were demoted |
+
+The `data` of each `group.*` event follows the same pattern as the `data` of `message.*`: the
+group's public id comes **at the top level** as `id` (`grp_{hex32}`), together with `name`,
+plus the standard context fields `direction: "inbound"` (group events
+come from WhatsApp), `channel: "whatsapp"` and `origin: "tn"`.
+
+> **The fields that say who performed the action come in two forms: check which one before using it.**
+> `participants[]` and some `*_by` fields are **person objects**
+> (`{contact_id, name, number}`, may be null); the other `*_by` fields are the **phone
+> as digits** (a string, e.g. `"5511988887777"`).
+>
+> - **Person object** (`{contact_id, name, number}`): `participants[]`, `added_by`,
+>   `removed_by` **in `group.participants_removed`**, `promoted_by`, `demoted_by`.
+> - **Phone as digits (string)**: `joined_by`, `removed_by` **in
+>   `group.left`**, and `changed_by` in the `group.name_changed`,
+>   `group.description_changed` and `group.settings_changed` events.
+>   `group.picture_changed` **has no `changed_by`**: the picture change is
+>   noticed by comparing the image hash, with no identifiable author.
+>
+> Watch out for the trickiest case: **`removed_by` changes form between the two
+> events that carry it**: it is a person object in `group.participants_removed` and a string in
+> `group.left`. In the fields that are strings, `*_by.number` is `undefined`: use the
+> value directly.
+
+> **The `at` field.** The events that reflect a real action on WhatsApp
+> (`group.name_changed`, `group.description_changed`, `group.settings_changed`,
+> `group.participants_added`, `group.participants_removed`,
+> `group.participants_promoted`, `group.participants_demoted` and `group.left`)
+> carry `data.at` with the **real moment of the action on WhatsApp** (different from the
+> envelope's `created_at`). `group.joined` and `group.picture_changed`, on the other hand,
+> do **not** carry `at`: they are situations Turbo Notify notices, with no single
+> moment of action on WhatsApp. In those cases, only the envelope's `created_at` applies.
+
+## Examples
+
+> The first example (`group.joined`) shows the **full envelope**. To keep
+> things short, the others show only `type` and `data`; the envelope is identical:
+> every `group.*` event carries `number_alias` (the identifier of the number that owns the event)
+> **right below `organization_id`**, together with `id` and
+> `created_at`.
+
+### `group.joined`
+
+```json
+{
+  "id": "evt_...",
+  "type": "group.joined",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "support",
+  "created_at": "2026-05-25T10:00:00Z",
+  "data": {
+    "id": "grp_9f6f0b37c98043e5835822eeae550e77",
+    "name": "Group A",
+    "joined_by": "5511988887777",
+    "creation": false,
+    "initial_participants_count": 7,
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn"
+  }
+}
+```
+
+- `id`/`name` are the public id (`grp_{hex32}`) and the group name at that moment (the group is the subject of the event).
+- `group.joined` does **not** carry `data.at`: it is the group entry as noticed by Turbo Notify, with no moment of action of its own on WhatsApp; use the envelope's `created_at`.
+- `joined_by` is the number (string of digits) of the admin who added your number. **Omitted** (key absent, never `null`) when the event comes from your own number creating the group (`creation=true`).
+
+### `group.left`
+
+```json
+{
+  "type": "group.left",
+  "data": {
+    "id": "grp_...",
+    "name": "Group A",
+    "removed_by": "5511988887777",
+    "reason": "removed",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-05-25T10:01:00Z"
+  }
+}
+```
+
+`reason` is informational: `removed` (removed by an admin), `left` (you left),
+`deleted` (group disbanded).
+
+### `group.name_changed`
+
+```json
+{
+  "type": "group.name_changed",
+  "data": {
+    "id": "grp_...",
+    "name": "Group A 2.0",
+    "old_name": "Group A",
+    "changed_by": "5511988887777",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-05-25T10:02:00Z"
+  }
+}
+```
+
+`name` is the **new (current)** group name; `old_name` is the previous name. There is no
+`new_name` field: `name` already carries the new name (same form as
+`contact.name_changed`).
+
+### `group.description_changed`
+
+```json
+{
+  "type": "group.description_changed",
+  "data": {
+    "id": "grp_...",
+    "name": "Group A 2.0",
+    "old_description": "...",
+    "new_description": "...",
+    "changed_by": "5511988887777",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-05-25T10:03:00Z"
+  }
+}
+```
+
+### `group.picture_changed`
+
+Sent **only** when a real group picture is successfully stored in your BYO Storage.
+The `picture` block follows the same lifecycle as message
+media: `kind: "available"` with a **presigned, time-limited** URL
+(`url_expires_at`, about 15 min) from your bucket, never a WhatsApp URL.
+Download the picture again through the GET endpoint when the URL expires.
+
+```json
+{
+  "type": "group.picture_changed",
+  "data": {
+    "id": "grp_...",
+    "name": "Group A 2.0",
+    "picture": {
+      "kind": "available",
+      "url": "https://<bucket>.r2.cloudflarestorage.com/groups/.../picture.jpg?...",
+      "url_expires_at": "2026-05-25T10:19:00Z",
+      "hash": "abc123..."
+    },
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn"
+  }
+}
+```
+
+`group.picture_changed` does **not** carry `data.at`: Turbo Notify notices the new
+picture, but with no single moment of action on WhatsApp; use the envelope's
+`created_at` to know when the event was sent.
+
+This event also does **not** carry `changed_by` or `picture.fetched_at`: the
+change is noticed by comparing the image hash, with no identifiable author, and the
+URL lifetime already shows in `picture.url_expires_at`. `fetched_at`
+appears in the two group **read** endpoints: `GET /v1/numbers/{alias}/groups`
+(list) and `GET /v1/numbers/{alias}/groups/{group_id}` (detail). Never in this webhook.
+
+Keep `picture.hash` to detect real changes, and download the picture again
+before the presigned URL expires (`url_expires_at`). To read the picture whenever
+you want, use [`GET /v1/numbers/{alias}/groups/{group_id}/picture`](/en/groups/picture/),
+where `{alias}` is the `number_alias` in this event's envelope (your number
+that takes part in the group).
+
+> **Prerequisite: BYO Storage.** This event is only sent when you have an
+> object storage integration enabled: Turbo Notify does not hand out
+> WhatsApp links. Without storage, the picture stays `unavailable` and no
+> `group.picture_changed` is sent. See how in
+> [Set up BYO Storage](/en/general/byo-storage-setup/).
+
+<a id="groups-picture-becomes-available"></a>
+
+> **The picture becomes available later.** If a group was seen while you
+> had no storage configured (or the group had no picture yet) and a picture reaches
+> BYO Storage later, Turbo Notify sends `group.picture_changed`
+> automatically as soon as the picture is saved to your bucket. You do not need to
+> sync anything again.
+
+### `group.settings_changed`
+
+One event per setting that changed (WhatsApp may report several
+changes at once; each one becomes an event).
+
+```json
+{
+  "type": "group.settings_changed",
+  "data": {
+    "id": "grp_...",
+    "name": "Group A 2.0",
+    "setting": "announce",
+    "old_value": false,
+    "new_value": true,
+    "changed_by": "5511988887777",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-05-25T10:05:00Z"
+  }
+}
+```
+
+`setting`: `announce` (only admins send messages), `locked` (only admins
+edit the group details), `ephemeral` (timer in seconds for disappearing
+messages) or `parent` (the group is linked to a community).
+
+### `group.participants_added`
+
+A single webhook per operation: all participants added together come in the same event.
+
+```json
+{
+  "type": "group.participants_added",
+  "data": {
+    "id": "grp_...",
+    "name": "Group A 2.0",
+    "participants": [
+      { "contact_id": "ct_...", "number": "5511555555555" },
+      { "number": "5511444444444" }
+    ],
+    "added_by": {
+      "contact_id": "ct_...",
+      "number": "5511988887777"
+    },
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-05-25T10:06:00Z"
+  }
+}
+```
+
+- `participants[]` lists who was added.
+- `added_by` is the admin who performed the action. **Omitted** (key absent, never
+  `null`) when it was not possible to identify who performed the action.
+- `contact_id` is filled in when the participant was already your
+  contact. Turbo Notify does not create contacts for participants seen only
+  in these events, to protect their privacy (LGPD) and to keep them out of your quota.
+
+### `group.participants_removed`
+
+Same form as `added`, with `removed_by` instead of `added_by`.
+
+### `group.participants_promoted`
+
+Same form, with `promoted_by` instead of `added_by`. Does not change the
+group's `participants_count`.
+
+### `group.participants_demoted`
+
+Same form, with `demoted_by`. Does not change `participants_count`.
+
+## Several changes at once
+
+When WhatsApp reports several changes at once (for example,
+name, description and 5 additions in the same update), Turbo Notify sends
+**one webhook per change**. That way you filter by the type you want without
+having to parse an event that comes in several shapes.
+
+## Idempotency
+
+In exceptional situations, the same event may be delivered more than once.
+Each event carries a unique `id` (`evt_…`), **the same across all delivery
+attempts**: use it as the key to drop duplicates on your side (store the `id`s
+you received and ignore any new delivery of the same `id`).

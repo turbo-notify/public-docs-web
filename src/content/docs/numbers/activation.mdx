@@ -291,8 +291,7 @@ resposta mais simples (só `alias` e `status`, sem o campo `at`):
 - `POST /v1/numbers/main/connect` → `202 Accepted`, `{"alias": "main", "status": "connecting"}`
 - `POST /v1/numbers/main/disconnect` → `202 Accepted`, `{"alias": "main", "status": "disconnecting"}`
 
-Nenhuma das duas depende do plano: estão sempre disponíveis, independente
-do tier. Ambas retornam `422 no_main_number_configured` quando não há número
+Nenhuma das duas depende do plano: estão sempre disponíveis. Ambas retornam `422 no_main_number_configured` quando não há número
 principal cadastrado na conta. No connect: `422 main_number_not_paired`
 quando o número existe mas ainda não concluiu o pareamento (pareie pelo
 dashboard primeiro), `409 already_connected` e `409 already_connecting`. No
@@ -307,11 +306,11 @@ disconnect: `409 already_disconnected` quando o número já está desconectado
 | Status | Código de erro              | Descrição                                                     |
 | :----: | ---------------------------- | ------------------------------------------------------------- |
 | `400`  | `no_payment_method`          | O número tinha exclusão agendada e a reativação exige cobrança, mas a organização não tem forma de pagamento cadastrada. O número continua com exclusão agendada. |
-| `402`  | `subscription_inactive`      | A assinatura da organização está `past_due`, `terminated`, `pending` ou com trial expirado (resposta inclui `details.status`). |
+| `402`  | `subscription_inactive`      | A assinatura da organização está `past_due`, `terminated`, `pending` ou com o período de teste expirado (resposta inclui `details.status`). |
 | `402`  | `feature_not_available`      | O plano atual não suporta números extras.                     |
 | `402`  | `payment_declined`           | A cobrança de reativação foi recusada. O número continua com exclusão agendada. |
 | `402`  | `payment_requires_authentication` | A forma de pagamento exige reautenticação (3DS). O número continua com exclusão agendada. |
-| `403`  | `no_device_link`             | O número extra não tem um vínculo de dispositivo ativo (estado inconsistente). |
+| `403`  | `no_device_link`             | O número extra não tem um vínculo ativo com o WhatsApp (estado inconsistente). |
 | `403`  | `extra_number_not_paired`    | O número extra ainda não concluiu o pareamento. Chame `POST /v1/numbers/{alias}/pair` primeiro. |
 | `404`  | `extra_number_not_found`     | O alias informado não corresponde a nenhum número cadastrado. |
 | `409`  | `already_connected`          | O número extra já está conectado.                              |

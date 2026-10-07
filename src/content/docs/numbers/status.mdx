@@ -133,10 +133,11 @@ Para verificar o status de um número extra específico, faça uma requisição 
     name: 'Condomínio Alpha',
     type: 'extra',
     alias: 'condominio_1',
-    number: '5511999999997',
+    number: '5511988887777',
     status: 'connected',
     at: '2025-07-16T10:01:00Z',
     description: null,
+    external_id: 'cliente-4821',
     scheduled_deletion_at: null,
     reason: null,
     pairing: null,
@@ -146,9 +147,9 @@ Para verificar o status de um número extra específico, faça uma requisição 
 :::note[Status do número principal]
 O número principal tem sua própria rota de status, `GET /v1/numbers/main`
 (mesmo escopo, `numbers:read`), com uma resposta mais enxuta: sem os
-campos `description`, `scheduled_deletion_at`, `reason` e `pairing` (o
-pareamento do número principal é feito exclusivamente pelo dashboard, não
-tem contrapartida na API pública):
+campos `description`, `scheduled_deletion_at`, `reason` e `pairing`, porque o
+número principal é pareado só pelo dashboard. `external_id` traz o valor
+definido com `PATCH /v1/numbers/main` (veja [Atualização](/numbers/update/#número-principal)), ou `null`:
 
 ```json
 {
@@ -158,7 +159,8 @@ tem contrapartida na API pública):
   "alias": "main",
   "number": "5511973117056",
   "status": "connected",
-  "at": "2026-04-07T10:00:00Z"
+  "at": "2026-04-07T10:00:00Z",
+  "external_id": null
 }
 ```
 :::
@@ -168,9 +170,10 @@ Diferente de [Listagem](/numbers/list/), que retorna a `description` real
 cadastrada, este endpoint (`GET /v1/numbers/{alias}`) hoje retorna
 `description` e `scheduled_deletion_at` sempre como `null`, independente do
 valor real. Quando o número está com `status: "pending_deletion"`, o
-timestamp da exclusão agendada aparece no campo `at` (não em
+momento da exclusão agendada aparece no campo `at` (não em
 `scheduled_deletion_at`). Para a descrição cadastrada, consulte
-[Listagem](/numbers/list/).
+[Listagem](/numbers/list/). `external_id`, por outro lado, traz o valor
+cadastrado.
 :::
 
 :::note[`at` acompanha o status atual]
@@ -209,6 +212,7 @@ da exclusão agendada (veja a nota acima).
 | `status` | string | Estado atual, veja [Tabela de status](#tabela-de-status) |
 | `at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`status`): atualiza a cada transição. Exceção: quando `status = "pending_deletion"`, é o momento da exclusão agendada. |
 | `description` | string\|null | Sempre `null` neste endpoint hoje, veja nota acima |
+| `external_id` | string\|null | O seu identificador para este número, definido no [cadastro](/numbers/add/) ou na [atualização](/numbers/update/); `null` quando não definido |
 | `scheduled_deletion_at` | string\|null | Sempre `null` neste endpoint hoje, veja nota acima |
 | `reason` | string\|null | Motivo da falha quando `status` é `"failed"`, veja [Motivos de falha](#motivos-de-falha); `null` em qualquer outro status |
 | `pairing` | object\|null | Informações de pareamento: presente apenas durante o processo de vinculação |

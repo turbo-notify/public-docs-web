@@ -151,9 +151,9 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
     reactions: [
       {
         from: {
-          number: '5511999990001',
+          number: '5511988887777',
           contact_id: 'ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
-          name: 'Maria Silva'
+          name: 'Ana Souza'
         },
         emoji: '👍',
         at: '2025-07-16T10:05:00Z',
@@ -161,7 +161,7 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
       },
       {
         from: {
-          number: '5511999990002'
+          number: '5511977776666'
         },
         emoji: '❤️',
         at: '2025-07-16T10:06:30Z',
@@ -192,7 +192,7 @@ Para listar as reações de uma mensagem, faça uma requisição `GET` informand
 | `reactions[].from.contact_id` | string | Identificador público do contato (`ct_{hex32}`). Omitido quando não disponível. |
 | `reactions[].from.name`  | string | Nome do remetente no WhatsApp. Omitido quando não disponível.                   |
 | `reactions[].emoji`      | string  | Emoji da reação.                                                         |
-| `reactions[].at`         | string  | Timestamp ISO 8601 de quando a reação foi registrada.                    |
+| `reactions[].at`         | string  | Data e hora ISO 8601 em que a reação foi registrada.                     |
 | `reactions[].direction`  | string  | `"inbound"` (reação de contato) ou `"outbound"` (reação do número da organização). |
 
 ## Erros possíveis

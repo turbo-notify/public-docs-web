@@ -1,0 +1,76 @@
+---
+title: Numbers overview
+description: The main number and extra numbers in Turbo Notify, the lifecycle of a number, and which route to use at each step.
+---
+
+Each WhatsApp number in your account sends and receives messages as a device
+linked to the WhatsApp of that phone, the same way WhatsApp Web works. The
+phone keeps working normally, and Turbo Notify shows up under **Linked
+devices** with the name of your organization.
+
+## Main number and extra numbers
+
+| | Main number | Extra numbers |
+| - | ----------- | ------------- |
+| How many | One per account | As many as your plan allows |
+| Alias | Always `main` | You choose it when adding the number |
+| Adding and pairing | In the dashboard | In the dashboard or through the API |
+| Billing | Included in the plan | Per number, see [Billing](/en/numbers/billing/) |
+
+Every message, contact and group route lives under the number:
+`/v1/numbers/{alias}/...`.
+
+## Lifecycle of an extra number
+
+| Step | What you do | Resulting status | Page |
+| ---- | ----------- | ---------------- | ---- |
+| Add | `POST /v1/numbers` | `pending` | [Adding](/en/numbers/add/) |
+| Pair | `POST /v1/numbers/{alias}/pair` and the code typed on the phone | `pairing`, then `connected` or `failed` | [Pairing](/en/numbers/pairing/) |
+| Track | `GET /v1/numbers/{alias}` or `number.*` webhooks | the current status | [Status](/en/numbers/status/) |
+| Disconnect and reconnect | `POST /v1/numbers/{alias}/disconnect` and `.../connect` | `disconnected`, `connecting`, `connected` | [Connection](/en/numbers/activation/) |
+| Remove | `DELETE /v1/numbers/{alias}` | removed right away or `pending_deletion` until the end of the cycle | [Removal](/en/numbers/remove/) |
+
+A connected number can go down: the connection to WhatsApp can drop, Turbo
+Notify can move the connection internally (maintenance, load balancing,
+recovery from an internal failure), or someone can remove the connection
+under **Linked devices** on the phone.
+
+When Turbo Notify can bring the number back on its own, the status is
+`reconnecting` while that happens. If the number comes back within the
+automatic reconnection window (about one minute), no webhook is sent: as far
+as you are concerned, the number never went down. If it does not come back in
+time, you receive `number.disconnected`, with `at` set to the moment the
+number went offline, and Turbo Notify keeps trying to reconnect.
+
+When the drop needs you, the notice arrives right away. If the connection was
+removed on the phone, you receive `number.revoked` and the number has to be
+paired again. The `reason` field of `number.disconnected` and
+`number.revoked` tells you what happened, see
+[Reasons](/en/messages/webhook/#disconnect-reasons).
+
+## Tracking changes
+
+Two ways, which can be combined:
+
+- **Webhooks** `number.*` tell you as soon as the number connects,
+  disconnects, fails, is revoked, or has its removal scheduled, canceled or
+  completed, see [Webhook](/en/messages/webhook/). Every `number.*` event
+  carries `data.external_id` (a string or `null`), the identifier you gave
+  the number when adding it, so you can route the event to the right
+  customer without looking anything up.
+- **Polling** `GET /v1/numbers/{alias}` returns the current status and,
+  during pairing, the code to type. This is the right way to show the code,
+  which is not sent by webhook.
+
+## If you resell numbers
+
+When the numbers in your account belong to your customers, add each number
+with the `external_id` of that customer in your system: it shows up in
+lookups and webhooks and works as a filter in the list. The
+[resale guide](/en/guides/resale/) walks through the full flow.
+
+Your customer is the one who types the code on their own phone. The
+[Pairing](/en/numbers/pairing/#recommended-pairing-experience) page
+describes the screen that lets them finish on their own: a new code at any
+time, the right message for each failure reason, and the attempt limit that
+protects their number.

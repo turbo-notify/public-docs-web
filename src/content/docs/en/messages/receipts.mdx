@@ -1,0 +1,229 @@
+---
+title: Receipt history
+description: Look up the history of delivery status changes (receipts) of a message sent through the Turbo Notify API.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+After a message is sent, WhatsApp returns delivery and read confirmations. The receipt history records these confirmations: `delivered` (delivered to the device) and `read` (read by the recipient), in ascending chronological order.
+
+## List receipts
+
+To list a message's receipt history, make a `GET` request with the `message_id` returned when you sent it.
+
+**Endpoint:** `GET /v1/messages/{message_id}/receipts` for the main number. For extra numbers, use `GET /v1/numbers/{alias}/messages/{message_id}/receipts`, where `{alias}` is the message's `number_alias`.
+
+**Required scope:** `messages:read`
+
+**Path parameters:**
+
+| Parameter    | Type   | Description                             |
+| ------------ | ------ | --------------------------------------- |
+| `alias` | string | *(extra number route only)* Alias of the number the message belongs to. |
+| `message_id` | string | Public message identifier (`msg_{hex32}`) |
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X GET \
+      https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/receipts \
+      -H "Authorization: Bearer YOUR_KEY"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch(
+      'https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/receipts',
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer YOUR_KEY'
+        }
+      }
+    );
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/receipts"
+    headers = {
+        "Authorization": "Bearer YOUR_KEY"
+    }
+
+    response = requests.get(url, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/receipts", nil)
+        req.Header.Set("Authorization", "Bearer YOUR_KEY")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/receipts';
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer YOUR_KEY'
+            ],
+            'method' => 'GET'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+    var response = await client.GetAsync(
+        "https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/receipts"
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/messages/msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7/receipts"))
+                .header("Authorization", "Bearer YOUR_KEY")
+                .GET()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+## Response examples
+
+### With full history (direct message)
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
+    receipts: [
+      { from: { contact_id: 'ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4', name: 'Ana Souza', number: '5511988887777' }, status: 'delivered', at: '2025-07-16T10:00:05Z' },
+      { from: { contact_id: 'ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4', name: 'Ana Souza', number: '5511988887777' }, status: 'read',      at: '2025-07-16T10:01:12Z' }
+    ]
+  }}
+/>
+
+### In a group (multiple recipients)
+
+The `contact_id` field appears only for participants who are already registered contacts in Turbo Notify. The `name` field (the WhatsApp display name) is independent: it can appear even without a `contact_id`. In the example below, Ana Souza is already a registered contact; Carlos Lima has a display name but is not a registered contact yet.
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
+    receipts: [
+      { from: { contact_id: 'ct_b1c2d3e4f5a6b1c2d3e4f5a6b1c2d3e4', name: 'Ana Souza',   number: '5511988887777' }, status: 'delivered', at: '2025-07-16T10:00:05Z' },
+      { from: { name: 'Carlos Lima', number: '5511977776666' }, status: 'delivered', at: '2025-07-16T10:00:08Z' },
+      { from: { contact_id: 'ct_b1c2d3e4f5a6b1c2d3e4f5a6b1c2d3e4', name: 'Ana Souza',   number: '5511988887777' }, status: 'read',      at: '2025-07-16T10:01:12Z' }
+    ]
+  }}
+/>
+
+### No receipts yet
+
+<ApiResponse
+  status={200}
+  body={{
+    message_id: 'msg_0198d3c5a1b24d3e9f01a2b3c4d5e6f7',
+    receipts: []
+  }}
+/>
+
+## Response structure
+
+| Field                    | Type    | Description                                                        |
+| ------------------------ | ------- | ------------------------------------------------------------------ |
+| `message_id`             | string  | Public message identifier.                                         |
+| `receipts`               | array   | List of status changes, in ascending chronological order.          |
+| `receipts[].from`            | object  | Who confirmed the receipt. Omitted when WhatsApp gives no information about who confirmed it. |
+| `receipts[].from.contact_id` | string  | Public contact identifier (`ct_{hex32}`). Omitted when not available. |
+| `receipts[].from.name`       | string  | WhatsApp display name (personal data, under your organization's responsibility). Omitted when not available. |
+| `receipts[].from.number`     | string  | E.164 number without `+` of who confirmed the receipt. Omitted when WhatsApp does not reveal the number of who confirmed it. |
+| `receipts[].status`      | string  | Status reached in this change (`delivered` or `read`).             |
+| `receipts[].at`          | string  | ISO 8601 date and time when the status was recorded.               |
+
+## Status table
+
+| Status      | Description                                                                 |
+| ----------- | --------------------------------------------------------------------------- |
+| `delivered` | Confirmation from WhatsApp that the message was delivered to the device.    |
+| `read`      | Confirmation from WhatsApp that the recipient read the message.             |
+
+> **Note:** Only confirmations sent by WhatsApp (`delivered` and `read`) are recorded as receipts. The `sent` status (sent to WhatsApp) can be checked with [`GET /v1/numbers/{alias}/messages/{id}/status`](/en/messages/status/).
+
+## Requires the BUSINESS plan or higher
+
+The detailed receipt history (`GET .../messages/{id}/receipts`) requires the `read_receipts` feature, available from the `BUSINESS` plan up. Organizations on `FREE`/`SOLO` receive:
+
+<ApiResponse
+  status={402}
+  body={{
+    error: 'feature_not_available',
+  }}
+/>
+
+This restriction applies to both routes (the nested `/v1/numbers/{alias}/messages/{id}/receipts` and the short `/v1/messages/{id}/receipts` route of the main number). The restriction does **not** affect the overall message status: [`GET .../messages/{id}/status`](/en/messages/status/) stays available on **every** plan, including `FREE`/`SOLO`. Only the **detailed** history, change by change, requires BUSINESS or higher.
+
+See [Quota and usage](/en/usage/quota/) for the limits and restrictions of each plan.
+
+## Possible errors
+
+| Status | Error code               | Description                                                                    |
+| :----: | ------------------------ | ------------------------------------------------------------------------------ |
+| `402`  | `feature_not_available` | Organization on the `FREE`/`SOLO` plan: the receipt history requires `BUSINESS` or higher. |
+| `403`  | `not_authorized`        | The API key is invalid or missing.                                             |
+| `403`  | `insufficient_scope`    | The API key does not have the `messages:read` scope.                           |
+| `404`  | `not_found`             | The message was not found, belongs to another organization, is outside your plan's [content retention window](/en/messages/retention/), or (on the nested route `/numbers/{alias}/messages/.../receipts`) belongs to a number other than the alias in the URL: all of these cases return the same response, with no distinction. |
+| `404`  | `message_not_found`     | *(only on the shortcut route without `{alias}`, `GET /v1/messages/{id}/receipts`)* The `message_id` exists but belongs to an extra number, not to the main number. |
+| `404` | `number_not_found` | *(only on the route with `{alias}`)* The alias in the URL does not match any registered number. |
+| `500`  | `internal_error`        | Unexpected internal server error.                                              |

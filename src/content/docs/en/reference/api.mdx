@@ -1,0 +1,43 @@
+---
+title: API reference
+description: Interactive reference of every Turbo Notify API endpoint, generated from the OpenAPI contract, with request testing from the browser and the Insomnia collection.
+---
+
+import { LinkButton } from '@astrojs/starlight/components';
+import DashboardLink from '@components/DashboardLink.astro';
+
+The interactive reference lists every API endpoint, with parameters, request bodies, responses and code examples, and lets you test each call from the browser with your own key. It is generated from the same OpenAPI contract the API publishes.
+
+<LinkButton href="/en/api-reference/" icon="right-arrow">Open the interactive reference</LinkButton>
+
+## Address and authentication
+
+| | |
+|---|---|
+| Base address | `https://api.turbonotify.com` |
+| Authentication | `Authorization: Bearer YOUR_KEY` header on every request |
+| Format | JSON (`Content-Type: application/json`) |
+
+Create the key in the dashboard, under <DashboardLink path="/api-keys">API Keys</DashboardLink>. See [API key](/en/general/access-key/).
+
+Message, contact and group routes exist in two forms: `/v1/numbers/{alias}/...` for any number of the account, and the short form without `/numbers/{alias}` (for example `/v1/messages`), which applies to the main number.
+
+## Test a request
+
+1. In the interactive reference, open the endpoint and click the test button.
+2. Under headers, add `Authorization` with the value `Bearer YOUR_KEY`.
+3. Send it. The request goes from your browser straight to `api.turbonotify.com`: the key does not pass through any other server.
+
+:::caution[These are real calls]
+A send test delivers a real message and uses the number's quota, and creating an extra number charges the account's card. For testing, prefer a key with read scopes only and revoke it afterwards.
+:::
+
+## Downloads
+
+### OpenAPI contract
+
+[openapi.json](/openapi.json) describes every endpoint in the OpenAPI 3.1 format. Tools such as Postman, Insomnia and client generators import the file directly.
+
+### Insomnia collection
+
+[turbo-notify-insomnia.yaml](/downloads/turbo-notify-insomnia.yaml) has ready-made requests, organized by resource, with example bodies. In Insomnia, import the file, pick the **Production** environment and fill in `apiKey` with your key.

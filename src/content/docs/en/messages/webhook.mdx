@@ -1,0 +1,1227 @@
+---
+title: Events via webhook
+description: "How to receive Turbo Notify events via webhook (HTTP push): the same data as the GET /events endpoint."
+---
+
+import DashboardLink from '@components/DashboardLink.astro';
+import ExternalLink from '@components/ExternalLink.astro';
+
+Turbo Notify notifies your system about events (confirmed send, delivery, read, received message, reaction, failure) via webhook (HTTP POST). The `data` object of each event is **identical** to the one returned by the [`GET /events`](/en/messages/polling/) endpoint.
+
+If an AI agent is the one replying, the usual setup is: the webhook delivers the event to your application, and the agent acts through the tools of the [MCP server](/en/general/mcp-server/) (for example `reply_to_message`). Without a public endpoint, the agent can read the same events with the `list_events` tool.
+
+## Receiving events
+
+To start receiving events, register your webhook URL in the <DashboardLink path="/webhooks">Dashboard</DashboardLink>. The URL must be public, reachable over HTTPS, and respond with a `2xx` status within 10 seconds.
+
+:::tip[Inspect and learn in real time]
+Before plugging the webhook into your application, open the <ExternalLink href="https://webhook.turbonotify.com">Webhook Inspector</ExternalLink> and register the URL it generates. The Inspector receives each delivery in real time (over WebSocket), shows full headers and body, validates the HMAC signature interactively, and suggests the typical next REST call for each event type (`message.received` → `GET /v1/numbers/{alias}/messages/{id}`). The `{alias}` comes from the `number_alias` field of the event envelope (`"main"` or the alias of an extra number).
+:::
+
+## Privacy
+
+We recommend that your webhook URL does not expose sensitive information, such as API keys or internal identifiers. Use generic paths and validate the authenticity of the request through the signature header.
+
+## Security
+
+Every webhook request sent by Turbo Notify includes the headers below. Use the signature to make sure the request was really sent by Turbo Notify and not by a third party.
+
+| Header | Description |
+|--------|-----------|
+| `X-Webhook-Signature` | `sha256=<hex>`: HMAC-SHA256 of `{X-Webhook-Timestamp}.{raw_body}` with your secret. |
+| `X-Webhook-Timestamp` | Unix epoch (seconds): use it to reject deliveries older than ~5 minutes (replay protection). |
+| `X-Webhook-Attempt` | Number of the current attempt (starts at 1, increases with each redelivery). |
+| `X-Webhook-Max-Attempts` | Total number of attempts Turbo Notify will make before giving up. |
+| `User-Agent` | `TurboNotify-Webhook/1.0`: useful to allow the requests through your web application firewall (WAF). |
+
+The secret is defined by **you**, in the <DashboardLink path="/webhooks">Dashboard</DashboardLink>, in the same form where you register the URL. Turbo Notify does not generate a secret: pick a long random value, store it in your application, and enter the same value on both sides.
+
+Signature validation example:
+
+```python title="validation.py"
+import hmac
+import hashlib
+
+def verify_signature(payload: bytes, timestamp: str, signature: str, secret: str) -> bool:
+    signed_data = f"{timestamp}.".encode() + payload
+    expected = "sha256=" + hmac.new(
+        secret.encode(),
+        signed_data,
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+# Usage:
+# timestamp = request.headers["X-Webhook-Timestamp"]
+# signature = request.headers["X-Webhook-Signature"]
+# verify_signature(request.body, timestamp, signature, secret)
+```
+
+```js title="validation.js"
+const crypto = require('crypto');
+
+function verifySignature(payload, timestamp, signature, secret) {
+  const signedData = `${timestamp}.${payload}`;
+  const expected = 'sha256=' + crypto
+    .createHmac('sha256', secret)
+    .update(signedData)
+    .digest('hex');
+  const expectedBuf = Buffer.from(expected);
+  const signatureBuf = Buffer.from(signature ?? '');
+  if (expectedBuf.length !== signatureBuf.length) return false;
+  return crypto.timingSafeEqual(expectedBuf, signatureBuf);
+}
+
+// Usage:
+// const timestamp = req.headers['x-webhook-timestamp'];
+// const signature = req.headers['x-webhook-signature'];
+// verifySignature(req.body, timestamp, signature, secret);
+```
+
+## Event structure
+
+Every webhook request follows the same base structure:
+
+| Property          | Type     | Description                                                               |
+| ----------------- | -------- | ------------------------------------------------------------------------- |
+| `id`              | `string` | Unique event identifier (`evt_…`). Use it as the idempotency key.         |
+| `type`            | `string` | Event type (e.g. `message.sent`).                                         |
+| `organization_id` | `string` | Public identifier of your organization (`org_{hex32}`). Always present.   |
+| `number_alias`    | `string` | Identifier of the Turbo Notify number the event belongs to: the alias itself, `"main"` for the main number or the alias of an extra number. Present in events tied to a specific number: `message.*`, `number.*`, `group.*`, all `contact.*` (including `contact.quota.*`) and `message.quota.*` (the message quota is per number). **Omitted** in `storage.*` **and** in `media.unavailable`, the events that do not belong to a single number. |
+| `created_at`      | `string` | Moment Turbo Notify **emitted** the event, distinct from `data.at` (moment of the action on WhatsApp). ISO 8601 in UTC with a `Z` suffix and second precision (e.g. `2026-06-01T13:00:05Z`). |
+| `data`            | `object` | Event-specific data (see [Message fields](#message-fields)). |
+
+:::note[Receipts and direction]
+The `message.delivered` and `message.read` events represent **delivery/read confirmations**. `direction` is always `"inbound"` (the confirmation comes from the recipient). The receipt is modeled as an inbound event:
+
+- **`from`** = who **triggered the receipt** (the contact that received/read it). Person format, **no `alias`**.
+- **`to`** = the **recipient of the receipt**: in direct conversations, your number (with `alias`); in groups, the **group** (`group_id` + `name`).
+
+Your number that received the receipt is identified by the `number_alias` of the envelope. For the details of that number, use `GET /v1/numbers/{alias}`.
+
+In **groups**, every other participant generates its own `delivered`/`read` pair, always with `from` = that participant and `to` = the group. Do not confuse this with `message.received`, where `direction="inbound"` reflects a new message coming from the contact.
+:::
+
+## Message fields
+
+All `message.*` events share the fields below in `data`:
+
+| Field | Type | Description |
+|-------|------|-----------|
+| `id` | `string \| null` | Public message identifier (`msg_{hex32}`). `null` only in `message.send.failed` (record not created). |
+| `from` | `object` | Who originated the event. Person (inbound): `{contact_id?, name?, number}`. Outbound: `{contact_id?, name?, alias, number}`. |
+| `to` | `object` | Recipient. 1:1 inbound: `{contact_id?, name?, alias, number}`, the `alias` is **always present** and identifies your number that received it. 1:1 outbound: `{contact_id?, name?, number}`. Group: `{group_id, name?}`. |
+| `preview` | `string` | Excerpt of the content (up to 50 characters). See [Preview by type](#preview-by-type). |
+| `content_type` | `string` | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, `contact`, `poll`, `interactive`. Messages of an unknown type arrive as `unsupported`. It is `""` (empty string) in `message.deleted`, `message.edit.failed` and `message.delete.failed`: those operations do not repeat the type of the original content. |
+| `direction` | `string` | `"outbound"` (action by your organization, through the API or the phone) or `"inbound"` (action by the contact, coming from WhatsApp). |
+| `channel` | `string` | Always `"whatsapp"`. |
+| `origin` | `string` | `"tn"` (action originated through the Turbo Notify API) or `"native"` (originated in the WhatsApp channel). Inbound events (`message.received`/`delivered`/`read`) are always `"native"`. Always present. |
+| `at` | `string` | ISO 8601 in UTC with a `Z` suffix and second precision (e.g. `2026-06-01T13:00:05Z`): moment of the **actual action on WhatsApp** (send, delivery, read, edit, etc.). Distinct from `created_at` (moment Turbo Notify emitted the event). |
+| `mentions` | `array` | **Optional**: present only when the message mentions someone, and **only** in the events that carry the message body: `message.received`, `message.replied`, `message.sent`, `message.edited`. Items `{contact_id?, name?, number}` (same format as the inbound `from`), in the order of the tokens in the text, without duplicates. An `@<digits>` in the `preview`/text is a mention **only** if the number is listed here. Absent in `delivered`/`read`/`deleted`/`reacted` and in the `*.failed` events. In `message.edited`, it is the set re-extracted from the **new** text. See [Mentions (@mentions)](/en/messages/send/#mentions-mentions). |
+
+> **Field order in `from`/`to`**: always
+> `contact_id, name, alias, number` (alias where it exists; optional fields
+> omitted when `null`). The group `to` is the exception: it keeps `{group_id, name?}`.
+> Your number involved in the event is identified by the `number_alias` of the envelope.
+> `created_at` (envelope) is the moment the event was **emitted**; `at` (in `data`)
+> is the moment of the **action on WhatsApp**: distinct values.
+>
+> `name` in `from`/`to` is the push name (display name) the contact set
+> on WhatsApp. Turbo Notify never infers it or looks it up in an
+> address book. It becomes available when the contact **has already sent
+> at least one inbound message to your organization** (that is how
+> WhatsApp delivers the push name), or when the destination number is itself
+> a Turbo Notify number of **another** organization whose name is already known.
+> Outside these two cases, in a `message.sent` to someone who never
+> appeared in either source, `to.name` is **omitted**: this is not an
+> error; treat the absence as "name not known yet", not as a delivery
+> failure.
+
+:::note[Outbound `at` is also the real WhatsApp moment]
+For **outbound** events (`message.sent`/`replied`/`edited`/`deleted`) and
+for the real-action `number.*` events, `data.at` is the
+**genuine moment of the action on WhatsApp** (the real send timestamp reported by
+WhatsApp), **not** the moment Turbo Notify emitted the event. That is why, in the examples
+below, `data.at` is typically **earlier** than the envelope `created_at`. The event
+is emitted a few moments after the action it describes. In failure events
+(`message.*.failed` and `number.connect.failed`) there is no completed action on
+WhatsApp: `data.at` is the moment the failure was detected.
+:::
+
+`message.*.failed` events add a structured `error` object: **the same
+format** as the `status.error` returned by `GET /v1/numbers/{alias}/messages/{id}` and
+`GET /v1/numbers/{alias}/messages/{id}/status`, so the event and the lookup say the same thing:
+
+| Field | Type | Description |
+|-------|------|-----------|
+| `error` | `object` | The failure error. Present in all `*.failed` events. |
+| `error.code` | `string` | Stable machine-readable code: branch on this value (e.g. `media_fetch_failed`, `unsupported_media_format`). |
+| `error.message` | `string` | Human-readable description of the failure. |
+| `error.hint` | `string` | Actionable guidance to fix it, derived from the `code`. **Omitted** (key absent, never `null`) when there is no guidance for the `code`. |
+
+### Preview by type
+
+| `content_type` | Preview |
+|---|---|
+| `text` | Truncated text |
+| `image` | Caption or `[Image]` |
+| `sticker` | `[Sticker]` |
+| `video` | Caption or `[Video]` |
+| `audio` | Transcription (when available) → caption → `[Audio]` |
+| `document` | Caption → file name → `[Document]` |
+| `location` | Readable text without brackets, e.g. `Av. Paulista, Sao Paulo, SP` |
+| `calendar` | No brackets: weekday and month abbreviated in English, time in UTC. E.g. `Meeting — Tue, 2 Jun 2026 14:00` |
+| `contact` | `[Contact: name]` or `[Contact]` when the card has no name |
+| `poll` | `""` (empty string) |
+| `interactive` | Body text (`body`) of the interactive message, or `[Interactive]` when the body is empty |
+| `unsupported` | `""` (empty string): message type not recognized by Turbo Notify |
+
+:::note[Mentions count as 1 character in the preview]
+Each `@<number>` mention token present in `data.mentions` counts as
+exactly **1 character** toward the ~50 limit of the `preview`, and the excerpt **never
+cuts a token in half**. A message with several mentions keeps more visible
+text than the raw count would suggest. A literal `@<digits>` that is **not**
+in `mentions` is plain text and counts character by character. The `preview` is
+byte-identical on every surface (webhook, polling, `GET`, listing).
+:::
+
+### Example: `message.sent` (outbound)
+
+```json title="webhook-payload.json"
+{
+  "id": "evt_b7adf529683940edcdc533081ae182c5",
+  "type": "message.sent",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T13:00:06Z",
+  "data": {
+    "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
+    "from": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "to": { "name": "João Silva", "number": "5511977776666" },
+    "preview": "Your message...",
+    "content_type": "text",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T13:00:05Z"
+  }
+}
+```
+
+`created_at` (`13:00:06`, emitted by Turbo Notify) is **distinct** from `data.at`
+(`13:00:05`, send confirmation on WhatsApp). The event was emitted 1 s after
+the action.
+
+The `number_alias` of the envelope identifies your number involved in the event. In outbound 1:1 conversations that number matches `from`.
+
+`origin` tells the source of the outbound send apart:
+- `"tn"`: sent through the Turbo Notify API.
+- `"native"`: detected directly from the WhatsApp app (when the organization types on the phone).
+
+`content_type` and `preview` mirror `message.received`: `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, `contact`, `poll` or `interactive`. For the full body, call `GET /v1/numbers/{alias}/messages/{id}`.
+
+### Example: `message.received` (inbound)
+
+```json title="webhook-payload.json"
+{
+  "id": "evt_2b09b39a44ffc0d3039251f995e4c284",
+  "type": "message.received",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T18:32:11Z",
+  "data": {
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "from": { "name": "João Silva", "number": "5511977776666" },
+    "to": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "preview": "Hi, I'd like to know...",
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "native",
+    "at": "2026-06-01T18:32:11Z"
+  }
+}
+```
+
+`from.name` carries the display name set on WhatsApp (push name); omitted when not set. The `number_alias` of the envelope resolves to `"main"` or the alias of the extra number that received the message.
+
+### Example: `message.received` (group)
+
+When a message arrives from a **WhatsApp group**,
+`to` carries `group_id` and the group name at the time of the event (`name`) instead of `number`.
+Your number that takes part in the group is identified by the `number_alias` of the envelope.
+`from` is still the participant who sent it: the sender is always a person, never the group.
+For 1:1 messages, `to.group_id` is omitted.
+
+```json title="message.received (group)"
+{
+  "id": "evt_c00a44c3fc774698b0f130d40bb5f104",
+  "type": "message.received",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-02T01:55:14Z",
+  "data": {
+    "id": "msg_e95500cc03c1492e81e46a77c1f0d420",
+    "from": {
+      "contact_id": "ct_45f2ece8a66a4eeaa661aeb9b8e58c77",
+      "name": "Ana Souza",
+      "number": "5511988887777"
+    },
+    "to": {
+      "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a",
+      "name": "TNT"
+    },
+    "preview": "Good morning, everyone",
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "native",
+    "at": "2026-06-02T01:55:14Z"
+  }
+}
+```
+
+- `to.group_id` is the public group identifier (`grp_{hex32}`), stable per organization. Raw WhatsApp JIDs are never exposed.
+- The `number_alias` of the envelope identifies your number that takes part in the group. Essential when the organization has several extra numbers.
+- To detect group messages: check `"group_id" in data.to`. 1:1 conversations never carry this field.
+
+### Example: `message.received` with mentions
+
+When the text (or the caption) mentions someone, the
+body arrives with the tokens already normalized to `@<number>` (E.164 digits without
+`+`) and `data.mentions` carries the matching contacts, already resolved:
+
+```json title="message.received (group, with mention)"
+{
+  "id": "evt_f11b55d4ed885709c1f241e51cc6f215",
+  "type": "message.received",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-07-03T12:15:02Z",
+  "data": {
+    "id": "msg_f06611dd14d2503f92f57b88d2f1e531",
+    "from": {
+      "contact_id": "ct_45f2ece8a66a4eeaa661aeb9b8e58c77",
+      "name": "Ana Souza",
+      "number": "5511988887777"
+    },
+    "to": {
+      "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a",
+      "name": "TNT"
+    },
+    "mentions": [
+      {
+        "contact_id": "ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+        "name": "João Silva",
+        "number": "5511977776666"
+      }
+    ],
+    "preview": "Hi @5511977776666, can you review the contract?",
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "native",
+    "at": "2026-07-03T12:15:01Z"
+  }
+}
+```
+
+- `mentions` appears **only** in the events that carry the message body
+  (`message.received`, `message.replied`, `message.sent`, `message.edited`) and
+  **only** when there are mentions.
+- An `@<digits>` in the text/`preview` is a mention **only** if the number is listed in
+  `mentions`. Otherwise it is plain text.
+- The same token you receive can be pasted back into a
+  [send with a mention](/en/messages/send/#mentions-mentions).
+
+### Example: `message.edited`
+
+```json title="message.edited (inbound: the contact edited the message)"
+{
+  "id": "evt_1f2e21dbffd042ed8913f047c40360e4",
+  "type": "message.edited",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T14:00:00Z",
+  "data": {
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "from": { "name": "João Silva", "number": "5511977776666" },
+    "to": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "preview": "Corrected message text",
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "native",
+    "at": "2026-06-01T14:00:00Z"
+  }
+}
+```
+
+```json title="message.edited (outbound: you edited the message through the API)"
+{
+  "id": "evt_918e22c6067759c500da08b4b58d1e8e",
+  "type": "message.edited",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T14:05:01Z",
+  "data": {
+    "id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
+    "from": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "to": { "name": "João Silva", "number": "5511977776666" },
+    "preview": "Updated message text",
+    "content_type": "text",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T14:05:00Z"
+  }
+}
+```
+
+### Example: `message.deleted`
+
+```json title="message.deleted (inbound: the contact deleted the message)"
+{
+  "id": "evt_5b285e5daa729a6dbbe721b7dbfb0572",
+  "type": "message.deleted",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T15:00:00Z",
+  "data": {
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "from": { "name": "João Silva", "number": "5511977776666" },
+    "to": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "preview": "",
+    "content_type": "",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "native",
+    "at": "2026-06-01T15:00:00Z"
+  }
+}
+```
+
+```json title="message.deleted (outbound: you deleted the message through the API)"
+{
+  "id": "evt_aee054157f581b985d932b19cd360a07",
+  "type": "message.deleted",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T15:05:01Z",
+  "data": {
+    "id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
+    "from": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "to": { "name": "João Silva", "number": "5511977776666" },
+    "preview": "",
+    "content_type": "",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T15:05:00Z"
+  }
+}
+```
+
+In `message.deleted`, both `preview` and `content_type` are **always
+`""` (empty string)**. The event only tells you the message was deleted, not
+what it contained. Do not branch on `content_type` here; use `data.id`
+to find the message on your side.
+
+### Example: `message.reacted`
+
+For `message.reacted`: `content_type` is always `"text"` and `preview` contains the emoji (or `""` for a removal). Use `GET /v1/numbers/{alias}/messages/{id}` for the full reaction details.
+
+```json title="message.reacted (inbound: the contact reacted to one of your messages)"
+{
+  "id": "evt_ba9178bb9becc1b3b37e4acc3aa31c93",
+  "type": "message.reacted",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T16:00:00Z",
+  "data": {
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "from": { "name": "João Silva", "number": "5511977776666" },
+    "to": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "preview": "👍",
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "native",
+    "at": "2026-06-01T16:00:00Z"
+  }
+}
+```
+
+```json title="message.reacted (outbound: you reacted to a message through the API)"
+{
+  "id": "evt_4b34400f674df225f2f38dd79eba6227",
+  "type": "message.reacted",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T16:05:01Z",
+  "data": {
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "from": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "to": { "name": "João Silva", "number": "5511977776666" },
+    "preview": "❤️",
+    "content_type": "text",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T16:05:00Z"
+  }
+}
+```
+
+To remove a reaction you sent earlier, send the `reaction` property as `null` in `POST /v1/numbers/{alias}/messages/{id}/react`. See [Send a reaction](/en/other-features/reaction/#remove-a-reaction). The `message.reacted` event is emitted with `preview: ""`.
+
+### Example: `message.replied` (inbound/outbound)
+
+Replies (messages that quote another one) are delivered as a dedicated event. `preview` contains the preview of the **new message** (the reply, not the quoted message). `quoted_message_id` identifies the quoted message in the `msg_<hex32>` format; omitted when the target could not be resolved (a message from before you used Turbo Notify, or removed by retention: use `GET /v1/numbers/{alias}/messages/{id}` to read `replied.message_id` and `replied.preview` in those cases).
+
+```json title="message.replied (inbound)"
+{
+  "id": "evt_cad607ebaa2f414ac955d3c726bb7e8b",
+  "type": "message.replied",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T13:00:00Z",
+  "data": {
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "from": { "name": "João Silva", "number": "5511977776666" },
+    "to": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "preview": "Yes, that's the order!",
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "native",
+    "quoted_message_id": "msg_c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6",
+    "at": "2026-06-01T13:00:00Z"
+  }
+}
+```
+
+```json title="message.replied (outbound: sent through the API)"
+{
+  "id": "evt_debdd6a4dc6642778f08bc4de99798c2",
+  "type": "message.replied",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T13:01:01Z",
+  "data": {
+    "id": "msg_b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
+    "from": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "to": { "name": "João Silva", "number": "5511977776666" },
+    "preview": "No problem, I'll check.",
+    "content_type": "text",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "quoted_message_id": "msg_c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6",
+    "at": "2026-06-01T13:01:00Z"
+  }
+}
+```
+
+To reply to a message through the API, use the dedicated endpoint `POST /v1/numbers/{alias}/messages/{message_id}/reply` (flat body). See [/en/messages/send/](/en/messages/send/).
+
+### Example: `message.delivered` / `message.read` (inbound receipt)
+
+Receipts are always **inbound**. `from` is who triggered the receipt; `to` identifies your organization's side (1:1: your number; group: the group). Your number is given by the `number_alias` of the envelope.
+
+```json title="message.delivered (1:1)"
+{
+  "id": "evt_f4702fbb477a28939969781b0a3f5964",
+  "type": "message.delivered",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T13:00:30Z",
+  "data": {
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "from": { "name": "João Silva", "number": "5511977776666" },
+    "to": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "preview": "Hi, I'd like to know...",
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "native",
+    "at": "2026-06-01T13:00:30Z"
+  }
+}
+```
+
+```json title="message.read (1:1)"
+{
+  "id": "evt_38059003a68e27e22391e62d7c8b94ac",
+  "type": "message.read",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T13:01:15Z",
+  "data": {
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "from": { "name": "João Silva", "number": "5511977776666" },
+    "to": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "preview": "Hi, I'd like to know...",
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "native",
+    "at": "2026-06-01T13:01:15Z"
+  }
+}
+```
+
+`preview` follows the same plan content retention window as the full message body: it is not permanent. Once that window has passed, `preview` and `transcription` (when present) carry a redaction marker instead of the original content in a webhook redelivery, and `GET /v1/events` no longer returns the event. Looking the message up by id in `GET /v1/numbers/{alias}/messages/{id}` returns `404 not_found` at the same moment. See [Message retention](/en/messages/retention/) for the full model (metadata: a fixed 12 months on every plan; content, including `preview`: FREE/SOLO a fixed 3 days, BUSINESS 3 days by default with the option of 30 or 90, CUSTOM set by contract).
+
+#### Group receipts: one per participant
+
+When you send a message to a **group**, **every other participant**
+generates its own `delivered` (on receiving it) and `read` (on reading it). In each
+receipt: `from` = that participant, `to` = the group. Your number that
+observed the receipt is given by the `number_alias` of the envelope.
+
+```json title="message.read (group): receipt from one participant"
+{
+  "id": "evt_7857525b786570587e8170fdc73a60aa",
+  "type": "message.read",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T13:01:15Z",
+  "data": {
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "from": { "name": "João Silva", "number": "5511977776666" },
+    "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
+    "preview": "Hi, team!",
+    "content_type": "text",
+    "direction": "inbound",
+    "channel": "whatsapp",
+    "origin": "native",
+    "at": "2026-06-01T13:01:15Z"
+  }
+}
+```
+
+- `from.number` changes with each participant that confirms; `to` (the group) and the `number_alias` of the envelope (your number) stay the same for every receipt of the same message.
+- To detect group receipts: check `"group_id" in data.to`.
+
+### Examples by `content_type` (inbound)
+
+The webhook envelope has the same structure for every inbound
+type. Only `data.content_type` and `data.preview` change. The
+snippets below show only the `data` object to reduce visual noise.
+
+To get the **full body** (text, vCard, coordinates, event
+description, media link, etc.), call `GET /v1/numbers/{alias}/messages/{id}`.
+
+#### `text`: plain text
+
+```json title="data: message.received (text)"
+{
+  "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "from": { "name": "João Silva", "number": "5511977776666" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "Hi, I'd like to know...",
+  "content_type": "text",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T18:32:11Z"
+}
+```
+
+> **Important:** replies (messages that quote another one)
+> are delivered as the dedicated **`message.replied`** event, never
+> as `message.received` with `content_type=reply`.
+
+#### `image`
+
+```json title="data: message.received (image)"
+{
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0010",
+  "from": { "name": "João Silva", "number": "5511977776666" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "Product photo",
+  "content_type": "image",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T18:34:01Z"
+}
+```
+
+Events do not include the `media` block. Call `GET /v1/numbers/{alias}/messages/{id}` to get the `image` block with the download URL.
+
+#### `video`
+
+```json title="data: message.received (video)"
+{
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0011",
+  "from": { "name": "João Silva", "number": "5511977776666" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "[Video]",
+  "content_type": "video",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T18:35:12Z"
+}
+```
+
+#### `audio`: voice message or music
+
+```json title="data: message.received (audio, without BYO STT)"
+{
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0012",
+  "from": { "name": "João Silva", "number": "5511977776666" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "[Audio]",
+  "content_type": "audio",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T18:36:08Z"
+}
+```
+
+```json title="data: message.received (audio, with BYO STT active: success)"
+{
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0012",
+  "from": { "name": "João Silva", "number": "5511977776666" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "Hi, can you confirm the order?",
+  "content_type": "audio",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "transcription": {
+    "kind": "available",
+    "text": "Hi, can you confirm the order?",
+    "language": "en"
+  },
+  "at": "2026-06-01T18:36:08Z"
+}
+```
+
+```json title="data: message.received (audio, with BYO STT active: failure)"
+{
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0012",
+  "from": { "name": "João Silva", "number": "5511977776666" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "[Audio]",
+  "content_type": "audio",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "transcription": {
+    "kind": "unavailable",
+    "reason": "timeout"
+  },
+  "at": "2026-06-01T18:36:08Z"
+}
+```
+
+In `GET /v1/numbers/{alias}/messages/{id}`, the typical `mime_type` of the `audio` block is `audio/ogg` (voice message) or `audio/mpeg` (music).
+
+When **BYO Speech-to-Text** is configured for the number, inbound audio messages gain the **`transcription`** field: a union discriminated by `kind` (omitted when the message is not audio):
+
+- **`{"kind": "available", "text": "...", "language"?: "pt"}`**: transcription completed; `language` is the BCP-47 code of the detected/configured language when available.
+- **`{"kind": "unavailable", "reason": "...", "hint"?: "..."}`**: transcription not available. `reason` is one of these 6 values: `not_configured`, `provider_error`, `file_too_large` (audio over 24 MB), `timeout`, `no_adapter` or `internal_error`. `hint` is optional guidance, written for whoever reads the event (with the link to the dashboard **Transcription** screen when there is something to adjust there).
+
+A transcription failure never blocks the message flow.
+
+#### `document`
+
+```json title="data: message.received (document)"
+{
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0013",
+  "from": { "name": "João Silva", "number": "5511977776666" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "invoice-april.pdf",
+  "content_type": "document",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T18:37:00Z"
+}
+```
+
+#### `sticker`
+
+```json title="data: message.received (sticker)"
+{
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0014",
+  "from": { "name": "João Silva", "number": "5511977776666" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "[Sticker]",
+  "content_type": "sticker",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T18:37:33Z"
+}
+```
+
+#### `location`
+
+```json title="data: message.received (location)"
+{
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0001",
+  "from": { "name": "João Silva", "number": "5511977776666" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "Av. Paulista, Sao Paulo, SP",
+  "content_type": "location",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T18:38:21Z"
+}
+```
+
+`preview` is the readable text without brackets. Full body via `GET /v1/numbers/{alias}/messages/{id}` in the `location` field with `latitude`, `longitude`, `name`, `address`, etc.
+
+#### `calendar`: calendar event
+
+```json title="data: message.received (calendar)"
+{
+  "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e0003",
+  "from": { "name": "João Silva", "number": "5511977776666" },
+  "to": { "alias": "main", "number": "5511973117056" },
+  "preview": "Sprint Planning — Mon, 1 Jun 2026 17:00",
+  "content_type": "calendar",
+  "direction": "inbound",
+  "channel": "whatsapp",
+  "origin": "native",
+  "at": "2026-06-01T18:40:00Z"
+}
+```
+
+Full body via `GET /v1/numbers/{alias}/messages/{id}` in the `calendar` field with `name`, `description`, `start_at`, `end_at`, etc.
+
+:::tip
+Want to see the event body rendered visually before plugging it into
+production? Register the URL generated by the <ExternalLink href="https://webhook.turbonotify.com">Webhook Inspector</ExternalLink>
+as your webhook and send a real test message. Each delivery arrives in
+real time, with full headers and body.
+:::
+
+## Event types
+
+Your webhook receives exactly the **42 event types** documented here,
+and no others. This
+page covers the **24** events of the `message.*`, `number.*`,
+`storage.*` and `media.*` families. The other **18** live in three
+dedicated pages: 6 `contact.*` events (including `contact.quota.*`) in
+[Contact events](/en/webhooks/contact-events/), 10 `group.*` events in
+[Lifecycle events](/en/groups/lifecycle-events/), and 2
+`message.quota.*` events in [Message quota events](/en/webhooks/message-quota-events/).
+They all arrive at the same configured endpoint. There is nothing to register
+separately.
+
+### Messages: send cycle
+
+| Type                      | When it is emitted                                                 |
+| ------------------------- | ------------------------------------------------------------------ |
+| `message.sent`            | Message sent successfully to WhatsApp (no quote).                  |
+| `message.send.failed`     | Failure sending a regular message (no quote).                      |
+| `message.delivered`       | Receipt: the recipient received a message you sent.                |
+| `message.read`            | Receipt: the recipient read a message you sent.                    |
+
+### Messages: replies (quotes)
+
+| Type                      | When it is emitted                                                 |
+| ------------------------- | ------------------------------------------------------------------ |
+| `message.replied`         | Reply sent or received (any `content_type`, in both directions).   |
+| `message.reply.failed`    | Failure sending a reply (through `POST /v1/numbers/{alias}/messages/{message_id}/reply`). |
+
+### Messages: receiving and operations
+
+| Type                      | When it is emitted                                                 |
+| ------------------------- | ------------------------------------------------------------------ |
+| `message.received`        | Message received from a contact (text, media, no quote).           |
+| `message.edited`          | A message was edited (yours or the contact's).                     |
+| `message.edit.failed`     | Failure editing a message.                                         |
+| `message.deleted`         | A message was deleted (yours or the contact's).                    |
+| `message.delete.failed`   | Failure deleting a message.                                        |
+| `message.reacted`         | A reaction was added or removed (`preview` = emoji or `""`).       |
+| `message.react.failed`    | Failure reacting to a message.                                     |
+
+### Numbers: lifecycle
+
+| Type                          | When it is emitted                                                |
+| ----------------------------- | ----------------------------------------------------------------- |
+| `number.created`              | Extra number created.                                             |
+| `number.connected`            | Main or extra number connected to WhatsApp.                       |
+| `number.disconnected`         | The number stayed disconnected beyond the automatic reconnection window. |
+| `number.connect.failed`       | Pairing/connection failure.                                       |
+| `number.revoked`              | Device unlinked by WhatsApp.                                      |
+| `number.remove.scheduled`     | Deletion of an extra number scheduled (grace period).             |
+| `number.remove.canceled`      | The scheduled deletion was canceled.                              |
+| `number.removed`              | Extra number was removed.                                         |
+
+All `number.*` events carry the common fields `alias`, `number` (when available) and `external_id`. `external_id` is always present, as a string or `null`: it is the identifier you gave the number when you created it or later, through `PATCH /v1/numbers/{alias}` (typically your end customer's id in your system). With it, a platform that resells numbers can route the event to the right customer without a lookup. `message.*` events keep identifying the number only by the `number_alias` of the envelope. The `name` field (the number's WhatsApp display name, captured on connection) is **optional** in all events and **omitted when null**. The `alias` `"main"` identifies the main number; any other value identifies an extra number. `number.connected`, `number.disconnected`, `number.connect.failed` and `number.revoked` can also carry `contact_id` (`ct_…`, the contact that represents the number itself), omitted when it does not exist yet. `number.disconnected` and `number.revoked` always carry `reason`, a stable code that says what happened (see [Disconnect reasons](#disconnect-reasons)).
+
+All `number.*` events also carry `channel` (always `"whatsapp"`) and `origin` (always `"tn"`: Turbo Notify is the one reporting the number's lifecycle). `number.*` events do **not** carry `direction`, because the number's lifecycle (creation, connection, disconnection, revocation, removal) is not an exchange of messages on WhatsApp.
+
+**Automatic reconnection.** When a number's connection drops and Turbo Notify can bring it back on its own (the connection to WhatsApp dropped, or Turbo Notify moved the connection during maintenance, a load redistribution or the recovery from a failure on its side), nothing is sent right away. If the number comes back within the automatic reconnection window (about one minute), **no** `number.disconnected` and **no** `number.connected` are sent: as far as you are concerned, the number never went down. If it does not come back in time, a single `number.disconnected` is sent at the end of the window, with `at` equal to the moment the number went offline; that is why this `at` can be about one to two minutes earlier than the envelope `created_at`. Turbo Notify keeps trying, and `number.connected` arrives when the number comes back. A disconnection that needs you is sent right away (see the reasons below).
+
+#### Disconnect reasons
+
+Use `reason` to decide what to show your customer. The values are stable and written from their point of view.
+
+| Event | `reason` | What happened and what to do |
+| ------ | -------- | ----------------------------- |
+| `number.disconnected` | `connection_lost` | The connection to WhatsApp dropped and did not come back within the automatic reconnection window. Turbo Notify keeps reconnecting: you do not need to do anything. |
+| `number.disconnected` | `service_interruption` | An interruption on Turbo Notify's side took the number offline. It comes back on its own; if it stays disconnected, connect it again (`POST /v1/numbers/{alias}/connect`). |
+| `number.disconnected` | `replaced_by_another_device` | Another connection took over this number's linked device. Sent right away. |
+| `number.disconnected` | `disconnected_by_request` | Someone in your account disconnected or removed the number. Sent right away. |
+| `number.revoked` | `logged_out_on_phone` | The device was logged out on the phone (WhatsApp, **Linked devices**). Pair the number again. |
+| `number.revoked` | `replaced_by_another_device` | Another connection took over this number's linked device and, for security, it was unlinked. Pair the number again. |
+
+The same code has the same meaning in every `number.*` event: the event type tells you the consequence (`number.disconnected`: the number is still paired and can come back; `number.revoked` and `number.connect.failed`: it has to be paired again). New reasons may be added. Treat a value you do not know as `connection_lost` in `number.disconnected` and as `logged_out_on_phone` in `number.revoked`.
+
+```json title="number.disconnected (example)"
+{
+  "id": "evt_6f0e1d2c3b4a59687766554433221100",
+  "type": "number.disconnected",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T13:06:21Z",
+  "data": {
+    "name": "Turbo Notify",
+    "alias": "main",
+    "number": "5511973117056",
+    "external_id": null,
+    "reason": "connection_lost",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T13:05:12Z"
+  }
+}
+```
+
+The `at` field (in `data`) carries the **moment of the actual action on WhatsApp**, and it is a value **distinct** from the envelope `created_at` (moment Turbo Notify emitted the event). The real-action events **`number.connected`**, **`number.disconnected`**, **`number.revoked`** and **`number.connect.failed`** carry `at` with that genuine WhatsApp moment (typically earlier than `created_at`); the events generated by Turbo Notify itself (**`number.created`**, **`number.remove.scheduled`**, **`number.remove.canceled`** and **`number.removed`**) do **not** carry `at`, only the envelope `created_at` (`number.remove.scheduled` carries `scheduled_at`, the moment the deletion will happen).
+
+```json title="number.connected (example)"
+{
+  "id": "evt_2dd89f2fad140cf3ba32f2ed9f289a22",
+  "type": "number.connected",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T13:00:01Z",
+  "data": {
+    "name": "Turbo Notify",
+    "alias": "main",
+    "number": "5511973117056",
+    "external_id": null,
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T13:00:00Z"
+  }
+}
+```
+
+`number.connect.failed` carries two fields about the failure: `error`, a
+human-readable message for your logs, and `reason`, a stable code to
+decide what to show your customer. The `reason` values are the same as the
+status `reason` field, listed in
+[Failure reasons](/en/numbers/status/#failure-reasons). Treat an unknown
+value as `pairing_failed`.
+
+```json title="number.connect.failed (example)"
+{
+  "id": "evt_4bcdecc36d67daab8f863f45a288c624",
+  "type": "number.connect.failed",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "vendas_sp",
+  "created_at": "2026-06-01T13:03:01Z",
+  "data": {
+    "alias": "vendas_sp",
+    "number": "5511988887777",
+    "external_id": "cliente-4821",
+    "error": "Pairing code expired without being used. Check that the number is registered on WhatsApp and try again.",
+    "reason": "pairing_timeout",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T13:03:00Z"
+  }
+}
+```
+
+### Storage and media
+
+Events related to the BYO Object Storage integration (AWS S3, Cloudflare R2, Supabase Storage) and to the availability of received media.
+
+:::note
+These events apply to any provider: the content is the same whichever provider is configured.
+:::
+
+:::caution[Received messages with media: delivered only once resolved]
+For **inbound messages with media** (image, video, audio, document, sticker), the `message.received` webhook is only sent after the media has a final outcome for your organization:
+
+- **With [BYO Storage](/en/general/byo-storage-setup/) active**: bytes saved in your bucket, or a permanent failure, signaled by `media.unavailable` (`reason`: `upload_failed` or `storage_circuit_open`).
+- **Without BYO Storage**: Turbo Notify **does not download or forward** the media hosted by WhatsApp. Every received message with media generates a `media.unavailable` with `reason: "no_storage"`, and the media block in `GET /v1/numbers/{alias}/messages/{id}` comes back unavailable with the same `reason`.
+
+Use `GET /v1/numbers/{alias}/messages/{id}` to access the `image`/`video`/`audio`/`document`/`sticker` block with the download URL (when available).
+:::
+
+#### Storage health
+
+| Type                          | When it is emitted                                                |
+| ----------------------------- | ----------------------------------------------------------------- |
+| `storage.degraded`            | The periodic checks of your bucket failed several times in a row. In the meantime, received media is not saved to the bucket. |
+| `storage.recovered`           | First successful check after a `storage.degraded`. Received media is saved to your bucket again. |
+
+#### Media availability
+
+| Type                          | When it is emitted                                                |
+| ----------------------------- | ----------------------------------------------------------------- |
+| `media.unavailable`           | The media could not be saved to your bucket (`reason`: `no_storage`, `storage_circuit_open`, `upload_failed`). |
+
+#### Example: `storage.degraded`
+
+```json title="webhook-payload.json"
+{
+  "id": "evt_85c989abd492e9905d8f038b981a4d6d",
+  "type": "storage.degraded",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T13:00:00Z",
+  "data": {
+    "reason": "healthcheck_failed",
+    "consecutive_failures": 5,
+    "error_code": "access_denied",
+    "affected_messages_count": 0,
+    "channel": "whatsapp",
+    "origin": "tn"
+  }
+}
+```
+
+#### Example: `storage.recovered`
+
+```json title="webhook-payload.json"
+{
+  "id": "evt_57b5936ddcfaa5c4a714c25321e62bb7",
+  "type": "storage.recovered",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T13:08:00Z",
+  "data": {
+    "degraded_since": "2026-06-01T13:00:00Z",
+    "duration_seconds": 480,
+    "channel": "whatsapp",
+    "origin": "tn"
+  }
+}
+```
+
+#### Example: `media.unavailable`
+
+```json title="webhook-payload.json"
+{
+  "id": "evt_42a7e38a04bef3cfe4f6a2cb6b387f06",
+  "type": "media.unavailable",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "created_at": "2026-06-01T14:15:30Z",
+  "data": {
+    "id": "msg_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    "content_type": "image",
+    "direction": "inbound",
+    "reason": "no_storage",
+    "channel": "whatsapp",
+    "origin": "tn"
+  }
+}
+```
+
+## Failure events
+
+Failure events share a common envelope and differ from one another in their set of extra fields. `id` can be `null` **only** in `message.send.failed` (when the record was not created).
+
+### `message.send.failed` / `message.reply.failed`
+
+```json title="message.send.failed"
+{
+  "id": "evt_e80780d9147341cab5a0791102f44c02",
+  "type": "message.send.failed",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T13:00:01Z",
+  "data": {
+    "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
+    "from": { "alias": "main", "number": "5511973117056" },
+    "to": { "number": "5511988887777" },
+    "preview": "Message that failed",
+    "content_type": "text",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "error": {
+      "code": "number_not_connected",
+      "message": "The number is not connected to WhatsApp.",
+      "hint": "The number was not connected to WhatsApp. Reconnect it, then send the message again."
+    },
+    "at": "2026-06-01T13:00:00Z"
+  }
+}
+```
+
+`from` and `to` are **always present** in every `message.*.failed` event,
+even when no message record was created (`id: null`).
+If the failure happens before the recipient is identified, `from` carries the
+number and alias that tried to send. The `error.hint` field carries the guidance
+for the code, as in the example above (`number_not_connected`: the number was
+not connected, reconnect it and send again), and it is **omitted** (not `null`)
+when there is no guidance for the code.
+
+### `message.edit.failed` / `message.delete.failed` / `message.react.failed`
+
+Unlike `message.send.failed`, these operations fail **on a message that already exists**: `id` is always present.
+
+```json title="message.edit.failed"
+{
+  "id": "evt_833a2144b32918475ce853581a753a5f",
+  "type": "message.edit.failed",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T13:05:01Z",
+  "data": {
+    "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
+    "from": { "alias": "main", "number": "5511973117056" },
+    "to": { "number": "5511988887777" },
+    "preview": "",
+    "content_type": "",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "error": {
+      "code": "edit_failed",
+      "message": "WhatsApp rejected the edit"
+    },
+    "at": "2026-06-01T13:05:00Z"
+  }
+}
+```
+
+WhatsApp only accepts edits on recent messages that have not been deleted. When it refuses, Turbo Notify emits `message.edit.failed` with `error.code: "edit_failed"`. Before that, `POST .../edit` itself already rejects messages that are not in an editable state, with `400 message_not_editable`. See [Edit and delete](/en/messages/edit-delete/).
+
+`message.delete.failed` follows exactly the same shape: only the value of
+`type` changes; `preview` and `content_type` are also `""`.
+
+`message.react.failed` differs in **one** point besides the `type`: its
+`content_type` is always the fixed literal `"text"` (a reaction is always text),
+while `edit.failed` and `delete.failed` carry `""`.
+
+## Group messages in outbound webhooks
+
+When you send a message to a group through
+`POST /v1/numbers/{alias}/messages` with `to.group_id`, the subsequent webhooks
+(`message.sent`, `message.delivered`, `message.read`,
+`message.send.failed`) use the same format: `to` carries
+`group_id` and the group name (`name`), and the `number_alias` of the envelope identifies your number that sent it:
+
+```json title="message.sent (outbound to a group)"
+{
+  "id": "evt_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "type": "message.sent",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-06-01T13:00:06Z",
+  "data": {
+    "id": "msg_01993c5a1b24d3e9f01a2b3c4d5e6f70",
+    "from": { "name": "Turbo Notify", "alias": "main", "number": "5511973117056" },
+    "to": { "group_id": "grp_e442553a56b14e2695f6acfd7d651b1a", "name": "TNT" },
+    "preview": "Good morning, team",
+    "content_type": "text",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-06-01T13:00:05Z"
+  }
+}
+```
+
+- `to.group_id` is the public identifier `grp_{hex32}`. The same value provided in `POST /v1/numbers/{alias}/messages`.
+- The `number_alias` of the envelope identifies your number that sent the message to the group.
+- To detect group messages: check `"group_id" in data.to`.
+
+## Mapping asynchronous operations
+
+API operations that trigger asynchronous processing expose `X-Request-ID` in the response header. Use `GET /v1/events?request_id=req_...` to query the operation's events and identify the outcome by the message `id` (`data.id`):
+
+| Operation                  | Success event                 | Failure event                     |
+| -------------------------- | ----------------------------- | --------------------------------- |
+| Send a message             | `message.sent`                | `message.send.failed`             |
+| Reply to a message         | `message.replied`             | `message.reply.failed`            |
+| Edit a message             | `message.edited`              | `message.edit.failed`             |
+| Delete a message           | `message.deleted`             | `message.delete.failed`           |
+
+Reactions and number operations are not covered by this filter. For a reaction,
+follow `message.reacted`/`message.react.failed` by the `data.id` of the
+target message. For numbers, follow `number.connected`,
+`number.connect.failed`, `number.remove.scheduled` and `number.remove.canceled`
+by `number_alias` (for example `GET /v1/events?number_alias=vendas_sp`).
+
+## Delivery attempts
+
+If your endpoint does not respond with a `2xx` status within 10 seconds, Turbo Notify reschedules the delivery following a Standard Webhooks style schedule, with a **random delay**: the actual delay of each attempt is a random value between 0 and the maximum shown, never a fixed value:
+
+| Attempt | Delay before this attempt |
+| :-------: | ----------------------------------------- |
+| 1         | None: initial delivery                     |
+| 2         | ~0 s (next redelivery cycle, ≤15 s)        |
+| 3         | up to 5 seconds                            |
+| 4         | up to 5 minutes                            |
+| 5         | up to 30 minutes                           |
+| 6         | up to 2 hours                              |
+
+After the 6th attempt fails, the event is marked as `dead_letter` and no further attempt is made.
+
+:::note[Redelivery requires the BUSINESS plan or higher]
+The redelivery schedule above is a plan feature, available from
+the `BUSINESS` plan up. Organizations on `SOLO` get **exactly
+1 attempt**: if that single attempt does not return `2xx`, the event is
+marked as `dead_letter` immediately, with no redelivery. The
+`X-Webhook-Max-Attempts` header, present in every delivery attempt, reflects
+this limit (`1` for `SOLO`; `6` for `BUSINESS`/`CUSTOM`). The `FREE` plan
+has no webhook delivery: follow the events through [polling](/en/messages/polling/).
+
+This only affects **redelivery** on failure. The first delivery attempt
+happens normally on every plan. See [Quota and
+usage](/en/usage/quota/) for the limits and restrictions of each plan.
+:::
+
+## Delivery guarantee and idempotency
+
+Turbo Notify delivers each event **at least once**. In exceptional situations, the same event may be delivered more than once. Use the `id` field to implement idempotency and avoid duplicate processing.
+
+### The `id` field as the idempotency key
+
+The `id` field (e.g. `evt_3f1c9a7e2b8d4c6fa0e15b7d9c2a4e68`) identifies the event uniquely and is **stable across delivery attempts**. If the same `id` reaches your endpoint twice, it is an automatic redelivery by Turbo Notify. The event was already processed on the first delivery.
+
+Store the `id` values you receive and ignore events whose `id` is already in your database:
+
+```js title="dedup.js"
+const seen = new Set();
+
+function handleEvent(event) {
+  if (seen.has(event.id)) {
+    return; // redelivery: already processed
+  }
+  seen.add(event.id);
+  // ... process
+}
+```
+
+In production, keep the `id` in a table or in a cache that holds it for at least three days.
+
+### Timestamps on redeliveries
+
+The `created_at` field (envelope) reflects the **moment Turbo Notify emitted the event**: when the event record is created and published, never the time the webhook was sent to your endpoint. When present, `at` (in `data`) reflects the **moment of the actual action on WhatsApp**. These are **distinct values**: an event can be emitted some time after the action it describes (events generated by Turbo Notify itself have no `at`). On redeliveries, both `created_at` and `at` stay **unchanged**: they are the same values as in the original attempt.
+
+This means that, when you receive a redelivery:
+- `created_at` is the emission moment; `at` (when present) is the moment of the action on WhatsApp, both fixed across attempts.
+- `X-Webhook-Attempt` increases with each attempt: use it for diagnostics, not for business logic.
+- `X-Webhook-Timestamp` reflects the time of the **current HTTP send** and is used for signature validation and replay protection; it is **not** the event timestamp.
+
+## Alternative: polling
+
+If you prefer to consume events on demand instead of exposing a public endpoint, use [polling via `GET /events`](/en/messages/polling/). The `data` object is the same as in the webhook.

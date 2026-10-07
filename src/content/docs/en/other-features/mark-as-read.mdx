@@ -1,0 +1,293 @@
+---
+title: Mark as read
+description: Manually mark the unread messages of a WhatsApp chat or group as read, without taking any other action.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+Marking messages as read tells WhatsApp that your application has read a chat's history, which shows the "blue ticks" to whoever sent the messages.
+
+## Automatic marking
+
+Turbo Notify already marks a chat's (or group's) unread messages as read automatically before sending, replying to, reacting to, editing or deleting a message in that same chat, and also when you [start typing](/en/other-features/typing-indicator/) (stopping typing reads nothing). This mirrors how a real WhatsApp app behaves: the number shows as online, the messages are read, and only then does the action happen, with no extra setup.
+
+The number goes back offline on its own a few minutes after the last interaction (this is the presence shown in WhatsApp: the number's connection and status do not change). Opening the conversation this way is automatic, uses no quota of its own (the send, reply or reaction counts as before) and produces no webhook event.
+
+Use the endpoint below only when you want to mark a chat as read without taking any other action on WhatsApp (the number also shows as online before reading), for example to keep your own application's inbox in sync with WhatsApp.
+
+An AI agent connected through the [MCP server](/en/general/mcp-server/) does the same with the `mark_as_read` tool (scope `messages:send`, same plan requirement), useful for triage or for handing the conversation to a person without replying.
+
+:::note[Requires the BUSINESS plan or higher]
+This endpoint requires the `read_receipts` feature, available from the `BUSINESS` plan. On the `FREE`/`SOLO` plans, the automatic marking described above keeps working as usual; only **manual** marking through this endpoint is blocked with `402`:
+
+<ApiResponse
+  status={402}
+  body={{
+    error: 'feature_not_available',
+  }}
+/>
+:::
+
+## Mark a chat as read
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="mark-as-read.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/messages/read \
+      -H "Authorization: Bearer YOUR_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": {"number": "+5511988887777"}
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="mark-as-read.js"
+    const response = await fetch('https://api.turbonotify.com/v1/messages/read', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer YOUR_KEY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: { number: '+5511988887777' }
+      })
+    });
+
+    console.log(response.status); // 202
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="mark_as_read.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/messages/read"
+    headers = {
+        "Authorization": "Bearer YOUR_KEY",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "to": {"number": "+5511988887777"}
+    }
+
+    response = requests.post(url, json=data, headers=headers)
+    print(response.status_code)  # 202
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="mark_as_read.go"
+    package main
+
+    import (
+        "fmt"
+        "net/http"
+        "strings"
+    )
+
+    func main() {
+        payload := strings.NewReader(`{"to": {"number": "+5511988887777"}}`)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/messages/read", payload)
+        req.Header.Set("Authorization", "Bearer YOUR_KEY")
+        req.Header.Set("Content-Type", "application/json")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        fmt.Println(resp.StatusCode) // 202
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="mark-as-read.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/messages/read';
+    $data = [
+        'to' => ['number' => '+5511988887777']
+    ];
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer YOUR_KEY',
+                'Content-Type: application/json'
+            ],
+            'method' => 'POST',
+            'content' => json_encode($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    file_get_contents($url, false, $context);
+    var_dump($http_response_header);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="MarkAsRead.cs"
+    using System.Text;
+    using System.Text.Json;
+
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+    var data = new {
+        to = new { number = "+5511988887777" }
+    };
+
+    var json = JsonSerializer.Serialize(data);
+    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+    var response = await client.PostAsync("https://api.turbonotify.com/v1/messages/read", content);
+    Console.WriteLine((int)response.StatusCode); // 202
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="MarkAsRead.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class MarkAsRead {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var json = """
+                {
+                    "to": {"number": "+5511988887777"}
+                }
+                """;
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/messages/read"))
+                .header("Authorization", "Bearer YOUR_KEY")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.statusCode()); // 202
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+Turbo Notify responds with an asynchronous acceptance:
+
+<ApiResponse
+  status={202}
+  body={{
+    operation_id: 'op_read_9f3c2a1d47e8',
+    status: { state: 'pending', at: '2025-07-16T10:00:00Z' },
+  }}
+/>
+
+The asynchronous acceptance only confirms that the request was queued. The unread messages are looked up when the request is processed; if there are none, nothing is marked as read (the number still shows as online) and no error is raised.
+
+## Available recipients
+
+The `to` field accepts exactly one of the three forms below, just like the [send message](/en/messages/send/) route:
+
+| Form | Example | When to use |
+| ---- | ------- | ----------- |
+| `number` | `{"number": "+5511988887777"}` | A known E.164 number |
+| `group_id` | `{"group_id": "grp_…"}` | A WhatsApp group |
+| `contact_id` | `{"contact_id": "ct_…"}` | The contact's ID in Turbo Notify (the phone number is looked up for you) |
+
+## Mark a group as read
+
+To mark the messages of a WhatsApp group as read, use `to.group_id` with the group's identifier instead of `to.number`. Since a group can have several people with unread messages, Turbo Notify groups the marking by sender within the group.
+
+:::note[Requires the BUSINESS plan or higher]
+Marking a group as read (like sending a message) also requires the
+`groups:messages` feature, available from the `BUSINESS` plan. On `FREE`/`SOLO`
+you still **receive** group messages, **list groups**
+(`GET /v1/numbers/{alias}/groups`) and get group details as usual. Only
+marking as read aimed at a `group_id` is blocked with `402`:
+
+<ApiResponse
+  status={402}
+  body={{
+    error: 'feature_not_available',
+  }}
+/>
+
+See [Quota and usage](/en/usage/quota/#sending-to-groups-requires-the-business-plan-or-higher)
+and [Group limitations](/en/groups/limitations/).
+:::
+
+```bash title="mark-as-read-group.sh"
+curl -X POST \
+  https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS/messages/read \
+  -H "Authorization: Bearer YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": {"group_id": "grp_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"}
+  }'
+```
+
+The `group_id` is the group's identifier in the `grp_{hex32}` format, returned by the [list groups](/en/groups/overview/) endpoint.
+
+## Mark as read by contact_id
+
+Use `to.contact_id` to mark as read the messages of a contact in your Turbo Notify contacts without giving the phone number directly. The phone number is taken from the contact's record.
+
+```bash title="mark-as-read-contact.sh"
+curl -X POST \
+  https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS/messages/read \
+  -H "Authorization: Bearer YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": {"contact_id": "ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"}
+  }'
+```
+
+## Mark as read from an extra number
+
+In the nested form, the number that marks the messages as read is **always the alias in the path**. To mark messages as read from a registered, active [extra number](/en/numbers/add/), use that form with the number's alias in place of `{alias}`:
+
+```bash title="mark-as-read.sh"
+curl -X POST \
+  https://api.turbonotify.com/v1/numbers/vendas-sp/messages/read \
+  -H "Authorization: Bearer YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": {"number": "+5511988887777"}
+  }'
+```
+
+The two forms handle the acting number differently:
+
+- **Nested** (`POST /v1/numbers/{alias}/messages/read`): the number that marks the messages is always the alias in the path.
+- **Flat** (`POST /v1/messages/read`): **always** marks from the main number (`main`).
+
+**To mark messages as read from an extra number, you must use the nested form**, with the extra number's alias in the URL path.
+
+If the alias in the path is not registered, or the number is not active, the request is
+rejected.
+
+Learn more about [extra numbers](/en/numbers/add/).
+
+## Webhook events
+
+Marking as read has no completion confirmation: the `202 Accepted` only confirms the
+asynchronous acceptance, and **no webhook event** is delivered for these requests. Your
+application already knows it made the call; there is no one else to notify.
+
+## Possible errors
+
+| Status | Error code              | Description                                        |
+| :----: | ----------------------- | -------------------------------------------------- |
+| `400`  | `contact_not_found`     | The `contact_id` given in `to` does not belong to this organization. |
+| `400`  | `contacts_not_enabled`  | Marking by `contact_id` is unavailable right now. Try again later; if it persists, contact support. |
+| `400`  | `groups_not_enabled`    | Group features are unavailable right now. Try again later; if it persists, contact support. |
+| `400`  | `invalid_recipient`     | The recipient given in `to` could not be resolved to a sendable address. Giving none, or more than one, of `number`, `group_id` and `contact_id` returns `422 validation_error`. |
+| `402`  | `feature_not_available` | The feature is not available on your plan. |
+| `403`  | `not_authorized`        | The API key is invalid or missing.                 |
+| `403`  | `insufficient_scope`    | The API key does not have the `messages:send` scope (the response includes `required_scope`). |
+| `404`  | `number_not_found`      | The `{alias}` in the path does not match any number on the account (on the flat route: the account has no main number yet). |
+| `404`  | `group_not_found`       | The `group_id` given in `to` was not found. |
+| `409`  | `number_not_connected` | The number is not connected to WhatsApp. Reconnect the number and try again. |
+| `422`  | `sender_not_found`      | The alias or number given does not match any sender on the account. |
+| `422`  | `validation_error`      | The request body is malformed or failed validation. The response includes `details.errors` with the list of invalid fields. |
+| `500`  | `internal_error`        | Unexpected internal server error.                  |

@@ -1,0 +1,433 @@
+---
+title: Sending media
+description: How to send images, audio, video, documents and stickers through Turbo Notify from a public URL.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+Media (images, audio, video, documents and stickers) is sent
+through the same `POST /v1/messages` endpoint used for text. The media
+fields go inside the **`content`** object. The type is recognized
+automatically from the anchor field present (`image_url`, `video_url`,
+`audio_url`, `document_url` or `sticker_url`).
+
+:::tip[Using extra numbers?]
+To send media from an extra number, use `/v1/numbers/{alias}/messages`, where
+`{alias}` is your extra number's alias. [Learn more](/en/numbers/add/).
+:::
+
+## Supported media types
+
+| Variant | Anchor field | Common formats | Maximum size | `caption`? | `filename`? |
+| ------- | ------------ | -------------- | :----------: | :--------: | :---------: |
+| `image` | `image_url` | JPEG, PNG, WebP | 16 MB | ✓ | — |
+| `video` | `video_url` | MP4 | 100 MB | ✓ | — |
+| `audio` | `audio_url` | MP3, OGG, M4A | 16 MB | — | — |
+| `document` | `document_url` | PDF, DOCX, XLSX, etc. | 100 MB | ✓ | ✓ |
+| `sticker` | `sticker_url` | WebP (static or animated), exactly 512×512px | 500 KB | — | — |
+
+`caption` **is not accepted** for `audio` and `sticker`. The API returns
+`422` if the field is sent with those types.
+
+## Method: public URL
+
+Provide a publicly accessible HTTPS URL. Turbo Notify downloads the
+file before delivering it to WhatsApp.
+
+### Image
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="send-image.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/messages \
+      -H "Authorization: Bearer YOUR_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": {"number": "+5511988887777"},
+        "content": {
+          "image_url": "https://cdn.example.com/product-photo.jpg",
+          "mime_type": "image/jpeg",
+          "caption": "Product photo"
+        }
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="send-image.js"
+    await fetch('https://api.turbonotify.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer YOUR_KEY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: { number: '+5511988887777' },
+        content: {
+          image_url: 'https://cdn.example.com/product-photo.jpg',
+          mime_type: 'image/jpeg',
+          caption: 'Product photo'
+        }
+      })
+    });
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="send_image.py"
+    import requests
+
+    requests.post(
+        "https://api.turbonotify.com/v1/messages",
+        headers={
+            "Authorization": "Bearer YOUR_KEY",
+            "Content-Type": "application/json",
+        },
+        json={
+            "to": {"number": "+5511988887777"},
+            "content": {
+                "image_url": "https://cdn.example.com/product-photo.jpg",
+                "mime_type": "image/jpeg",
+                "caption": "Product photo",
+            },
+        },
+    )
+    ```
+  </TabItem>
+</Tabs>
+
+:::tip[Mentions in the caption]
+An image `caption` accepts `@<number>` mention tokens (for example
+`"caption": "Check out this photo, @5511977776666?"`) with the same rules as
+`text`: the mention is detected from the text itself, the digits are E.164
+without `+`, and an invalid token stays as plain text without blocking the send.
+See [Mentions (@mentions)](/en/messages/send/#mentions-mentions).
+:::
+
+### Video
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="send-video.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/messages \
+      -H "Authorization: Bearer YOUR_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": {"number": "+5511988887777"},
+        "content": {
+          "video_url": "https://cdn.example.com/product-clip.mp4",
+          "mime_type": "video/mp4",
+          "caption": "Watch the video"
+        }
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="send-video.js"
+    await fetch('https://api.turbonotify.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer YOUR_KEY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: { number: '+5511988887777' },
+        content: {
+          video_url: 'https://cdn.example.com/product-clip.mp4',
+          mime_type: 'video/mp4',
+          caption: 'Watch the video'
+        }
+      })
+    });
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="send_video.py"
+    import requests
+
+    requests.post(
+        "https://api.turbonotify.com/v1/messages",
+        headers={
+            "Authorization": "Bearer YOUR_KEY",
+            "Content-Type": "application/json",
+        },
+        json={
+            "to": {"number": "+5511988887777"},
+            "content": {
+                "video_url": "https://cdn.example.com/product-clip.mp4",
+                "mime_type": "video/mp4",
+                "caption": "Watch the video",
+            },
+        },
+    )
+    ```
+  </TabItem>
+</Tabs>
+
+A video `caption` also accepts [`@<number>` mentions](/en/messages/send/#mentions-mentions).
+
+### Audio
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="send-audio.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/messages \
+      -H "Authorization: Bearer YOUR_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": {"number": "+5511988887777"},
+        "content": {
+          "audio_url": "https://cdn.example.com/audio.ogg",
+          "mime_type": "audio/ogg"
+        }
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="send-audio.js"
+    await fetch('https://api.turbonotify.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer YOUR_KEY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: { number: '+5511988887777' },
+        content: {
+          audio_url: 'https://cdn.example.com/audio.ogg',
+          mime_type: 'audio/ogg'
+        }
+      })
+    });
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="send_audio.py"
+    import requests
+
+    requests.post(
+        "https://api.turbonotify.com/v1/messages",
+        headers={
+            "Authorization": "Bearer YOUR_KEY",
+            "Content-Type": "application/json",
+        },
+        json={
+            "to": {"number": "+5511988887777"},
+            "content": {
+                "audio_url": "https://cdn.example.com/audio.ogg",
+                "mime_type": "audio/ogg",
+            },
+        },
+    )
+    ```
+  </TabItem>
+</Tabs>
+
+`mime_type` is optional and does not change how the file is sent: the format
+WhatsApp receives comes from what the server behind the URL actually delivers.
+
+:::note[Audio arrives as a file, not as a voice message]
+Audio sent through the API always arrives as an audio file, with the regular
+playback bar. There is no parameter that turns it into a voice message
+(the kind recorded by holding the microphone button), and `mime_type` does not
+do that: it only describes the format.
+:::
+
+### Document
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="send-document.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/messages \
+      -H "Authorization: Bearer YOUR_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": {"number": "+5511988887777"},
+        "content": {
+          "document_url": "https://cdn.example.com/invoice.pdf",
+          "mime_type": "application/pdf",
+          "filename": "Invoice-April.pdf",
+          "caption": "Your invoice for April"
+        }
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="send-document.js"
+    await fetch('https://api.turbonotify.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer YOUR_KEY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: { number: '+5511988887777' },
+        content: {
+          document_url: 'https://cdn.example.com/invoice.pdf',
+          mime_type: 'application/pdf',
+          filename: 'Invoice-April.pdf',
+          caption: 'Your invoice for April'
+        }
+      })
+    });
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="send_document.py"
+    import requests
+
+    requests.post(
+        "https://api.turbonotify.com/v1/messages",
+        headers={
+            "Authorization": "Bearer YOUR_KEY",
+            "Content-Type": "application/json",
+        },
+        json={
+            "to": {"number": "+5511988887777"},
+            "content": {
+                "document_url": "https://cdn.example.com/invoice.pdf",
+                "mime_type": "application/pdf",
+                "filename": "Invoice-April.pdf",
+                "caption": "Your invoice for April",
+            },
+        },
+    )
+    ```
+  </TabItem>
+</Tabs>
+
+`filename` appears as the attachment name in the recipient's chat. A document
+`caption` also accepts [`@<number>` mentions](/en/messages/send/#mentions-mentions).
+
+### Sticker
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="send-sticker.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/messages \
+      -H "Authorization: Bearer YOUR_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": {"number": "+5511988887777"},
+        "content": {
+          "sticker_url": "https://cdn.example.com/animated-sticker.webp",
+          "mime_type": "image/webp"
+        }
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="send-sticker.js"
+    await fetch('https://api.turbonotify.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer YOUR_KEY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: { number: '+5511988887777' },
+        content: {
+          sticker_url: 'https://cdn.example.com/animated-sticker.webp',
+          mime_type: 'image/webp'
+        }
+      })
+    });
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="send_sticker.py"
+    import requests
+
+    requests.post(
+        "https://api.turbonotify.com/v1/messages",
+        headers={
+            "Authorization": "Bearer YOUR_KEY",
+            "Content-Type": "application/json",
+        },
+        json={
+            "to": {"number": "+5511988887777"},
+            "content": {
+                "sticker_url": "https://cdn.example.com/animated-sticker.webp",
+                "mime_type": "image/webp",
+            },
+        },
+    )
+    ```
+  </TabItem>
+</Tabs>
+
+Stickers must be WebP (static or animated), with
+**exact dimensions of 512×512 pixels** (any other size is
+rejected even if the WebP is valid), and stay within the 500 KB limit.
+
+## Field schema (all types)
+
+The media fields go inside the `content` object. The anchor field (e.g. `image_url`) determines the variant. Every media send uses a public URL; you cannot send a file by giving only its key in your BYO Storage.
+
+| Field in `content` | Type | Required | Notes |
+|---|---|---|---|
+| `image_url` | URL | conditional | Anchor field for images; public HTTPS URL |
+| `video_url` | URL | conditional | Anchor field for videos; public HTTPS URL |
+| `audio_url` | URL | conditional | Anchor field for audio; public HTTPS URL |
+| `document_url` | URL | conditional | Anchor field for documents; public HTTPS URL |
+| `sticker_url` | URL | conditional | Anchor field for stickers; public HTTPS URL |
+| `mime_type` | string | no | optional and informational: it does not change the send. The format is identified from the file downloaded from the URL |
+| `caption` | string | partial | accepted for `image`, `video`, `document`; **not accepted** for `audio` and `sticker` (returns `422`). Accepts [`@<number>` mention](/en/messages/send/#mentions-mentions) tokens, detected implicitly, with the same rules as `text` |
+| `filename` | string | no | `document` only; appears as the attachment name in the chat |
+
+## Response
+
+<ApiResponse
+  status={202}
+  body={{
+    message_id: 'msg_a1b2c3d4e5f60718293a4b5c6d7e8f90',
+    status: { state: 'pending', at: '2026-04-27T10:00:05Z', error: null },
+  }}
+/>
+
+The actual confirmation arrives through the `message.sent` webhook. If the send
+fails (unreachable URL, unsupported format, size exceeded) you receive
+`message.send.failed` with a specific `error` object (`{ code, message, hint }`).
+
+## Outbound webhook
+
+When WhatsApp confirms the send, the `message.sent` webhook
+includes `content_type` and `preview` (same format as `message.received`):
+
+```json title="webhook-message-sent.json"
+{
+  "id": "evt_3f9a1c2b4d5e6f708192a3b4c5d6e7f8",
+  "type": "message.sent",
+  "organization_id": "org_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+  "number_alias": "main",
+  "created_at": "2026-04-27T10:00:08Z",
+  "data": {
+    "id": "msg_a1b2c3d4e5f60718293a4b5c6d7e8f90",
+    "from": { "alias": "main", "number": "5511973117056" },
+    "to":   { "number": "5511988887777" },
+    "preview": "Product photo",
+    "content_type": "image",
+    "direction": "outbound",
+    "channel": "whatsapp",
+    "origin": "tn",
+    "at": "2026-04-27T10:00:08Z"
+  }
+}
+```
+
+To download the file of a received media message, use
+[`GET /v1/numbers/{alias}/messages/{id}`](/en/messages/get/): the media fields
+appear **directly** in the object named after the `content_type` (`image`, `video`,
+`audio`, `document`, `sticker`), with no `media` sub-object. With BYO Object Storage
+set up, that object comes with `kind: "available"` and a `url` holding the
+presigned download URL.
+
+## Related
+
+- [Sending messages](/en/messages/send/): text, location, contact, calendar (same endpoint).
+- [Outbound webhook](/en/messages/webhook/): `message.sent` and `message.delivered` payloads.
+- [Get a message](/en/messages/get/): fetch the full body, including media.

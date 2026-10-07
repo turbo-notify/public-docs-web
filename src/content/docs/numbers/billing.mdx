@@ -4,22 +4,23 @@ description: "Como funciona a cobrança de números extras no Turbo Notify: pre�
 ---
 
 import DashboardLink from '@components/DashboardLink.astro';
+import Price from '@components/Price.astro';
 
-Números extras permitem enviar mensagens a partir de múltiplos números de WhatsApp na mesma conta, ideal para empresas com várias unidades, filiais ou departamentos. Esta página explica como funciona a cobrança.
+Números extras permitem enviar mensagens a partir de múltiplos números de WhatsApp na mesma conta. São ideais para empresas com várias unidades, filiais ou departamentos, e para revenda: uma plataforma parceira oferece um número a cada cliente final dela (veja o [guia de revenda](/guides/resale/)). Esta página explica como funciona a cobrança.
 
 ## Quem pode usar números extras
 
-Números extras estão disponíveis nos planos **Empresarial** (`BUSINESS`) e **Personalizado** (`CUSTOM`). Nos planos Gratuito (`FREE`) e Lobo Solitário (`SOLO`), adicionar um número extra retorna `402 feature_not_available`. É necessário fazer upgrade primeiro.
+Números extras estão disponíveis nos planos **Empresarial** (`BUSINESS`) e **Personalizado** (`CUSTOM`). Nos planos Gratuito (`FREE`) e Lobo Solitário (`SOLO`), adicionar um número extra retorna `402 feature_not_available`. É necessário mudar de plano primeiro.
 
-Cada plano tem um limite máximo de números extras simultâneos: **1.000** nos planos Empresarial e Personalizado, na prática sem limite relevante para o uso típico. Veja a tabela completa de planos em [Quota e uso](/usage/quota/).
+Cada plano tem um limite máximo de números extras simultâneos: **1.000** nos planos Empresarial e Personalizado. Veja a tabela completa de planos em [Cota e uso](/usage/quota/).
 
 ## Preço
 
-O valor mensal de um número extra no plano Empresarial é **R$ 34,90**. O plano Personalizado negocia o valor conforme o volume contratado. O valor exato para a sua conta (que pode variar por moeda/país) aparece na página de <DashboardLink path="/billing">Cobrança</DashboardLink> do dashboard.
+Cada número extra custa **<Price item="extraNumber" />** por número, por mês, além do plano Empresarial. A moeda segue a conta: real (BRL) no Brasil e dólar (USD) nos demais países. O plano Personalizado negocia o valor conforme o volume contratado. O valor exato para a sua conta aparece na página de <DashboardLink path="/billing">Cobrança</DashboardLink> do dashboard.
 
 ## Como funciona a cobrança
 
-- **Números extras adicionados durante o ciclo** geram uma cobrança pro-rata **imediata, no momento da ativação**: cobrindo os dias restantes até o fim do ciclo atual, usando os dias reais do ciclo (28 a 31, conforme o mês), nunca um mês fixo de 30 dias. Essa cobrança é feita antes mesmo do número ficar disponível: se ela falhar (cartão recusado, sem forma de pagamento cadastrada), o número não chega a ser criado.
+- **Números extras adicionados durante o ciclo** geram uma cobrança pro-rata **imediata, no momento da ativação**, que cobre os dias restantes até o fim do ciclo atual. O cálculo usa os dias reais do ciclo (28 a 31, conforme o mês), nunca um mês fixo de 30 dias. Essa cobrança é feita antes de o número ficar disponível: se ela falhar (cartão recusado, sem forma de pagamento cadastrada), o número não chega a ser criado.
 - **A partir do ciclo seguinte**, se o número extra continuar ativo, ele passa a ser cobrado pelo valor cheio (sem pro-rata), na mesma fatura do plano base.
 
 **Fórmula (cobrança pro-rata na ativação):**
@@ -28,15 +29,17 @@ O valor mensal de um número extra no plano Empresarial é **R$ 34,90**. O plano
 valor = valor_mensal × dias_restantes_no_ciclo / dias_do_ciclo
 ```
 
-**Exemplo:** em um ciclo de 31 dias (janeiro, por exemplo), um número extra ativado no dia 11 tem 20 dias restantes até o fim do ciclo. A cobrança pro-rata, feita imediatamente na ativação, é R$ 34,90 × 20 / 31 = **R$ 22,52**.
+**Exemplo:** em um ciclo de 31 dias (janeiro, por exemplo), um número extra ativado no dia 11 tem 20 dias restantes até o fim do ciclo. A cobrança pro-rata, feita na ativação, é <Price item="extraNumber" /> × 20 / 31 = **<Price item="extraNumber" prorate={{ days: 20, cycleDays: 31 }} />**.
 
 A cobrança pro-rata de ativação é um lançamento avulso. A partir do ciclo seguinte, o número extra passa a compor a fatura regular de início de ciclo, junto com o plano base.
 
 ### Números removidos logo após a ativação podem ser reembolsados
 
-Se você adicionar um número extra e ele for **removido de imediato** (veja o critério em [Removendo um número extra](#removendo-um-número-extra)), a cobrança pro-rata feita na ativação é **reembolsada**, veja `refund_eligible` na resposta do `DELETE`.
+Se você remover um número extra logo depois de adicioná-lo, antes de usá-lo, a cobrança pro-rata feita na ativação pode ser **reembolsada automaticamente**. A resposta do `DELETE` diz o que aconteceu, em `refund_eligible`, `refund_amount_cents` e `refund_status` (veja [Remoção de números extras](/numbers/remove/)).
 
-Quando a remoção é **agendada** (até o fim do ciclo de uso atual do número), o número continua na conta e continua sendo cobrado normalmente em cada início de ciclo até a exclusão ser executada, sem reembolso da cobrança já feita.
+Quando a remoção é **agendada** (até o fim do ciclo pago do número), o número continua na conta e continua sendo cobrado normalmente em cada início de ciclo até a exclusão ser executada, sem reembolso da cobrança já feita.
+
+Dúvidas sobre um reembolso: escreva para billing@turbonotify.com.
 
 ## Removendo um número extra
 
@@ -44,9 +47,9 @@ Quando a remoção é **agendada** (até o fim do ciclo de uso atual do número)
 
 Com o número já desconectado, a remoção segue um de dois caminhos, decidido automaticamente:
 
-**Remoção imediata (número pouco ou nada usado).** Se o número se qualifica como uso mínimo: menos de **72 horas** desde a primeira conexão **e** menos de **10 mensagens** enviadas (um número que nunca chegou a conectar sempre se qualifica), ele é removido na hora, sem período de espera.
+**Remoção imediata.** Um número removido logo depois de ser adicionado, antes de ser usado, pode ser removido na hora, sem período de espera, com reembolso da cobrança de ativação.
 
-**Remoção agendada (número já em uso).** Fora dessas condições, o número entra em status `pending_deletion` e a remoção definitiva é agendada para o **fim do ciclo de uso atual do número** (ciclo de 30 dias contado desde a primeira conexão, não 30 dias a partir de agora): o campo `scheduled_deletion_at` na resposta traz a data exata. Durante todo esse período você pode reverter a decisão com `POST /v1/numbers/{alias}/cancel-deletion`. O número volta ao estado normal.
+**Remoção agendada.** Nos demais casos, o número entra em status `pending_deletion` e continua ativo até o **fim do ciclo pago do número**. O campo `scheduled_deletion_at` na resposta traz a data exata. Durante todo esse período você pode reverter a decisão com `POST /v1/numbers/{alias}/cancel-deletion`, e o número volta ao estado normal.
 
 Cancelar a exclusão agendada, por essa chamada ou reconectando o número, pode gerar uma nova cobrança pro-rata de ativação: isso acontece quando o número foi criado antes do início do ciclo cobrado atual, porque ele já ficou fora da fatura desse ciclo. Se essa cobrança falhar, a exclusão continua agendada.
 
@@ -55,14 +58,14 @@ A resposta do `DELETE` informa qual caminho foi tomado, em `refund_eligible` (`t
 Os dois caminhos têm efeitos diferentes na fatura:
 
 - **Remoção imediata**: o número é excluído na hora e a cobrança pro-rata feita na ativação é **reembolsada**. Veja [Números removidos logo após a ativação](#números-removidos-logo-após-a-ativação-podem-ser-reembolsados).
-- **Remoção agendada**: o número continua na conta até o fim do ciclo de uso atual, então **continua sendo cobrado normalmente em cada início de ciclo** nesse intervalo, exatamente como um número apenas desconectado (veja [Pausar em vez de remover](#pausar-em-vez-de-remover) logo abaixo). A cobrança só cessa quando a exclusão é efetivamente executada.
+- **Remoção agendada**: o número continua na conta até o fim do ciclo pago, então **continua sendo cobrado normalmente em cada início de ciclo** nesse intervalo, exatamente como um número apenas desconectado (veja [Pausar em vez de remover](#pausar-em-vez-de-remover) logo abaixo). A cobrança só para quando a exclusão é executada.
 
 ### Pausar em vez de remover
 
 Para parar de usar um número temporariamente sem perdê-lo, **desconecte** em vez de remover:
 
 - O número permanece na conta com status `disconnected` e **continua sendo cobrado normalmente** a cada início de ciclo, enquanto permanecer na conta.
-- Pode ser reconectado a qualquer momento, sem precisar recadastrar.
+- Pode ser reconectado a qualquer momento, sem precisar cadastrar de novo.
 - É a opção certa para pausas temporárias. A remoção é para quando você não vai mais usar o número.
 
 ## Limite de números extras
@@ -82,11 +85,11 @@ Remova um número existente para liberar espaço, ou fale com o time comercial s
 
 **Sou cobrado por números desconectados?**
 
-Sim: desconectar pausa o funcionamento do número, mas não interrompe a cobrança: ele continua sendo cobrado a cada início de ciclo. Para parar de ser cobrado, é necessário remover o número, e quando a remoção é agendada, a cobrança só cessa depois que a exclusão é executada, ao fim do ciclo de uso atual do número.
+Sim. Desconectar pausa o funcionamento do número, mas não interrompe a cobrança: ele continua sendo cobrado a cada início de ciclo. Para parar de ser cobrado, é necessário remover o número. Quando a remoção é agendada, a cobrança só para depois que a exclusão é executada, ao fim do ciclo pago do número.
 
 **Posso adicionar e remover números livremente?**
 
-Sim, respeitando o limite do plano. Um número extra ativado no meio do ciclo gera uma cobrança pro-rata imediata; se ainda estiver na conta no início do ciclo seguinte, passa a ser cobrado pelo valor cheio junto com o plano base. Só a remoção imediata (uso mínimo) dá direito a reembolso da cobrança pro-rata de ativação.
+Sim, respeitando o limite do plano. Um número extra ativado no meio do ciclo gera uma cobrança pro-rata imediata; se ainda estiver na conta no início do ciclo seguinte, passa a ser cobrado pelo valor cheio junto com o plano base. Só a remoção imediata, logo depois de adicionar o número e antes de usá-lo, pode reembolsar a cobrança pro-rata de ativação.
 
 **Onde vejo o detalhamento da cobrança dos meus números extras?**
 

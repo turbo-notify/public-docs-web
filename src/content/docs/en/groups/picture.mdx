@@ -1,0 +1,93 @@
+---
+title: Group picture
+description: GET /v1/numbers/{alias}/groups/{group_id}/picture endpoint. Redirects (302) to a presigned URL when the picture is available; otherwise, answers 200 with the reason.
+sidebar:
+  order: 4
+---
+
+import ApiResponse from '@components/ApiResponse.astro';
+
+Returns the picture of a WhatsApp group: redirects (302) to a **presigned** URL when the picture is in your BYO Storage; otherwise, answers 200 with the `picture` object (state and reason). The response format is the same as the [contact profile picture](/en/contacts/profile-picture/) endpoint, but what happens when the presigned URL cannot be generated **is different in the two**: see [Behavior by `picture.kind`](#behavior-by-picturekind).
+
+## Endpoint
+
+```http
+GET /v1/groups/{group_id}/picture
+```
+
+**Required scope:** `groups:read`. For extra numbers: `GET /v1/numbers/{alias}/groups/{group_id}/picture`, where `{alias}` is the `number_alias` in the envelope of the group event. `group_id` is the public id (`grp_{hex32}`).
+
+## Behavior by `picture.kind`
+
+The returned `picture` has only two possible states:
+`available` (picture in your BYO Storage) or `unavailable` (any other
+situation, with the cause in `reason`):
+
+| `picture.kind` | HTTP response |
+| --------------- | ------------- |
+| `available` | **302 Found**: **presigned** BYO Storage URL (R2/S3/Supabase), never the object key in the bucket |
+| `unavailable` | **200 OK**: JSON body `{ "kind": "unavailable", "reason": ..., "setup_hint"?: ... }` (see the `reason` field below) |
+
+The `picture.kind = "pending"` value only appears in webhook payloads: this
+read endpoint never returns it.
+
+When the picture is already stored in your BYO Storage, but generating the
+presigned URL fails on this request, this endpoint does not return an error:
+it answers **200 OK** with `unavailable` and the cause in the
+`reason` field of the body. This endpoint never returns `404` for an unavailable picture:
+it always answers `200` with `picture.kind: "unavailable"` and the matching
+`reason`.
+
+:::caution[The contact picture behaves differently here]
+This is one point where the two endpoints **diverge**. In the same situation
+(failure to generate the presigned URL of an already stored picture), the [contact
+profile picture endpoint](/en/contacts/profile-picture/) does return
+**`404 contact_picture_unavailable`**, while the group endpoint returns **200**
+with `kind: "unavailable"`.
+
+Do not treat the two as equivalent: a client that expects a 404 from the group endpoint
+will never see it, and a client that expects a 200 from the contact endpoint will get a 404.
+:::
+
+Turbo Notify checks a picture marked `unavailable` again on the next group activity after you enable BYO Storage, with no action on your side (see [the picture becomes available later](/en/groups/lifecycle-events/#groups-picture-becomes-available)).
+
+## Example: picture available
+
+```bash
+curl -I "https://api.turbonotify.com/v1/groups/grp_.../picture" \
+  -H "Authorization: Bearer YOUR_KEY"
+
+HTTP/1.1 302 Found
+Location: https://<bucket>.r2.cloudflarestorage.com/groups/.../picture.jpg?...
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+```
+
+The presigned URL is short-lived: **15 minutes by default** (configurable between 1 minute and 1 hour in your storage integration).
+
+## Example: picture unavailable (no storage)
+
+<ApiResponse
+  status={200}
+  body={{
+    kind: 'unavailable',
+    reason: 'no_storage',
+    setup_hint: {
+      setup_url: 'https://dashboard.turbonotify.com/storage',
+      docs_url: 'https://docs.turbonotify.com/general/byo-storage-setup/',
+      message:
+        'Configure object storage (S3, Cloudflare R2, or Supabase Storage, free tiers available) to receive media. Visit your dashboard or read the docs.',
+    },
+  }}
+/>
+
+The `reason` field tells you the cause: `no_storage` (no storage configured), `storage_circuit_open` (your storage had been failing and uploads were paused for a while), `upload_failed` (uploading the picture to your bucket failed this time) or `peer_has_none` (the group has no picture). `setup_hint` is only filled in for `no_storage` and `storage_circuit_open`. For `upload_failed` and `peer_has_none` it comes as `null`. It is the same format used by media and by the contact picture.
+
+## The `picture` field in `GET /v1/numbers/{alias}/groups/{group_id}`
+
+The `picture` field in the full group payload shows the same state: it carries the presigned URL when the picture is available, and the right `reason` and `setup_hint` when it is `unavailable`.
+
+## Cache
+
+- The response comes with `Cache-Control: no-store, no-cache, must-revalidate` and `Pragma: no-cache`: **it must not be cached**, including the `302` redirect. Call again whenever you need the current state. The **presigned URL given in `Location`** stays valid for its own lifetime, and that URL is the one to reuse if you want to avoid a new download.
+- The presigned URL is short-lived: **15 minutes by default** (configurable between 1 minute and 1 hour). Do not reuse the URL past that time; call again to get a new one.

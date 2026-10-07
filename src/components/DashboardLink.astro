@@ -1,12 +1,15 @@
 ---
+import { localeFromPath, ui } from '../i18n/locale';
+
 interface Props {
   path: string;
 }
 
 const { path } = Astro.props;
 const dashboardUrl = `https://dashboard.turbonotify.com${path}`;
+const t = ui[localeFromPath(Astro.url.pathname)];
 ---
 
 <a href={dashboardUrl} target="_blank" rel="noopener noreferrer">
-  <slot /><span class="sr-only"> (abre em nova aba)</span>
+  <slot /><span class="sr-only">{t.opensInNewTab}</span>
 </a>

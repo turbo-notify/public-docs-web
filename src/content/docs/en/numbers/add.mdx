@@ -1,0 +1,271 @@
+---
+title: Adding extra numbers
+description: How to add extra WhatsApp numbers to your Turbo Notify account to send messages from multiple senders.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+import DashboardLink from '@components/DashboardLink.astro';
+
+Extra numbers let you send messages from multiple WhatsApp numbers, in addition to the main number of your account. Adding a number takes two steps: registering it, described on this page, and [pairing](/en/numbers/pairing/), when the WhatsApp of that number starts recognizing Turbo Notify.
+
+Registering a number triggers an immediate pro-rata charge that covers the days left in the current cycle. See [Extra number billing](/en/numbers/billing/) for the price, the formula and refunds. The number is only created if the charge is approved.
+
+## Adding in the dashboard
+
+The simplest way to add an extra number is through the Turbo Notify dashboard. Open the <DashboardLink path="/numbers">Numbers</DashboardLink> page and click **Add number**.
+
+Enter the phone number with its country code and an alias: the number is registered right away, with no pairing code at this point. Then open the new number, choose the pairing method (QR code or pairing code) and click **Link number** to generate the matching code or QR code.
+
+## Adding through the API
+
+You can also add extra numbers programmatically through the API.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X POST \
+      https://api.turbonotify.com/v1/numbers \
+      -H "Authorization: Bearer YOUR_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "phone_number": "+5511988887777",
+        "alias": "vendas_sp",
+        "description": "São Paulo sales team",
+        "external_id": "customer-4821"
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch('https://api.turbonotify.com/v1/numbers', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer YOUR_KEY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        phone_number: '+5511988887777',
+        alias: 'vendas_sp',
+        description: 'São Paulo sales team',
+        external_id: 'customer-4821'
+      })
+    });
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/numbers"
+    headers = {
+        "Authorization": "Bearer YOUR_KEY",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "phone_number": "+5511988887777",
+        "alias": "vendas_sp",
+        "description": "São Paulo sales team",
+        "external_id": "customer-4821"
+    }
+
+    response = requests.post(url, json=data, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+        "strings"
+    )
+
+    func main() {
+        payload := strings.NewReader(`{"phone_number": "+5511988887777", "alias": "vendas_sp", "description": "São Paulo sales team", "external_id": "customer-4821"}`)
+        req, _ := http.NewRequest("POST", "https://api.turbonotify.com/v1/numbers", payload)
+        req.Header.Set("Authorization", "Bearer YOUR_KEY")
+        req.Header.Set("Content-Type", "application/json")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/numbers';
+    $data = [
+        'phone_number' => '+5511988887777',
+        'alias' => 'vendas_sp',
+        'description' => 'São Paulo sales team',
+        'external_id' => 'customer-4821'
+    ];
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer YOUR_KEY',
+                'Content-Type: application/json'
+            ],
+            'method' => 'POST',
+            'content' => json_encode($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    using System.Text;
+    using System.Text.Json;
+
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+    var data = new {
+        phone_number = "+5511988887777",
+        alias = "vendas_sp",
+        description = "São Paulo sales team",
+        external_id = "customer-4821"
+    };
+
+    var json = JsonSerializer.Serialize(data);
+    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+    var response = await client.PostAsync(
+        "https://api.turbonotify.com/v1/numbers",
+        content
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var json = """
+                {
+                    "phone_number": "+5511988887777",
+                    "alias": "vendas_sp",
+                    "description": "São Paulo sales team",
+                    "external_id": "customer-4821"
+                }
+                """;
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers"))
+                .header("Authorization", "Bearer YOUR_KEY")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+**Required scope:** `numbers:write`
+
+Registering (`POST /v1/numbers`) and pairing (getting the code to enter in
+WhatsApp) are **separate operations**.
+
+| Field | Type | Required | Description |
+| ----- | ---- | :------: | ----------- |
+| `phone_number` | string | Yes | Phone number with country code. The leading `+` is accepted. |
+| `alias` | string | Yes | Name of the number in the `/v1/numbers/{alias}/...` routes. Must start with a letter and be at most 50 characters. |
+| `description` | string | No | Free-form description of the number. |
+| `external_id` | string | No | Your own identifier for this number, typically the id of your customer in your system. 1 to 128 characters, no control characters; leading and trailing spaces are trimmed. When set, it must be unique among the numbers of your organization. |
+
+The response only confirms that the number was created: `status` always
+starts as `"pending"` and the response carries no pairing code.
+`external_id` comes back with the value you sent, or `null` if you did not
+send one:
+
+<ApiResponse
+  status={201}
+  body={{
+    alias: 'vendas_sp',
+    phone_number: '5511988887777',
+    status: 'pending',
+    created_at: '2025-07-16T10:00:00Z',
+    description: 'São Paulo sales team',
+    external_id: 'customer-4821',
+  }}
+/>
+
+:::note[The `+` is for the request, not the response]
+Look at `phone_number` above: the request was sent with
+`"+5511988887777"`, but the response returns `"5511988887777"`, **without
+the `+`**.
+
+The `+` is removed when the number is stored. So:
+
+- **Request**: `phone_number` **accepts** a leading `+` (`"+5511988887777"`).
+- **Response**: `phone_number` **never** includes the `+`; it is always plain
+  E.164 digits (`"5511988887777"`), the same format as the `number` field in
+  [List](/en/numbers/list/) and [Status](/en/numbers/status/).
+
+If you compare the value you sent with the value returned (to deduplicate or
+confirm the registration), strip the `+` before comparing.
+:::
+
+## Next step: pairing
+
+The number starts with `status: "pending"`. To link it to WhatsApp, follow
+[Pairing extra numbers](/en/numbers/pairing/).
+
+## Registration rules
+
+- Each extra number must belong to a phone with an active WhatsApp: that is where pairing is completed.
+- `alias` is required, must start with a letter and be at most 50 characters. It identifies the number in the `/v1/numbers/{alias}/...` routes, including when sending messages.
+- The alias `main` is reserved for the main number.
+- The same phone number can only be registered once in the account.
+- The same `external_id` can only be on one number of your organization at a time. Once a number is removed, its `external_id` is free for another number.
+- Each registration is a real card charge, so registrations are paced per account. Above that pace, the response is `429 number_creation_rate_limited`, with a `Retry-After` header telling you in how many seconds to try again. Nothing is charged in that case.
+
+## Possible errors
+
+These are the main errors that can occur when adding extra numbers:
+
+| Status | Error code               | Description                                            |
+| :----: | ------------------------ | ------------------------------------------------------ |
+| `422`  | `validation_error`       | The body is invalid: `alias` empty, not starting with a letter or longer than 50 characters, `phone_number` missing, `external_id` empty, longer than 128 characters or containing a control character, or a text field with an invalid character. The response includes `details.errors` with the field and the message. |
+| `400`  | `reserved_alias`         | The alias `"main"` is reserved for the main number and cannot be used for an extra number. |
+| `400`  | `no_payment_method`      | The organization has no payment method on file. No charge is attempted and no number is created. |
+| `402`  | `subscription_inactive`  | The organization's subscription is `past_due`, `terminated`, `pending` or its trial period has expired (the response includes `details.status`). |
+| `402`  | `feature_not_available`  | The current plan does not support extra numbers.       |
+| `402`  | `extra_numbers_limit_reached` | The organization has reached the extra number limit of its plan (1,000 on the Business and Custom plans). The response includes `details.limit` and `details.current`. |
+| `402`  | `payment_declined`       | The pro-rata activation charge (see [Extra number billing](/en/numbers/billing/)) was declined by the payment method. No number is created. |
+| `402`  | `payment_requires_authentication` | The payment method requires re-authentication (3DS) and cannot be charged automatically. No number is created. |
+| `403`  | `not_authorized`         | The API key is invalid or missing.                     |
+| `403`  | `insufficient_scope`     | The API key does not have the `numbers:write` scope (the response includes `required_scope`). |
+| `409`  | `number_already_exists`  | The alias or phone number is already registered in the account. |
+| `409`  | `external_id_already_used` | Another number of your account already uses this `external_id`. |
+| `429`  | `number_creation_rate_limited` | Your account created extra numbers faster than allowed. Nothing was charged. Wait the number of seconds in the `Retry-After` header and try again. |
+| `500`  | `internal_error`         | Unexpected internal server error.                      |
+| `503`  | `payment_gateway_unavailable` | The activation charge could not be confirmed in time. No number is created; try again. |

@@ -6,9 +6,9 @@ description: "Endpoints GET /v1/organizations e GET /v1/organizations/{id}: dado
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ApiResponse from '@components/ApiResponse.astro';
 
-O Turbo Notify é **single-organization por chave de acesso**: cada chave pertence a exatamente uma organização, e estes dois endpoints só permitem ler os dados da **sua própria** organização, não há um diretório de organizações de terceiros.
+Cada chave de acesso pertence a **exatamente uma organização**, e estes dois endpoints só permitem ler os dados da **sua própria** organização: não existe um diretório de outras organizações.
 
-**Escopo obrigatório:** `organizations:read` (selecionável na criação da chave de acesso no dashboard).
+**Escopo obrigatório:** `organizations:read` (selecionável ao criar a chave de acesso no dashboard).
 
 ## Listar organização
 
@@ -147,7 +147,7 @@ organização autenticada, no formato de lista padrão da API (`data`,
 
 `GET /v1/organizations/{organization_id}` retorna o mesmo objeto, sem o
 envelope de lista. O `{organization_id}` deve ser o `org_{hex32}` da
-**própria** organização autenticada. Nunca vaza dados de terceiros.
+**própria** organização autenticada. Nunca retorna dados de outra organização.
 
 A rejeição acontece em **duas etapas**, com códigos diferentes:
 
@@ -299,24 +299,23 @@ A rejeição acontece em **duas etapas**, com códigos diferentes:
 | `id` | string | Identificador público da organização (`org_` + 32 hex) |
 | `name` | string | Nome cadastrado da organização |
 | `plan` | string | Identificador do plano contratado (ex.: `free`, `solo`, `business`, `custom`) |
-| `locale` | string | Locale configurado (ex.: `pt-BR`, `en`) |
-| `timezone` | string | Timezone IANA configurado para a conta (ex.: `America/Sao_Paulo`). **Não afeta o formato dos timestamps da API**: é usado apenas para agrupar os gráficos do dashboard |
-| `suspended_at` | string\|null | Timestamp ISO 8601 de suspensão; `null` quando a organização está ativa |
-| `created_at` | string | Timestamp ISO 8601 de criação da organização |
-| `updated_at` | string | Timestamp ISO 8601 da última atualização dos dados cadastrais |
+| `locale` | string | Idioma configurado (ex.: `pt-BR`, `en`) |
+| `timezone` | string | Fuso horário IANA configurado para a conta (ex.: `America/Sao_Paulo`). **Não afeta o formato das datas da API**: é usado apenas para agrupar os gráficos do dashboard |
+| `suspended_at` | string\|null | Data e hora ISO 8601 da suspensão; `null` quando a organização está ativa |
+| `created_at` | string | Data e hora ISO 8601 de criação da organização |
+| `updated_at` | string | Data e hora ISO 8601 da última atualização dos dados cadastrais |
 
-**Todo timestamp emitido pela API** é UTC canônico, com sufixo `Z` e precisão
+**Toda data e hora retornada pela API** está em UTC, com sufixo `Z` e precisão
 de segundos (ex.: `2026-06-01T10:00:05Z`): `created_at` e `at` em webhooks,
-polling e nas respostas de mensagem, os campos cadastrais da tabela acima e os
+na consulta de eventos e nas respostas de mensagem, os campos cadastrais da tabela acima e os
 campos de expiração de URL pré-assinada (`expires_at` / `url_expires_at` nos
 blocos de mídia e foto). Nos campos de evento e mensagem o formato é garantido
 por validação (`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$`), e nenhum valor com
-offset explícito chega a qualquer superfície pública, independentemente do
+deslocamento de fuso explícito é retornado, independentemente do
 `timezone` configurado na conta.
 
-Apenas campos seguros para exposição pública aparecem aqui: ajustes
-administrativos internos da organização nunca são retornados por este
-endpoint.
+Este endpoint retorna só os dados cadastrais listados acima: configurações
+administrativas da organização não aparecem nele.
 
 ## Erros possíveis
 

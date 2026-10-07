@@ -1,0 +1,55 @@
+---
+title: Contact errors
+description: Error codes returned by the /v1/numbers/{alias}/contacts/* endpoints and what to do in each case.
+sidebar:
+  order: 6
+---
+
+import ApiResponse from '@components/ApiResponse.astro';
+
+## Error table
+
+| HTTP | `error` | When |
+| ---- | ------- | ---- |
+| 400  | `invalid_contact_id` | `contact_id` does not match `^ct_[0-9a-f]{32}$` |
+| 400  | `invalid_cursor` | Corrupted opaque cursor |
+| 402  | `contact_quota_exceeded` | Returned by message sending (not by the contact endpoints) when the number's distinct-contacts quota for the cycle has already been reached |
+| 403  | `not_authorized` | The API key is missing, invalid or revoked |
+| 403  | `insufficient_scope` | The API key lacks the scope the route requires: `contacts:read` for list, detail and picture; `contacts:write` for refresh (the response includes `required_scope`) |
+| 404  | `contact_not_found` | The contact does not exist, or belongs to another organization or to another number (the route's `{alias}`) |
+| 404  | `number_not_found` | The route's `{alias}` does not match any number in the account (applies to `/contacts`, `/contacts/{id}`, `/contacts/quota` and the other sub-routes) |
+| 404  | `contact_picture_unavailable` | Rare case: generating the picture's presigned URL failed. A missing picture (no storage, picture upload failed, contact without a picture) does **not** return 404: see [Profile picture](/en/contacts/profile-picture/) |
+| 422  | `validation_error` | A query parameter failed validation, for example `limit` outside the 1 to 200 range. The response carries `details.errors` with the rejected fields |
+| 429  | `refresh_rate_limited` | Per-minute refresh limit reached |
+| 500  | `internal_error` | Unexpected server error |
+
+## 402 response example
+
+Returned when you try to talk through Turbo Notify to a contact that would become **counted in the current cycle** (a **new** contact or a **returning** contact not yet counted this cycle) and the cycle's distinct-contacts quota is already used up.
+
+<ApiResponse
+  status={402}
+  body={{
+    error: 'contact_quota_exceeded',
+    message: 'Distinct-contacts quota exceeded for tier SOLO (100/100 this cycle)',
+    details: {
+      quota: 100,
+      used: 100,
+      resets_at: '2026-08-01T00:00:00Z',
+      tier: 'SOLO',
+    },
+  }}
+/>
+
+**What to do:** upgrade the plan. Unlike 429, a 402 has no `Retry-After`: sending again does not help. The quota only comes back when the billing cycle closes (at `resets_at`) or when the plan changes.
+
+## 402 vs 429
+
+| | 402 Payment Required | 429 Too Many Requests |
+| - | -------------------- | --------------------- |
+| Meaning | Plan limit: upgrade | Rate limit: try again later |
+| Header | — | `Retry-After: <seconds>` |
+| When it clears | At the end of the billing cycle (`resets_at`) or with an upgrade | In seconds or minutes |
+| Source | Cycle quota | Burst protection |
+
+See also: [Quota and usage](/en/usage/quota/).

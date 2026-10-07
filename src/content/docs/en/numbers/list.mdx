@@ -1,0 +1,265 @@
+---
+title: Listing numbers
+description: How to list all the numbers (main and extra) registered in your Turbo Notify account.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+List all the numbers in your account (the main number and the extra numbers) to see the alias, phone number and status of each one in a single call.
+
+## List numbers
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X GET \
+      https://api.turbonotify.com/v1/numbers \
+      -H "Authorization: Bearer YOUR_KEY"
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch('https://api.turbonotify.com/v1/numbers', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer YOUR_KEY'
+      }
+    });
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/numbers"
+    headers = {
+        "Authorization": "Bearer YOUR_KEY"
+    }
+
+    response = requests.get(url, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+    )
+
+    func main() {
+        req, _ := http.NewRequest("GET", "https://api.turbonotify.com/v1/numbers", nil)
+        req.Header.Set("Authorization", "Bearer YOUR_KEY")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/numbers';
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer YOUR_KEY'
+            ],
+            'method' => 'GET'
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+    var response = await client.GetAsync(
+        "https://api.turbonotify.com/v1/numbers"
+    );
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers"))
+                .header("Authorization", "Bearer YOUR_KEY")
+                .GET()
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+<ApiResponse
+  status={200}
+  body={{
+    data: [
+      {
+        contact_id: 'ct_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+        name: 'Turbo Notify',
+        type: 'main',
+        alias: 'main',
+        number: '5511973117056',
+        description: null,
+        external_id: null,
+        status: { status: 'connected', at: '2025-07-16T09:00:00Z', reason: null },
+      },
+      {
+        contact_id: 'ct_c7abb1f5ee9640bf86a0a20290810ae9',
+        name: 'Condomínio Alpha',
+        type: 'extra',
+        alias: 'condominio_1',
+        number: '5511988887777',
+        description: 'Building 1 notices',
+        external_id: 'customer-4821',
+        status: { status: 'connected', at: '2025-07-16T10:01:00Z', reason: null },
+      },
+      {
+        contact_id: null,
+        name: null,
+        type: 'extra',
+        alias: 'condominio_2',
+        number: '5511977776666',
+        description: null,
+        external_id: 'customer-4822',
+        status: { status: 'connecting', at: '2025-07-16T10:05:00Z', reason: null },
+      },
+      {
+        contact_id: null,
+        name: null,
+        type: 'extra',
+        alias: 'condominio_3',
+        number: '5511966665555',
+        description: null,
+        external_id: null,
+        status: { status: 'pending', at: '2025-07-16T10:10:00Z', reason: null },
+      },
+    ],
+    cursor: null,
+    has_more: false,
+  }}
+/>
+
+Without filters, `GET /v1/numbers` returns **all** the numbers registered in
+the organization: the **main number first**, followed by the extra numbers in
+creation order.
+
+:::note[`status.at` follows the current status]
+`status.at` is the moment the number **entered its current status**: it
+updates on every transition (pairing, connection, connection drop,
+reconnection, failure, revocation). A `disconnected`, `failed`,
+`reconnecting` (and so on) number reports the moment of that transition, not
+an outdated connection timestamp.
+
+During an automatic reconnection (an internal move of the connection), the
+number shows as `reconnecting` and, if it does not come back within about one
+minute, as `disconnected`; in both cases `status.at` is the moment it went
+offline. See [Status](/en/numbers/status/).
+
+A newly added number that has not been paired yet (`status: "pending"`, like
+`condominio_3` in the example above) has the time it was added in
+`status.at`.
+
+The exception is `status: "pending_deletion"` (extra numbers only):
+`status.at` holds the time of the **scheduled deletion**, not a connection
+transition.
+:::
+
+**Required scope:** `numbers:read`
+
+## Filters
+
+Two optional query string filters narrow the list:
+
+| Parameter | Description |
+| --------- | ----------- |
+| `status` | Only the numbers in this status. Accepts one of the values in the [Status table](/en/numbers/status/#status-table), for example `?status=failed`. A value outside the table answers `422 validation_error`. |
+| `external_id` | Only the number with this `external_id`, exact match, for example `?external_id=customer-4821`. |
+
+Both filters together combine: the number must match both. The main number
+is listed only when it matches the filters.
+
+```bash title="turbo-notify.sh"
+# Numbers in the account whose pairing failed
+curl -X GET \
+  "https://api.turbonotify.com/v1/numbers?status=failed" \
+  -H "Authorization: Bearer YOUR_KEY"
+
+# The number of your customer 4821
+curl -X GET \
+  "https://api.turbonotify.com/v1/numbers?external_id=customer-4821" \
+  -H "Authorization: Bearer YOUR_KEY"
+```
+
+## Response fields
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `data` | array | List of the account's numbers (main + extra) |
+| `cursor` | string\|null | Always `null`: this route does not paginate |
+| `has_more` | boolean | Always `false`: this route returns all numbers in a single page |
+| `data[].contact_id` | string\|null | Public identifier (`ct_…`) of the number's own contact; `null` until resolved |
+| `data[].name` | string\|null | Name of the number's WhatsApp account (captured on connection); `null` until a connection has been established |
+| `data[].type` | string | `"main"` for the main number (always the first item) or `"extra"` for extra numbers |
+| `data[].alias` | string | Unique identifier of the number in the account (`"main"` for the main number) |
+| `data[].number` | string | Phone number in E.164 digits (no `+`) |
+| `data[].description` | string\|null | Free-form description you set |
+| `data[].external_id` | string\|null | Your own identifier for this number, set when [adding](/en/numbers/add/) or [updating](/en/numbers/update/) it; `null` when not set |
+| `data[].status` | object | `{status, at, reason?}`: current state of the number |
+| `data[].status.status` | string | `pending`, `pairing`, `inactive`, `connecting`, `connected`, `disconnected`, `reconnecting`, `failed`, `revoked` or `pending_deletion`, see [Status table](/en/numbers/status/#status-table) |
+| `data[].status.at` | string | ISO 8601 timestamp of the moment the number **entered its current status** (`data[].status.status`): updates on every transition. Exception: with `status: "pending_deletion"`, it is the time of the scheduled deletion. |
+| `data[].status.reason` | string\|null | Failure reason when `status.status` is `"failed"` (same values as [Failure reasons](/en/numbers/status/#failure-reasons)); `null` in any other status. |
+
+## Possible errors
+
+`GET /v1/numbers` does not depend on the plan: the main number can always be
+listed, and the list returns any extra number that already exists in the
+account regardless of the current plan.
+
+**Listing is the only extra number operation available on every plan**. All
+the others ([add](/en/numbers/add/#possible-errors),
+[check status](/en/numbers/status/#possible-errors),
+[connect/disconnect](/en/numbers/activation/#possible-errors) and
+[remove](/en/numbers/remove/#possible-errors)) require a plan that supports
+extra numbers and return `402 feature_not_available` otherwise. In an account
+that moved to a plan without extra numbers, you can still see the existing
+extra numbers, but you cannot manage them.
+
+| Status | Error code              | Description                                         |
+| :----: | ----------------------- | --------------------------------------------------- |
+| `403`  | `not_authorized`        | The API key is invalid or missing.                  |
+| `403`  | `insufficient_scope`    | The API key does not have the `numbers:read` scope (the response includes `required_scope`). |
+| `422`  | `validation_error`      | The `status` filter has a value that is not in the [Status table](/en/numbers/status/#status-table). |
+| `500`  | `internal_error`        | Unexpected internal server error.                   |

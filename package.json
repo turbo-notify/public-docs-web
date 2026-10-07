@@ -6,17 +6,25 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "node --test tests/source/*.test.mjs",
+    "test:site": "astro check && astro build && node --test tests/site/*.test.mjs",
+    "test:visual": "playwright test",
+    "export:collection": "node scripts/export-insomnia-collection.mjs",
+    "check": "astro check"
   },
   "dependencies": {
     "@astrojs/starlight": "0.28.4",
+    "@scalar/api-reference": "1.73.0",
     "astro": "4.16.18",
     "sharp": "^0.33.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.0",
-    "typescript": "^5.7.0"
+    "@playwright/test": "1.55.0",
+    "typescript": "^5.7.0",
+    "yaml": "2.8.1"
   },
   "pnpm": {
     "overrides": {

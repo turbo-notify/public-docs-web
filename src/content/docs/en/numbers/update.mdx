@@ -1,0 +1,243 @@
+---
+title: Updating extra numbers
+description: How to rename an extra number or change its description and external_id in Turbo Notify.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+import DashboardLink from '@components/DashboardLink.astro';
+
+Update the alias (the name used in API calls), the description or the `external_id` of an extra number you already added, without recreating it.
+
+## Updating in the dashboard
+
+Open the <DashboardLink path="/numbers">Numbers</DashboardLink> page in the dashboard, open the number and edit the alias and/or the description. Save to apply the changes.
+
+## Updating through the API
+
+Make a PATCH request with the number's current alias in the URL and, in the body, only the fields you want to change.
+
+<Tabs>
+  <TabItem label="cURL">
+    ```bash title="turbo-notify.sh"
+    curl -X PATCH \
+      https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS \
+      -H "Authorization: Bearer YOUR_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "alias": "vendas_sp_2",
+        "description": "São Paulo sales team (new shift)"
+      }'
+    ```
+  </TabItem>
+  <TabItem label="Node">
+    ```js title="turbo-notify.js"
+    const response = await fetch('https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS', {
+      method: 'PATCH',
+      headers: {
+        'Authorization': 'Bearer YOUR_KEY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        alias: 'vendas_sp_2',
+        description: 'São Paulo sales team (new shift)'
+      })
+    });
+
+    const result = await response.json();
+    console.log(result);
+    ```
+  </TabItem>
+  <TabItem label="Python">
+    ```python title="turbo_notify.py"
+    import requests
+
+    url = "https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS"
+    headers = {
+        "Authorization": "Bearer YOUR_KEY",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "alias": "vendas_sp_2",
+        "description": "São Paulo sales team (new shift)"
+    }
+
+    response = requests.patch(url, json=data, headers=headers)
+    result = response.json()
+    print(result)
+    ```
+  </TabItem>
+  <TabItem label="Go">
+    ```go title="turbo_notify.go"
+    package main
+
+    import (
+        "fmt"
+        "io"
+        "net/http"
+        "strings"
+    )
+
+    func main() {
+        payload := strings.NewReader(`{"alias": "vendas_sp_2", "description": "São Paulo sales team (new shift)"}`)
+        req, _ := http.NewRequest("PATCH", "https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS", payload)
+        req.Header.Set("Authorization", "Bearer YOUR_KEY")
+        req.Header.Set("Content-Type", "application/json")
+        resp, _ := http.DefaultClient.Do(req)
+        defer resp.Body.Close()
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Println(string(body))
+    }
+    ```
+  </TabItem>
+  <TabItem label="PHP">
+    ```php title="turbo-notify.php"
+    <?php
+    $url = 'https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS';
+
+    $data = [
+        'alias' => 'vendas_sp_2',
+        'description' => 'São Paulo sales team (new shift)'
+    ];
+
+    $options = [
+        'http' => [
+            'header' => [
+                'Authorization: Bearer YOUR_KEY',
+                'Content-Type: application/json'
+            ],
+            'method' => 'PATCH',
+            'content' => json_encode($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    $response = json_decode($result, true);
+    var_dump($response);
+    ?>
+    ```
+  </TabItem>
+  <TabItem label="C#">
+    ```csharp title="TurboNotify.cs"
+    using System.Text;
+
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+    var payload = new StringContent(
+        "{\"alias\": \"vendas_sp_2\", \"description\": \"São Paulo sales team (new shift)\"}",
+        Encoding.UTF8,
+        "application/json"
+    );
+
+    var request = new HttpRequestMessage(HttpMethod.Patch, "https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS")
+    {
+        Content = payload
+    };
+    var response = await client.SendAsync(request);
+    var result = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(result);
+    ```
+  </TabItem>
+  <TabItem label="Java">
+    ```java title="TurboNotify.java"
+    import java.net.http.*;
+    import java.net.URI;
+
+    public class TurboNotify {
+        public static void main(String[] args) throws Exception {
+            var client = HttpClient.newHttpClient();
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.turbonotify.com/v1/numbers/NUMBER_ALIAS"))
+                .header("Authorization", "Bearer YOUR_KEY")
+                .header("Content-Type", "application/json")
+                .method("PATCH", HttpRequest.BodyPublishers.ofString(
+                    "{\"alias\": \"vendas_sp_2\", \"description\": \"São Paulo sales team (new shift)\"}"
+                ))
+                .build();
+
+            var response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+        }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+<ApiResponse
+  status={200}
+  body={{
+    alias: 'vendas_sp_2',
+    description: 'São Paulo sales team (new shift)',
+    external_id: 'customer-4821',
+    status: 'connected',
+    at: '2025-07-16T10:00:00Z',
+  }}
+/>
+
+**Required scope:** `numbers:write`
+
+The body fields are **optional and independent**: send only what you want to change.
+
+| Field | Type | Required | Description |
+| ----- | ---- | :------: | ----------- |
+| `alias` | string | No | New alias of the number. Must start with a letter, be at most 50 characters and cannot be `"main"` (reserved for the main number). Omit it to keep the current alias. |
+| `description` | string \| null | No | New description of the number. Send `null` explicitly to clear the current description; **omit the field** to leave it as is. |
+| `external_id` | string \| null | No | Your own identifier for this number, typically the id of your customer in your system. Send a value to set or change it, `null` explicitly to remove it; **omit the field** to keep it. 1 to 128 characters, no control characters, leading and trailing spaces trimmed, and unique among the numbers of your organization. |
+
+To set or change only the `external_id`:
+
+```json
+{ "external_id": "customer-4821" }
+```
+
+To remove it:
+
+```json
+{ "external_id": null }
+```
+
+The response returns the updated state of the number:
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `alias` | string | Current alias of the number (the new one, if it changed). Use it in the next calls to this number. |
+| `description` | string \| null | Current description of the number. |
+| `external_id` | string \| null | Current `external_id` of the number. |
+| `status` | string | Current state of the number, see [Status table](/en/numbers/status/#status-table). |
+| `at` | string | ISO 8601 timestamp of this update. |
+
+:::note[Renaming does not affect the connection]
+Changing the `alias`, the `description` or the `external_id` does not disconnect the number, does not require pairing it again and does not restart it: the connection to WhatsApp stays exactly as it was. From the response on, use the **new** alias in any later call to this number.
+:::
+
+:::tip[`external_id` is the stable key]
+Renaming the alias keeps the `external_id`. That is why it is the stable way to find a customer's number: `GET /v1/numbers?external_id=customer-4821` (see [Filters](/en/numbers/list/#filters)) finds the number even after its alias changes.
+:::
+
+## Main number
+
+The main number also accepts an `external_id`, and only that: in `PATCH /v1/numbers/main`, send only `external_id` (a value to set or change it, `null` to remove it). Sending `alias` or `description` for the main number answers `403 main_number_update_not_allowed`.
+
+```json
+{ "external_id": "main-account" }
+```
+
+## Possible errors
+
+| Status | Error code                      | Description                                                    |
+| :----: | ------------------------------- | -------------------------------------------------------------- |
+| `400`  | `reserved_alias`                | The new alias is `"main"`, reserved for the main number.       |
+| `400`  | `no_changes`                    | No field was sent, or the only field sent (`alias`) is the same as the current value. |
+| `402`  | `feature_not_available`         | The current plan does not support extra numbers.               |
+| `403`  | `not_authorized`                | The API key is invalid or missing.                             |
+| `403`  | `insufficient_scope`            | The API key does not have the `numbers:write` scope (the response includes `required_scope`). |
+| `403`  | `main_number_update_not_allowed` | On the main number (`main`), only `external_id` can be changed; `alias` and `description` cannot. |
+| `404`  | `extra_number_not_found`        | The alias in the path does not match any registered number.    |
+| `409`  | `alias_already_exists`          | Another extra number already uses that alias.                  |
+| `409`  | `external_id_already_used`      | Another number of your account already uses this `external_id`. |
+| `422`  | `validation_error`              | `alias` is empty, does not start with a letter or is longer than 50 characters, `external_id` is empty, longer than 128 characters or contains a control character, or a text field contains an invalid character. The response includes `details.errors` with the specific field and message. |
+| `500`  | `internal_error`                | Unexpected internal server error.                              |

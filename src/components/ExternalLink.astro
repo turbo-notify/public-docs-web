@@ -1,4 +1,6 @@
 ---
+import { localeFromPath, ui } from '../i18n/locale';
+
 interface Props {
   href: string;
 }
@@ -7,8 +9,9 @@ const { href } = Astro.props;
 const isExternal = href.startsWith('http');
 const target = isExternal ? '_blank' : undefined;
 const rel = isExternal ? 'noopener noreferrer' : undefined;
+const t = ui[localeFromPath(Astro.url.pathname)];
 ---
 
 <a href={href} target={target} rel={rel} class:list={[{ 'external-link': isExternal }]}>
-  <slot />{isExternal && <span class="sr-only"> (abre em nova aba)</span>}
+  <slot />{isExternal && <span class="sr-only">{t.opensInNewTab}</span>}
 </a>

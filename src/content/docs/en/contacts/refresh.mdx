@@ -1,0 +1,191 @@
+---
+title: Refresh a contact
+description: "POST /v1/numbers/{alias}/contacts/{contact_id}/refresh endpoint: refreshes the contact name on demand. Answers 202 with requested_at, the outcome shows up on the contact itself, and there is a rate limit per plan."
+sidebar:
+  order: 4
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ApiResponse from '@components/ApiResponse.astro';
+
+Asks WhatsApp for a contact's current name. Each request runs a real lookup on WhatsApp and counts against your plan's refresh limit, which is why it requires the write scope, not the read scope. The 202 response is immediate; the lookup finishes within a few seconds and the outcome shows up on the contact itself.
+
+A refresh changes **only the name**. This endpoint does not refresh the profile picture: the picture is checked again automatically the next time the number and the contact exchange messages. A refresh also changes nothing about the delivery of your messages.
+
+The lookup uses the connection of the number that owns the contact (`main` or the extra number's alias). If that number is not connected, the refresh ends right away with the `number_not_connected` outcome.
+
+## Endpoint
+
+```http
+POST /v1/contacts/{contact_id}/refresh
+```
+
+For extra numbers: `POST /v1/numbers/{alias}/contacts/{contact_id}/refresh`
+
+**Required scope:** `contacts:write`.
+
+## Rate limit
+
+Each refresh looks up WhatsApp right away, so it has a per-minute limit that depends on the plan:
+
+| Plan       | Refreshes/min |
+| ---------- | -------------:|
+| `FREE`     | 5   |
+| `SOLO`     | 30  |
+| `BUSINESS` | 120 |
+| `CUSTOM`   | 600 |
+
+Going over the limit returns `429 refresh_rate_limited` with the `Retry-After` header.
+
+## Example
+
+<Tabs>
+<TabItem label="cURL">
+```bash
+curl -X POST "https://api.turbonotify.com/v1/contacts/ct_.../refresh" \
+  -H "Authorization: Bearer YOUR_KEY"
+```
+</TabItem>
+<TabItem label="Node">
+```ts
+const id = "ct_a1b2c3d4e5f6789012345678901234ab";
+
+const res = await fetch(`https://api.turbonotify.com/v1/contacts/${id}/refresh`, {
+  method: "POST",
+  headers: { Authorization: "Bearer YOUR_KEY" },
+});
+const { status, requested_at } = await res.json();
+```
+</TabItem>
+<TabItem label="Python">
+```python
+import httpx
+
+contact_id = "ct_a1b2c3d4e5f6789012345678901234ab"
+
+r = httpx.post(
+    f"https://api.turbonotify.com/v1/contacts/{contact_id}/refresh",
+    headers={"Authorization": "Bearer YOUR_KEY"},
+)
+```
+</TabItem>
+<TabItem label="Go">
+```go
+package main
+
+import (
+    "fmt"
+    "io"
+    "net/http"
+)
+
+func main() {
+    req, _ := http.NewRequest(
+        "POST",
+        "https://api.turbonotify.com/v1/contacts/ct_.../refresh",
+        nil,
+    )
+    req.Header.Set("Authorization", "Bearer YOUR_KEY")
+    resp, _ := http.DefaultClient.Do(req)
+    defer resp.Body.Close()
+    body, _ := io.ReadAll(resp.Body)
+    fmt.Println(string(body))
+}
+```
+</TabItem>
+<TabItem label="PHP">
+```php
+<?php
+$url = 'https://api.turbonotify.com/v1/contacts/ct_.../refresh';
+
+$options = [
+    'http' => [
+        'header' => ['Authorization: Bearer YOUR_KEY'],
+        'method' => 'POST'
+    ]
+];
+
+$context = stream_context_create($options);
+$result = file_get_contents($url, false, $context);
+?>
+```
+</TabItem>
+<TabItem label="C#">
+```csharp
+var client = new HttpClient();
+client.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_KEY");
+
+var response = await client.PostAsync(
+    "https://api.turbonotify.com/v1/contacts/ct_.../refresh",
+    null
+);
+var result = await response.Content.ReadAsStringAsync();
+Console.WriteLine(result);
+```
+</TabItem>
+<TabItem label="Java">
+```java
+import java.net.http.*;
+import java.net.URI;
+
+public class RefreshContact {
+    public static void main(String[] args) throws Exception {
+        var client = HttpClient.newHttpClient();
+
+        var request = HttpRequest.newBuilder()
+            .uri(URI.create("https://api.turbonotify.com/v1/contacts/ct_.../refresh"))
+            .header("Authorization", "Bearer YOUR_KEY")
+            .POST(HttpRequest.BodyPublishers.noBody())
+            .build();
+
+        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.body());
+    }
+}
+```
+</TabItem>
+</Tabs>
+
+## Response (202)
+
+<ApiResponse
+  status={202}
+  body={{
+    status: 'queued',
+    requested_at: '2026-05-10T13:40:00Z',
+  }}
+/>
+
+`requested_at` is the moment of the request (UTC, to the second). It identifies
+this request in the contact's `refresh` field.
+
+## Follow the outcome
+
+Read the contact with [`GET /v1/contacts/{contact_id}`](/en/contacts/detail/) (or
+`GET /v1/numbers/{alias}/contacts/{contact_id}`). The `refresh` field shows the
+last refresh request you made:
+
+```json
+"refresh": {
+  "requested_at": "2026-05-10T13:40:00Z",
+  "completed_at": null,
+  "outcome": null
+}
+```
+
+While the lookup is in progress, `completed_at` and `outcome` stay `null`.
+When it finishes, both are filled in:
+
+| `outcome` | What it means | What to do |
+| --------- | ------------- | ---------- |
+| `updated` | The name changed on WhatsApp and the contact already shows the new name. | Nothing. The `contact.name_changed` webhook is also sent. |
+| `unchanged` | The contact name was already up to date. | Nothing. |
+| `number_not_connected` | The number that owns the contact was not connected to WhatsApp. | Reconnect the number and request the refresh again. |
+| `unavailable` | WhatsApp did not answer about this contact, or the lookup could not be started. | Try again in a few minutes. |
+
+A new request replaces the previous one: `requested_at` becomes the time of the new
+request and `completed_at`/`outcome` go back to `null` until it finishes. If the name
+changed, you also receive the `contact.name_changed` webhook; no other
+event is sent because of a refresh.
+
+See [contact events](/en/webhooks/contact-events/).

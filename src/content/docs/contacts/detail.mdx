@@ -20,7 +20,7 @@ Para números extras: `GET /v1/numbers/{alias}/contacts/{contact_id}`
 
 **Escopo obrigatório:** `contacts:read`.
 
-## Path
+## Parâmetro de rota
 
 | Parâmetro | Tipo | Formato |
 | --------- | ---- | ------- |
@@ -169,22 +169,22 @@ public class DetalheContato {
 O `number_alias` (logo após `id`) identifica o número do Turbo Notify a que
 este contato pertence: `"main"` ou o alias de um número extra (o mesmo
 telefone alcançado por dois números diferentes gera dois contatos distintos). O
-`phone_number` é o **E.164 completo** (sem máscara), o mesmo número já
-exposto em `message.from`/`message.to`. O campo `name` é o
-push name do contato no WhatsApp (coerente com o triplo `{id, name, number}`
-dos eventos `contact.*`). `picture` é uma união discriminada por `kind`
-(`available` | `unavailable`), espelhando o bloco de mídia dos
-eventos; quando `kind` é `available`, o próprio bloco carrega `fetched_at`.
+`phone_number` é o **E.164 completo** (sem máscara), o mesmo número que
+aparece em `message.from`/`message.to`. O campo `name` é o nome que o
+contato definiu no perfil do WhatsApp (o mesmo trio `{id, name, number}`
+dos eventos `contact.*`). `picture` tem o formato definido por `kind`
+(`available` ou `unavailable`), igual ao bloco de mídia dos
+eventos; quando `kind` é `available`, o próprio bloco traz `fetched_at`.
 O valor `pending` só aparece em payloads de webhook: este endpoint de
 leitura nunca o retorna.
 
-### Datas de interação e refresh
+### Datas de interação e atualização
 
 | Campo | Significado |
 | ----- | ----------- |
 | `first_messaged_at` | Quando a primeira mensagem enviada por este número via Turbo Notify chegou ao contato no WhatsApp. `null` enquanto nenhuma chegou. Um envio que falhou antes de chegar ao WhatsApp não preenche este campo. |
 | `last_interaction_at` | A última mensagem trocada de fato com o contato, em qualquer direção: recebida, enviada pelo celular ou enviada via Turbo Notify e entregue ao WhatsApp. Um envio que não chegou ao WhatsApp não altera este campo. |
-| `refresh` | O último [refresh](/contacts/refresh/) que você pediu para este contato. `null` se você nunca pediu. Traz `requested_at`, `completed_at` e `outcome`; os dois últimos ficam `null` enquanto o refresh está em andamento. |
+| `refresh` | O último [pedido de atualização](/contacts/refresh/) que você fez para este contato. `null` se você nunca fez. Traz `requested_at`, `completed_at` e `outcome`; os dois últimos ficam `null` enquanto a atualização está em andamento. |
 
 ## Erros
 

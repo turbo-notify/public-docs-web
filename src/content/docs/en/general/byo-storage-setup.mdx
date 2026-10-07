@@ -1,0 +1,129 @@
+---
+title: Bring your own storage (BYO Storage)
+description: Configure your own bucket (AWS S3, Cloudflare R2, Supabase Storage) to permanently store received media and contact profile pictures.
+---
+
+import DashboardLink from '@components/DashboardLink.astro';
+
+With **your own storage** (BYO Storage, short for "Bring Your Own"), Turbo Notify stores received media and contact profile pictures directly in your bucket, under your control. Without this setup, received media is not available for download.
+
+## How your own storage works
+
+When a contact sends an image, video, audio, document or sticker to your WhatsApp number, Turbo Notify:
+
+1. Receives the media from WhatsApp.
+2. Uploads the file to your bucket (through the S3 API).
+3. Returns a presigned URL directly in the media object (`image.url`, `video.url`, …) when you call `GET /v1/numbers/{alias}/messages/{id}`.
+4. Sends the `message.received` webhook with the available media fields.
+
+Without your own storage configured, the `kind` field returns `"unavailable"` with `reason: "no_storage"`. The media content is not kept.
+
+## Supported providers
+
+Turbo Notify uses the S3 HTTP API, the same protocol supported by all three providers:
+
+| Provider | Free plan | Notes |
+|----------|:---------:|-------|
+| **Cloudflare R2** | Yes | No egress fees; a good choice when media is downloaded often. Check the provider's site for current limits. |
+| **Supabase Storage** | Yes | Ideal if you already use Supabase in your project. Check the provider's site for current limits. |
+| **AWS S3** | Yes | Largest tooling ecosystem; egress fees apply. Check the AWS site for details. |
+
+:::note[Pricing]
+We do not quote prices because provider plans change. Check each provider's site for current limits and prices before choosing.
+:::
+
+## How to set it up
+
+### 1. Create a bucket with your chosen provider
+
+The bucket must be **private** (no public access). Turbo Notify accesses its content with the credentials you provide, not through public URLs.
+
+### 2. Create credentials with minimum permissions
+
+The required permissions are:
+
+```
+s3:PutObject
+s3:GetObject
+s3:DeleteObject
+s3:ListBucket
+```
+
+Create an IAM user (AWS), an R2 API token (Cloudflare) or S3 access keys in the project's Storage settings (Supabase), with access restricted to the Turbo Notify bucket.
+
+### 3. Configure it in the dashboard
+
+Go to <DashboardLink path="/storage">Storage</DashboardLink> and fill in:
+
+| Field | Value |
+|-------|-------|
+| **Provider** | AWS S3, Cloudflare R2 or Supabase Storage |
+| **Bucket** | Name of the bucket you created |
+| **Region** | The bucket's region (for example `us-east-1`, or `auto` for R2) |
+| **Access Key ID** | IAM / R2 / Supabase access key |
+| **Secret Access Key** | The matching secret key |
+| **Cloudflare Account ID** / **Supabase Project Ref** | Only for R2 and Supabase, respectively: the S3-compatible address is built automatically from this value |
+
+### 4. Validate the connection and save
+
+Before saving, click **Test connection**. Turbo Notify checks the bucket (`HEAD`), writes a temporary object (`PUT`), reads it back (`GET`) and removes it (`DELETE`), validating the 4 required permissions (`ListBucket`/`PutObject`/`GetObject`/`DeleteObject`). Each check shows in a list with its result, and the save button is only enabled when all four pass. Once saved, media starts being stored immediately. If any check fails, review the credentials, the bucket name and the permissions.
+
+## Behavior after setup
+
+### Received media
+
+All media received after activation is copied to your bucket automatically. The media fields in `GET /v1/numbers/{alias}/messages/{id}` start returning `kind: "available"`, for example:
+
+```json
+{
+  "kind": "available",
+  "url": "https://<bucket>.r2.cloudflarestorage.com/...?X-Amz-...",
+  "expires_at": "2026-04-21T11:00:00Z",
+  "mime_type": "image/jpeg",
+  "size_bytes": 184320
+}
+```
+
+Access to the media expires at `expires_at`. To get a new URL, fetch the message again.
+
+### Contact profile pictures
+
+With your own storage active, profile pictures are stored in the bucket and `GET /v1/numbers/{alias}/contacts/{id}/profile-picture` answers with a 302 redirect to the presigned URL.
+
+### Media received before setup
+
+Media received **before** your own storage was activated stays at `kind: "unavailable"`. It is not recovered later: only new media is stored.
+
+## Troubleshooting
+
+### `kind: "unavailable"` with `reason: "upload_failed"`
+
+The upload to the bucket failed after retries. Possible causes:
+
+- Expired credentials or insufficient permissions.
+- Deleted bucket or changed access policy.
+- Bucket quota reached (check the provider's console).
+
+Go to <DashboardLink path="/storage">Storage</DashboardLink> and click **Test connection** to diagnose.
+
+### `kind: "unavailable"` with `reason: "storage_circuit_open"`
+
+Your storage failed several times in a row and media uploads to it were paused temporarily. Turbo Notify retries automatically. When the connection is restored, you receive the `storage.recovered` webhook.
+
+### `kind: "pending"`
+
+The media is still being uploaded to the bucket. Wait a few seconds and call `GET /v1/numbers/{alias}/messages/{id}` again. This state only shows while the upload is in progress: the `message.received` webhook is only sent once the media is available or unavailable.
+
+## Security
+
+- Credentials are stored encrypted (AES-256-GCM), never in plain text.
+- Turbo Notify never exposes credentials in logs or responses.
+- Presigned URLs have a configurable validity (default: 15 minutes; up to 1 hour).
+- We recommend **least privilege**: credentials with access restricted to the Turbo Notify bucket.
+
+## Related
+
+- [Get a message](/en/messages/get/): media fields as a union discriminated by `kind`.
+- [Webhooks: Storage and media](/en/messages/webhook/#storage-and-media): the `storage.degraded` and `storage.recovered` events.
+- [Send media](/en/messages/send-media/): sending media from a public URL.
+- [Profile picture](/en/contacts/profile-picture/): redirect to a presigned URL.
