@@ -157,10 +157,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by inbox handle (``\"main\"`` or extra alias). ADR 2026-06-22: restricts results to events belonging to this specific number. Organization-scoped events without a ``number_alias`` (e.g. ``storage.*``, ``message.quota.*``) are excluded when this filter is active.",
+              "description": "Filter by inbox handle (``\"main\"`` or extra alias). ADR 2026-06-22: restricts results to events belonging to this specific number. The only organization-scoped events without a ``number_alias`` are ``storage.*`` (ADR 2026-07-02 made ``message.quota.*``/``contact.quota.*`` number-scoped too); those are excluded when this filter is active.",
               "title": "Number Alias"
             },
-            "description": "Filter by inbox handle (``\"main\"`` or extra alias). ADR 2026-06-22: restricts results to events belonging to this specific number. Organization-scoped events without a ``number_alias`` (e.g. ``storage.*``, ``message.quota.*``) are excluded when this filter is active."
+            "description": "Filter by inbox handle (``\"main\"`` or extra alias). ADR 2026-06-22: restricts results to events belonging to this specific number. The only organization-scoped events without a ``number_alias`` are ``storage.*`` (ADR 2026-07-02 made ``message.quota.*``/``contact.quota.*`` number-scoped too); those are excluded when this filter is active."
           },
           {
             "name": "created[gte]",
@@ -847,6 +847,48 @@
         }
       }
     },
+    "/v1/messages/read": {
+      "post": {
+        "tags": [
+          "Messages"
+        ],
+        "summary": "Mark As Read Flat",
+        "description": "Mark a chat's (or WhatsApp Group's) unread inbound backlog as read\nfrom the main number.",
+        "operationId": "mark_as_read_flat_v1_messages_read_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkAsReadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkAsReadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/typing-indicator": {
       "post": {
         "tags": [
@@ -965,17 +1007,19 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ContactSource"
                 },
                 {
                   "type": "null"
                 }
               ],
+              "description": "Restrict to contacts that entered the platform this way: `inbound`, `outbound`, `mention` or `self`. Typed as the enum so FastAPI rejects anything else at the boundary with 422 — an untyped `str` reached `ContactSource(v)` in the repository, where the ValueError escaped as a 500 (an empty `?source=`, which is what a client emits for an unset optional filter, hit the same path).",
               "title": "Source"
-            }
+            },
+            "description": "Restrict to contacts that entered the platform this way: `inbound`, `outbound`, `mention` or `self`. Typed as the enum so FastAPI rejects anything else at the boundary with 422 — an untyped `str` reached `ContactSource(v)` in the repository, where the ValueError escaped as a 500 (an empty `?source=`, which is what a client emits for an unset optional filter, hit the same path)."
           },
           {
-            "name": "has_messaged_in_window",
+            "name": "contacted_in_cycle",
             "in": "query",
             "required": false,
             "schema": {
@@ -987,8 +1031,10 @@
                   "type": "null"
                 }
               ],
-              "title": "Has Messaged In Window"
-            }
+              "description": "When true, restrict to contacts CONTACTED via Turbo Notify in the main number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Cycle-anchored (ADR 2026-07-04), not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected).",
+              "title": "Contacted In Cycle"
+            },
+            "description": "When true, restrict to contacts CONTACTED via Turbo Notify in the main number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Cycle-anchored (ADR 2026-07-04), not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected)."
           }
         ],
         "responses": {
@@ -2120,7 +2166,7 @@
           "Messages"
         ],
         "summary": "React To Message",
-        "description": "Add or remove a reaction from the number identified by ``alias``.\n\nThe ownership guard fetches the message first and asserts that the\n``number_alias`` on the result matches ``alias`` — preventing a caller\nfrom reacting to a message that belongs to a different inbox.",
+        "description": "Add or remove a reaction from the number identified by ``alias``.\n\nThe target message must belong to the inbox identified by ``alias``; one\nthat belongs to a different number responds identically to one that does\nnot exist.",
         "operationId": "react_to_message_v1_numbers__alias__messages__message_id__react_post",
         "parameters": [
           {
@@ -2188,7 +2234,7 @@
           "Messages"
         ],
         "summary": "Get Message Details",
-        "description": "Retrieve the full details of a message by its public ``msg_{hex}`` id.\n\nThe ``{alias}`` is validated against the organization before the query so\nan attacker cannot enumerate messages from a different number by guessing\nIDs.  After the query the ``number_alias`` in the result is checked against\n``alias`` to prevent cross-number information leakage.",
+        "description": "Retrieve the full details of a message by its public ``msg_{hex}`` id.\n\nThe message must belong to the inbox identified by ``alias``; one that\nbelongs to a different number responds identically to one that does not\nexist, so a caller cannot enumerate messages from another number by\nguessing IDs.",
         "operationId": "get_message_details_v1_numbers__alias__messages__message_id__get",
         "parameters": [
           {
@@ -2593,6 +2639,60 @@
         }
       }
     },
+    "/v1/numbers/{alias}/messages/read": {
+      "post": {
+        "tags": [
+          "Numbers",
+          "Messages"
+        ],
+        "summary": "Mark As Read",
+        "description": "Mark a chat's (or WhatsApp Group's) unread inbound backlog as read\nfrom the number identified by ``alias`` — independent of the\nautomatic mark-as-read that already accompanies send/reply/react/\nedit/delete (ADR 2026-09-07-mark-as-read-on-interaction). Useful for\na customer's own client that wants inbox parity (e.g. an unread\nbadge cleared by the user) without sending any WhatsApp message.\n\nThe sender is inferred from the URL ``alias``; there is no ``from``\nbody field.",
+        "operationId": "mark_as_read_v1_numbers__alias__messages_read_post",
+        "parameters": [
+          {
+            "name": "alias",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Alias"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkAsReadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkAsReadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/numbers/{alias}/contacts": {
       "get": {
         "tags": [
@@ -2679,17 +2779,19 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ContactSource"
                 },
                 {
                   "type": "null"
                 }
               ],
+              "description": "Restrict to contacts that entered the platform this way: `inbound`, `outbound`, `mention` or `self`. Typed as the enum so FastAPI rejects anything else at the boundary with 422 — an untyped `str` reached `ContactSource(v)` in the repository, where the ValueError escaped as a 500 (an empty `?source=`, which is what a client emits for an unset optional filter, hit the same path).",
               "title": "Source"
-            }
+            },
+            "description": "Restrict to contacts that entered the platform this way: `inbound`, `outbound`, `mention` or `self`. Typed as the enum so FastAPI rejects anything else at the boundary with 422 — an untyped `str` reached `ContactSource(v)` in the repository, where the ValueError escaped as a 500 (an empty `?source=`, which is what a client emits for an unset optional filter, hit the same path)."
           },
           {
-            "name": "has_messaged_in_window",
+            "name": "contacted_in_cycle",
             "in": "query",
             "required": false,
             "schema": {
@@ -2701,8 +2803,10 @@
                   "type": "null"
                 }
               ],
-              "title": "Has Messaged In Window"
-            }
+              "description": "When true, restrict to contacts CONTACTED via Turbo Notify in this number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Cycle-anchored (ADR 2026-07-04), not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected).",
+              "title": "Contacted In Cycle"
+            },
+            "description": "When true, restrict to contacts CONTACTED via Turbo Notify in this number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Cycle-anchored (ADR 2026-07-04), not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected)."
           }
         ],
         "responses": {
@@ -3051,7 +3155,7 @@
           "Groups"
         ],
         "summary": "Get Group Nested",
-        "description": "Retrieve a single group for the inbox ``{alias}``.\n\nThe ``number_id`` on the group row is checked against the resolved number\nso that a caller cannot fetch a group belonging to a different inbox\nwithin the same organisation (ADR 2026-06-22, Fix 4).  When ``number_id``\nis ``None`` (legacy rows without the column populated) the guard is\nskipped — org-level isolation is still enforced by the use case.",
+        "description": "Retrieve a single group belonging to this number.\n\nA group that belongs to a different number of the same organization is not\nreturned, even though the id is valid: ids are scoped to the number that\nlisted them.",
         "operationId": "get_group_nested_v1_numbers__alias__groups__group_id__get",
         "parameters": [
           {
@@ -3441,21 +3545,16 @@
             "type": "integer",
             "title": "Remaining"
           },
-          "window_days": {
-            "type": "integer",
-            "title": "Window Days",
-            "default": 30
+          "cycle_start": {
+            "type": "string",
+            "title": "Cycle Start"
+          },
+          "cycle_end": {
+            "type": "string",
+            "title": "Cycle End"
           },
           "resets_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
             "title": "Resets At"
           },
           "tier": {
@@ -3469,10 +3568,58 @@
           "used",
           "quota",
           "remaining",
+          "cycle_start",
+          "cycle_end",
+          "resets_at",
           "tier"
         ],
         "title": "ContactQuotaResponse",
-        "description": "Organization's current contact-quota snapshot.\n\nShape matches ``05-public-api-endpoints.md`` § 05.3:\n\n.. code-block:: json\n\n   {\n     \"used\": 87,\n     \"quota\": 1000,\n     \"remaining\": 913,\n     \"window_days\": 30,\n     \"resets_at\": \"...\",\n     \"tier\": \"SOLO\"\n   }"
+        "description": "Organization's current contact-quota snapshot.\n\nTask 4.1 (public quota/usage shapes gain the evaluated cycle): the\nformer rolling ``window_days`` field is retired — the response now\ncarries the evaluated billing cycle directly (``cycle_start``/\n``cycle_end``), mirroring ``MessageQuotaResponse`` exactly.\n``resets_at`` always equals ``cycle_end``.\n\nm3 coherence fix: these three fields are typed ``str`` (not\n``datetime``) and formatted at construction time via the canonical\n``format_utc_iso()`` helper — matching the second-precision, Z-suffixed\nconvention already used by the NATS quota events (``contact.quota.*``)\nand every other public-surface timestamp (e.g. ``at`` on message\nresponses). A ``datetime``-typed field would serialize with Pydantic's\ndefault microsecond-precision encoder, diverging from the event side.\n\n.. code-block:: json\n\n   {\n     \"used\": 87,\n     \"quota\": 1000,\n     \"remaining\": 913,\n     \"cycle_start\": \"2026-06-01T00:00:00Z\",\n     \"cycle_end\": \"2026-07-01T00:00:00Z\",\n     \"resets_at\": \"2026-07-01T00:00:00Z\",\n     \"tier\": \"SOLO\"\n   }"
+      },
+      "ContactRefreshPayload": {
+        "properties": {
+          "requested_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Requested At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "updated",
+                  "unchanged",
+                  "number_not_connected",
+                  "unavailable"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "requested_at"
+        ],
+        "title": "ContactRefreshPayload",
+        "description": "The last refresh the customer asked for (spec 2026-10-04-send-contract-hygiene, part C).\n\n``completed_at`` and ``outcome`` stay ``null`` while the refresh runs."
       },
       "ContactResponse": {
         "properties": {
@@ -3570,6 +3717,16 @@
             ],
             "title": "Picture"
           },
+          "refresh": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContactRefreshPayload"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -3593,6 +3750,17 @@
         "title": "ContactResponse",
         "description": "Single-contact detail response (flat phone post-collapse).\n\n``picture`` is a :data:`ProfilePicturePayload` discriminated union\n(``kind``: ``\"available\"`` | ``\"unavailable\"``).\n``None`` when no picture metadata has been fetched yet.\n\n2026-06-06: ``push_name`` renamed to ``name`` (coherence with the\n``contact.*`` event triple ``{id, name, number}``). Removed\n``organization_id`` (the API is already organization-scoped — implicit),\n``source`` (internal discovery detail), ``profile_picture_fetched_at``\n(internal fetch marker — the ``available`` picture variant already\ncarries its own ``fetched_at``), and the low-value fields\n``status_about``, ``is_business``, ``business_profile``, ``last_seen_at``."
       },
+      "ContactSource": {
+        "type": "string",
+        "enum": [
+          "inbound",
+          "outbound",
+          "mention",
+          "self"
+        ],
+        "title": "ContactSource",
+        "description": "How a :class:`Contact` entered the platform.\n\nInvariant: SOURCE_IMMUTABLE — once set on contact creation the value\nnever changes. Re-pairing or address-book rotations do NOT alter the\nsource; ``last_interaction_at`` carries that signal instead.\n\nMembers:\n    INBOUND: First touched when the organization received a message from\n        this peer (worker emitted ``MessageReceivedEvent``).\n    OUTBOUND: First touched when the organization sent a message to this\n        peer (``SendMessageUseCase`` invoked\n        :meth:`ContactWriteRepository.upsert_contact`).\n    MENTION: First touched when this peer was @mentioned inside message\n        traffic (inbound, channel-outbound, or TN send — ADR 2026-07-03).\n        Traffic-derived like a receipt acker; NEVER stamps\n        ``first_messaged_at``/``last_messaged_at`` and never consumes a\n        quota slot (``tn_send=False`` always).\n    SELF: Contact represents a TN-managed number — primary session\n        or extra number for the organization itself. ``is_self=TRUE`` row."
+      },
       "ContactUsageSnapshot": {
         "properties": {
           "used": {
@@ -3608,15 +3776,7 @@
             "title": "Remaining"
           },
           "resets_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
             "title": "Resets At"
           },
           "tier": {
@@ -3630,6 +3790,7 @@
           "used",
           "quota",
           "remaining",
+          "resets_at",
           "tier"
         ],
         "title": "ContactUsageSnapshot",
@@ -4130,6 +4291,18 @@
             ],
             "title": "Sticker"
           },
+          "interactive": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interactive"
+          },
           "replied": {
             "anyOf": [
               {
@@ -4203,7 +4376,7 @@
           "status"
         ],
         "title": "GetMessageDetailsResponse",
-        "description": "``GET /v1/messages/{id}`` response.\n\nUnified with the webhook/polling event shape (2026-06-01 spec):\n\nCommon fields (all ``message.*`` events):\n- ``id``: public ``msg_{hex32}`` identifier.\n- ``organization_id``: ``org_{hex32}`` — the owning organization (after ``id``).\n- ``number_alias``: organization inbox handle (``\"main\"`` / extra alias), after\n  ``organization_id``. Replaces the dropped ``inbox`` party block.\n- ``from``/``to``: direction-aware party shapes.\n- ``preview``: permanent grapheme-aware crop (≤ 50 chars).\n- ``content_type``: ``text``, ``image``, ``audio``, etc.\n- ``direction``: ``\"outbound\"`` or ``\"inbound\"``.\n- ``channel``: always ``\"whatsapp\"``.\n- ``origin``: ``\"tn\"`` (API send), ``\"native\"`` (WhatsApp direct/inbound).\n  Always present — never ``null``.\n- ``at``: ISO 8601 — stable WhatsApp occurrence moment (does not advance\n  with delivery state; outbound = sent_at, inbound = created_at proxy).\n- ``status``: ``{state, at, error}`` — ``status.at`` is the advancing\n  current-delivery-status time (read_at → delivered_at → sent_at → failed_at\n  → created_at).  ``error`` is the nested ``MessageError``\n  (``{code, message, hint}``), present iff ``state=\"failed\"``.\n- ``mentions`` (ADR 2026-07-03): ``[{contact_id?, name?, number}, ...]`` —\n  hydrated ``@<number>`` mentions found in ``text``/the media ``caption``,\n  inbound AND outbound, stored order.  ``None`` when the message has no\n  mentions.  Survives the ``content`` retention purge (mirrors\n  ``quoted_message_id``).\n\nType-specific optional fields (one per ``content_type``):\n- ``text``: full text for ``content_type=\"text\"``.\n- ``image``, ``video``, ``audio``, ``document``, ``sticker``: media\n  objects including the discriminated ``media`` block (``kind`` field).\n- ``location``: ``{latitude, longitude, name?, address?, …}``.\n- ``calendar``: ``{name, start_at, …}``.\n- ``replied``: ``{message_id, preview}`` — for reply messages.\n\nFor ``message.reacted``: ``content_type=\"text\"``, ``text`` = emoji or ``\"\"``.\n\nRemoved (2026-06-01): ``body``, ``body_expired``, ``sent_at``,\n``delivered_at``, ``read_at``, ``updated_at``, ``quoted_message_id``\n(top-level), ``media`` (top-level — moved into type-specific objects).\nRemoved (ADR 2026-06-19): ``inbox`` party block — superseded by the flat\n``number_alias`` handle."
+        "description": "``GET /v1/messages/{id}`` response.\n\nUnified with the webhook/polling event shape (2026-06-01 spec):\n\nCommon fields (all ``message.*`` events):\n- ``id``: public ``msg_{hex32}`` identifier.\n- ``organization_id``: ``org_{hex32}`` — the owning organization (after ``id``).\n- ``number_alias``: organization inbox handle (``\"main\"`` / extra alias), after\n  ``organization_id``. Replaces the dropped ``inbox`` party block.\n- ``from``/``to``: direction-aware party shapes.\n- ``preview``: grapheme-aware crop (≤ 50 chars). Follows the identical\n  per-organization content-retention window as the body (not permanent) —\n  resolved by the shared ``RetentionResolver``.\n- ``content_type``: ``text``, ``image``, ``audio``, etc.\n- ``direction``: ``\"outbound\"`` or ``\"inbound\"``.\n- ``channel``: always ``\"whatsapp\"``.\n- ``origin``: ``\"tn\"`` (API send), ``\"native\"`` (WhatsApp direct/inbound).\n  Always present — never ``null``.\n- ``at``: ISO 8601 — stable WhatsApp occurrence moment (does not advance\n  with delivery state; outbound = sent_at, inbound = created_at proxy).\n- ``status``: ``{state, at, error}`` — ``status.at`` is the advancing\n  current-delivery-status time (read_at → delivered_at → sent_at → failed_at\n  → created_at).  ``error`` is the nested ``MessageError``\n  (``{code, message, hint}``), present iff ``state=\"failed\"``.\n- ``mentions`` (ADR 2026-07-03): ``[{contact_id?, name?, number}, ...]`` —\n  hydrated ``@<number>`` mentions found in ``text``/the media ``caption``,\n  inbound AND outbound, stored order.  ``None`` when the message has no\n  mentions.  Survives the ``content`` retention purge (mirrors\n  ``quoted_message_id``).\n\nType-specific optional fields (one per ``content_type``):\n- ``text``: full text for ``content_type=\"text\"``.\n- ``image``, ``video``, ``audio``, ``document``, ``sticker``: media\n  objects including the discriminated ``media`` block (``kind`` field).\n- ``location``: ``{latitude, longitude, name?, address?, …}``.\n- ``calendar``: ``{name, start_at, …}``.\n- ``interactive``: ``{interactive_type, body, header?, footer?, url_button}``.\n- ``replied``: ``{message_id, preview}`` — for reply messages.\n\nFor ``message.reacted``: ``content_type=\"text\"``, ``text`` = emoji or ``\"\"``.\n\nRemoved (2026-06-01): ``body``, ``body_expired``, ``sent_at``,\n``delivered_at``, ``read_at``, ``updated_at``, ``quoted_message_id``\n(top-level), ``media`` (top-level — moved into type-specific objects).\nRemoved (ADR 2026-06-19): ``inbox`` party block — superseded by the flat\n``number_alias`` handle."
       },
       "GetMessageReactionsResponse": {
         "properties": {
@@ -4577,6 +4750,36 @@
         ],
         "title": "MainNumberActionResponse"
       },
+      "MarkAsReadRequest": {
+        "properties": {
+          "to": {
+            "$ref": "#/components/schemas/OutboundRecipientInput"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "to"
+        ],
+        "title": "MarkAsReadRequest"
+      },
+      "MarkAsReadResponse": {
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "title": "Operation Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReadStatusPayload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "operation_id",
+          "status"
+        ],
+        "title": "MarkAsReadResponse"
+      },
       "MessageError": {
         "properties": {
           "code": {
@@ -4606,7 +4809,7 @@
           "message"
         ],
         "title": "MessageError",
-        "description": "Structured error for a failed message operation.\n\nTHE single error shape across every surface that reports a failure —\nthe webhook ``data.error`` (failed events) and the public API\n``status.error`` (``GET /v1/messages/{id}``, ``GET .../status``, and the\nsend/edit/delete/reply responses). Present only when the message state is\n``failed``; ``null``/absent otherwise.\n\nInvariant — coherence:\n    This model is defined ONCE here and reused by both the webhook\n    contracts and the public-api response schemas. Do not fork a local\n    copy; a divergent error shape is exactly the incoherence this model\n    exists to prevent.\n\nFields:\n    code: Stable machine-readable identifier — consumers branch on this\n        (e.g. ``media_fetch_failed``, ``unsupported_media_format``,\n        ``reaction_lid_unavailable``). Never localised, never reworded.\n    message: Human-readable summary of what went wrong.\n    hint: Actionable, no-PII remediation guidance. Derived from ``code``\n        (+ content type) via the shared ``error_hint`` service, so the\n        event and the resource always carry the same hint. ``None`` when\n        no guidance applies."
+        "description": "Structured error for a failed message operation.\n\nTHE single error shape across every surface that reports a failure —\nthe webhook ``data.error`` (failed events) and the public API\n``status.error`` (``GET /v1/messages/{id}``, ``GET .../status``, and the\nsend/edit/delete/reply responses). Present only when the message state is\n``failed``; ``null``/absent otherwise.\n\nInvariant — coherence:\n    This model is defined ONCE here and reused by both the webhook\n    contracts and the public-api response schemas. Do not fork a local\n    copy; a divergent error shape is exactly the incoherence this model\n    exists to prevent.\n\nFields:\n    code: Stable machine-readable identifier — consumers branch on this\n        (e.g. ``media_fetch_failed``, ``unsupported_media_format``,\n        ``reaction_lid_unavailable``). Never localised, never reworded.\n    message: Human-readable summary of what went wrong.\n    hint: Actionable, no-PII remediation guidance. Derived from ``code``\n        (+ content type) via the shared ``error_hint`` service, so the\n        event and the resource always carry the same hint. Omitted from\n        the wire — never ``null`` — when no guidance applies.\n\nInvariant — ``hint`` is omitted, never ``null``:\n    ``error_hint()`` returns ``None`` for every code outside its catalog\n    (``whatsapp_send_failed``, ``message_timeout``, ...). The\n    webhook surface already dropped the key via\n    ``EventData.to_public_dict(exclude_none=True)`` and the message-detail\n    GET via ``response_model_exclude_none``, but ``GET .../{id}/status``\n    cannot use that flag (it must keep ``error: null`` on the non-failed\n    states). Rather than bolt a ``field_serializer`` onto that one\n    consumer, the rule lives on the shape itself — which is what the\n    coherence invariant above demands, and what keeps the published\n    OpenAPI intact.\n\n    Why the shape and not the consumer: a ``field_serializer`` on the\n    enclosing payload makes that payload's serialization JSON schema\n    differ from its validation one, so Pydantic emits two definitions and\n    FastAPI publishes them as ``<Model>-Input`` / ``<Model>-Output`` —\n    renaming the component every generated client binds to, cascading the\n    rename to every enclosing model, and degrading ``error`` from\n    ``$ref: MessageError`` to a free-form object. A ``model_serializer``\n    here changes no schema at all (proved by\n    ``public-api/tests/contract/test_message_status_error_wire_shape.py``)."
       },
       "MessageListItem": {
         "properties": {
@@ -4700,21 +4903,16 @@
             "type": "integer",
             "title": "Remaining"
           },
-          "window_days": {
-            "type": "integer",
-            "title": "Window Days",
-            "default": 30
+          "cycle_start": {
+            "type": "string",
+            "title": "Cycle Start"
+          },
+          "cycle_end": {
+            "type": "string",
+            "title": "Cycle End"
           },
           "resets_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
             "title": "Resets At"
           },
           "tier": {
@@ -4728,10 +4926,13 @@
           "used",
           "quota",
           "remaining",
+          "cycle_start",
+          "cycle_end",
+          "resets_at",
           "tier"
         ],
         "title": "MessageQuotaResponse",
-        "description": "A number's current message-quota snapshot.\n\n.. code-block:: json\n\n   {\n     \"used\": 1234,\n     \"quota\": 10000,\n     \"remaining\": 8766,\n     \"window_days\": 30,\n     \"resets_at\": \"...\",\n     \"tier\": \"SOLO\"\n   }"
+        "description": "A number's current message-quota snapshot.\n\nTask 4.1 (public quota/usage shapes gain the evaluated cycle): the\nformer rolling ``window_days`` field is retired — the response now\ncarries the evaluated billing cycle directly (``cycle_start``/\n``cycle_end``), matching the internal ``MessageQuotaSnapshot`` and the\nNATS quota-event payloads exactly. ``resets_at`` always equals\n``cycle_end``.\n\nm3 coherence fix: these three fields are typed ``str`` (not\n``datetime``) and formatted at construction time via the canonical\n``format_utc_iso()`` helper — matching the second-precision, Z-suffixed\nconvention already used by the NATS quota events (``message.quota.*``)\nand every other public-surface timestamp. A ``datetime``-typed field\nwould serialize with Pydantic's default microsecond-precision encoder,\ndiverging from the event side.\n\n.. code-block:: json\n\n   {\n     \"used\": 1234,\n     \"quota\": 10000,\n     \"remaining\": 8766,\n     \"cycle_start\": \"2026-06-01T00:00:00Z\",\n     \"cycle_end\": \"2026-07-01T00:00:00Z\",\n     \"resets_at\": \"2026-07-01T00:00:00Z\",\n     \"tier\": \"SOLO\"\n   }"
       },
       "MessageStatusPayload": {
         "properties": {
@@ -4776,15 +4977,7 @@
             "title": "Remaining"
           },
           "resets_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
             "title": "Resets At"
           },
           "tier": {
@@ -4798,10 +4991,78 @@
           "used",
           "quota",
           "remaining",
+          "resets_at",
           "tier"
         ],
         "title": "MessageUsageSnapshot",
         "description": "Message-quota subsection of :class:`UsageResponse`."
+      },
+      "NumberFamilyUsage": {
+        "properties": {
+          "used": {
+            "type": "integer",
+            "title": "Used"
+          },
+          "quota": {
+            "type": "integer",
+            "title": "Quota"
+          },
+          "remaining": {
+            "type": "integer",
+            "title": "Remaining"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "used",
+          "quota",
+          "remaining"
+        ],
+        "title": "NumberFamilyUsage",
+        "description": "``used``/``quota``/``remaining`` for ONE quota family on ONE number.\n\nNo ``resets_at``/``tier`` here — both are uniform across every number\nin the organization and already surface at the top level."
+      },
+      "NumberMessagesUsage": {
+        "properties": {
+          "alias": {
+            "type": "string",
+            "title": "Alias"
+          },
+          "messages": {
+            "$ref": "#/components/schemas/NumberFamilyUsage"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "alias",
+          "messages"
+        ],
+        "title": "NumberMessagesUsage",
+        "description": "Per-number breakdown entry for ``GET /v1/usage/messages`` (messages only)."
+      },
+      "NumberUsage": {
+        "properties": {
+          "alias": {
+            "type": "string",
+            "title": "Alias"
+          },
+          "messages": {
+            "$ref": "#/components/schemas/NumberFamilyUsage"
+          },
+          "contacts": {
+            "$ref": "#/components/schemas/NumberFamilyUsage"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "alias",
+          "messages",
+          "contacts"
+        ],
+        "title": "NumberUsage",
+        "description": "Per-number breakdown entry for ``GET /v1/usage`` (both families)."
       },
       "OrganizationListResponse": {
         "properties": {
@@ -5237,6 +5498,24 @@
         ],
         "title": "ReactionStatusPayload"
       },
+      "ReadStatusPayload": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "at": {
+            "type": "string",
+            "title": "At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "at"
+        ],
+        "title": "ReadStatusPayload"
+      },
       "ReceiptFromPayload": {
         "properties": {
           "contact_id": {
@@ -5319,10 +5598,18 @@
             "type": "string",
             "title": "Status",
             "default": "queued"
+          },
+          "requested_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Requested At"
           }
         },
         "additionalProperties": false,
         "type": "object",
+        "required": [
+          "requested_at"
+        ],
         "title": "RefreshResponse"
       },
       "ReplyMessageRequest": {
@@ -5388,6 +5675,22 @@
           "messages_sent": {
             "type": "integer",
             "title": "Messages Sent"
+          },
+          "refund_status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "not_applicable",
+                  "succeeded",
+                  "failed"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Status"
           }
         },
         "type": "object",
@@ -5944,9 +6247,6 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": [
-          "reaction"
-        ],
         "title": "SendReactionRequest"
       },
       "SendReactionResponse": {
@@ -6225,12 +6525,20 @@
         "properties": {
           "messages": {
             "$ref": "#/components/schemas/MessageUsageSnapshot"
+          },
+          "numbers": {
+            "items": {
+              "$ref": "#/components/schemas/NumberMessagesUsage"
+            },
+            "type": "array",
+            "title": "Numbers"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "messages"
+          "messages",
+          "numbers"
         ],
         "title": "UsageMessagesResponse",
         "description": "Subset returned by ``GET /v1/usage/messages``."
@@ -6242,13 +6550,21 @@
           },
           "contacts": {
             "$ref": "#/components/schemas/ContactUsageSnapshot"
+          },
+          "numbers": {
+            "items": {
+              "$ref": "#/components/schemas/NumberUsage"
+            },
+            "type": "array",
+            "title": "Numbers"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
           "messages",
-          "contacts"
+          "contacts",
+          "numbers"
         ],
         "title": "UsageResponse",
         "description": "Unified envelope returned by ``GET /v1/usage``."
