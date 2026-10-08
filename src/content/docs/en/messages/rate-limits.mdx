@@ -93,7 +93,7 @@ These controls are transparent and, in most cases, do not affect normal use of t
 
 WhatsApp has its own rules and usage limits. Even if you stay within Turbo Notify's limits, sending too much, sending unsolicited messages or sending content recipients consider spam can get your number blocked by WhatsApp.
 
-To avoid problems, follow the responsible-use recommendations in [Avoid abuse](/en/general/abuse/) and the <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">WhatsApp policies</ExternalLink>.
+To avoid problems, follow the responsible-use recommendations in [Avoid blocks](/en/general/abuse/) and the <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">WhatsApp policies</ExternalLink>.
 
 ## Related errors
 
@@ -108,8 +108,7 @@ To avoid problems, follow the responsible-use recommendations in [Avoid abuse](/
 | `429`  | `reply_ratio_too_low` | Too few replies received compared with what the number sent, a sign of unsolicited sending. Reduce the volume to people who do not interact. It comes without `Retry-After`: waiting does not help, sending is accepted again when contacts reply or the volume drops. |
 | `429`  | `pairing_rate_limited`   | Pairing code requests above the limit, see [Pairing extra numbers](#pairing-extra-numbers). |
 | `429`  | `rate_limit_exceeded`    | Your organization's general API request limit exceeded (1,000 requests per second). Parallel requests are accepted as long as the total for the second stays below that. Wait for `Retry-After` and try again. |
-| `503`  | `internal_error`         | Service temporarily unavailable. Try again in a few moments.              |
-| `503`  | `plan_lookup_failed`     | The organization's plan could not be identified at the moment. The request was not processed. Try again. |
+| `503`  | `service_unavailable`    | Service temporarily unavailable, including when the organization's plan could not be identified. The request was not processed. Try again in a few moments. |
 
 For the **quota** errors (`402 contact_quota_exceeded`, `429 messages_quota_exceeded`, `402 feature_not_available`), see [Quota and usage](/en/usage/quota/#errors).
 

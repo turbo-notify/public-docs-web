@@ -29,7 +29,7 @@ A resposta do `DELETE` diz o que aconteceu, em `refund_eligible`, `refund_amount
 
 ## Remover pelo dashboard
 
-Acesse a página de <DashboardLink path="/numbers">Números</DashboardLink> no dashboard, localize o número desejado e clique em **Remover**. Confirme a ação na caixa de diálogo.
+Acesse a página de <DashboardLink path="/numbers">Números</DashboardLink> no dashboard, abra o número desejado e clique em **Remover número**. Antes de confirmar, o painel mostra o que vai acontecer: a remoção imediata, com o valor da ativação que será reembolsado quando houver (botão **Remover**), ou a exclusão agendada para o fim do período já pago, sem reembolso (botão **Agendar exclusão**).
 
 ## Remover via API
 
@@ -310,7 +310,7 @@ necessário desconectar o número antes de agendar a exclusão), consulte o
 | :----: | -------------------------------- | --------------------------------------------------- |
 | `400`  | `invalid_status_for_deletion`   | O número está `connected`. Desconecte antes de agendar a exclusão. |
 | `402`  | `feature_not_available`  | O plano atual não suporta números extras.           |
-| `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.         |
+| `401`  | `not_authenticated`      | A chave de acesso está inválida ou ausente.         |
 | `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
 | `404`  | `extra_number_not_found` | O alias informado não foi encontrado na conta.      |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                |
@@ -324,7 +324,7 @@ necessário desconectar o número antes de agendar a exclusão), consulte o
 | `402`  | `feature_not_available`  | O plano atual não suporta números extras.               |
 | `402`  | `payment_declined`       | A cobrança de reativação foi recusada. A exclusão continua agendada. |
 | `402`  | `payment_requires_authentication` | A forma de pagamento exige reautenticação (3DS). A exclusão continua agendada. |
-| `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.              |
+| `401`  | `not_authenticated`      | A chave de acesso está inválida ou ausente.              |
 | `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
 | `404`  | `extra_number_not_found` | O alias informado não foi encontrado na conta.           |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                     |

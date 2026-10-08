@@ -327,6 +327,6 @@ disconnect: `409 already_disconnected` quando o número já está desconectado
 | `409`  | `already_disconnected`   | O número extra já está desconectado (nada a fazer).           |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                           |
 
-Ambas as rotas também retornam `403 not_authorized` (chave inválida/ausente)
+Ambas as rotas também retornam `401 not_authenticated` (chave inválida/ausente)
 e `403 insufficient_scope` (falta o escopo `numbers:write`, resposta inclui
 `required_scope`) como qualquer outro endpoint autenticado.

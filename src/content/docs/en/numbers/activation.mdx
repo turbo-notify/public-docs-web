@@ -328,6 +328,6 @@ the number is already disconnected (nothing to do, the goal is already met).
 | `409`  | `already_disconnected`   | The extra number is already disconnected (nothing to do).     |
 | `500`  | `internal_error`         | Unexpected internal server error.                             |
 
-Both routes also return `403 not_authorized` (invalid or missing key) and
+Both routes also return `401 not_authenticated` (invalid or missing key) and
 `403 insufficient_scope` (missing the `numbers:write` scope, the response
 includes `required_scope`) like any other authenticated endpoint.

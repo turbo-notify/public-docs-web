@@ -165,17 +165,6 @@ definido com `PATCH /v1/numbers/main` (veja [Atualização](/numbers/update/#nú
 ```
 :::
 
-:::note[`description` e `scheduled_deletion_at` sempre `null` aqui]
-Diferente de [Listagem](/numbers/list/), que retorna a `description` real
-cadastrada, este endpoint (`GET /v1/numbers/{alias}`) hoje retorna
-`description` e `scheduled_deletion_at` sempre como `null`, independente do
-valor real. Quando o número está com `status: "pending_deletion"`, o
-momento da exclusão agendada aparece no campo `at` (não em
-`scheduled_deletion_at`). Para a descrição cadastrada, consulte
-[Listagem](/numbers/list/). `external_id`, por outro lado, traz o valor
-cadastrado.
-:::
-
 :::note[`at` acompanha o status atual]
 `at` é o momento em que o número **entrou no status atual**: atualiza a
 cada transição (pareamento, conexão, queda de conexão, reconexão, falha,
@@ -197,7 +186,7 @@ Um número recém-cadastrado (`status: "pending"`) traz em `at` o momento do
 cadastro.
 
 A única exceção é `status: "pending_deletion"`, em que `at` traz o momento
-da exclusão agendada (veja a nota acima).
+da exclusão agendada, o mesmo valor de `scheduled_deletion_at`.
 :::
 
 ## Campos da resposta
@@ -211,9 +200,9 @@ da exclusão agendada (veja a nota acima).
 | `number` | string | Número de telefone em dígitos E.164 (sem `+`) |
 | `status` | string | Estado atual, veja [Tabela de status](#tabela-de-status) |
 | `at` | string | Timestamp ISO 8601 do momento em que o número **entrou no status atual** (`status`): atualiza a cada transição. Exceção: quando `status = "pending_deletion"`, é o momento da exclusão agendada. |
-| `description` | string\|null | Sempre `null` neste endpoint hoje, veja nota acima |
+| `description` | string\|null | A descrição cadastrada para o número; `null` quando não definida |
 | `external_id` | string\|null | O seu identificador para este número, definido no [cadastro](/numbers/add/) ou na [atualização](/numbers/update/); `null` quando não definido |
-| `scheduled_deletion_at` | string\|null | Sempre `null` neste endpoint hoje, veja nota acima |
+| `scheduled_deletion_at` | string\|null | Timestamp ISO 8601 da exclusão agendada (veja [Remoção](/numbers/remove/)); `null` quando nenhuma exclusão está agendada |
 | `reason` | string\|null | Motivo da falha quando `status` é `"failed"`, veja [Motivos de falha](#motivos-de-falha); `null` em qualquer outro status |
 | `pairing` | object\|null | Informações de pareamento: presente apenas durante o processo de vinculação |
 
@@ -269,7 +258,7 @@ Novos motivos podem ser adicionados. Trate um valor que você não conhece como
 | Status | Código de erro          | Descrição                                           |
 | :----: | ----------------------- | --------------------------------------------------- |
 | `402`  | `feature_not_available` | O plano atual não suporta números extras.           |
-| `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.         |
+| `401`  | `not_authenticated`     | A chave de acesso está inválida ou ausente.         |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `numbers:read` (resposta inclui `required_scope`). |
 | `404`  | `extra_number_not_found` | O alias informado não foi encontrado na conta.     |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.                |

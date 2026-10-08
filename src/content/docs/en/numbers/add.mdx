@@ -262,10 +262,11 @@ These are the main errors that can occur when adding extra numbers:
 | `402`  | `extra_numbers_limit_reached` | The organization has reached the extra number limit of its plan (1,000 on the Business and Custom plans). The response includes `details.limit` and `details.current`. |
 | `402`  | `payment_declined`       | The pro-rata activation charge (see [Extra number billing](/en/numbers/billing/)) was declined by the payment method. No number is created. |
 | `402`  | `payment_requires_authentication` | The payment method requires re-authentication (3DS) and cannot be charged automatically. No number is created. |
-| `403`  | `not_authorized`         | The API key is invalid or missing.                     |
+| `401`  | `not_authenticated`      | The API key is invalid or missing.                     |
 | `403`  | `insufficient_scope`     | The API key does not have the `numbers:write` scope (the response includes `required_scope`). |
 | `409`  | `number_already_exists`  | The alias or phone number is already registered in the account. |
 | `409`  | `external_id_already_used` | Another number of your account already uses this `external_id`. |
 | `429`  | `number_creation_rate_limited` | Your account created extra numbers faster than allowed. Nothing was charged. Wait the number of seconds in the `Retry-After` header and try again. |
 | `500`  | `internal_error`         | Unexpected internal server error.                      |
+| `502`  | `integration_error`      | The payment processor answered the activation charge with an error. No number is created; try again in a moment. |
 | `503`  | `payment_gateway_unavailable` | The activation charge could not be confirmed in time. No number is created; try again. |

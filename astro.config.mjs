@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import { movedPageRedirects } from './src/data/moved-pages.mjs';
 
 /** Sidebar entry for a page: pt-BR label plus its English translation. */
 const page = (slug, pt, en) => ({ slug, label: pt, translations: { en } });
@@ -9,6 +10,7 @@ const group = (pt, en, items) => ({ label: pt, translations: { en }, items });
 
 export default defineConfig({
   site: 'https://docs.turbonotify.com',
+  redirects: movedPageRedirects(),
   vite: {
     build: {
       // The interactive API reference (Scalar) ships as one large chunk that

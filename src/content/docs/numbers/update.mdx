@@ -233,7 +233,7 @@ O número principal também aceita um `external_id`, e só ele: em `PATCH /v1/nu
 | `400`  | `reserved_alias`                | O novo alias é `"main"`, reservado para o número principal.    |
 | `400`  | `no_changes`                    | Nenhum campo foi enviado, ou o único campo enviado (`alias`) é igual ao valor atual. |
 | `402`  | `feature_not_available`         | O plano atual não suporta números extras.                       |
-| `403`  | `not_authorized`                | A chave de acesso está inválida ou ausente.                     |
+| `401`  | `not_authenticated`             | A chave de acesso está inválida ou ausente.                     |
 | `403`  | `insufficient_scope`            | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
 | `403`  | `main_number_update_not_allowed` | No número principal (`main`), só o `external_id` pode ser alterado; `alias` e `description` não. |
 | `404`  | `extra_number_not_found`        | O alias informado no path não corresponde a nenhum número cadastrado. |

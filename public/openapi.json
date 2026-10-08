@@ -5,79 +5,12 @@
     "description": "Turbo Notify Public API for WhatsApp messaging",
     "version": "1.0.0"
   },
+  "servers": [
+    {
+      "url": "https://api.turbonotify.com"
+    }
+  ],
   "paths": {
-    "/health": {
-      "get": {
-        "tags": [
-          "Health"
-        ],
-        "summary": "Health",
-        "description": "Basic health check.",
-        "operationId": "health_health_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object",
-                  "title": "Response Health Health Get"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/health/ready": {
-      "get": {
-        "tags": [
-          "Health"
-        ],
-        "summary": "Ready",
-        "description": "Readiness check with dependency verification.\n\nExecuta todos os checkers em paralelo. Retorna 503 quando qualquer\ncheck **crítico** falha; falhas em checks não-críticos viram\n``degraded`` mas mantêm o probe verde (200).",
-        "operationId": "ready_health_ready_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
-    "/health/live": {
-      "get": {
-        "tags": [
-          "Health"
-        ],
-        "summary": "Live",
-        "description": "Liveness check (for Kubernetes).",
-        "operationId": "live_health_live_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object",
-                  "title": "Response Live Health Live Get"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/events": {
       "get": {
         "tags": [
@@ -263,16 +196,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/messages": {
@@ -325,16 +263,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "post": {
         "tags": [
@@ -383,16 +326,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/messages/quota": {
@@ -414,7 +362,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/messages/{message_id}/reply": {
@@ -479,16 +432,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/messages/{message_id}/react": {
@@ -537,16 +495,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/messages/{message_id}": {
@@ -555,7 +518,7 @@
           "Messages"
         ],
         "summary": "Get Message Details Flat",
-        "description": "Retrieve message details, asserting the message belongs to the main number.",
+        "description": "Retrieve the details of a message of the main number.",
         "operationId": "get_message_details_flat_v1_messages__message_id__get",
         "parameters": [
           {
@@ -585,16 +548,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/messages/{message_id}/status": {
@@ -603,7 +571,7 @@
           "Messages"
         ],
         "summary": "Get Message Status Flat",
-        "description": "Get delivery status, asserting ownership by the main number.",
+        "description": "Get the delivery status of a message of the main number.",
         "operationId": "get_message_status_flat_v1_messages__message_id__status_get",
         "parameters": [
           {
@@ -633,16 +601,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/messages/{message_id}/reactions": {
@@ -651,7 +624,7 @@
           "Messages"
         ],
         "summary": "Get Message Reactions Flat",
-        "description": "List reactions, asserting the message belongs to the main number.",
+        "description": "List the reactions to a message of the main number.",
         "operationId": "get_message_reactions_flat_v1_messages__message_id__reactions_get",
         "parameters": [
           {
@@ -681,16 +654,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/messages/{message_id}/receipts": {
@@ -699,7 +677,7 @@
           "Messages"
         ],
         "summary": "Get Message Receipts Flat",
-        "description": "List receipts, asserting ownership by the main number.",
+        "description": "List the delivery receipts of a message of the main number.",
         "operationId": "get_message_receipts_flat_v1_messages__message_id__receipts_get",
         "parameters": [
           {
@@ -729,16 +707,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/messages/{message_id}/edit": {
@@ -747,7 +730,7 @@
           "Messages"
         ],
         "summary": "Edit Message Flat",
-        "description": "Edit a sent message, asserting ownership by the main number.",
+        "description": "Edit a message sent from the main number.",
         "operationId": "edit_message_flat_v1_messages__message_id__edit_post",
         "parameters": [
           {
@@ -787,16 +770,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/messages/{message_id}/delete": {
@@ -805,7 +793,7 @@
           "Messages"
         ],
         "summary": "Delete Message Flat",
-        "description": "Delete a sent message, asserting ownership by the main number.",
+        "description": "Delete a message sent from the main number.",
         "operationId": "delete_message_flat_v1_messages__message_id__delete_post",
         "parameters": [
           {
@@ -835,16 +823,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/messages/read": {
@@ -877,16 +870,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/typing-indicator": {
@@ -919,16 +917,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/contacts": {
@@ -1013,10 +1016,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Restrict to contacts that entered the platform this way: `inbound`, `outbound`, `mention` or `self`. Typed as the enum so FastAPI rejects anything else at the boundary with 422 — an untyped `str` reached `ContactSource(v)` in the repository, where the ValueError escaped as a 500 (an empty `?source=`, which is what a client emits for an unset optional filter, hit the same path).",
+              "description": "Only contacts with this origin: `inbound` (the first message came from them), `outbound` (the first message went to them), `mention` (first seen in a mention) or `self` (one of your own numbers). Any other value is rejected with 422.",
               "title": "Source"
             },
-            "description": "Restrict to contacts that entered the platform this way: `inbound`, `outbound`, `mention` or `self`. Typed as the enum so FastAPI rejects anything else at the boundary with 422 — an untyped `str` reached `ContactSource(v)` in the repository, where the ValueError escaped as a 500 (an empty `?source=`, which is what a client emits for an unset optional filter, hit the same path)."
+            "description": "Only contacts with this origin: `inbound` (the first message came from them), `outbound` (the first message went to them), `mention` (first seen in a mention) or `self` (one of your own numbers). Any other value is rejected with 422."
           },
           {
             "name": "contacted_in_cycle",
@@ -1031,10 +1034,10 @@
                   "type": "null"
                 }
               ],
-              "description": "When true, restrict to contacts CONTACTED via Turbo Notify in the main number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Based on the billing cycle, not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected).",
+              "description": "When true, only the contacts messaged through Turbo Notify in the main number's current billing cycle: the same contacts the contact quota's `used` counts. The count follows the billing cycle, not a rolling window.",
               "title": "Contacted In Cycle"
             },
-            "description": "When true, restrict to contacts CONTACTED via Turbo Notify in the main number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Based on the billing cycle, not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected)."
+            "description": "When true, only the contacts messaged through Turbo Notify in the main number's current billing cycle: the same contacts the contact quota's `used` counts. The count follows the billing cycle, not a rolling window."
           }
         ],
         "responses": {
@@ -1049,16 +1052,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/contacts/quota": {
@@ -1080,7 +1088,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/contacts/{contact_id}": {
@@ -1089,7 +1102,7 @@
           "Contacts"
         ],
         "summary": "Get Contact Flat",
-        "description": "Retrieve a single contact, asserting it belongs to the main number.",
+        "description": "Retrieve a single contact of the main number.",
         "operationId": "get_contact_flat_v1_contacts__contact_id__get",
         "parameters": [
           {
@@ -1119,16 +1132,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/contacts/{contact_id}/profile-picture": {
@@ -1165,16 +1183,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/contacts/{contact_id}/refresh": {
@@ -1213,16 +1236,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/groups": {
@@ -1302,16 +1330,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/groups/{group_id}": {
@@ -1320,7 +1353,7 @@
           "Groups"
         ],
         "summary": "Get Group Flat",
-        "description": "Retrieve a single group, asserting it belongs to the main number.",
+        "description": "Retrieve a single group of the main number.",
         "operationId": "get_group_flat_v1_groups__group_id__get",
         "parameters": [
           {
@@ -1350,16 +1383,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/groups/{group_id}/picture": {
@@ -1368,7 +1406,7 @@
           "Groups"
         ],
         "summary": "Get Group Picture Flat",
-        "description": "Resolve the group picture, asserting ownership by the main number.",
+        "description": "Resolve the profile picture of a group of the main number.",
         "operationId": "get_group_picture_flat_v1_groups__group_id__picture_get",
         "parameters": [
           {
@@ -1396,16 +1434,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers": {
@@ -1413,8 +1456,47 @@
         "tags": [
           "Numbers"
         ],
-        "summary": "List Extra Numbers",
-        "operationId": "list_extra_numbers_v1_numbers_get",
+        "summary": "List Numbers",
+        "description": "List the numbers of your account: the main number first, then the extra numbers.\n\nFilter with `status` and `external_id`; both can be combined.",
+        "operationId": "list_numbers_v1_numbers_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PublicNumberStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only numbers currently in this status, for example `disconnected` to find the numbers that need attention.",
+              "title": "Status"
+            },
+            "description": "Only numbers currently in this status, for example `disconnected` to find the numbers that need attention."
+          },
+          {
+            "name": "external_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only the number with exactly this `external_id` (your own identifier for it). Returns an empty list when no number has it.",
+              "title": "External Id"
+            },
+            "description": "Only the number with exactly this `external_id` (your own identifier for it). Returns an empty list when no number has it."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1425,24 +1507,40 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "The request has a value that is not valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "post": {
         "tags": [
           "Numbers"
         ],
         "summary": "Add Extra Number",
+        "description": "Add an extra number to the organization.\n\nAdding a number charges its activation to your payment method right away.\nAdditions are limited per organization over a rolling hour: past the\nlimit the request answers 429 `number_creation_rate_limited`, and the\n`Retry-After` header says how many seconds to wait.",
         "operationId": "add_extra_number_v1_numbers_post",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AddExtraNumberRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -1456,16 +1554,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/main": {
@@ -1486,7 +1589,57 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Numbers"
+        ],
+        "summary": "Update Main Number",
+        "description": "Set, change or remove the `external_id` of your main number.\n\nThe main number keeps the alias `main` and has no description, so\n`external_id` is the only field accepted here.",
+        "operationId": "update_main_number_v1_numbers_main_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExtraNumberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateExtraNumberResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request has a value that is not valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}": {
@@ -1519,22 +1672,28 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "patch": {
         "tags": [
           "Numbers"
         ],
         "summary": "Update Extra Number",
+        "description": "Change the alias, the description or the `external_id` of an extra number.",
         "operationId": "update_extra_number_v1_numbers__alias__patch",
         "parameters": [
           {
@@ -1569,23 +1728,28 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "delete": {
         "tags": [
           "Numbers"
         ],
         "summary": "Remove Extra Number",
-        "description": "Delete (schedule deletion of) an extra number.\n\nIf the number is eligible for a 72h refund, deletion is immediate.\nOtherwise, the number is scheduled for deletion at the end of the\ncurrent billing cycle and remains active until then.",
+        "description": "Remove an extra number.\n\nThe number must be disconnected first. Depending on how it was used, the\nnumber is either removed right away with its activation charge refunded,\nor its removal is scheduled for the end of the period already paid (it\nkeeps working until then and there is no refund). The response says which\nof the two happened.",
         "operationId": "remove_extra_number_v1_numbers__alias__delete",
         "parameters": [
           {
@@ -1610,16 +1774,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/main/connect": {
@@ -1640,7 +1809,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/main/disconnect": {
@@ -1661,7 +1835,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/pair": {
@@ -1711,16 +1890,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/cancel-pairing": {
@@ -1753,16 +1937,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/connect": {
@@ -1795,16 +1984,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/disconnect": {
@@ -1837,16 +2031,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/cancel-deletion": {
@@ -1879,16 +2078,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/messages": {
@@ -1951,16 +2155,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "post": {
         "tags": [
@@ -2019,16 +2228,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/messages/quota": {
@@ -2063,16 +2277,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/messages/{message_id}/reply": {
@@ -2147,16 +2366,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/messages/{message_id}/react": {
@@ -2215,16 +2439,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/messages/{message_id}": {
@@ -2273,16 +2502,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/messages/{message_id}/status": {
@@ -2331,16 +2565,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/messages/{message_id}/reactions": {
@@ -2389,16 +2628,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/messages/{message_id}/receipts": {
@@ -2447,16 +2691,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/messages/{message_id}/edit": {
@@ -2515,16 +2764,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/messages/{message_id}/delete": {
@@ -2573,16 +2827,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/typing-indicator": {
@@ -2592,7 +2851,7 @@
           "Messages"
         ],
         "summary": "Send Typing Indicator",
-        "description": "Send a typing indicator from the number identified by ``alias``.\n\nThe sender is inferred from the URL ``alias``; the ``from`` body field\nis not required (and ignored if supplied — the path always wins).",
+        "description": "Send a typing indicator from the number identified by ``alias``.\n\nThe sender is the number in the URL ``alias``. The ``from`` body field\nis not required, and when supplied it is ignored (the URL always wins).\n\nWith ``is_typing`` true, the number first appears online and the unread\nmessages it received in that conversation are marked as read, then after\na short random pause (between 0.3 and 1.5 seconds) the typing indicator shows,\nso it never shows over unread messages. With ``is_typing`` false only\nthe indicator is cleared and nothing is read.",
         "operationId": "send_typing_indicator_v1_numbers__alias__typing_indicator_post",
         "parameters": [
           {
@@ -2627,16 +2886,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/messages/read": {
@@ -2646,7 +2910,7 @@
           "Messages"
         ],
         "summary": "Mark As Read",
-        "description": "Mark a chat's (or WhatsApp Group's) unread inbound backlog as read\nfrom the number identified by ``alias`` — independent of the\nautomatic mark-as-read that already accompanies send/reply/react/\nedit/delete. Useful for\na customer's own client that wants inbox parity (e.g. an unread\nbadge cleared by the user) without sending any WhatsApp message.\n\nThe sender is inferred from the URL ``alias``; there is no ``from``\nbody field.",
+        "description": "Mark a chat's (or WhatsApp Group's) unread inbound backlog as read\nfrom the number identified by ``alias``, independent of the\nautomatic mark-as-read that already accompanies send, reply, react,\nedit, delete and the start of the typing indicator (the number also\nappears online first, and goes back offline by itself a few minutes\nafter its last interaction). Useful for\na customer's own client that wants inbox parity (e.g. an unread\nbadge cleared by the user) without sending any WhatsApp message.\n\nThe sender is inferred from the URL ``alias``; there is no ``from``\nbody field.",
         "operationId": "mark_as_read_v1_numbers__alias__messages_read_post",
         "parameters": [
           {
@@ -2681,16 +2945,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/contacts": {
@@ -2785,10 +3054,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Restrict to contacts that entered the platform this way: `inbound`, `outbound`, `mention` or `self`. Typed as the enum so FastAPI rejects anything else at the boundary with 422 — an untyped `str` reached `ContactSource(v)` in the repository, where the ValueError escaped as a 500 (an empty `?source=`, which is what a client emits for an unset optional filter, hit the same path).",
+              "description": "Only contacts with this origin: `inbound` (the first message came from them), `outbound` (the first message went to them), `mention` (first seen in a mention) or `self` (one of your own numbers). Any other value is rejected with 422.",
               "title": "Source"
             },
-            "description": "Restrict to contacts that entered the platform this way: `inbound`, `outbound`, `mention` or `self`. Typed as the enum so FastAPI rejects anything else at the boundary with 422 — an untyped `str` reached `ContactSource(v)` in the repository, where the ValueError escaped as a 500 (an empty `?source=`, which is what a client emits for an unset optional filter, hit the same path)."
+            "description": "Only contacts with this origin: `inbound` (the first message came from them), `outbound` (the first message went to them), `mention` (first seen in a mention) or `self` (one of your own numbers). Any other value is rejected with 422."
           },
           {
             "name": "contacted_in_cycle",
@@ -2803,10 +3072,10 @@
                   "type": "null"
                 }
               ],
-              "description": "When true, restrict to contacts CONTACTED via Turbo Notify in this number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Based on the billing cycle, not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected).",
+              "description": "When true, only the contacts messaged through Turbo Notify in this number's current billing cycle: the same contacts the contact quota's `used` counts. The count follows the billing cycle, not a rolling window.",
               "title": "Contacted In Cycle"
             },
-            "description": "When true, restrict to contacts CONTACTED via Turbo Notify in this number's current evaluated billing cycle — the SAME population the contact-quota `used` figure counts (distinct non-self contacts whose last_messaged_at falls in [cycle_start, cycle_end)). Based on the billing cycle, not a rolling window. Renamed from the retired `has_messaged_in_window` parameter (rolling-30d window over the acquisition marker `first_messaged_at`) — the old name is no longer recognized and is silently ignored (unknown query params are dropped, not rejected)."
+            "description": "When true, only the contacts messaged through Turbo Notify in this number's current billing cycle: the same contacts the contact quota's `used` counts. The count follows the billing cycle, not a rolling window."
           }
         ],
         "responses": {
@@ -2821,16 +3090,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/contacts/quota": {
@@ -2865,16 +3139,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/contacts/{contact_id}": {
@@ -2884,7 +3163,7 @@
           "Contacts"
         ],
         "summary": "Get Contact Nested",
-        "description": "Retrieve a single contact, asserting it belongs to inbox ``{alias}``.",
+        "description": "Retrieve a single contact of the number identified by ``{alias}``.",
         "operationId": "get_contact_nested_v1_numbers__alias__contacts__contact_id__get",
         "parameters": [
           {
@@ -2923,16 +3202,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/contacts/{contact_id}/profile-picture": {
@@ -2942,7 +3226,7 @@
           "Contacts"
         ],
         "summary": "Get Contact Profile Picture Nested",
-        "description": "Resolve the contact's profile picture, asserting ownership by ``{alias}``.",
+        "description": "Resolve the profile picture of a contact of the number identified by ``{alias}``.",
         "operationId": "get_contact_profile_picture_nested_v1_numbers__alias__contacts__contact_id__profile_picture_get",
         "parameters": [
           {
@@ -2979,16 +3263,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/contacts/{contact_id}/refresh": {
@@ -3037,16 +3326,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/groups": {
@@ -3136,16 +3430,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/groups/{group_id}": {
@@ -3194,16 +3493,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/numbers/{alias}/groups/{group_id}/picture": {
@@ -3250,16 +3554,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/organizations": {
@@ -3280,7 +3589,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/organizations/{organization_id}": {
@@ -3318,16 +3632,21 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "The request has a value that is not valid.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/usage": {
@@ -3348,7 +3667,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/usage/messages": {
@@ -3369,7 +3693,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     }
   },
@@ -3381,9 +3710,10 @@
             "type": "string",
             "title": "Alias"
           },
-          "phone": {
+          "phone_number": {
             "type": "string",
-            "title": "Phone"
+            "title": "Phone Number",
+            "description": "The phone of the number, in international format (for example `+5511988887777`)."
           },
           "description": {
             "anyOf": [
@@ -3395,12 +3725,24 @@
               }
             ],
             "title": "Description"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id",
+            "description": "Optional. Your own identifier for this number (1 to 128 characters). Another number of your account already using it answers 409 `external_id_already_used`, and nothing is charged."
           }
         },
         "type": "object",
         "required": [
           "alias",
-          "phone"
+          "phone_number"
         ],
         "title": "AddExtraNumberRequest"
       },
@@ -3432,6 +3774,18 @@
               }
             ],
             "title": "Description"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id",
+            "description": "Your own identifier for this number, for example the id of the customer it serves in your system. 1 to 128 characters, surrounding spaces removed, no control characters. Unique among the numbers of your account; `null` when not set. Unlike `alias`, it can be any text (a UUID or an integer sent as a string) and it does not change when you rename the number."
           }
         },
         "type": "object",
@@ -3529,7 +3883,7 @@
           "data"
         ],
         "title": "ContactListResponse",
-        "description": "List of contacts plus an opaque next cursor.\n\n``cursor`` is the token to pass back as ``?cursor=…`` on the next\nrequest; ``None`` when the listing is exhausted. ``has_more`` is a\nDX redundancy — clients can rely on ``cursor is not None`` but the\nexplicit boolean keeps loops trivial."
+        "description": "List of contacts plus an opaque next cursor.\n\n``cursor`` is the token to pass back as ``?cursor=...`` on the next\nrequest; ``null`` when there are no more contacts. ``has_more`` says the\nsame thing as a boolean (``true`` exactly when ``cursor`` is not\n``null``), to keep pagination loops simple."
       },
       "ContactQuotaResponse": {
         "properties": {
@@ -3574,7 +3928,7 @@
           "tier"
         ],
         "title": "ContactQuotaResponse",
-        "description": "Organization's current contact-quota snapshot.\n\nTask 4.1 (public quota/usage shapes gain the evaluated cycle): the\nformer rolling ``window_days`` field is retired — the response now\ncarries the evaluated billing cycle directly (``cycle_start``/\n``cycle_end``), mirroring ``MessageQuotaResponse`` exactly.\n``resets_at`` always equals ``cycle_end``.\n\nThese three fields are UTC timestamps with second precision and a ``Z``\nsuffix, the same format used by the ``contact.quota.*`` webhook events\nand every other timestamp in the API (for example ``at`` on message\nresponses).\n\n.. code-block:: json\n\n   {\n     \"used\": 87,\n     \"quota\": 1000,\n     \"remaining\": 913,\n     \"cycle_start\": \"2026-06-01T00:00:00Z\",\n     \"cycle_end\": \"2026-07-01T00:00:00Z\",\n     \"resets_at\": \"2026-07-01T00:00:00Z\",\n     \"tier\": \"SOLO\"\n   }"
+        "description": "A number's current contact-quota snapshot.\n\nThe quota counts the current billing cycle, from ``cycle_start`` to\n``cycle_end`` (the same shape as the message quota). ``resets_at``\nalways equals ``cycle_end``.\n\nThese three fields are UTC timestamps with second precision and a ``Z``\nsuffix, the same format used by the ``contact.quota.*`` webhook events\nand every other timestamp in the API (for example ``at`` on message\nresponses).\n\n.. code-block:: json\n\n   {\n     \"used\": 87,\n     \"quota\": 1000,\n     \"remaining\": 913,\n     \"cycle_start\": \"2026-06-01T00:00:00Z\",\n     \"cycle_end\": \"2026-07-01T00:00:00Z\",\n     \"resets_at\": \"2026-07-01T00:00:00Z\",\n     \"tier\": \"SOLO\"\n   }"
       },
       "ContactRefreshPayload": {
         "properties": {
@@ -3619,7 +3973,7 @@
           "requested_at"
         ],
         "title": "ContactRefreshPayload",
-        "description": "The last refresh the customer asked for (spec 2026-10-04-send-contract-hygiene, part C).\n\n``completed_at`` and ``outcome`` stay ``null`` while the refresh runs."
+        "description": "The last refresh you asked for on this contact.\n\n``completed_at`` and ``outcome`` stay ``null`` while the refresh runs."
       },
       "ContactResponse": {
         "properties": {
@@ -3748,7 +4102,7 @@
           "updated_at"
         ],
         "title": "ContactResponse",
-        "description": "Single-contact detail response (flat phone post-collapse).\n\n``picture`` is a :data:`ProfilePicturePayload` discriminated union\n(``kind``: ``\"available\"`` | ``\"unavailable\"``).\n``None`` when no picture metadata has been fetched yet.\n\n2026-06-06: ``push_name`` renamed to ``name`` (coherence with the\n``contact.*`` event triple ``{id, name, number}``). Removed\n``organization_id`` (the API is already organization-scoped — implicit),\n``source`` (internal discovery detail), ``profile_picture_fetched_at``\n(internal fetch marker — the ``available`` picture variant already\ncarries its own ``fetched_at``), and the low-value fields\n``status_about``, ``is_business``, ``business_profile``, ``last_seen_at``."
+        "description": "One contact.\n\n``picture`` says whether the contact's profile picture is available\n(``kind``: ``\"available\"`` or ``\"unavailable\"``); ``null`` when the\npicture has not been checked yet."
       },
       "ContactSource": {
         "type": "string",
@@ -3759,7 +4113,7 @@
           "self"
         ],
         "title": "ContactSource",
-        "description": "How a contact entered the platform.\n\nInvariant: SOURCE_IMMUTABLE — once set on contact creation the value\nnever changes. Re-pairing or address-book rotations do NOT alter the\nsource; ``last_interaction_at`` carries that signal instead.\n\nMembers:\n    INBOUND: First touched when the organization received a message from\n        this peer.\n    OUTBOUND: First touched when the organization sent a message to this\n        peer.\n    MENTION: First touched when this peer was @mentioned inside message\n        traffic (received, sent from the phone, or sent through the API).\n        Traffic-derived like a receipt acker; NEVER stamps\n        ``first_messaged_at``/``last_messaged_at`` and never consumes a\n        quota slot (``tn_send=False`` always).\n    SELF: Contact represents a TN-managed number — primary session\n        or extra number for the organization itself. ``is_self=TRUE`` row."
+        "description": "How a contact first appeared. It never changes afterwards.\n\nValues:\n    inbound: the first message came from this contact.\n    outbound: the first message was sent to this contact.\n    mention: the contact was first seen in a mention (in a message\n        received, sent from the phone or sent through the API).\n    self: the contact is one of your own numbers (main or extra)."
       },
       "ContactUsageSnapshot": {
         "properties": {
@@ -3895,7 +4249,7 @@
           "data"
         ],
         "title": "EventResponse",
-        "description": "A single item in the events list.\n\nUnified envelope (2026-06-01 spec) — same fields on webhook and\npolling channels:\n\n- ``id``: evt_{hex32} event identifier.\n- ``type``: WebhookEventType value.\n- ``organization_id``: org_{hex32} — the organization's public identifier.\n- ``number_alias``: the number handle — ``\"main\"`` or an\n  extra alias — immediately below ``organization_id``; omitted for\n  organization-wide events with no single number.\n- ``created_at``: ISO 8601 with organization timezone offset (fallback UTC).\n- ``data``: Shared ``EventData`` subclass — byte-identical on both\n  channels.\n\nRemoved (2026-06-01): ``object``, ``request_id``, ``timestamp``."
+        "description": "One event of the events list, with the same fields as the webhook.\n\n- ``id``: the event id (``evt_...``).\n- ``type``: the event type, for example ``message.received``.\n- ``organization_id``: your organization id (``org_...``).\n- ``number_alias``: the number the event belongs to (``\"main\"`` or the\n  alias of an extra number); absent on organization-wide events.\n- ``created_at``: when the event was recorded (ISO 8601).\n- ``data``: the event payload, identical to the one the webhook delivers."
       },
       "ExtraNumberStatusPayload": {
         "properties": {
@@ -3963,6 +4317,18 @@
             "type": "string",
             "title": "Number"
           },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id",
+            "description": "Your own identifier for this number, for example the id of the customer it serves in your system. 1 to 128 characters, surrounding spaces removed, no control characters. Unique among the numbers of your account; `null` when not set. Unlike `alias`, it can be any text (a UUID or an integer sent as a string) and it does not change when you rename the number."
+          },
           "description": {
             "anyOf": [
               {
@@ -3985,7 +4351,7 @@
           "status"
         ],
         "title": "ExtraNumberSummaryResponse",
-        "description": "Per-item summary for ``GET /numbers`` (list).\n\nNumber identity fields, in order:\n``contact_id, name, type, alias, number`` then the surface-specific\n``description``/``status`` tail."
+        "description": "One number of the account in the list.\n\nFields in order: `contact_id`, `name`, `type`, `alias`, `number`,\n`external_id`, then `description` and `status`."
       },
       "GetExtraNumberStatusResponse": {
         "properties": {
@@ -4023,6 +4389,18 @@
           "number": {
             "type": "string",
             "title": "Number"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id",
+            "description": "Your own identifier for this number, for example the id of the customer it serves in your system. 1 to 128 characters, surrounding spaces removed, no control characters. Unique among the numbers of your account; `null` when not set. Unlike `alias`, it can be any text (a UUID or an integer sent as a string) and it does not change when you rename the number."
           },
           "status": {
             "type": "string",
@@ -4084,7 +4462,7 @@
           "at"
         ],
         "title": "GetExtraNumberStatusResponse",
-        "description": "``GET /numbers/{alias}`` — canonical NUMBER identity shape.\n\nField order:\n``contact_id, name, type, alias, number, status, at`` then the\nsurface-specific tail (``description``, ``scheduled_deletion_at``,\n``reason``, ``pairing``)."
+        "description": "One extra number, with its status and, while pairing, its code or QR.\n\nFields in order: `contact_id`, `name`, `type`, `alias`, `number`,\n`external_id`, `status`, `at`, then `description`, `scheduled_deletion_at`,\n`reason` and `pairing`."
       },
       "GetMainNumberResponse": {
         "properties": {
@@ -4129,6 +4507,18 @@
             ],
             "title": "Number"
           },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id",
+            "description": "Your own identifier for this number, for example the id of the customer it serves in your system. 1 to 128 characters, surrounding spaces removed, no control characters. Unique among the numbers of your account; `null` when not set. Unlike `alias`, it can be any text (a UUID or an integer sent as a string) and it does not change when you rename the number."
+          },
           "status": {
             "type": "string",
             "title": "Status"
@@ -4152,7 +4542,7 @@
           "status"
         ],
         "title": "GetMainNumberResponse",
-        "description": "``GET /numbers/main`` — canonical NUMBER identity shape.\n\nField order:\n``contact_id, name, type, alias, number, status, at``."
+        "description": "The main number of the account and its status.\n\nFields in order: `contact_id`, `name`, `type`, `alias`, `number`,\n`external_id`, `status`, `at`."
       },
       "GetMessageDetailsResponse": {
         "properties": {
@@ -4376,7 +4766,7 @@
           "status"
         ],
         "title": "GetMessageDetailsResponse",
-        "description": "``GET /v1/messages/{id}`` response.\n\nUnified with the webhook/polling event shape (2026-06-01 spec):\n\nCommon fields (all ``message.*`` events):\n- ``id``: public ``msg_{hex32}`` identifier.\n- ``organization_id``: ``org_{hex32}`` — the owning organization (after ``id``).\n- ``number_alias``: organization inbox handle (``\"main\"`` / extra alias), after\n  ``organization_id``. Replaces the dropped ``inbox`` party block.\n- ``from``/``to``: direction-aware party shapes.\n- ``preview``: grapheme-aware crop (≤ 50 chars). Follows the identical\n  per-organization content-retention window as the body (not permanent) —\n  resolved by the shared ``RetentionResolver``.\n- ``content_type``: ``text``, ``image``, ``audio``, etc.\n- ``direction``: ``\"outbound\"`` or ``\"inbound\"``.\n- ``channel``: always ``\"whatsapp\"``.\n- ``origin``: ``\"tn\"`` (API send), ``\"native\"`` (WhatsApp direct/inbound).\n  Always present — never ``null``.\n- ``at``: ISO 8601 — stable WhatsApp occurrence moment (does not advance\n  with delivery state; outbound = sent_at, inbound = created_at proxy).\n- ``status``: ``{state, at, error}`` — ``status.at`` is the advancing\n  current-delivery-status time (read_at → delivered_at → sent_at → failed_at\n  → created_at).  ``error`` is the nested ``MessageError``\n  (``{code, message, hint}``), present iff ``state=\"failed\"``.\n- ``mentions``: ``[{contact_id?, name?, number}, ...]`` —\n  hydrated ``@<number>`` mentions found in ``text``/the media ``caption``,\n  inbound AND outbound, stored order.  ``None`` when the message has no\n  mentions.  Survives the ``content`` retention purge (mirrors\n  ``quoted_message_id``).\n\nType-specific optional fields (one per ``content_type``):\n- ``text``: full text for ``content_type=\"text\"``.\n- ``image``, ``video``, ``audio``, ``document``, ``sticker``: media\n  objects including the discriminated ``media`` block (``kind`` field).\n- ``location``: ``{latitude, longitude, name?, address?, …}``.\n- ``calendar``: ``{name, start_at, …}``.\n- ``interactive``: ``{interactive_type, body, header?, footer?, url_button}``.\n- ``replied``: ``{message_id, preview}`` — for reply messages.\n\nFor ``message.reacted``: ``content_type=\"text\"``, ``text`` = emoji or ``\"\"``.\n\nRemoved (2026-06-01): ``body``, ``body_expired``, ``sent_at``,\n``delivered_at``, ``read_at``, ``updated_at``, ``quoted_message_id``\n(top-level), ``media`` (top-level — moved into type-specific objects).\nRemoved: the ``inbox`` party block, replaced by the flat ``number_alias``\nhandle."
+        "description": "One message, with the same fields as the ``message.*`` webhook events.\n\nCommon fields:\n- ``id``: the message id (``msg_...``).\n- ``organization_id``: your organization id (``org_...``).\n- ``number_alias``: the number the message belongs to (``\"main\"`` or the\n  alias of an extra number).\n- ``from``/``to``: sender and recipient; their shape depends on the\n  direction.\n- ``preview``: the first characters of the message (up to 50). It is kept\n  only for your plan's content retention period, like the content itself.\n- ``content_type``: ``text``, ``image``, ``audio`` and so on.\n- ``direction``: ``\"outbound\"`` or ``\"inbound\"``.\n- ``channel``: always ``\"whatsapp\"``.\n- ``origin``: ``\"tn\"`` (sent through the API) or ``\"native\"`` (sent or\n  received on WhatsApp itself). Always present, never ``null``.\n- ``at``: when the message happened on WhatsApp (ISO 8601). It does not\n  change as the delivery state advances.\n- ``status``: ``{state, at, error}``. ``status.at`` is when the current\n  delivery state was reached. ``error`` (``{code, message, hint}``) is\n  present only when ``state`` is ``\"failed\"``.\n- ``mentions``: the ``@<number>`` mentions found in the text or caption,\n  in order, as ``[{contact_id?, name?, number}, ...]``; absent when the\n  message mentions nobody. Kept after the content retention period ends.\n\nContent fields (one, matching ``content_type``):\n- ``text``: the full text, for ``content_type=\"text\"``.\n- ``image``, ``video``, ``audio``, ``document``, ``sticker``: the media,\n  with a ``media`` block that says whether the file is available\n  (``kind`` field).\n- ``location``: ``{latitude, longitude, name?, address?, ...}``.\n- ``calendar``: ``{name, start_at, ...}``.\n- ``interactive``: ``{interactive_type, body, header?, footer?, url_button}``.\n- ``replied``: ``{message_id, preview}``, on a reply.\n\nFor a reaction, ``content_type`` is ``\"text\"`` and ``text`` holds the\nemoji (``\"\"`` when the reaction was removed)."
       },
       "GetMessageReactionsResponse": {
         "properties": {
@@ -4476,7 +4866,7 @@
           "data"
         ],
         "title": "GroupListResponse",
-        "description": "List of groups plus an opaque next-page cursor.\n\n``cursor`` is ``None`` when the listing is exhausted. ``has_more``\nmirrors ``cursor is not None`` for DX convenience."
+        "description": "List of groups plus an opaque next-page cursor.\n\n``cursor`` is ``null`` when there are no more groups. ``has_more`` says\nthe same thing as a boolean (``true`` exactly when ``cursor`` is not\n``null``)."
       },
       "GroupResponse": {
         "properties": {
@@ -4608,20 +4998,7 @@
           "updated_at"
         ],
         "title": "GroupResponse",
-        "description": "Public representation of a WhatsApp Group for the API consumer.\n\nIntentionally omits:\n- ``whatsapp_group_id`` (raw WA protocol identifier — internal)\n- ``parent_whatsapp_group_jid`` (internal community identifier)\n- ``picture_url`` / ``picture_hash`` (internal WhatsApp CDN hints)\n- ``last_metadata_sync_at`` (internal cache-freshness marker — TN\n  implementation detail; ``updated_at`` already signals row changes)\n- ``deleted_at`` (admin-only)"
-      },
-      "HTTPValidationError": {
-        "properties": {
-          "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
-            "type": "array",
-            "title": "Detail"
-          }
-        },
-        "type": "object",
-        "title": "HTTPValidationError"
+        "description": "One WhatsApp group the number belongs to."
       },
       "InteractiveHeaderInput": {
         "properties": {
@@ -4644,7 +5021,7 @@
           "text"
         ],
         "title": "InteractiveHeaderInput",
-        "description": "Header of an interactive message — text-only in MVP."
+        "description": "Header of an interactive message. Only a text header is supported."
       },
       "InteractiveUrlButtonInput": {
         "properties": {
@@ -4932,7 +5309,7 @@
           "tier"
         ],
         "title": "MessageQuotaResponse",
-        "description": "A number's current message-quota snapshot.\n\nTask 4.1 (public quota/usage shapes gain the evaluated cycle): the\nformer rolling ``window_days`` field is retired — the response now\ncarries the evaluated billing cycle directly (``cycle_start``/\n``cycle_end``), matching the ``message.quota.*`` webhook events exactly.\n``resets_at`` always equals ``cycle_end``.\n\nThese three fields are UTC timestamps with second precision and a ``Z``\nsuffix, the same format used by the ``message.quota.*`` webhook events\nand every other timestamp in the API.\n\n.. code-block:: json\n\n   {\n     \"used\": 1234,\n     \"quota\": 10000,\n     \"remaining\": 8766,\n     \"cycle_start\": \"2026-06-01T00:00:00Z\",\n     \"cycle_end\": \"2026-07-01T00:00:00Z\",\n     \"resets_at\": \"2026-07-01T00:00:00Z\",\n     \"tier\": \"SOLO\"\n   }"
+        "description": "A number's current message-quota snapshot.\n\nThe quota counts the current billing cycle, from ``cycle_start`` to\n``cycle_end``, exactly as the ``message.quota.*`` webhook events do.\n``resets_at`` always equals ``cycle_end``.\n\nThese three fields are UTC timestamps with second precision and a ``Z``\nsuffix, the same format used by the ``message.quota.*`` webhook events\nand every other timestamp in the API.\n\n.. code-block:: json\n\n   {\n     \"used\": 1234,\n     \"quota\": 10000,\n     \"remaining\": 8766,\n     \"cycle_start\": \"2026-06-01T00:00:00Z\",\n     \"cycle_end\": \"2026-07-01T00:00:00Z\",\n     \"resets_at\": \"2026-07-01T00:00:00Z\",\n     \"tier\": \"SOLO\"\n   }"
       },
       "MessageStatusPayload": {
         "properties": {
@@ -5020,7 +5397,7 @@
           "remaining"
         ],
         "title": "NumberFamilyUsage",
-        "description": "``used``/``quota``/``remaining`` for ONE quota family on ONE number.\n\nNo ``resets_at``/``tier`` here — both are uniform across every number\nin the organization and already surface at the top level."
+        "description": "``used``, ``quota`` and ``remaining`` of one quota on one number.\n\n``resets_at`` and ``tier`` are the same for every number of the\norganization, so they appear once, at the top level of the response."
       },
       "NumberMessagesUsage": {
         "properties": {
@@ -5096,7 +5473,7 @@
           "data"
         ],
         "title": "OrganizationListResponse",
-        "description": "One-item list of organizations for the authenticated organization.\n\nThe public-api is single-organization: exactly one organization is returned.\n``cursor`` is always ``None`` and ``has_more`` is always ``False``."
+        "description": "The organization of the API key, as a list.\n\nYour key belongs to one organization; exactly one is returned.\n``cursor`` is always ``null`` and ``has_more`` is always ``false``."
       },
       "OrganizationResponse": {
         "properties": {
@@ -5155,7 +5532,7 @@
           "updated_at"
         ],
         "title": "OrganizationResponse",
-        "description": "Public representation of the authenticated organization's organization.\n\nExposes only safe fields — anti-ban bypass flags and billing overrides\nare admin-only and never present here."
+        "description": "The organization that owns the API key used in the request."
       },
       "OutboundRecipientInput": {
         "properties": {
@@ -5197,7 +5574,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "OutboundRecipientInput",
-        "description": "``to`` field on outbound message requests — number XOR group_id XOR contact_id.\n\nAccepts EXACTLY ONE of:\n- ``number``: E.164 phone for 1:1 messages.\n- ``group_id``: TN public ``grp_{hex32}`` for WhatsApp Group sends.\n- ``contact_id``: TN public ``ct_{hex32}`` — phone resolved server-side\n  from the Contacts table.\n\nSupplying more than one or none yields a 422 ``invalid_recipient`` error."
+        "description": "The recipient: a phone number, a group or a contact.\n\nSend exactly one of:\n- ``number``: the phone in E.164 format, for a one-to-one message.\n- ``group_id``: a group id (``grp_...``), to send to a WhatsApp group.\n- ``contact_id``: a contact id (``ct_...``); the message goes to that\n  contact's phone.\n\nSending more than one, or none, is rejected with 422 ``invalid_recipient``."
       },
       "OutboundSenderInput": {
         "properties": {
@@ -5227,18 +5604,21 @@
         "additionalProperties": false,
         "type": "object",
         "title": "OutboundSenderInput",
-        "description": "``from`` field on outbound message requests — alias XOR number.\n\nOn the request side either ``alias`` (e.g. ``\"main\"`` or an extra\nnumber alias) or ``number`` (E.164 phone) is provided — never both.\nThe platform resolves the alias or number to the sending number\nbefore the message is stored."
+        "description": "The sending number, given by ``alias`` or by ``number``.\n\nSend exactly one of them: ``alias`` (``\"main\"`` or the alias of an extra\nnumber) or ``number`` (the phone in E.164 format). Sending both, or\nneither, is rejected with 422."
       },
       "PairExtraNumberRequest": {
         "properties": {
           "method": {
             "type": "string",
+            "const": "pairing_code",
             "title": "Method",
             "default": "pairing_code"
           }
         },
+        "additionalProperties": false,
         "type": "object",
-        "title": "PairExtraNumberRequest"
+        "title": "PairExtraNumberRequest",
+        "description": "Optional body of the pairing request.\n\nAn extra number is always paired with a pairing code that you type in\nWhatsApp (Linked devices, Link with phone number instead), so\n`pairing_code` is the only accepted method and the body can be left out.\nAny other value answers 422."
       },
       "PairExtraNumberResponse": {
         "properties": {
@@ -5338,7 +5718,7 @@
           "url"
         ],
         "title": "ProfilePictureAvailable",
-        "description": "Profile picture is accessible via a signed URL.\n\n``url_expires_at`` is set for presigned URLs and ``None`` for\npermanent public URLs.  Consumers should re-fetch via the contacts\nAPI after the URL expires rather than caching indefinitely.\n\n``hash`` is the hex-encoded SHA-256 of the picture bytes —\nstable across re-uploads of the same image, useful for dedup.\n\n``fetched_at`` records when the picture was last fetched from\nWhatsApp, useful for freshness heuristics."
+        "description": "Profile picture is accessible via a signed URL.\n\n``url_expires_at`` is set for temporary (signed) URLs and ``null`` for\npermanent public URLs. After a temporary URL expires, fetch the contact\nagain to get a fresh one instead of keeping the old URL.\n\n``hash`` is the hex-encoded SHA-256 of the picture bytes. It stays the\nsame when the same image is uploaded again, which helps to deduplicate.\n\n``fetched_at`` records when the picture was last fetched from\nWhatsApp, useful for freshness heuristics."
       },
       "ProfilePicturePending": {
         "properties": {
@@ -5411,7 +5791,24 @@
           "reason"
         ],
         "title": "ProfilePictureUnavailable",
-        "description": "Profile picture cannot be served.\n\n``reason`` vocabulary:\n\n* ``\"no_storage\"`` — organization has no BYO Object Storage configured.\n  ``setup_hint`` is always present.\n* ``\"upload_failed\"`` — upload failed after all retries.\n  ``setup_hint`` is ``None``.\n* ``\"peer_has_none\"`` — the contact has not set a profile picture.\n  ``setup_hint`` is ``None`` (no storage action needed).\n* ``\"storage_circuit_open\"`` — circuit breaker open; uploads\n  suspended.  ``setup_hint`` is present.\n\nInvariant: ``setup_hint is not None IFF reason in\n{\"no_storage\", \"storage_circuit_open\"}``."
+        "description": "Profile picture cannot be served.\n\n``reason`` vocabulary:\n\n* ``\"no_storage\"``: the organization has no object storage configured.\n  ``setup_hint`` is always present.\n* ``\"upload_failed\"``: the upload failed after all retries.\n  ``setup_hint`` is ``null``.\n* ``\"peer_has_none\"``: the contact has not set a profile picture.\n  ``setup_hint`` is ``null`` (nothing to set up on your side).\n* ``\"storage_circuit_open\"``: uploads to the storage are paused after\n  repeated failures. ``setup_hint`` is present.\n\n``setup_hint`` is present exactly when ``reason`` is ``\"no_storage\"`` or\n``\"storage_circuit_open\"``."
+      },
+      "PublicNumberStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "pairing",
+          "inactive",
+          "connecting",
+          "connected",
+          "disconnected",
+          "reconnecting",
+          "failed",
+          "revoked",
+          "pending_deletion"
+        ],
+        "title": "PublicNumberStatus",
+        "description": "What a customer reads in a number's `status`."
       },
       "ReactionFromPayload": {
         "properties": {
@@ -5556,7 +5953,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "ReceiptFromPayload",
-        "description": "The party who emitted a delivery/read receipt.\n\n``number`` is ``None`` for LID (Linked-Device) receipts where the acker's\nphone is unavailable. The ``from`` object is still returned when\n``contact_id`` or ``name`` are known even without a phone number."
+        "description": "The party who emitted a delivery/read receipt.\n\n``number`` is ``null`` when WhatsApp does not reveal the phone of the\nperson who acknowledged. The ``from`` object is still returned when\n``contact_id`` or ``name`` are known even without a phone number."
       },
       "ReceiptItem": {
         "properties": {
@@ -5662,19 +6059,18 @@
         "properties": {
           "scheduled_deletion_at": {
             "type": "string",
-            "title": "Scheduled Deletion At"
+            "title": "Scheduled Deletion At",
+            "description": "When the number is removed. The current time when it was removed right away; otherwise the end of its paid period, until which it keeps working."
           },
           "refund_eligible": {
             "type": "boolean",
-            "title": "Refund Eligible"
+            "title": "Refund Eligible",
+            "description": "``true`` when the number was removed right away and its activation charge is refunded. ``false`` when the removal is scheduled for the end of the paid period, with no refund."
           },
           "refund_amount_cents": {
             "type": "integer",
-            "title": "Refund Amount Cents"
-          },
-          "messages_sent": {
-            "type": "integer",
-            "title": "Messages Sent"
+            "title": "Refund Amount Cents",
+            "description": "Amount refunded to your payment method, in cents of your billing currency. 0 when there is no refund."
           },
           "refund_status": {
             "anyOf": [
@@ -5690,17 +6086,18 @@
                 "type": "null"
               }
             ],
-            "title": "Refund Status"
+            "title": "Refund Status",
+            "description": "Outcome of the refund when the number was removed right away: `succeeded` (the amount is on its way back to your payment method), `not_applicable` (there was nothing to refund) or `failed` (the number is removed and our billing team completes the refund). Null when the removal is scheduled."
           }
         },
         "type": "object",
         "required": [
           "scheduled_deletion_at",
           "refund_eligible",
-          "refund_amount_cents",
-          "messages_sent"
+          "refund_amount_cents"
         ],
-        "title": "ScheduleExtraNumberDeletionResponse"
+        "title": "ScheduleExtraNumberDeletionResponse",
+        "description": "What removing the number did: removed right away with a refund, or scheduled."
       },
       "SendAudioContent": {
         "properties": {
@@ -5730,7 +6127,7 @@
           "audio_url"
         ],
         "title": "SendAudioContent",
-        "description": "Send an audio file or voice note via a public URL.\n\nWhatsApp ignores captions on audio — the field is intentionally\nabsent to avoid silent data loss."
+        "description": "Send an audio file or voice note via a public URL.\n\nWhatsApp does not show captions on audio, so this content has no\n``caption`` field (a caption would be silently lost)."
       },
       "SendCalendarContent": {
         "properties": {
@@ -5823,7 +6220,7 @@
           "start_at"
         ],
         "title": "SendCalendarContent",
-        "description": "Schedule a calendar event. Maps to WhatsApp ``eventMessage``.\n\n``start_at`` and ``end_at`` are timezone-aware ISO-8601 datetimes\n(values without a timezone are rejected)."
+        "description": "Schedule a calendar event as a WhatsApp event message.\n\n``start_at`` and ``end_at`` are timezone-aware ISO-8601 datetimes\n(values without a timezone are rejected)."
       },
       "SendContactContent": {
         "properties": {
@@ -5894,7 +6291,7 @@
           "phones"
         ],
         "title": "SendContactContent",
-        "description": "Share a contact card. Maps to WhatsApp ``ContactMessage``.\n\nThe vCard sent on the wire is generated server-side from these\nstructured fields. Clients never craft the vCard themselves, which keeps escaping correct\nand the produced contact compatible with WhatsApp's parser."
+        "description": "Share a contact card as a WhatsApp contact message.\n\nYou send the structured fields below and the vCard is built for you, so\nthe card always opens correctly in WhatsApp. You never write a vCard yourself."
       },
       "SendContactEmail": {
         "properties": {
@@ -6086,7 +6483,7 @@
           "url_button"
         ],
         "title": "SendInteractiveContent",
-        "description": "Interactive message — CTA URL only.\n\n``interactive_type`` is a one-value discriminator kept for forward\ncompatibility (and to anchor the JSON shape consistent with the\nstorage VO). ``url_button`` is required.\n\nOnly the call-to-action URL button is supported."
+        "description": "Interactive message with a call-to-action URL button.\n\n``interactive_type`` has a single accepted value today and ``url_button``\nis required. Only the call-to-action URL button is supported."
       },
       "SendLocationContent": {
         "properties": {
@@ -6148,7 +6545,7 @@
           "longitude"
         ],
         "title": "SendLocationContent",
-        "description": "Pin a geographic point. Maps to WhatsApp ``LocationMessage``."
+        "description": "Pin a geographic point as a WhatsApp location message."
       },
       "SendMessageRequest": {
         "properties": {
@@ -6210,7 +6607,7 @@
           "content"
         ],
         "title": "SendMessageRequest",
-        "description": "``POST /v1/messages`` request body.\n\n``to`` identifies the recipient (phone XOR group_id).\n``content`` is the message payload — variant is inferred from field\npresence (see the content variants of this request).\n``quoted_message_id`` is optional — supply a ``msg_{hex32}`` to quote an\nexisting message without using the dedicated ``/reply`` endpoint.\n\nThe sender number is determined by the ``{alias}`` URL segment of\n``POST /v1/numbers/{alias}/messages`` — there is no ``from`` field in\nthe request body."
+        "description": "``POST /v1/messages`` request body.\n\n``to`` identifies the recipient (a phone, a group or a contact).\n``content`` is the message itself; its kind is inferred from the fields\nyou send (see the content variants of this request).\n``quoted_message_id`` is optional: give a ``msg_...`` id to quote an\nexisting message without using the dedicated ``/reply`` endpoint.\n\nThe sending number is the ``{alias}`` in the URL of\n``POST /v1/numbers/{alias}/messages`` (``main`` on ``POST /v1/messages``),\nso the body has no ``from`` field."
       },
       "SendMessageResponse": {
         "properties": {
@@ -6301,7 +6698,7 @@
           "sticker_url"
         ],
         "title": "SendStickerContent",
-        "description": "Send a sticker via a public URL (animated WebP recommended).\n\nWhatsApp ignores captions on stickers — the field is intentionally\nabsent to avoid silent data loss."
+        "description": "Send a sticker via a public URL (animated WebP recommended).\n\nWhatsApp does not show captions on stickers, so this content has no\n``caption`` field (a caption would be silently lost)."
       },
       "SendTextContent": {
         "properties": {
@@ -6438,7 +6835,7 @@
           "message"
         ],
         "title": "StorageSetupHint",
-        "description": "Guidance payload embedded in unavailable-media or unavailable-picture events.\n\nInvariant: emitted ONLY when ``reason`` is ``\"no_storage\"`` or\n``\"storage_circuit_open\"`` — i.e. cases where the organization can take a\ncorrective action (configure or fix storage).  ``upload_failed`` is\na transient infrastructure error where the hint would be misleading\n(the integration is configured but failed on a specific attempt).\n\nFields:\n    setup_url: Deep link into the dashboard storage-setup flow.\n    docs_url: Link to the public documentation page for BYO Object\n        Storage configuration.\n    message: Short English seed string suitable for display or\n        further localisation (e.g. ``\"Configure your media storage\n        to receive inbound media files.\"``)."
+        "description": "How to fix the storage, sent with unavailable media or pictures.\n\nPresent only when ``reason`` is ``\"no_storage\"`` or\n``\"storage_circuit_open\"``: the cases where the organization can act\n(configure or fix its storage). It is absent on ``upload_failed``, a\none-off failure where the storage is configured and the hint would\nmislead.\n\nFields:\n    setup_url: Deep link into the dashboard storage-setup flow.\n    docs_url: Link to the public documentation page for BYO Object\n        Storage configuration.\n    message: Short English seed string suitable for display or\n        further localisation (e.g. ``\"Configure your media storage\n        to receive inbound media files.\"``)."
       },
       "TypingStatusPayload": {
         "properties": {
@@ -6481,10 +6878,23 @@
               }
             ],
             "title": "Description"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id",
+            "description": "Your own identifier for this number (1 to 128 characters). Send a string to set or change it, `null` to remove it, or leave the field out to keep it. Another number of your account already using it answers 409 `external_id_already_used`."
           }
         },
         "type": "object",
-        "title": "UpdateExtraNumberRequest"
+        "title": "UpdateExtraNumberRequest",
+        "description": "Send only the fields you want to change.\n\nOn the main number only `external_id` can be changed."
       },
       "UpdateExtraNumberResponse": {
         "properties": {
@@ -6510,6 +6920,18 @@
           "at": {
             "type": "string",
             "title": "At"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id",
+            "description": "Your own identifier for this number, for example the id of the customer it serves in your system. 1 to 128 characters, surrounding spaces removed, no control characters. Unique among the numbers of your account; `null` when not set. Unlike `alias`, it can be any text (a UUID or an integer sent as a string) and it does not change when you rename the number."
           }
         },
         "type": "object",
@@ -6569,38 +6991,78 @@
         "title": "UsageResponse",
         "description": "Unified envelope returned by ``GET /v1/usage``."
       },
-      "ValidationError": {
+      "ValidationErrorDetails": {
+        "additionalProperties": false,
+        "description": "Every field of the request that was rejected.",
         "properties": {
-          "loc": {
+          "errors": {
             "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
+              "$ref": "#/components/schemas/ValidationErrorItem"
             },
-            "type": "array",
-            "title": "Location"
-          },
-          "msg": {
-            "type": "string",
-            "title": "Message"
-          },
-          "type": {
-            "type": "string",
-            "title": "Error Type"
+            "title": "Errors",
+            "type": "array"
           }
         },
-        "type": "object",
         "required": [
-          "loc",
-          "msg",
+          "errors"
+        ],
+        "title": "ValidationErrorDetails",
+        "type": "object"
+      },
+      "ValidationErrorItem": {
+        "additionalProperties": false,
+        "description": "One field of the request that was rejected.",
+        "properties": {
+          "field": {
+            "description": "Where the problem is, as a dotted path that starts with the part of the request: `body.to.number`, `query.limit`.",
+            "title": "Field",
+            "type": "string"
+          },
+          "message": {
+            "description": "What is wrong with the value.",
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "description": "A short machine-readable name for the kind of problem.",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "message",
           "type"
         ],
-        "title": "ValidationError"
+        "title": "ValidationErrorItem",
+        "type": "object"
+      },
+      "ValidationErrorResponse": {
+        "additionalProperties": false,
+        "description": "Answer to a request that was understood but has a value that is not valid.",
+        "properties": {
+          "error": {
+            "const": "validation_error",
+            "title": "Error",
+            "type": "string"
+          },
+          "details": {
+            "$ref": "#/components/schemas/ValidationErrorDetails"
+          }
+        },
+        "required": [
+          "error",
+          "details"
+        ],
+        "title": "ValidationErrorResponse",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Your API key, created in the dashboard under Setup > API Keys. Send it on every request as `Authorization: Bearer <your key>`. A request without a valid key answers `401 not_authenticated`; a valid key without the operation's scope answers `403 insufficient_scope`."
       }
     }
   }

@@ -346,7 +346,7 @@ Learn more about [extra numbers](/en/numbers/add/).
 | :----: | ----------------------- | -------------------------------------------------- |
 | `400`  | `invalid_message_id`    | The `message_id` in the URL is not in the `msg_{hex32}` format. |
 | `402`  | `feature_not_available` | The feature is not available on your plan. |
-| `403`  | `not_authorized`        | The API key is invalid or missing.                 |
+| `401`  | `not_authenticated`     | The API key is invalid or missing.                 |
 | `403`  | `insufficient_scope`    | The API key does not have the `messages:send` scope (the response includes `required_scope`). |
 | `404`  | `number_not_found`      | The `{alias}` in the path does not match any number on the account (on the flat route: the account has no main number yet). |
 | `404`  | `not_found`             | The message was not found, belongs to another organization, is outside your plan's [content retention window](/en/messages/retention/), or (on the nested route `/numbers/{alias}/messages/.../react`) belongs to a number other than the alias in the URL: all of these cases return the same response, with no distinction. |

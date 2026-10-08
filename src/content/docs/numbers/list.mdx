@@ -258,7 +258,7 @@ os números extras existentes, mas não consegue gerenciá-los.
 
 | Status | Código de erro          | Descrição                                           |
 | :----: | ----------------------- | --------------------------------------------------- |
-| `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.         |
+| `401`  | `not_authenticated`     | A chave de acesso está inválida ou ausente.         |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `numbers:read` (resposta inclui `required_scope`). |
 | `422`  | `validation_error`      | O filtro `status` tem um valor que não está na [Tabela de status](/numbers/status/#tabela-de-status). |
 | `500`  | `internal_error`        | Erro interno inesperado no servidor.                |

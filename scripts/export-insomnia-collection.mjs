@@ -1,14 +1,16 @@
 #!/usr/bin/env node
 // Builds the Insomnia collection customers download from the docs site.
 //
-// Usage: npm run export:collection -- <path to insomnia/public_api.yaml>
+// Usage: pnpm export:collection <path to insomnia/public_api.yaml>
 //        (defaults to ../insomnia/public_api.yaml, the sibling repository)
 //
 // The source collection is the team's working copy: it carries local and
-// staging environments and sample values from the team's own tests. The
-// download keeps every request and folder as is and changes only the
-// environments: one "Production" environment pointing at the public API,
-// an empty `apiKey` for the reader to fill in, and placeholder sample values.
+// staging environments, sample values from the team's own tests, and the
+// team's liveness probe. The download keeps every API request and folder as
+// is, drops the probe (it is outside the public reference: `/health` is not in
+// the OpenAPI document either), and changes the environments: one "Production"
+// environment pointing at the public API, an empty `apiKey` for the reader to
+// fill in, and placeholder sample values.
 // The script is deterministic: rerunning it on the same input produces the
 // same file, so the committed download only changes when the collection does.
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -28,6 +30,7 @@ const PLACEHOLDERS = {
   reactionEventId: '',
   numberAlias: 'main',
   extraNumberAlias: 'cliente_ana',
+  externalId: 'cliente-4711',
   recipientPhone: '+5511988887777',
   contactId: 'ct_00000000000000000000000000000000',
   exampleGroupId: 'grp_00000000000000000000000000000000',
@@ -49,6 +52,14 @@ if (unknownKeys.length > 0) {
     `new base environment values need a placeholder in this script: ${unknownKeys.join(', ')}`,
   );
 }
+
+/** Folders for the team only: requests outside the public API reference. */
+const TEAM_ONLY_FOLDERS = new Set(['fld_health']);
+const keptFolders = doc.collection.filter((item) => !TEAM_ONLY_FOLDERS.has(item?.meta?.id));
+if (keptFolders.length !== doc.collection.length - TEAM_ONLY_FOLDERS.size) {
+  throw new Error(`the source collection no longer has the folders ${[...TEAM_ONLY_FOLDERS]}`);
+}
+doc.collection = keptFolders;
 
 base.data = Object.fromEntries(Object.keys(base.data ?? {}).map((key) => [key, PLACEHOLDERS[key]]));
 base.subEnvironments = [

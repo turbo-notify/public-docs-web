@@ -39,10 +39,10 @@ Se você revende números para os seus clientes, mantenha a chave no servidor da
 
 ## Escopos
 
-Cada chave carrega **escopos de permissão** que determinam quais operações ela pode chamar (por exemplo `messages:send`, `messages:read`, `numbers:read`, `numbers:write`, `events:read`, `contacts:read`, `contacts:write`, `groups:read` e `organizations:read`). A API distingue dois erros `403`:
+Cada chave carrega **escopos de permissão** que determinam quais operações ela pode chamar (por exemplo `messages:send`, `messages:read`, `numbers:read`, `numbers:write`, `events:read`, `contacts:read`, `contacts:write`, `groups:read` e `organizations:read`). A API distingue dois erros:
 
-- `not_authorized`: a chave está ausente, inválida ou revogada.
-- `insufficient_scope`: a chave é válida, mas não possui o escopo exigido pelo endpoint. A resposta inclui o campo `required_scope` com o escopo necessário:
+- `401 not_authenticated`: a chave está ausente, mal formatada, desconhecida, revogada ou expirada. A resposta traz o cabeçalho `WWW-Authenticate: Bearer`.
+- `403 insufficient_scope`: a chave é válida, mas não possui o escopo exigido pelo endpoint. A resposta inclui o campo `required_scope` com o escopo necessário:
 
 ```json
 {
@@ -55,7 +55,7 @@ A tabela de erros de cada endpoint indica o escopo exigido pela operação.
 
 ### Chave para um agente de IA
 
-Para conectar um agente pelo [Servidor MCP](/general/mcp-server/), crie uma chave com o template **Agente de IA (MCP)** no dashboard. Ele marca só o necessário para um atendente: `messages:send`, `messages:read`, `contacts:read`, `groups:read`, `numbers:read` e `events:read`. O [catálogo de ferramentas](/general/mcp-server/#ferramentas) mostra o escopo que cada ferramenta exige, caso você prefira ajustar a chave. Pelo servidor MCP, os dois erros `403` acima chegam ao agente como `unauthorized: not_authorized` e `unauthorized: insufficient_scope`.
+Para conectar um agente pelo [Servidor MCP](/general/mcp-server/), crie uma chave com o template **Agente de IA (MCP)** no dashboard. Ele marca só o necessário para um atendente: `messages:send`, `messages:read`, `contacts:read`, `groups:read`, `numbers:read` e `events:read`. O [catálogo de ferramentas](/general/mcp-server/#ferramentas) mostra o escopo que cada ferramenta exige, caso você prefira ajustar a chave. Pelo servidor MCP, os dois erros acima chegam ao agente como `unauthorized: not_authenticated` e `unauthorized: insufficient_scope`, cada um com o que fazer em seguida.
 
 ### Chave para revenda
 

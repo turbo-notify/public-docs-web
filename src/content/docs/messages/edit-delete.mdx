@@ -367,7 +367,7 @@ Os dois endpoints compartilham o mesmo conjunto de erros:
 | :----: | ------------------------ | -------------------------------------------------------------- |
 | `400`  | `message_not_editable`   | *(apenas na edição)* A mensagem foi **recebida** (enviada por outra pessoa), foi enviada pelo próprio celular (`origin: "native"`), não é do tipo texto, ainda não foi enviada, já foi apagada, ou seu status atual (`failed`, por exemplo) não permite edição. |
 | `400`  | `message_not_deletable`  | *(apenas na exclusão)* A mensagem foi **recebida** (enviada por outra pessoa), foi enviada pelo próprio celular (`origin: "native"`), ainda não foi enviada, já foi apagada, ou seu status atual não permite exclusão. |
-| `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.                     |
+| `401`  | `not_authenticated`      | A chave de acesso está inválida ou ausente.                     |
 | `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
 | `404`  | `number_not_found`       | O alias informado na URL não corresponde a nenhum número cadastrado. |
 | `404`  | `not_found`              | A mensagem não foi encontrada, pertence a outra organização, está fora da [janela de retenção de conteúdo](/messages/retention/) do plano, ou (na rota aninhada `/numbers/{alias}/messages/...`) pertence a um número diferente do alias informado na URL: todos esses casos devolvem a mesma resposta, sem distinção. |

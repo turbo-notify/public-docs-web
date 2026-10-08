@@ -17,14 +17,14 @@ O Turbo Notify conecta o seu número como um dispositivo, não usa a API oficial
 
 ## 1. Crie a conta
 
-Crie uma conta gratuita em [dashboard.turbonotify.com](https://dashboard.turbonotify.com/auth/register). Se já tem conta, entre e siga para o próximo passo.
+Crie uma conta gratuita em [dashboard.turbonotify.com](https://dashboard.turbonotify.com/auth/signup?locale=pt-BR). Se já tem conta, entre e siga para o próximo passo.
 
 ## 2. Conecte o número principal
 
 O número principal é o WhatsApp que envia e recebe as mensagens da sua conta. Ele é conectado pelo dashboard:
 
 1. No dashboard, abra <DashboardLink path="/numbers">Números</DashboardLink> e, no cartão **Número principal**, clique em **Conectar número principal**.
-2. Escolha **QR code** ou **código de pareamento**.
+2. Escolha **QR Code** ou **Código de pareamento**.
 3. No celular, abra o WhatsApp em **Dispositivos conectados > Conectar dispositivo**. Para o QR code, aponte a câmera para a tela. Para o código, toque em **Conectar com número de telefone** e digite o código mostrado no dashboard.
 4. O cartão passa a mostrar o número como conectado, e o Turbo Notify aparece em **Dispositivos conectados** no celular com o nome da sua organização.
 
@@ -343,7 +343,7 @@ Os dois entregam os mesmos eventos, com o mesmo formato. Para escolher, veja [Qu
 | Resposta | O que significa | O que fazer |
 |---|---|---|
 | `409 number_not_connected` | O número que envia não está conectado ao WhatsApp. | Volte ao passo 2 e conecte o número principal. Se ele já estava conectado, veja se o Turbo Notify não foi removido de **Dispositivos conectados** no celular. |
-| `403 not_authorized` | A chave está ausente, errada ou revogada. | Confira o cabeçalho `Authorization: Bearer SUA_CHAVE`. |
+| `401 not_authenticated` | A chave está ausente, errada ou revogada. | Confira o cabeçalho `Authorization: Bearer SUA_CHAVE`. |
 | `403 insufficient_scope` | A chave não tem o escopo da operação (`required_scope` diz qual). | Use uma chave com o escopo indicado, ou o template **Acesso total**. |
 | `400 invalid_phone_number` | O destino não é um telefone válido. | Envie o número com código do país, como `+5511988887777`. |
 | `429 send_rate_spacing` | Você enviou antes do intervalo mínimo entre mensagens do seu plano. | Espere os segundos do cabeçalho `Retry-After`. Esse ritmo protege o seu número. |

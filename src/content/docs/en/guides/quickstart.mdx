@@ -17,14 +17,14 @@ Turbo Notify connects your number as a linked device; it does not use the offici
 
 ## 1. Create your account
 
-Create a free account at [dashboard.turbonotify.com](https://dashboard.turbonotify.com/auth/register). If you already have one, sign in and go to the next step.
+Create a free account at [dashboard.turbonotify.com](https://dashboard.turbonotify.com/auth/signup?locale=en). If you already have one, sign in and go to the next step.
 
 ## 2. Connect your main number
 
 The main number is the WhatsApp that sends and receives your account's messages. You connect it in the dashboard:
 
 1. In the dashboard, open <DashboardLink path="/numbers">Numbers</DashboardLink> and, on the **Main number** card, click **Connect main number**.
-2. Choose **QR code** or **pairing code**.
+2. Choose **QR code** or **Pairing code**.
 3. On the phone, open WhatsApp at **Linked devices > Link a device**. For the QR code, point the camera at the screen. For the code, tap **Link with phone number instead** and type the code shown in the dashboard.
 4. The card now shows the number as connected, and Turbo Notify appears under **Linked devices** on the phone with your organization's name.
 
@@ -343,7 +343,7 @@ Both deliver the same events in the same format. To choose, see [Event polling](
 | Response | What it means | What to do |
 |---|---|---|
 | `409 number_not_connected` | The sending number is not connected to WhatsApp. | Go back to step 2 and connect the main number. If it was connected, check that Turbo Notify was not removed from **Linked devices** on the phone. |
-| `403 not_authorized` | The key is missing, wrong or revoked. | Check the `Authorization: Bearer YOUR_KEY` header. |
+| `401 not_authenticated` | The key is missing, wrong or revoked. | Check the `Authorization: Bearer YOUR_KEY` header. |
 | `403 insufficient_scope` | The key lacks the operation's scope (`required_scope` names it). | Use a key with that scope, or the **Full access** template. |
 | `400 invalid_phone_number` | The recipient is not a valid phone number. | Send the number with its country code, such as `+5511988887777`. |
 | `429 send_rate_spacing` | You sent before the minimum interval between messages of your plan. | Wait the seconds in the `Retry-After` header. This pace protects your number. |

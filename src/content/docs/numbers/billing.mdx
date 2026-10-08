@@ -16,7 +16,7 @@ Cada plano tem um limite máximo de números extras simultâneos: **1.000** nos 
 
 ## Preço
 
-Cada número extra custa **<Price item="extraNumber" />** por número, por mês, além do plano Empresarial. A moeda segue a conta: real (BRL) no Brasil e dólar (USD) nos demais países. O plano Personalizado negocia o valor conforme o volume contratado. O valor exato para a sua conta aparece na página de <DashboardLink path="/billing">Cobrança</DashboardLink> do dashboard.
+Cada número extra custa **<Price item="extraNumber" currency="BRL" />** por número, por mês, além do plano Empresarial, para contas no Brasil (cobrança em real). Contas dos demais países pagam **<Price item="extraNumber" currency="USD" />** por número, por mês, em dólar. No plano Personalizado, as condições são combinadas com o time comercial (sales@turbonotify.com). O valor exato para a sua conta aparece na página de <DashboardLink path="/billing">Cobrança</DashboardLink> do dashboard.
 
 ## Como funciona a cobrança
 
@@ -37,7 +37,7 @@ A cobrança pro-rata de ativação é um lançamento avulso. A partir do ciclo s
 
 Se você remover um número extra logo depois de adicioná-lo, antes de usá-lo, a cobrança pro-rata feita na ativação pode ser **reembolsada automaticamente**. A resposta do `DELETE` diz o que aconteceu, em `refund_eligible`, `refund_amount_cents` e `refund_status` (veja [Remoção de números extras](/numbers/remove/)).
 
-Quando a remoção é **agendada** (até o fim do ciclo pago do número), o número continua na conta e continua sendo cobrado normalmente em cada início de ciclo até a exclusão ser executada, sem reembolso da cobrança já feita.
+Quando a remoção é **agendada** (para o fim do ciclo pago do número), o número continua na conta até lá e não há reembolso da cobrança já feita. Ele não entra na fatura do ciclo seguinte.
 
 Dúvidas sobre um reembolso: escreva para billing@turbonotify.com.
 
@@ -58,7 +58,7 @@ A resposta do `DELETE` informa qual caminho foi tomado, em `refund_eligible` (`t
 Os dois caminhos têm efeitos diferentes na fatura:
 
 - **Remoção imediata**: o número é excluído na hora e a cobrança pro-rata feita na ativação é **reembolsada**. Veja [Números removidos logo após a ativação](#números-removidos-logo-após-a-ativação-podem-ser-reembolsados).
-- **Remoção agendada**: o número continua na conta até o fim do ciclo pago, então **continua sendo cobrado normalmente em cada início de ciclo** nesse intervalo, exatamente como um número apenas desconectado (veja [Pausar em vez de remover](#pausar-em-vez-de-remover) logo abaixo). A cobrança só para quando a exclusão é executada.
+- **Remoção agendada**: o número continua na conta até o fim do ciclo pago, que já foi cobrado e não é reembolsado. Ele **não entra na fatura do ciclo seguinte**: a cobrança para com a exclusão. Um número apenas desconectado, ao contrário, continua sendo cobrado (veja [Pausar em vez de remover](#pausar-em-vez-de-remover) logo abaixo).
 
 ### Pausar em vez de remover
 

@@ -299,7 +299,7 @@ A rejeição acontece em **duas etapas**, com códigos diferentes:
 | `id` | string | Identificador público da organização (`org_` + 32 hex) |
 | `name` | string | Nome cadastrado da organização |
 | `plan` | string | Identificador do plano contratado (ex.: `free`, `solo`, `business`, `custom`) |
-| `locale` | string | Idioma configurado (ex.: `pt-BR`, `en`) |
+| `locale` | string | Idioma das comunicações da organização, `pt-BR` ou `en` (no dashboard, **Organização > Idioma das comunicações**). Não muda o formato das respostas da API |
 | `timezone` | string | Fuso horário IANA configurado para a conta (ex.: `America/Sao_Paulo`). **Não afeta o formato das datas da API**: é usado apenas para agrupar os gráficos do dashboard |
 | `suspended_at` | string\|null | Data e hora ISO 8601 da suspensão; `null` quando a organização está ativa |
 | `created_at` | string | Data e hora ISO 8601 de criação da organização |
@@ -322,7 +322,7 @@ administrativas da organização não aparecem nele.
 | Status | Código de erro           | Descrição                                              |
 | :----: | ------------------------- | -------------------------------------------------------- |
 | `400`  | `invalid_organization_id` | *(apenas detalhe)* O `{organization_id}` informado não está no formato `org_` + 32 hex minúsculos (ex.: UUID com hífens, hex em maiúsculas, string arbitrária). |
-| `403`  | `not_authorized`          | A chave de acesso está inválida ou ausente.              |
+| `401`  | `not_authenticated`       | A chave de acesso está inválida ou ausente.              |
 | `403`  | `insufficient_scope`      | A chave de acesso não possui o escopo `organizations:read` (resposta inclui `required_scope`). |
 | `404`  | `organization_not_found`  | *(apenas detalhe)* O `{organization_id}` informado está **bem-formado**, mas não corresponde à organização autenticada. Formato inválido retorna `400 invalid_organization_id`, não este código. |
 | `500`  | `internal_error`          | Erro interno inesperado no servidor.                     |

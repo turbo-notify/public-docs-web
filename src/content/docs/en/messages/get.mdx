@@ -200,7 +200,7 @@ Use `GET /v1/messages/{id}` for the main number. For extra numbers, use `GET /v1
 | `origin` | string | `"tn"` (sent through the Turbo Notify API) or `"native"` (typed on the phone). Always present. |
 | `at` | string | ISO 8601 in UTC with a `Z` suffix and second precision (e.g. `2026-06-01T13:00:05Z`): the **stable occurrence time** of the message on WhatsApp (outbound: the actual send time; inbound: the time it was received). It **does not change** as the message moves `sent → delivered → read`. For the current delivery or read time, use `status.at`. |
 | `status` | object | `{state, at}`: current delivery state and the matching `status.at`. Unlike the root `at`, `status.at` **moves forward** with each transition (to `delivered`, then `read`). |
-| `mentions` | array | **Optional**: present only when the message mentions someone (inbound or outbound). List of mentioned contacts, items `{contact_id?, name?, number}` (same format as the inbound `from`), in the order of the tokens in the text, with no duplicates. A `@<digits>` in the text is a mention **only** if the number appears here. It remains present after the message body expires under retention. See [Mentions (@mentions)](/en/messages/send/#mentions-mentions). |
+| `mentions` | array | **Optional**: present only when the message mentions someone (inbound or outbound). List of mentioned contacts, items `{contact_id?, name?, number}` (same format as the inbound `from`), in the order of the tokens in the text, with no duplicates. A `@<digits>` in the text is a mention **only** if the number appears here. It follows the same retention window as the rest of the content. See [Mentions (@mentions)](/en/messages/send/#mentions-mentions). |
 
 ### Fields by `content_type`
 
@@ -423,9 +423,9 @@ holds the matching contacts, already resolved:
 }
 ```
 
-The field appears on inbound **and** outbound messages, and remains present even
-after the message body expires under retention (the token in `preview`
-can still be matched against `mentions`).
+The field appears on inbound **and** outbound messages. It follows the plan's
+content retention window: after it, this request answers `404 not_found` for the
+whole resource (see [Message retention](/en/messages/retention/)).
 
 ### Example: reply (quoted message)
 
@@ -518,7 +518,7 @@ When **BYO Speech-to-Text** is set up for the number, **inbound** audio messages
 | `kind` | string | `"available"`: transcription completed, or `"unavailable"`: not available. |
 | `text` | string | *(`available` only)* Transcribed text. |
 | `language` | `string \| null` | *(`available` only)* BCP-47 code of the detected/configured language, when available. |
-| `reason` | string | *(`unavailable` only)* One of these 6 values: `not_configured`, `provider_error`, `file_too_large` (audio over 24 MB), `timeout`, `no_adapter` or `internal_error`. |
+| `reason` | string | *(`unavailable` only)* One of these 6 values: `not_configured`, `provider_error`, `file_too_large` (audio over 24 MB), `timeout`, `provider_not_supported` (the configured transcription provider is not supported right now) or `internal_error`. |
 | `hint` | `string \| null` | *(`unavailable` only)* Optional guidance, written for whoever reads the event (with a link to the dashboard's **Transcription** screen when there is something to adjust there). |
 
 A transcription failure never blocks the message flow.
@@ -563,7 +563,7 @@ When Object Storage is set up, Turbo Notify automatically copies each received m
 | Status | Error code | Description |
 | :----: | ---------- | ----------- |
 | `400` | `invalid_message_id` | The identifier does not match the `msg_` + 32 hex format. |
-| `403` | `not_authorized` | The API key is invalid or missing. |
+| `401` | `not_authenticated` | The API key is invalid or missing. |
 | `403` | `insufficient_scope` | The API key does not have the `messages:read` scope (the response includes `required_scope`). |
 | `404` | `not_found` | Message not found, belongs to another organization, is outside the plan's [content retention window](/en/messages/retention/), or (on the nested route `/numbers/{alias}/messages/{id}`) belongs to a number other than the alias in the URL: the same response as for a message that never existed. |
 | `404` | `message_not_found` | *(only on the shortcut route without `{alias}`, `GET /v1/messages/{id}`)* The `message_id` exists but belongs to an extra number, not to the main number. |

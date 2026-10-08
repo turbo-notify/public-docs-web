@@ -433,6 +433,20 @@ Caso o alias informado na URL não esteja cadastrado como número extra ou não 
 
 Saiba mais em [Inclusão de números extras](/numbers/add/).
 
+## Envio sem duplicar
+
+O envio (`POST .../messages`) e a resposta (`POST .../messages/{message_id}/reply`) aceitam o cabeçalho opcional `Idempotency-Key`: um texto de até 255 caracteres escolhido por você. Se a requisição falhar por tempo esgotado ou erro de rede e você repetir **com a mesma chave, no mesmo número**, a mensagem não é enviada de novo: a resposta traz o `message_id` da mensagem original. Sem a chave, repetir pode entregar a mensagem em dobro.
+
+Use uma chave nova para cada mensagem nova, derivada de algo estável do seu lado (por exemplo o id do pedido que gerou a notificação). Uma chave vazia ou com mais de 255 caracteres é recusada com `400 invalid_idempotency_key`.
+
+```bash
+curl -X POST https://api.turbonotify.com/v1/messages \
+  -H "Authorization: Bearer SUA_CHAVE" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: pedido-4711-confirmacao" \
+  -d '{"to": {"number": "+5511988887777"}, "content": {"text": "Seu pedido foi confirmado."}}'
+```
+
 ## Erros possíveis
 
 Veja os principais erros que podem ocorrer no envio de mensagens e como interpretá-los:
@@ -447,7 +461,7 @@ Veja os principais erros que podem ocorrer no envio de mensagens e como interpre
 | `402`  | `feature_not_available` | Envio para grupo (`to.group_id`) requer plano `BUSINESS` ou superior, veja [Envio para grupo](#envio-para-grupo). |
 | `402`  | `subscription_inactive` | Assinatura com pagamento pendente, encerrada ou com período de teste expirado (`details.status`). Bloqueia todo envio até a assinatura voltar a ficar ativa. |
 | `402`  | `contact_quota_exceeded` | Franquia de contatos distintos do ciclo atual esgotada, veja [Cota e uso](/usage/quota/). |
-| `403`  | `not_authorized`        | A chave de acesso está inválida ou ausente.       |
+| `401`  | `not_authenticated`     | A chave de acesso está inválida ou ausente.       |
 | `403`  | `insufficient_scope`    | A chave de acesso não possui o escopo `messages:send` (resposta inclui `required_scope`). |
 | `404`  | `number_not_found`      | O alias informado na URL não corresponde a nenhum número cadastrado na conta. |
 | `404`  | `group_not_found`       | O `group_id` informado em `to` não foi encontrado na conta. |

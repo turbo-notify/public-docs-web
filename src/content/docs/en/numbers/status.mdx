@@ -165,17 +165,6 @@ the value set with `PATCH /v1/numbers/main` (see [Update](/en/numbers/update/#ma
 ```
 :::
 
-:::note[`description` and `scheduled_deletion_at` are always `null` here]
-Unlike [List](/en/numbers/list/), which returns the actual `description`
-you set, this endpoint (`GET /v1/numbers/{alias}`) currently returns
-`description` and `scheduled_deletion_at` as `null`, whatever their actual
-value. When the number has `status: "pending_deletion"`, the time of the
-scheduled deletion appears in the `at` field (not in
-`scheduled_deletion_at`). For the description you set, use
-[List](/en/numbers/list/). `external_id`, on the other hand, returns the
-value you set.
-:::
-
 :::note[`at` follows the current status]
 `at` is the moment the number **entered its current status**: it updates
 on every transition (pairing, connection, connection drop, reconnection,
@@ -198,7 +187,7 @@ A newly added number (`status: "pending"`) has the time it was added in
 `at`.
 
 The only exception is `status: "pending_deletion"`, where `at` holds the time
-of the scheduled deletion (see the note above).
+of the scheduled deletion, the same value as `scheduled_deletion_at`.
 :::
 
 ## Response fields
@@ -212,9 +201,9 @@ of the scheduled deletion (see the note above).
 | `number` | string | Phone number in E.164 digits (no `+`) |
 | `status` | string | Current status, see [Status table](#status-table) |
 | `at` | string | ISO 8601 timestamp of the moment the number **entered its current status** (`status`): updates on every transition. Exception: when `status = "pending_deletion"`, it is the time of the scheduled deletion. |
-| `description` | string\|null | Currently always `null` on this endpoint, see the note above |
+| `description` | string\|null | The description set for the number; `null` when not set |
 | `external_id` | string\|null | Your own identifier for this number, set when [adding](/en/numbers/add/) or [updating](/en/numbers/update/) it; `null` when not set |
-| `scheduled_deletion_at` | string\|null | Currently always `null` on this endpoint, see the note above |
+| `scheduled_deletion_at` | string\|null | ISO 8601 timestamp of the scheduled removal (see [Remove](/en/numbers/remove/)); `null` when no removal is scheduled |
 | `reason` | string\|null | Failure reason when `status` is `"failed"`, see [Failure reasons](#failure-reasons); `null` in any other status |
 | `pairing` | object\|null | Pairing information: present only while the number is being paired |
 
@@ -270,7 +259,7 @@ New reasons may be added. Treat a value you do not recognize as
 | Status | Error code              | Description                                         |
 | :----: | ----------------------- | --------------------------------------------------- |
 | `402`  | `feature_not_available` | The current plan does not support extra numbers.    |
-| `403`  | `not_authorized`        | The API key is invalid or missing.                  |
+| `401`  | `not_authenticated`     | The API key is invalid or missing.                  |
 | `403`  | `insufficient_scope`    | The API key does not have the `numbers:read` scope (the response includes `required_scope`). |
 | `404`  | `extra_number_not_found` | The alias was not found in the account.            |
 | `500`  | `internal_error`        | Unexpected internal server error.                   |

@@ -33,7 +33,7 @@ Para listar contatos de um número extra, use `/v1/numbers/{alias}/contacts` ond
 | --------- | ---- | --------- |
 | `limit` | int | 1 a 200 (padrão 50) |
 | `cursor` | string | Token opaco retornado em `cursor` |
-| `phone` | string | Filtro exato por E.164 (`+5511...`) |
+| `phone` | string | Filtro exato por telefone E.164. Na URL, escreva o `+` como `%2B` (`phone=%2B5511988887777`) ou envie só os dígitos (`phone=5511988887777`): um `+` solto vira espaço e o filtro não encontra nada |
 | `name` | string | Correspondência parcial sobre o nome do contato |
 | `source` | enum | `inbound \| outbound \| self \| mention`: `mention` é o contato observado pela primeira vez por ter sido **mencionado** em uma mensagem; contatos criados por menção **não** ocupam a cota de contatos |
 | `contacted_in_cycle` | bool | Retorna apenas os contatos com quem você falou pelo Turbo Notify dentro do ciclo de faturamento atual (novos ou recorrentes). Um envio que não chegou ao WhatsApp não conta |

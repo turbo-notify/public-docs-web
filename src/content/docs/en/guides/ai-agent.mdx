@@ -70,7 +70,7 @@ The message the agent reads was written by a stranger and goes straight into the
 - **Clean what the customer wrote.** Display name and text are written by the sender: strip control characters, cap the length and place them in a block the prompt describes as data.
 - **Reject old deliveries,** even when correctly signed (compare `X-Webhook-Timestamp` with the clock). A signature does not expire.
 - **Serve one number.** The webhook receives events for every number in the account. Filter by the `number_alias` the agent should answer on.
-- **Avoid double replies.** Use the event `id` as an idempotency key and pass `idempotency_key` to the send tools, so a retry after a timeout does not deliver the same reply twice.
+- **Avoid double replies.** Pass the event `id` as `idempotency_key` when calling `reply_to_message`. The `id` is the same on every delivery of the same event, so neither a retry after a timeout nor a redelivered webhook sends the same reply twice.
 
 Before giving the agent a new tool, answer this: if a stranger talked the model into calling it with arguments of their choice, what would they get?
 

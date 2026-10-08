@@ -23,9 +23,11 @@ To configure the webhook URL, validate the signature and understand the envelope
 
 ## `number_alias` in the envelope
 
-Both events carry, right below `organization_id`, the `number_alias` field: the identifier of the Turbo Notify number whose message quota was reached (`"main"` for the main number or the alias of an extra number). The event `data` carries the quota fields `threshold_bps` (only in `warning`), `used`, `quota`, `cycle_start`, `cycle_end`, `resets_at`, `tier`, `channel`, `origin`. `number_alias` sits in the **envelope**, never inside `data`.
+Both events carry, right below `organization_id`, the `number_alias` field: the identifier of the Turbo Notify number whose message quota was reached (`"main"` for the main number or the alias of an extra number). The event `data` carries the quota fields `threshold_percent` (only in `warning`), `used`, `quota`, `cycle_start`, `cycle_end`, `resets_at`, `tier`, `channel`, `origin`. `number_alias` sits in the **envelope**, never inside `data`.
 
 `used`/`quota` are measured against the organization's evaluated billing cycle (`cycle_start`/`cycle_end`, ISO 8601 UTC); `resets_at` equals `cycle_end`.
+
+`threshold_percent` is the percentage of the quota reached, as an integer: `80`, `90` or `95` (`80` means 80%). An exhausted quota does not arrive as `threshold_percent: 100`: it arrives as the `message.quota.exceeded` event, which has no such field.
 
 > Among the account events, `number_alias` is omitted in `storage.*` and in `media.unavailable`. The whole `*.quota.*` family (contacts and messages) carries this field.
 
@@ -39,7 +41,7 @@ Both events carry, right below `organization_id`, the `number_alias` field: the 
   "number_alias": "main",
   "created_at": "2026-06-20T12:00:00Z",
   "data": {
-    "threshold_bps": 80,
+    "threshold_percent": 80,
     "used": 240,
     "quota": 300,
     "cycle_start": "2026-06-01T00:00:00Z",

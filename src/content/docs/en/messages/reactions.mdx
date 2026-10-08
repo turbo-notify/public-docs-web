@@ -199,7 +199,7 @@ To list a message's reactions, make a `GET` request with the `message_id` return
 
 | Status | Error code       | Description                                          |
 | :----: | ---------------- | ---------------------------------------------------- |
-| `403`  | `not_authorized`    | The API key is invalid or missing.                                |
+| `401`  | `not_authenticated` | The API key is invalid or missing.                                |
 | `403`  | `insufficient_scope` | The API key does not have the `messages:read` scope.             |
 | `404`  | `not_found`         | The message was not found, belongs to another organization, is outside your plan's [content retention window](/en/messages/retention/), or (on the nested route `/numbers/{alias}/messages/.../reactions`) belongs to a number other than the alias in the URL: all of these cases return the same response, with no distinction. |
 | `404`  | `message_not_found` | *(only on the shortcut route without `{alias}`, `GET /v1/messages/{id}/reactions`)* The `message_id` exists but belongs to an extra number, not to the main number. |

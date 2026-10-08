@@ -1,5 +1,5 @@
 // Every internal link and anchor in the built site resolves, in both locales.
-// Run after `astro build` (npm run test:site does both).
+// Run after `astro build` (pnpm test:site does both).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';

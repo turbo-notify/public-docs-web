@@ -70,7 +70,7 @@ A mensagem que o agente lê foi escrita por um desconhecido e entra direto no co
 - **Limpe o que veio do cliente.** Nome de exibição e texto são escritos pelo remetente: remova caracteres de controle, limite o tamanho e coloque-os num bloco que o prompt descreve como dados.
 - **Recuse entregas antigas,** mesmo com assinatura válida (compare `X-Webhook-Timestamp` com o relógio). Uma assinatura não expira.
 - **Atenda um número só.** O webhook recebe eventos de todos os números da conta. Filtre pelo `number_alias` que o agente deve atender.
-- **Evite respostas em dobro.** Use o `id` do evento como chave de idempotência e passe `idempotency_key` nas ferramentas de envio, para que uma repetição depois de um tempo esgotado não entregue a mesma resposta duas vezes.
+- **Evite respostas em dobro.** Passe o `id` do evento em `idempotency_key` ao chamar `reply_to_message`. O `id` é o mesmo em todas as entregas do mesmo evento, então nem uma nova tentativa depois de um tempo esgotado nem uma nova entrega do webhook mandam a mesma resposta duas vezes.
 
 Antes de dar uma ferramenta nova ao agente, responda: se um estranho convencesse o modelo a chamá-la com argumentos escolhidos por ele, o que ele ganharia?
 

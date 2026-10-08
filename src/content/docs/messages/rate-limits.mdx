@@ -93,7 +93,7 @@ Esses controles são transparentes e, na maioria dos casos, não impactam o uso 
 
 O WhatsApp possui suas próprias regras e limites de uso. Mesmo que você esteja dentro dos limites do Turbo Notify, o envio excessivo, não solicitado ou considerado spam pelos destinatários pode resultar em bloqueio do seu número pelo WhatsApp.
 
-Para evitar problemas, siga as recomendações de uso responsável descritas em [Evite o abuso](/general/abuse/) e as <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">políticas do WhatsApp</ExternalLink>.
+Para evitar problemas, siga as recomendações de uso responsável descritas em [Evite bloqueios](/general/abuse/) e as <ExternalLink href="https://www.whatsapp.com/legal/business-policy/">políticas do WhatsApp</ExternalLink>.
 
 ## Erros relacionados
 
@@ -108,8 +108,7 @@ Para evitar problemas, siga as recomendações de uso responsável descritas em 
 | `429`  | `reply_ratio_too_low` | Poucas respostas recebidas em relação ao que o número enviou, sinal de envio não solicitado. Reduza o volume para quem não interage. Vem sem `Retry-After`: esperar não resolve, o envio volta a ser aceito quando os contatos respondem ou o volume cai. |
 | `429`  | `pairing_rate_limited`   | Pedidos de código de pareamento acima do limite, veja [Pareamento de números extras](#pareamento-de-números-extras). |
 | `429`  | `rate_limit_exceeded`    | Limite geral de requisições à API da sua organização ultrapassado (1.000 requisições por segundo). Requisições em paralelo são aceitas enquanto o total do segundo fica abaixo disso. Aguarde o `Retry-After` e tente novamente. |
-| `503`  | `internal_error`         | Serviço temporariamente indisponível. Tente novamente após alguns instantes. |
-| `503`  | `plan_lookup_failed`     | Não foi possível identificar o plano da organização no momento. A requisição não foi processada. Tente novamente. |
+| `503`  | `service_unavailable`    | Serviço temporariamente indisponível, inclusive quando não foi possível identificar o plano da organização. A requisição não foi processada. Tente novamente após alguns instantes. |
 
 Para os erros de **cota** (`402 contact_quota_exceeded`, `429 messages_quota_exceeded`, `402 feature_not_available`), veja [Cota e uso](/usage/quota/#erros).
 

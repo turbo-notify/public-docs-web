@@ -256,7 +256,7 @@ When a tool cannot do what was asked, the agent gets the reason in the result it
 | Invalid argument | `invalid_request: <code>` | Fix the arguments and try again. |
 | Number disconnected | `conflict: number_not_connected`, with guidance to reconnect | Reconnect the number with `connect_number` (or in the dashboard, if the phone needs to read a code again) and try again. |
 | Number already in the requested state | `conflict: already_connected`, `conflict: already_connecting` or `conflict: already_disconnected` | Nothing to do: on a repeated `connect_number` or `disconnect_number`, the number is already in the requested state. |
-| Invalid or revoked key | `unauthorized: not_authorized` | Create a new key in the dashboard. |
+| Invalid, revoked or expired key | `unauthorized: not_authenticated`, with guidance to replace the key | Create a new key in the dashboard. |
 | Key without the tool's scope | `unauthorized: insufficient_scope` | Look up the scope in the [tools](#tools) table and use a key that has it. |
 | Quota, plan or payment | `payment_required: <code>` and the full `details` object | See [Quota and usage](/en/usage/quota/#errors). |
 | Not found | `not_found: <code>` | Check the identifier or the `number_alias`. |
@@ -271,7 +271,7 @@ These are answered before any tool runs, so your MCP client sees them, not the a
 
 | Response | What happened | What to do |
 |---|---|---|
-| `401 unauthorized` | A streaming connection was opened without a key. | Send the `Authorization` header on the connection too, not only on the calls. |
+| `401 not_authenticated` | A streaming connection was opened without a key. | Send the `Authorization` header on the connection too, not only on the calls. |
 | `429 too_many_streams` | This key already holds 8 open streaming connections, or the source address already holds 64. | Close the ones you do not use, or reduce the processes connected with the same key or from the same address. |
 | `429 rate_limit_exceeded` | More than 600 requests in one minute with this key, or more than 3000 in one minute from the same address. | Honor the response's `Retry-After`. |
 

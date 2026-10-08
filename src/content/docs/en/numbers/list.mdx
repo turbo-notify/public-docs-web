@@ -259,7 +259,7 @@ extra numbers, but you cannot manage them.
 
 | Status | Error code              | Description                                         |
 | :----: | ----------------------- | --------------------------------------------------- |
-| `403`  | `not_authorized`        | The API key is invalid or missing.                  |
+| `401`  | `not_authenticated`     | The API key is invalid or missing.                  |
 | `403`  | `insufficient_scope`    | The API key does not have the `numbers:read` scope (the response includes `required_scope`). |
 | `422`  | `validation_error`      | The `status` filter has a value that is not in the [Status table](/en/numbers/status/#status-table). |
 | `500`  | `internal_error`        | Unexpected internal server error.                   |

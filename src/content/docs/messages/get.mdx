@@ -200,7 +200,7 @@ Use `GET /v1/messages/{id}` para o número principal. Para números extras, use 
 | `origin` | string | `"tn"` (envio via Turbo Notify API) ou `"native"` (digitada no celular). Sempre presente. |
 | `at` | string | ISO 8601 em UTC com sufixo `Z` e precisão de segundos (ex.: `2026-06-01T13:00:05Z`): momento **estável de ocorrência** da mensagem no WhatsApp (outbound: o momento real de envio; inbound: o momento de recebimento). **Não muda** conforme a mensagem avança `sent → delivered → read`. Para o momento da entrega/leitura atual, use `status.at`. |
 | `status` | object | `{state, at}`: estado atual de entrega e o `status.at` correspondente. Diferente do `at` raiz, o `status.at` **avança** a cada transição (move para `delivered`, depois `read`). |
-| `mentions` | array | **Opcional**: presente apenas quando a mensagem menciona alguém (inbound ou outbound). Lista de contatos mencionados, itens `{contact_id?, name?, number}` (mesmo formato do `from` inbound), na ordem dos tokens no texto, sem duplicatas. Um `@<digitos>` no texto **só** é menção se o número constar aqui. Continua presente depois que o corpo da mensagem expira pela retenção. Veja [Menções (@mentions)](/messages/send/#menções-mentions). |
+| `mentions` | array | **Opcional**: presente apenas quando a mensagem menciona alguém (inbound ou outbound). Lista de contatos mencionados, itens `{contact_id?, name?, number}` (mesmo formato do `from` inbound), na ordem dos tokens no texto, sem duplicatas. Um `@<digitos>` no texto **só** é menção se o número constar aqui. Segue a mesma janela de retenção do restante do conteúdo. Veja [Menções (@mentions)](/messages/send/#menções-mentions). |
 
 ### Campos por `content_type`
 
@@ -423,9 +423,9 @@ os contatos correspondentes, já resolvidos:
 }
 ```
 
-O campo aparece em mensagens inbound **e** outbound, e continua presente mesmo
-depois que o corpo da mensagem expira pela retenção (o token no `preview`
-continua identificável em `mentions`).
+O campo aparece em mensagens inbound **e** outbound. Ele segue a mesma janela
+de retenção de conteúdo do plano: depois dela, a consulta responde `404 not_found`
+para o recurso inteiro (veja [Retenção das mensagens](/messages/retention/)).
 
 ### Exemplo: reply (mensagem citada)
 
@@ -518,7 +518,7 @@ Quando **BYO Speech-to-Text** está configurado para o número, mensagens de áu
 | `kind` | string | `"available"`: transcrição concluída, ou `"unavailable"`: não disponível. |
 | `text` | string | *(apenas `available`)* Texto transcrito. |
 | `language` | `string \| null` | *(apenas `available`)* Código BCP-47 do idioma detectado/configurado, quando disponível. |
-| `reason` | string | *(apenas `unavailable`)* Um destes 6 valores: `not_configured`, `provider_error`, `file_too_large` (áudio acima de 24 MB), `timeout`, `no_adapter` ou `internal_error`. |
+| `reason` | string | *(apenas `unavailable`)* Um destes 6 valores: `not_configured`, `provider_error`, `file_too_large` (áudio acima de 24 MB), `timeout`, `provider_not_supported` (o provedor de transcrição configurado não é suportado no momento) ou `internal_error`. |
 | `hint` | `string \| null` | *(apenas `unavailable`)* Orientação opcional, escrita para quem lê o evento (com o link da tela **Transcrição** do dashboard quando há algo a ajustar lá). |
 
 O fluxo da mensagem nunca é bloqueado por falha de transcrição.
@@ -563,7 +563,7 @@ Quando o Object Storage está configurado, o Turbo Notify copia automaticamente 
 | Status | Código de erro | Descrição |
 | :----: | -------------- | --------- |
 | `400` | `invalid_message_id` | O identificador não corresponde ao formato `msg_` + 32 hex. |
-| `403` | `not_authorized` | A chave de acesso está inválida ou ausente. |
+| `401` | `not_authenticated` | A chave de acesso está inválida ou ausente. |
 | `403` | `insufficient_scope` | A chave de acesso não possui o escopo `messages:read` (resposta inclui `required_scope`). |
 | `404` | `not_found` | Mensagem não encontrada, pertence a outra organização, está fora da [janela de retenção de conteúdo](/messages/retention/) do plano, ou (na rota aninhada `/numbers/{alias}/messages/{id}`) pertence a um número diferente do alias informado na URL: mesma resposta de uma mensagem que nunca existiu. |
 | `404` | `message_not_found` | *(apenas na rota atalho sem `{alias}`, `GET /v1/messages/{id}`)* O `message_id` existe mas pertence a um número extra, não ao número principal. |

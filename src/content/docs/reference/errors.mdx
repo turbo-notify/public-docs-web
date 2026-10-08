@@ -19,6 +19,7 @@ Cada página de endpoint lista os erros daquela rota. Esta página reúne todos 
 | Status | Código | O que significa e o que fazer |
 | :----: | ------ | ----------------------------- |
 | `400` | `invalid_json` | O corpo não é um JSON válido. Confira a sintaxe e o `Content-Type: application/json`. |
+| `400` | `invalid_request` | A requisição tem um caractere nulo (`%00` na URL ou `\u0000` no corpo), que nunca é válido. Remova-o do valor enviado. |
 | `400` | `invalid_phone_number` | O telefone não é válido. Envie com código do país, como `+5511988887777`. |
 | `400` | `invalid_recipient` | Não foi possível encontrar o destinatário informado em `to`. |
 | `400` | `contact_not_found` | O `contact_id` informado em `to` não pertence à conta. |
@@ -27,9 +28,11 @@ Cada página de endpoint lista os erros daquela rota. Esta página reúne todos 
 | `400` | `not_group_member` | O número não participa mais do grupo informado. |
 | `400` | `invalid_message_id` | O identificador da mensagem não está no formato `msg_…`. |
 | `400` | `invalid_contact_id` | O identificador do contato não está no formato `ct_…`. |
+| `400` | `invalid_group_id` | O identificador do grupo não está no formato `grp_…`. |
 | `400` | `invalid_event_id` | O identificador do evento não está no formato `evt_…`. |
 | `400` | `invalid_request_id` | O identificador da requisição não está no formato `req_…`. |
 | `400` | `invalid_organization_id` | O identificador da organização não está no formato `org_…`. |
+| `400` | `invalid_idempotency_key` | O cabeçalho `Idempotency-Key` está vazio ou passa de 255 caracteres. Veja [Envio sem duplicar](/messages/send/#envio-sem-duplicar). |
 | `400` | `invalid_cursor` | O cursor de paginação é inválido. Use o valor devolvido pela página anterior. |
 | `400` | `invalid_alias` | O alias não é válido. Ele começa com uma letra e tem até 50 caracteres. |
 | `400` | `reserved_alias` | O alias `main` é reservado ao número principal. |
@@ -44,7 +47,7 @@ Cada página de endpoint lista os erros daquela rota. Esta página reúne todos 
 
 | Status | Código | O que significa e o que fazer |
 | :----: | ------ | ----------------------------- |
-| `401` | `unauthorized` | Servidor MCP: uma conexão de streaming foi aberta sem chave. Envie o cabeçalho `Authorization` também na conexão. |
+| `401` | `not_authenticated` | A chave está ausente, mal formatada, desconhecida, revogada ou expirada. Confira o cabeçalho `Authorization: Bearer SUA_CHAVE` e veja [Chave de acesso](/general/access-key/). Repetir com a mesma chave não resolve. No servidor MCP, o mesmo código responde a uma conexão de streaming aberta sem chave: envie o cabeçalho `Authorization` também na conexão. |
 
 ## 402: plano, cota ou pagamento
 
@@ -59,9 +62,10 @@ Cada página de endpoint lista os erros daquela rota. Esta página reúne todos 
 
 ## 403: sem permissão
 
+A chave foi aceita, mas a operação não é permitida: falta um escopo na chave, ou a operação não vale para este número.
+
 | Status | Código | O que significa e o que fazer |
 | :----: | ------ | ----------------------------- |
-| `403` | `not_authorized` | A chave está ausente, inválida ou revogada. Veja [Chave de acesso](/general/access-key/). |
 | `403` | `insufficient_scope` | A chave não tem o escopo da rota (`required_scope` diz qual). |
 | `403` | `main_number_pair_not_allowed` | O número principal só é pareado pelo dashboard. |
 | `403` | `main_number_update_not_allowed` | A operação vale só para números extras, não para `main`. |
@@ -75,6 +79,7 @@ Cada página de endpoint lista os erros daquela rota. Esta página reúne todos 
 | `404` | `not_found` | O recurso não existe na conta. |
 | `404` | `number_not_found` | O alias da URL não corresponde a nenhum número da conta. |
 | `404` | `extra_number_not_found` | O alias não corresponde a nenhum número extra da conta. |
+| `404` | `no_main_number` | O número principal ainda não foi conectado, então `GET` e `PATCH /v1/numbers/main` não têm o que mostrar. Conecte-o pelo dashboard. |
 | `404` | `message_not_found` | A mensagem não existe neste número. Confira o `number_alias` junto com o id. |
 | `404` | `contact_not_found` | O contato não existe neste número. |
 | `404` | `group_not_found` | O grupo não existe neste número. |
@@ -129,13 +134,14 @@ Todos trazem o cabeçalho `Retry-After` quando há um tempo de espera conhecido.
 | `429` | `pairing_rate_limited` | Pedidos de código de pareamento demais. Veja [Pareamento](/numbers/pairing/). |
 | `429` | `too_many_streams` | Servidor MCP: conexões de streaming abertas demais para a chave ou o endereço de origem. |
 
-## 500 e 503: falha do nosso lado
+## 500, 502 e 503: falha do nosso lado
 
 | Status | Código | O que significa e o que fazer |
 | :----: | ------ | ----------------------------- |
 | `500` | `internal_error` | Erro inesperado. Tente de novo; se persistir, fale com o [suporte](/help/support/). |
+| `502` | `integration_error` | Um serviço externo de que a operação depende (por exemplo, o processador de pagamento ao cadastrar um número extra) respondeu com erro. Tente de novo em instantes; se persistir, fale com o [suporte](/help/support/). |
 | `503` | `payment_gateway_unavailable` | Não foi possível confirmar a cobrança a tempo. Nada foi criado. Tente de novo. |
-| `503` | `plan_lookup_failed` | Não foi possível consultar o plano da conta agora. Tente de novo em instantes. |
+| `503` | `service_unavailable` | Um serviço de apoio da API está indisponível no momento, não foi possível verificar a chave de acesso agora ou não foi possível consultar o plano da conta. Nada foi feito e a chave não tem problema: tente de novo em instantes. |
 
 ## Falhas de mensagem
 
@@ -148,12 +154,14 @@ Uma mensagem aceita com `202` pode falhar depois, no WhatsApp. Nesse caso o stat
 | `whatsapp_send_failed` | O WhatsApp recusou a mensagem. Veja `error.message`. |
 | `media_fetch_failed` | Não foi possível baixar a mídia da URL. Ela precisa ser pública e acessível. |
 | `media_too_large` | A mídia passa do tamanho máximo do tipo. Veja [Envio de mídia](/messages/send-media/). |
-| `unsupported_media_format` | O formato do arquivo não é aceito para esse tipo de mídia. |
-| `unknown_magic_bytes` | Não foi possível reconhecer o formato do arquivo. Confira se a URL devolve um arquivo de mídia. |
-| `sticker_decode_failed` | A figurinha não é uma imagem WebP válida. |
-| `sticker_invalid_dimensions` | Figurinhas precisam ter exatamente 512×512 pixels. |
-| `media_storage_required` | A conta não tem armazenamento conectado para essa mídia. Veja [Armazenamento](/general/byo-storage-setup/). |
+| `unsupported_media_format` | O formato do arquivo não é aceito para esse tipo de mídia (inclusive um arquivo que não é mídia, ou uma figurinha que não é WebP de 512×512). O `hint` diz o formato esperado. |
+| `invalid_cta_url_payload` | A mensagem com botão de link chegou sem o endereço do botão. Inclua a URL e envie de novo. |
+| `invalid_interactive_type` | Só mensagens interativas com botão de link são aceitas. |
+| `internal_error` | A plataforma não conseguiu processar o envio. Envie de novo; se persistir, fale com o [suporte](/help/support/). |
 | `reaction_lid_unavailable` | O WhatsApp não permitiu reagir a esse contato agora. Tente mais tarde. |
+| `reaction_send_failed` | O WhatsApp não aceitou a reação (evento `message.react.failed`). Tente de novo. |
+| `edit_failed` | O WhatsApp recusou a edição (evento `message.edit.failed`), por exemplo porque a mensagem já passou do prazo de edição. |
+| `delete_failed` | O WhatsApp recusou apagar a mensagem (evento `message.delete.failed`). |
 
 Novos códigos podem surgir. Trate um código desconhecido como falha definitiva e registre o `error.message`.
 

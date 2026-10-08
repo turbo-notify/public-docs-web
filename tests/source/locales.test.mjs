@@ -73,3 +73,41 @@ test('internal links stay inside the page locale', () => {
   }
   assert.deepEqual(offenders, []);
 });
+
+test('every moved page redirects to a page that exists, in both locales', async () => {
+  const { MOVED_PAGES, movedPageRedirects } = await import('../../src/data/moved-pages.mjs');
+  const pt = slugs('pt');
+  const en = slugs('en');
+  for (const [from, to] of Object.entries(MOVED_PAGES)) {
+    assert.ok(!pt.has(from) && !en.has(from), `${from} no longer exists as a page`);
+    assert.ok(pt.has(to) && en.has(to), `${to} exists in both locales`);
+  }
+  const redirects = movedPageRedirects();
+  assert.equal(Object.keys(redirects).length, Object.keys(MOVED_PAGES).length * 2);
+  assert.match(config, /redirects:\s*movedPageRedirects\(\)/, 'astro.config.mjs applies the redirects');
+});
+
+test('links to the Turbo Notify website open it in the page language', () => {
+  const wrong = [];
+  for (const page of all) {
+    const prefix = page.locale === 'en' ? '/en' : '/pt';
+    // Link targets only (Markdown links and href attributes), not sample payloads.
+    const links = /(?:\]\(|href=")(https:\/\/turbonotify\.com(\/[^\s"'`)<>]*)?)/g;
+    for (const [, url, path] of page.source.matchAll(links)) {
+      if (!path || !(path === prefix || path.startsWith(`${prefix}/`))) wrong.push(`${page.rel}: ${url}`);
+    }
+  }
+  assert.deepEqual(wrong, [], 'website links carry the locale of the page (/pt or /en)');
+});
+
+test('links to the dashboard sign-in and sign-up open it in the page language', () => {
+  const wrong = [];
+  for (const page of all) {
+    const locale = page.locale === 'en' ? 'en' : 'pt-BR';
+    const links = /https:\/\/dashboard\.turbonotify\.com\/auth\/[^\s"'`)<>]*/g;
+    for (const [url] of page.source.matchAll(links)) {
+      if (!new URL(url).searchParams.has('locale', locale)) wrong.push(`${page.rel}: ${url}`);
+    }
+  }
+  assert.deepEqual(wrong, [], `dashboard auth links carry ?locale= of the page (pt-BR or en)`);
+});

@@ -39,10 +39,10 @@ If you resell numbers to your customers, keep the key on your platform's server 
 
 ## Scopes
 
-Each key carries **permission scopes** that determine which operations it can call (for example `messages:send`, `messages:read`, `numbers:read`, `numbers:write`, `events:read`, `contacts:read`, `contacts:write`, `groups:read` and `organizations:read`). The API returns two different `403` errors:
+Each key carries **permission scopes** that determine which operations it can call (for example `messages:send`, `messages:read`, `numbers:read`, `numbers:write`, `events:read`, `contacts:read`, `contacts:write`, `groups:read` and `organizations:read`). The API returns two different errors:
 
-- `not_authorized`: the key is missing, invalid or revoked.
-- `insufficient_scope`: the key is valid but lacks the scope the endpoint requires. The response includes a `required_scope` field with the scope you need:
+- `401 not_authenticated`: the key is missing, malformed, unknown, revoked or expired. The response carries the `WWW-Authenticate: Bearer` header.
+- `403 insufficient_scope`: the key is valid but lacks the scope the endpoint requires. The response includes a `required_scope` field with the scope you need:
 
 ```json
 {
@@ -55,7 +55,7 @@ Each endpoint's error table lists the scope the operation requires.
 
 ### Key for an AI agent
 
-To connect an agent through the [MCP server](/en/general/mcp-server/), create a key with the **AI agent (MCP)** template in the dashboard. It selects only what a support agent needs: `messages:send`, `messages:read`, `contacts:read`, `groups:read`, `numbers:read` and `events:read`. The [tool catalog](/en/general/mcp-server/#tools) shows the scope each tool requires, in case you prefer to adjust the key. Through the MCP server, the two `403` errors above reach the agent as `unauthorized: not_authorized` and `unauthorized: insufficient_scope`.
+To connect an agent through the [MCP server](/en/general/mcp-server/), create a key with the **AI agent (MCP)** template in the dashboard. It selects only what a support agent needs: `messages:send`, `messages:read`, `contacts:read`, `groups:read`, `numbers:read` and `events:read`. The [tool catalog](/en/general/mcp-server/#tools) shows the scope each tool requires, in case you prefer to adjust the key. Through the MCP server, the two errors above reach the agent as `unauthorized: not_authenticated` and `unauthorized: insufficient_scope`, each with what to do next.
 
 ### Key for resale
 

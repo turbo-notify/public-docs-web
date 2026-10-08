@@ -434,6 +434,20 @@ If the alias in the URL is not registered as an extra number or is not active, t
 
 Learn more in [Adding extra numbers](/en/numbers/add/).
 
+## Sending without duplicates
+
+Sending (`POST .../messages`) and replying (`POST .../messages/{message_id}/reply`) accept the optional `Idempotency-Key` header: a string of up to 255 characters that you choose. If the request fails with a timeout or a network error and you repeat it **with the same key, on the same number**, the message is not sent again: the response carries the `message_id` of the original message. Without the key, repeating can deliver the message twice.
+
+Use a new key for each new message, derived from something stable on your side (for example the id of the order that triggered the notification). An empty key or one longer than 255 characters is refused with `400 invalid_idempotency_key`.
+
+```bash
+curl -X POST https://api.turbonotify.com/v1/messages \
+  -H "Authorization: Bearer YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: order-4711-confirmation" \
+  -d '{"to": {"number": "+5511988887777"}, "content": {"text": "Your order is confirmed."}}'
+```
+
 ## Possible errors
 
 These are the main errors that can occur when sending messages, and how to read them:
@@ -448,7 +462,7 @@ These are the main errors that can occur when sending messages, and how to read 
 | `402`  | `feature_not_available` | Sending to a group (`to.group_id`) requires the `BUSINESS` plan or higher, see [Sending to a group](#sending-to-a-group). |
 | `402`  | `subscription_inactive` | Subscription with a pending payment, ended, or with an expired trial (`details.status`). Blocks every send until the subscription is active again. |
 | `402`  | `contact_quota_exceeded` | The current cycle's allowance of distinct contacts is used up, see [Quota and usage](/en/usage/quota/). |
-| `403`  | `not_authorized`        | The API key is invalid or missing.                |
+| `401`  | `not_authenticated`     | The API key is invalid or missing.                |
 | `403`  | `insufficient_scope`    | The API key does not have the `messages:send` scope (the response includes `required_scope`). |
 | `404`  | `number_not_found`      | The alias in the URL does not match any number registered in the account. |
 | `404`  | `group_not_found`       | The `group_id` given in `to` was not found in the account. |

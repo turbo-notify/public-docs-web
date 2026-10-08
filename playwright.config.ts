@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Visual pass over the built site (run `npm run build` first). The preview
+// Visual pass over the built site (run `pnpm build` first). The preview
 // server uses its own port so it never collides with a running dev server.
 const PORT = Number(process.env.DOCS_PREVIEW_PORT ?? 4391);
 
@@ -17,7 +17,7 @@ export default defineConfig({
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
   ],
   webServer: {
-    command: `npx astro preview --host 127.0.0.1 --port ${PORT}`,
+    command: `pnpm exec astro preview --host 127.0.0.1 --port ${PORT}`,
     url: `http://127.0.0.1:${PORT}/`,
     reuseExistingServer: false,
     timeout: 60_000,

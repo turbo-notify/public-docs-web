@@ -1,6 +1,6 @@
 ---
 title: Pareamento de números extras
-description: Como vincular um número extra ao WhatsApp pela API com código de vinculação, tratar código digitado errado, motivos de falha e o limite de tentativas.
+description: Como vincular um número extra ao WhatsApp pela API com código de pareamento, tratar código digitado errado, motivos de falha e o limite de tentativas.
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
@@ -33,6 +33,8 @@ celular com o nome da sua organização, para que a pessoa reconheça a conexão
 e não a remova por engano.
 
 ## Pedir o código
+
+O corpo da requisição é opcional. Se enviar `method`, o único valor aceito é `"pairing_code"`: um número extra sempre é pareado por código. Qualquer outro valor responde `422`.
 
 <Tabs>
   <TabItem label="cURL">
@@ -471,5 +473,5 @@ parear depois, peça um novo código.
 | `404`  | `extra_number_not_found` | O alias informado não existe na conta. |
 | `409`  | `not_pairing` | O número não está com `status: "pairing"`. |
 
-As duas rotas também retornam `403 not_authorized` (chave inválida ou
+As duas rotas também retornam `401 not_authenticated` (chave inválida ou
 ausente) e `403 insufficient_scope` (falta o escopo `numbers:write`).

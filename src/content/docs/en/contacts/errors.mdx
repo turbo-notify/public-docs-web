@@ -14,7 +14,7 @@ import ApiResponse from '@components/ApiResponse.astro';
 | 400  | `invalid_contact_id` | `contact_id` does not match `^ct_[0-9a-f]{32}$` |
 | 400  | `invalid_cursor` | Corrupted opaque cursor |
 | 402  | `contact_quota_exceeded` | Returned by message sending (not by the contact endpoints) when the number's distinct-contacts quota for the cycle has already been reached |
-| 403  | `not_authorized` | The API key is missing, invalid or revoked |
+| 401  | `not_authenticated` | The API key is missing, invalid or revoked |
 | 403  | `insufficient_scope` | The API key lacks the scope the route requires: `contacts:read` for list, detail and picture; `contacts:write` for refresh (the response includes `required_scope`) |
 | 404  | `contact_not_found` | The contact does not exist, or belongs to another organization or to another number (the route's `{alias}`) |
 | 404  | `number_not_found` | The route's `{alias}` does not match any number in the account (applies to `/contacts`, `/contacts/{id}`, `/contacts/quota` and the other sub-routes) |

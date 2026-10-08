@@ -367,7 +367,7 @@ Both endpoints share the same set of errors:
 | :----: | ------------------------ | -------------------------------------------------------------- |
 | `400`  | `message_not_editable`   | *(edit only)* The message was **received** (sent by someone else), was sent from the phone itself (`origin: "native"`), is not a text message, has not been sent yet, was already deleted, or its current status (`failed`, for example) does not allow editing. |
 | `400`  | `message_not_deletable`  | *(delete only)* The message was **received** (sent by someone else), was sent from the phone itself (`origin: "native"`), has not been sent yet, was already deleted, or its current status does not allow deletion. |
-| `403`  | `not_authorized`         | The API key is invalid or missing.                             |
+| `401`  | `not_authenticated`      | The API key is invalid or missing.                             |
 | `403`  | `insufficient_scope`     | The API key does not have the `messages:send` scope (the response includes `required_scope`). |
 | `404`  | `number_not_found`       | The alias in the URL does not match any registered number.     |
 | `404`  | `not_found`              | The message was not found, belongs to another organization, is outside your plan's [content retention window](/en/messages/retention/), or (on the nested route `/numbers/{alias}/messages/...`) belongs to a number other than the alias in the URL: all of these cases return the same response, with no distinction. |

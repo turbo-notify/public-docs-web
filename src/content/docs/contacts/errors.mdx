@@ -14,7 +14,7 @@ import ApiResponse from '@components/ApiResponse.astro';
 | 400  | `invalid_contact_id` | `contact_id` não bate com `^ct_[0-9a-f]{32}$` |
 | 400  | `invalid_cursor` | Cursor opaco corrompido |
 | 402  | `contact_quota_exceeded` | Retornado pelo envio de mensagem (não pelos endpoints de contato) quando a cota de contatos distintos do ciclo do número já foi atingida |
-| 403  | `not_authorized` | A chave de acesso está ausente, inválida ou revogada |
+| 401  | `not_authenticated` | A chave de acesso está ausente, inválida ou revogada |
 | 403  | `insufficient_scope` | A chave de acesso não tem o escopo exigido pela rota: `contacts:read` para listagem, detalhe e foto; `contacts:write` para atualização (a resposta inclui `required_scope`) |
 | 404  | `contact_not_found` | O contato não existe, pertence a outra organização ou a outro número (o `{alias}` da rota) |
 | 404  | `number_not_found` | O `{alias}` da rota não corresponde a nenhum número da conta (vale para `/contacts`, `/contacts/{id}`, `/contacts/quota` e as demais sub-rotas) |

@@ -725,7 +725,7 @@ In `GET /v1/numbers/{alias}/messages/{id}`, the typical `mime_type` of the `audi
 When **BYO Speech-to-Text** is configured for the number, inbound audio messages gain the **`transcription`** field: a union discriminated by `kind` (omitted when the message is not audio):
 
 - **`{"kind": "available", "text": "...", "language"?: "pt"}`**: transcription completed; `language` is the BCP-47 code of the detected/configured language when available.
-- **`{"kind": "unavailable", "reason": "...", "hint"?: "..."}`**: transcription not available. `reason` is one of these 6 values: `not_configured`, `provider_error`, `file_too_large` (audio over 24 MB), `timeout`, `no_adapter` or `internal_error`. `hint` is optional guidance, written for whoever reads the event (with the link to the dashboard **Transcription** screen when there is something to adjust there).
+- **`{"kind": "unavailable", "reason": "...", "hint"?: "..."}`**: transcription not available. `reason` is one of these 6 values: `not_configured`, `provider_error`, `file_too_large` (audio over 24 MB), `timeout`, `provider_not_supported` (the configured transcription provider is not supported right now) or `internal_error`. `hint` is optional guidance, written for whoever reads the event (with the link to the dashboard **Transcription** screen when there is something to adjust there).
 
 A transcription failure never blocks the message flow.
 

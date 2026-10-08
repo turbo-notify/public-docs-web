@@ -179,7 +179,7 @@ Use `GET /v1/messages` for the main number. For extra numbers, use `GET /v1/numb
 | `data[].content_type` | string | `text`, `image`, `audio`, `video`, `document`, `sticker`, `location`, `calendar`, etc. |
 | `data[].preview` | string | Opening excerpt of the content, never splitting an emoji or accented character (same value as `GET /v1/numbers/{alias}/messages/{id}`) |
 | `data[].at` | string | ISO 8601: the **stable occurrence time** of the message (outbound: actual send; inbound: receipt). It does not move as the message progresses `sent → delivered → read`. |
-| `data[].status` | object | `{state, at, error}`: current delivery state and the timestamp of that transition. In `GET /v1/numbers/{alias}/messages`, `error` is filled in (`{code, message, hint}`) when `state` is `"failed"`. On the short route `GET /v1/messages` it is **always `null`**: in that case use `GET /v1/messages/{id}/status` or `GET /v1/messages/{id}`. |
+| `data[].status` | object | `{state, at, error}`: current delivery state and the timestamp of that transition. `error` is filled in (`{code, message, hint}`) when `state` is `"failed"` and is `null` in every other state, on both routes. |
 
 :::note[No `mentions` in the list]
 Unlike [Get a message](/en/messages/get/), the items in this list
@@ -207,7 +207,7 @@ To see the mentions of a specific message, use
 
 | Status | Error code             | Description                                          |
 | :----: | ---------------------- | ---------------------------------------------------- |
-| `403`  | `not_authorized`       | The API key is invalid or missing.                   |
+| `401`  | `not_authenticated`    | The API key is invalid or missing.                   |
 | `403`  | `insufficient_scope`   | The API key does not have the `messages:read` scope (the response includes `required_scope`). |
 | `404`  | `number_not_found`     | The alias in the URL does not match any registered number. |
 | `422`  | `validation_error`     | A query parameter failed validation: for example, `limit` outside the 1 to 200 range. The response includes `details.errors` with the rejected fields. |

@@ -22,7 +22,7 @@ collection:
           created: 1748995200000
           modified: 1748995200000
           isPrivate: false
-          description: 'Send a WhatsApp CTA-URL interactive message. Anchor field is `interactive_type` — variant detected from field presence. `interactive_type` is always `"cta_url"`. Required: `body` (message text, ≤1024 chars) and `url_button` (`display_text` ≤20 chars + `url`). Optional: `header` (`{"type": "text", "text": "..."}`), `footer` (≤60 chars).'
+          description: 'Send a WhatsApp CTA-URL interactive message. Anchor field is `interactive_type`; the variant is detected from field presence. `interactive_type` is always `"cta_url"`. Required: `body` (message text, ≤1024 chars) and `url_button` (`display_text` ≤20 chars + `url`). Optional: `header` (`{"type": "text", "text": "..."}`), `footer` (≤60 chars).'
           sortKey: -656
         method: POST
         body:
@@ -72,7 +72,7 @@ collection:
           created: 1774240000001
           modified: 1780706799835
           isPrivate: false
-          description: "Send a text message via WhatsApp. Wire shape: variant is inferred from field presence inside `content` — no explicit `content_type` required. `to` is polymorphic by key presence: `{\"number\": \"+55...\"}` for 1:1, `{\"group_id\": \"grp_{hex32}\"}` for group. Sender is the number identified by {alias} in the URL path (default: 'main'). Response 202 returns message_id (msg_{hex32}); internal correlator in X-Request-ID header. For group sends, see \"Send Message (to group)\" above. If the organization's subscription is not active (past_due / terminated / an elapsed trial / no subscription row), every send (incl. Reply) returns 402 `{\"error\": \"subscription_inactive\", \"message\": \"...\", \"details\": {\"status\": \"past_due\"|\"terminated\"|\"trial_expired\"|\"missing\"}}` BEFORE any quota check runs. Before the message is sent the number appears online and the unread messages it received in that conversation are marked as read, as a person opening the chat would. Opening the chat this way is automatic, needs no configuration, uses no quota and creates no webhook event of its own, and adds no plan requirement. The number goes back offline by itself a few minutes after its last interaction."
+          description: "Send a text message via WhatsApp. Wire shape: variant is inferred from field presence inside `content`, no explicit `content_type` required. `to` is polymorphic by key presence: `{\"number\": \"+55...\"}` for 1:1, `{\"group_id\": \"grp_{hex32}\"}` for group. Sender is the number identified by {alias} in the URL path (default: 'main'). Response 202 returns message_id (msg_{hex32}); internal correlator in X-Request-ID header. For group sends, see \"Send Message (to group)\" above. If the organization's subscription is not active (past_due / terminated / an elapsed trial / no subscription row), every send (incl. Reply) returns 402 `{\"error\": \"subscription_inactive\", \"message\": \"...\", \"details\": {\"status\": \"past_due\"|\"terminated\"|\"trial_expired\"|\"missing\"}}` BEFORE any quota check runs. Before the message is sent the number appears online and the unread messages it received in that conversation are marked as read, as a person opening the chat would. Opening the chat this way is automatic, needs no configuration, uses no quota and creates no webhook event of its own, and adds no plan requirement. The number goes back offline by itself a few minutes after its last interaction."
           sortKey: -700
         method: POST
         body:
@@ -116,7 +116,7 @@ collection:
           created: 1783036800000
           modified: 1783036800000
           isPrivate: false
-          description: "Send a text message with an @mention. Token rule: `@` + the mentioned contact's phone as E.164 digits WITHOUT `+` (7–15 digits, word-boundary guarded — `name@domain.com` and `@+55...` never match), written directly in `text` (or a media `caption`). Detection is implicit — there is NO `mentions` request field; every valid token renders as a real tappable mention on the recipient's device. BR 12-digit tokens are normalized to the canonical 13-digit form; invalid digit runs stay plain text (fail-open). Mentions never consume message/contact quota. The persisted message carries a hydrated `mentions` array on GET detail and on the `message.sent`/`replied`/`edited` event `data`; each token counts as 1 character in `preview`. Works for 1:1 and group sends alike."
+          description: "Send a text message with an @mention. Token rule: `@` + the mentioned contact's phone as E.164 digits WITHOUT `+` (7 to 15 digits, word-boundary guarded, so `name@domain.com` and `@+55...` never match), written directly in `text` (or a media `caption`). Detection is implicit: there is NO `mentions` request field; every valid token renders as a real tappable mention on the recipient's device. BR 12-digit tokens are normalized to the canonical 13-digit form; invalid digit runs stay plain text (fail-open). Mentions never consume message/contact quota. The persisted message carries a hydrated `mentions` array on GET detail and on the `message.sent`/`replied`/`edited` event `data`; each token counts as 1 character in `preview`. Works for 1:1 and group sends alike."
           sortKey: -695
         method: POST
         body:
@@ -160,7 +160,7 @@ collection:
           created: 1774240000002
           modified: 1776254400000
           isPrivate: false
-          description: Edit a previously sent message by its public message_id (msg_{hex32}). Returns 202; result via webhook `message.edited` carrying `preview` (≤50-grapheme crop, renamed from `new_preview` on 2026-05-06). After the edit succeeds, `GET /v1/messages/{id}` returns the new body — the original row is patched in place. Channel-side edits (typed on the WhatsApp app) are also surfaced as `message.edited` and persisted via native decrypt of WhatsApp's `secretEncryptedMessage` envelope. Response body returns message_id; internal correlator is in X-Request-ID header. Before the edit the number appears online and the unread messages it received in that conversation are marked as read. Opening the chat this way is automatic and uses no quota and creates no webhook event of its own.
+          description: Edit a previously sent message by its public message_id (msg_{hex32}). Returns 202; result via webhook `message.edited` carrying `preview` (≤50-grapheme crop, renamed from `new_preview` on 2026-05-06). After the edit succeeds, `GET /v1/messages/{id}` returns the new body (the original row is patched in place). Channel-side edits (typed on the WhatsApp app) are also surfaced as `message.edited` and persisted via native decrypt of WhatsApp's `secretEncryptedMessage` envelope. Response body returns message_id; internal correlator is in X-Request-ID header. Before the edit the number appears online and the unread messages it received in that conversation are marked as read. Opening the chat this way is automatic and uses no quota and creates no webhook event of its own.
           sortKey: -600
         method: POST
         body:
@@ -295,7 +295,7 @@ collection:
           created: 1776254400003
           modified: 1776254400003
           isPrivate: false
-          description: "Retrieve the full details of a message: id, organization_id, number_alias, direction, from/to, content_type, the named content field (text/image/...), preview, status, and timestamps. Example response: { id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70', organization_id: 'org_...', number_alias: 'main', direction: 'outbound', from: { number: '5511973117056', alias: 'main', name: 'Turbo Notify' }, to: { number: '5511999999999', name: 'João' }, content_type: 'text', text: 'Olá, seu pedido foi confirmado!', preview: 'Olá, seu pedido foi confirmado!', channel: 'whatsapp', origin: 'tn', at: '2026-04-21T10:00:05Z', status: { state: 'delivered', at: '2026-04-21T10:01:00Z' } }. The top-level `at` is the message's STABLE occurrence moment — outbound: the real WhatsApp send moment; inbound: the WhatsApp receive moment. It does NOT change as the message advances sent -> delivered -> read. The nested `status.at` is the CURRENT delivery-status time and ADVANCES with each transition (moves forward to delivered, then read). GET /v1/messages/{id}/status returns the same `status.at`. Uses messageId captured from Send / Reply / Edit / Delete / React."
+          description: "Retrieve the full details of a message: id, organization_id, number_alias, direction, from/to, content_type, the named content field (text/image/...), preview, status, and timestamps. Example response: { id: 'msg_01993c5a1b24d3e9f01a2b3c4d5e6f70', organization_id: 'org_...', number_alias: 'main', direction: 'outbound', from: { number: '5511973117056', alias: 'main', name: 'Turbo Notify' }, to: { number: '5511999999999', name: 'João' }, content_type: 'text', text: 'Olá, seu pedido foi confirmado!', preview: 'Olá, seu pedido foi confirmado!', channel: 'whatsapp', origin: 'tn', at: '2026-04-21T10:00:05Z', status: { state: 'delivered', at: '2026-04-21T10:01:00Z' } }. The top-level `at` is the message's STABLE occurrence moment (outbound: the real WhatsApp send moment; inbound: the WhatsApp receive moment). It does NOT change as the message advances sent -> delivered -> read. The nested `status.at` is the CURRENT delivery-status time and ADVANCES with each transition (moves forward to delivered, then read). GET /v1/messages/{id}/status returns the same `status.at`. Uses messageId captured from Send / Reply / Edit / Delete / React."
           sortKey: -190
         method: GET
         settings:
@@ -313,7 +313,7 @@ collection:
           created: 1776254400010
           modified: 1780705571388
           isPrivate: false
-          description: "List active reactions on a message (addressed by public message_id msg_{hex32}). Returns one entry per reactor phone number — last emoji wins (upsert semantics). Each reaction includes: from.number, from.contact_id (ct_{hex32} or null), from.name (WhatsApp name or null), emoji, at (ISO 8601 UTC timestamp), direction (inbound | outbound). Scope: messages:read. Uses messageId captured from Send / Reply / Edit / Delete / React."
+          description: "List active reactions on a message (addressed by public message_id msg_{hex32}). Returns one entry per reactor phone number; the last emoji wins (upsert semantics). Each reaction includes: from.number, from.contact_id (ct_{hex32} or null), from.name (WhatsApp name or null), emoji, at (ISO 8601 UTC timestamp), direction (inbound | outbound). Scope: messages:read. Uses messageId captured from Send / Reply / Edit / Delete / React."
           sortKey: -210
         method: GET
         settings:
@@ -349,7 +349,7 @@ collection:
           created: 1777889700001
           modified: 1777889700001
           isPrivate: false
-          description: Send a WhatsApp location pin. Anchor field is `latitude` — variant detected from field presence. `latitude` (-90..90) and `longitude` (-180..180) required. Optional `name`, `address`, and `url` (http/https only). The recipient sees the WhatsApp native location card with map preview.
+          description: Send a WhatsApp location pin. Anchor field is `latitude`; the variant is detected from field presence. `latitude` (-90..90) and `longitude` (-180..180) required. Optional `name`, `address`, and `url` (http/https only). The recipient sees the WhatsApp native location card with map preview.
           sortKey: -695
         method: POST
         body:
@@ -396,7 +396,7 @@ collection:
           created: 1777889700002
           modified: 1777889700002
           isPrivate: false
-          description: Send a WhatsApp contact card. Anchor field is `display_name` — variant detected from field presence. Requires `display_name` and at least one phone (`phones[].label` defaults to "Mobile"). Optional `emails[]`, `organization`, `title`, `address`. The vCard is generated server-side — clients never craft escaping themselves.
+          description: Send a WhatsApp contact card. Anchor field is `display_name`; the variant is detected from field presence. Requires `display_name` and at least one phone (`phones[].label` defaults to "Mobile"). Optional `emails[]`, `organization`, `title`, `address`. The vCard is generated server-side, so clients never craft escaping themselves.
           sortKey: -690
         method: POST
         body:
@@ -449,7 +449,7 @@ collection:
           created: 1777889700003
           modified: 1777889700003
           isPrivate: false
-          description: Send a WhatsApp calendar/event invite (maps to WhatsApp `eventMessage`, exposed here as `calendar`). Anchor field is `start_at` — variant detected from field presence. Requires `name` and timezone-aware `start_at`. Optional `end_at` (must be > start_at), `description`, `join_link` (http/https), `location` (nested object), `has_reminder` + `reminder_offset_sec`, `extra_guests_allowed`.
+          description: Send a WhatsApp calendar/event invite (maps to WhatsApp `eventMessage`, exposed here as `calendar`). Anchor field is `start_at`; the variant is detected from field presence. Requires `name` and timezone-aware `start_at`. Optional `end_at` (must be > start_at), `description`, `join_link` (http/https), `location` (nested object), `has_reminder` + `reminder_offset_sec`, `extra_guests_allowed`.
           sortKey: -685
         method: POST
         body:
@@ -504,7 +504,7 @@ collection:
           created: 1777889700004
           modified: 1777889700004
           isPrivate: false
-          description: Send a WhatsApp image. Anchor field is `image_url` — variant detected from field presence. Requires `image_url` (http/https). Optional `mime_type`, `caption`. The URL is fetched and the image is uploaded to WhatsApp before delivering. The `caption` accepts @mention tokens (`@<E.164 digits, no +>`, e.g. "Confere, @5511987650000?") with the same implicit-detection rules as text sends (see "Send Message (text + mention)"); video/document captions accept them too (audio/sticker have no caption).
+          description: Send a WhatsApp image. Anchor field is `image_url`; the variant is detected from field presence. Requires `image_url` (http/https). Optional `mime_type`, `caption`. The URL is fetched and the image is uploaded to WhatsApp before delivering. The `caption` accepts @mention tokens (`@<E.164 digits, no +>`, e.g. "Confere, @5511987650000?") with the same implicit-detection rules as text sends (see "Send Message (text + mention)"); video/document captions accept them too (audio/sticker have no caption).
           sortKey: -680
         method: POST
         body:
@@ -549,7 +549,7 @@ collection:
           created: 1777889700005
           modified: 1777889700005
           isPrivate: false
-          description: Send a WhatsApp video. Anchor field is `video_url` — variant detected from field presence. Requires `video_url` (http/https). Optional `mime_type` (e.g. `video/mp4`) and `caption`.
+          description: Send a WhatsApp video. Anchor field is `video_url`; the variant is detected from field presence. Requires `video_url` (http/https). Optional `mime_type` (e.g. `video/mp4`) and `caption`.
           sortKey: -675
         method: POST
         body:
@@ -638,7 +638,7 @@ collection:
           created: 1777889700007
           modified: 1777889700007
           isPrivate: false
-          description: Send a WhatsApp document (PDF, DOCX, XLSX, etc.). Anchor field is `document_url` — variant detected from field presence. Requires `document_url` (http/https). Optional `mime_type`, `caption` and `filename` — WhatsApp shows `filename` in the chat list.
+          description: Send a WhatsApp document (PDF, DOCX, XLSX, etc.). Anchor field is `document_url`; the variant is detected from field presence. Requires `document_url` (http/https). Optional `mime_type`, `caption` and `filename` (WhatsApp shows `filename` in the chat list).
           sortKey: -665
         method: POST
         body:
@@ -684,7 +684,7 @@ collection:
           created: 1777889700008
           modified: 1777889700008
           isPrivate: false
-          description: Send a WhatsApp sticker (animated WebP). Anchor field is `sticker_url` — variant detected from field presence. Requires `sticker_url` (http/https). Optional `mime_type` (`image/webp`). Stickers are caption-less by protocol — the API rejects the field with 422.
+          description: Send a WhatsApp sticker (animated WebP). Anchor field is `sticker_url`; the variant is detected from field presence. Requires `sticker_url` (http/https). Optional `mime_type` (`image/webp`). Stickers are caption-less by protocol, so the API rejects the field with 422.
           sortKey: -660
         method: POST
         body:
@@ -770,16 +770,16 @@ collection:
           created: 1779062400000
           modified: 1780693630635
           isPrivate: false
-          description: "Send a text message to a WhatsApp Group. `to` carries the public `grp_{hex32}` identifier via `to.group_id` (presence-based, no `kind` field). Sender = number identified by {alias} in the URL (default: 'main'). Quota counts as 1 destinatário regardless of group size; webhooks `message.sent`/`delivered`/`read` include `number_alias`. Organization must be a current participant — otherwise response is 202 but `message.send.failed` fires async with `not_group_member`. Content variant inferred from field presence inside `content` — no explicit `content_type` required. Requires BUSINESS or above. FREE/SOLO organizations get 402 `{\"error\": \"feature_not_available\"}`. Reacting to / editing / deleting an already-sent group message is NOT gated by this restriction."
+          description: "Send a text message to a WhatsApp Group. `to` carries the public `grp_{hex32}` identifier via `to.group_id` (presence-based, no `kind` field). Sender = number identified by {alias} in the URL (default: 'main'). Quota counts as 1 recipient regardless of group size; webhooks `message.sent`/`delivered`/`read` include `number_alias`. Organization must be a current participant; otherwise response is 202 but `message.send.failed` fires async with `not_group_member`. Content variant inferred from field presence inside `content`, no explicit `content_type` required. Requires BUSINESS or above. FREE/SOLO organizations get 402 `{\"error\": \"feature_not_available\"}`. Reacting to / editing / deleting an already-sent group message is NOT gated by this restriction."
           sortKey: -695
         method: POST
         body:
           mimeType: application/json
           text: |-
             {
-              "to": { "group_id": "grp_b6d9e5bcdccb4e30afa5907d2c9c1cde" },
+              "to": { "group_id": "{{ _.exampleGroupId }}" },
               "content": {
-                "text": "Bom dia, equipe — mensagem do Turbo Notify"
+                "text": "Bom dia, equipe. Mensagem do Turbo Notify"
               }
             }
         headers:
@@ -814,7 +814,7 @@ collection:
           created: 1780704000001
           modified: 1780704000001
           isPrivate: false
-          description: "Send a text message resolved from a TN Contact. `to.contact_id` is the third XOR variant of `to` (alongside `number` and `group_id`). The API looks up the phone from the TN Contact registry at send time — useful when the caller stores only a `ct_` identifier. Error codes: `contact_not_found` (400) if the contact does not exist for this organization; `contacts_not_enabled` (400) if the Contacts feature is not provisioned."
+          description: "Send a text message to a contact by its contact id. `to.contact_id` is the third XOR variant of `to` (alongside `number` and `group_id`). The API looks up the phone from the contact at send time, useful when the caller stores only a `ct_` identifier. Error codes: `contact_not_found` (400) if the contact does not exist for this organization; `contacts_not_enabled` (400) if the Contacts feature is not provisioned."
           sortKey: -694
         method: POST
         body:
@@ -843,42 +843,6 @@ collection:
               const reqId = insomnia.response.headers.find(h => h.name.toLowerCase() === "x-request-id");
               if (reqId) insomnia.environment.set("requestId", reqId.value);
             }
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: "{{ _.baseUrl }}/v1/numbers/{{ _.numberAlias }}/messages/msg_0d84d1d1ea3f42e48eb83bec0aead4ea/reactions"
-        name: Get Message Reactions [x]
-        meta:
-          id: req_980014fd4caa432b94b63720982e1216
-          created: 1780705584267
-          modified: 1780705591717
-          isPrivate: false
-          description: "List active reactions on a message (addressed by public message_id msg_{hex32}). Returns one entry per reactor phone number — last emoji wins (upsert semantics). Each reaction includes: from.number, from.contact_id (ct_{hex32} or null), from.name (WhatsApp name or null), emoji, at (ISO 8601 UTC timestamp), direction (inbound | outbound). Scope: messages:read. Uses messageId captured from Send / Reply / Edit / Delete / React."
-          sortKey: -207.5
-        method: GET
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: "{{ _.baseUrl }}/v1/numbers/{{ _.numberAlias }}/messages/msg_0d84d1d1ea3f42e48eb83bec0aead4ea/receipts"
-        name: Get Message Receipts [x]
-        meta:
-          id: req_ddae7497a05c478bbd62c73ecf03aea6
-          created: 1780705616382
-          modified: 1780705620748
-          isPrivate: false
-          description: "List delivery receipt history for a message (addressed by public message_id msg_{hex32}). Returns status transitions in chronological order (delivered → read). Each receipt includes: status (delivered | read) and at (ISO 8601 UTC timestamp). Note: only WhatsApp-confirmed acks (delivered + read) are tracked here. For sent status, use GET /v1/messages/{id}/status. Scope: messages:read. Uses messageId captured from Send / Reply / Edit / Delete / React. Requires BUSINESS or above. FREE/SOLO get 402 `feature_not_available`. The overall message status (GET .../status) stays available on every plan. Only this granular per-status receipt log is gated."
-          sortKey: -202.5
-        method: GET
         settings:
           renderRequestBody: true
           encodeUrl: true
@@ -1012,7 +976,7 @@ collection:
           created: 1774240000023
           modified: 1776254400002
           isPrivate: false
-          description: "Show or hide typing indicator resolved from a TN Contact. contact_id is the ct_{hex32} from the Contacts API — phone resolved server-side. Error codes: contact_not_found (400), contacts_not_enabled (400). With `is_typing: true` the number first appears online and the unread messages it received from the contact are marked as read, then after a short random pause the typing indicator shows. With `is_typing: false` nothing is read."
+          description: "Show or hide the typing indicator for a contact by its contact id. contact_id is the ct_{hex32} from the Contacts API; the phone is resolved server-side. Error codes: contact_not_found (400), contacts_not_enabled (400). With `is_typing: true` the number first appears online and the unread messages it received from the contact are marked as read, then after a short random pause the typing indicator shows. With `is_typing: false` nothing is read."
           sortKey: -395
         method: POST
         body:
@@ -1044,13 +1008,13 @@ collection:
     authentication:
       type: bearer
       token: "{{ _.apiKey }}"
-  - name: Messages (flat — número principal)
+  - name: Messages (main number shortcut)
     meta:
       id: fld_messages_flat
       created: 1750809600000
       modified: 1750809600000
       sortKey: -590
-      description: Rotas flat para o número principal. Equivalente a /v1/numbers/main/... sem especificar o alias.
+      description: "Shortcut routes for the main number: the same as /v1/numbers/main/... without the alias."
     children:
       - url: "{{ _.baseUrl }}/v1/messages"
         name: Send Message (flat)
@@ -1059,7 +1023,7 @@ collection:
           created: 1750809600001
           modified: 1750809600001
           sortKey: -700
-          description: POST /v1/messages — envia do número principal. Equivalente a POST /v1/numbers/main/messages.
+          description: POST /v1/messages sends from the main number. Same as POST /v1/numbers/main/messages.
         method: POST
         body:
           mimeType: application/json
@@ -1150,7 +1114,7 @@ collection:
           created: 1750809600006
           modified: 1750809600006
           sortKey: -675
-          description: GET /v1/messages/{messageId}/reactions — equivalente a GET /v1/numbers/main/messages/{messageId}/reactions.
+          description: GET /v1/messages/{messageId}/reactions is the same as GET /v1/numbers/main/messages/{messageId}/reactions.
         method: GET
         headers: []
         settings:
@@ -1168,7 +1132,7 @@ collection:
           created: 1750809600007
           modified: 1750809600007
           sortKey: -670
-          description: GET /v1/messages/{messageId}/receipts — equivalente a GET /v1/numbers/main/messages/{messageId}/receipts. Requires BUSINESS or above. FREE/SOLO get 402 `feature_not_available`. GET .../status stays ungated on every plan.
+          description: GET /v1/messages/{messageId}/receipts is the same as GET /v1/numbers/main/messages/{messageId}/receipts. Requires BUSINESS or above. FREE/SOLO get 402 `feature_not_available`. GET .../status stays ungated on every plan.
         method: GET
         headers: []
         settings:
@@ -1186,7 +1150,7 @@ collection:
           created: 1750809600008
           modified: 1750809600008
           sortKey: -665
-          description: POST /v1/messages/{messageId}/reply — equivalente a POST /v1/numbers/main/messages/{messageId}/reply.
+          description: POST /v1/messages/{messageId}/reply is the same as POST /v1/numbers/main/messages/{messageId}/reply.
         method: POST
         body:
           mimeType: application/json
@@ -1216,7 +1180,7 @@ collection:
           created: 1750809600009
           modified: 1750809600009
           sortKey: -660
-          description: POST /v1/messages/{messageId}/react — equivalente a POST /v1/numbers/main/messages/{messageId}/react.
+          description: POST /v1/messages/{messageId}/react is the same as POST /v1/numbers/main/messages/{messageId}/react.
         method: POST
         body:
           mimeType: application/json
@@ -1242,7 +1206,7 @@ collection:
           created: 1750809600010
           modified: 1750809600010
           sortKey: -655
-          description: POST /v1/messages/{messageId}/edit — equivalente a POST /v1/numbers/main/messages/{messageId}/edit.
+          description: POST /v1/messages/{messageId}/edit is the same as POST /v1/numbers/main/messages/{messageId}/edit.
         method: POST
         body:
           mimeType: application/json
@@ -1268,7 +1232,7 @@ collection:
           created: 1750809600011
           modified: 1750809600011
           sortKey: -650
-          description: POST /v1/messages/{messageId}/delete — equivalente a POST /v1/numbers/main/messages/{messageId}/delete.
+          description: POST /v1/messages/{messageId}/delete is the same as POST /v1/numbers/main/messages/{messageId}/delete.
         method: POST
         body:
           mimeType: application/json
@@ -1291,7 +1255,7 @@ collection:
           created: 1750809600005
           modified: 1750809600005
           sortKey: -680
-          description: POST /v1/typing-indicator — equivalente a POST /v1/numbers/main/typing-indicator.
+          description: POST /v1/typing-indicator is the same as POST /v1/numbers/main/typing-indicator.
         method: POST
         body:
           mimeType: application/json
@@ -1318,7 +1282,7 @@ collection:
           created: 1776340800001
           modified: 1776340800001
           sortKey: -675
-          description: POST /v1/messages/read — equivalente a POST /v1/numbers/main/messages/read.
+          description: POST /v1/messages/read is the same as POST /v1/numbers/main/messages/read.
         method: POST
         body:
           mimeType: application/json
@@ -1340,13 +1304,13 @@ collection:
     authentication:
       type: bearer
       token: "{{ _.apiKey }}"
-  - name: Contacts (flat — número principal)
+  - name: Contacts (main number shortcut)
     meta:
       id: fld_contacts_flat
       created: 1750809600010
       modified: 1750809600010
       sortKey: -295
-      description: Rotas flat para contatos do número principal. Equivalente a /v1/numbers/main/contacts/...
+      description: "Shortcut routes for the main number's contacts: the same as /v1/numbers/main/contacts/..."
     children:
       - url: "{{ _.baseUrl }}/v1/contacts"
         name: List Contacts (flat)
@@ -1376,7 +1340,7 @@ collection:
           created: 1750809600012
           modified: 1750809600012
           sortKey: -695
-          description: "GET /v1/contacts/quota — equivalente a GET /v1/numbers/main/contacts/quota. Response: { used, quota, remaining, tier, cycle_start, cycle_end, resets_at } — ciclo de billing da organização; `window_days` REMOVIDO, resets_at == cycle_end."
+          description: "GET /v1/contacts/quota is the same as GET /v1/numbers/main/contacts/quota. Response: { used, quota, remaining, tier, cycle_start, cycle_end, resets_at }, measured over the organization's billing cycle; resets_at equals cycle_end."
         method: GET
         headers: []
         settings:
@@ -1394,7 +1358,7 @@ collection:
           created: 1750809600015
           modified: 1750809600015
           sortKey: -694
-          description: "GET /v1/messages/quota — equivalente a GET /v1/numbers/main/messages/quota. Response: { used, quota, remaining, tier, cycle_start, cycle_end, resets_at } — ciclo de billing da organização; `window_days` REMOVIDO, resets_at == cycle_end."
+          description: "GET /v1/messages/quota is the same as GET /v1/numbers/main/messages/quota. Response: { used, quota, remaining, tier, cycle_start, cycle_end, resets_at }, measured over the organization's billing cycle; resets_at equals cycle_end."
         method: GET
         headers: []
         settings:
@@ -1412,7 +1376,7 @@ collection:
           created: 1750809600013
           modified: 1750809600013
           sortKey: -690
-          description: GET /v1/contacts/{contactId} — equivalente a GET /v1/numbers/main/contacts/{contactId}.
+          description: GET /v1/contacts/{contactId} is the same as GET /v1/numbers/main/contacts/{contactId}.
         method: GET
         headers: []
         settings:
@@ -1430,7 +1394,7 @@ collection:
           created: 1750809600014
           modified: 1750809600014
           sortKey: -685
-          description: GET /v1/contacts/{contactId}/profile-picture — equivalente a GET /v1/numbers/main/contacts/{contactId}/profile-picture.
+          description: GET /v1/contacts/{contactId}/profile-picture is the same as GET /v1/numbers/main/contacts/{contactId}/profile-picture.
         method: GET
         headers: []
         settings:
@@ -1448,7 +1412,7 @@ collection:
           created: 1750809600015
           modified: 1750809600015
           sortKey: -680
-          description: "POST /v1/contacts/{contactId}/refresh, equivalente a POST /v1/numbers/main/contacts/{contactId}/refresh. Scope required: contacts:write. Updates the contact's name only. Response 202: {\"status\": \"queued\", \"requested_at\": \"2026-05-10T13:40:00Z\"}. Follow the result with Get Contact Detail (flat): its refresh object gains completed_at and outcome (updated | unchanged | number_not_connected | unavailable)."
+          description: "POST /v1/contacts/{contactId}/refresh is the same as POST /v1/numbers/main/contacts/{contactId}/refresh. Scope required: contacts:write. Updates the contact's name only. Response 202: {\"status\": \"queued\", \"requested_at\": \"2026-05-10T13:40:00Z\"}. Follow the result with Get Contact Detail (flat): its refresh object gains completed_at and outcome (updated | unchanged | number_not_connected | unavailable)."
         method: POST
         body:
           mimeType: application/json
@@ -1467,13 +1431,13 @@ collection:
     authentication:
       type: bearer
       token: "{{ _.apiKey }}"
-  - name: Groups (flat — número principal)
+  - name: Groups (main number shortcut)
     meta:
       id: fld_groups_flat
       created: 1750809600020
       modified: 1750809600020
       sortKey: -195
-      description: Rotas flat para grupos do número principal. Equivalente a /v1/numbers/main/groups/...
+      description: "Shortcut routes for the main number's groups: the same as /v1/numbers/main/groups/..."
     children:
       - url: "{{ _.baseUrl }}/v1/groups"
         name: List Groups (flat)
@@ -1503,7 +1467,7 @@ collection:
           created: 1750809600022
           modified: 1750809600022
           sortKey: -695
-          description: GET /v1/groups/{groupId} — equivalente a GET /v1/numbers/main/groups/{groupId}.
+          description: GET /v1/groups/{groupId} is the same as GET /v1/numbers/main/groups/{groupId}.
         method: GET
         headers: []
         settings:
@@ -1521,7 +1485,7 @@ collection:
           created: 1750809600023
           modified: 1750809600023
           sortKey: -690
-          description: GET /v1/groups/{groupId}/picture — equivalente a GET /v1/numbers/main/groups/{groupId}/picture.
+          description: GET /v1/groups/{groupId}/picture is the same as GET /v1/numbers/main/groups/{groupId}/picture.
         method: GET
         headers: []
         settings:
@@ -1558,7 +1522,7 @@ collection:
               created: 1774240000031
               modified: 1776254400000
               isPrivate: false
-              description: "Register a new extra number (status: pending). Does NOT start pairing — use 'Pair Extra Number' next. Captures extraNumberAlias. BUSINESS+ only. FREE/SOLO get 402 `{\"error\": \"feature_not_available\"}`. Also enforces the tier's numeric cap (BUSINESS 1000 / CUSTOM 1000, counting your existing extra numbers): at the cap, returns 402 `{\"error\": \"extra_numbers_limit_reached\", \"message\": \"...\", \"details\": {\"limit\": <int>, \"current\": <int>}}`. The request triggers an immediate pro-rata activation charge BEFORE the number is created: no card on file returns 400 `{\"error\": \"no_payment_method\"}`; a declined/blocked charge returns 402 `{\"error\": \"payment_declined\"}` or 402 `{\"error\": \"payment_requires_authentication\"}`; a gateway timeout returns 503 `{\"error\": \"payment_gateway_unavailable\"}` — in every case, no number is created."
+              description: "Register a new extra number (status: pending). Does NOT start pairing; use 'Pair Extra Number' next. Captures extraNumberAlias. BUSINESS+ only. FREE/SOLO get 402 `{\"error\": \"feature_not_available\"}`. Also enforces the tier's numeric cap (BUSINESS 1000 / CUSTOM 1000, counting your existing extra numbers): at the cap, returns 402 `{\"error\": \"extra_numbers_limit_reached\", \"message\": \"...\", \"details\": {\"limit\": <int>, \"current\": <int>}}`. The request triggers an immediate pro-rata activation charge BEFORE the number is created: no card on file returns 400 `{\"error\": \"no_payment_method\"}`; a declined/blocked charge returns 402 `{\"error\": \"payment_declined\"}` or 402 `{\"error\": \"payment_requires_authentication\"}`; a gateway timeout returns 503 `{\"error\": \"payment_gateway_unavailable\"}`. In every case, no number is created. Optional external_id: your own identifier for the number (1 to 128 characters, unique among your numbers); one already in use answers 409 `{\"error\": \"external_id_already_used\"}` and nothing is charged. Additions are limited per account over a rolling window: past it, 429 `{\"error\": \"number_creation_rate_limited\"}` with a Retry-After header (seconds to wait), and nothing is charged."
               sortKey: -1100
             method: POST
             body:
@@ -1566,7 +1530,8 @@ collection:
               text: |-
                 {
                   "alias": "clinica_tal",
-                  "phone_number": "+5571988001122"
+                  "phone_number": "+5511988887777",
+                  "external_id": "{{ _.externalId }}"
                 }
             headers:
               - name: Content-Type
@@ -1588,20 +1553,72 @@ collection:
                 store: true
               rebuildPath: true
           - url: "{{ _.baseUrl }}/v1/numbers"
-            name: List Extra Numbers
+            name: List Numbers
             meta:
               id: req_extra_list
               created: 1774240000032
-              modified: 1776254400000
+              modified: 1780840000000
               isPrivate: false
-              description: List all registered extra numbers. Captures extraNumberAlias from the first result.
+              description: List the numbers of the account, the main number first, each with its external_id (null when not set). Captures extraNumberAlias from the first extra number.
               sortKey: -700
             method: GET
             scripts:
               afterResponse: |-
                 const body = insomnia.response.json();
-                if (insomnia.response.code === 200 && body.numbers && body.numbers.length > 0) {
-                  insomnia.environment.set("extraNumberAlias", body.numbers[0].alias);
+                const extra = insomnia.response.code === 200 && Array.isArray(body.data) ? body.data.find((n) => n.type === "extra") : undefined;
+                if (extra) {
+                  insomnia.environment.set("extraNumberAlias", extra.alias);
+                }
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrl }}/v1/numbers"
+            name: List Numbers by Status
+            meta:
+              id: req_numbers_list_by_status
+              created: 1780840000001
+              modified: 1780840000001
+              isPrivate: false
+              description: Only the numbers currently in one status, here disconnected (the ones that need attention). Accepted values pending, pairing, inactive, connecting, connected, disconnected, reconnecting, failed, revoked, pending_deletion; any other value answers 422.
+              sortKey: -690
+            method: GET
+            parameters:
+              - name: status
+                value: disconnected
+                disabled: false
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrl }}/v1/numbers"
+            name: Find Number by External ID
+            meta:
+              id: req_numbers_find_by_external_id
+              created: 1780840000002
+              modified: 1780840000002
+              isPrivate: false
+              description: The number holding exactly this external_id (your own identifier for it), or an empty list. Captures extraNumberAlias when the number found is an extra number.
+              sortKey: -680
+            method: GET
+            parameters:
+              - name: external_id
+                value: "{{ _.externalId }}"
+                disabled: false
+            scripts:
+              afterResponse: |-
+                const body = insomnia.response.json();
+                const found = insomnia.response.code === 200 && Array.isArray(body.data) ? body.data[0] : undefined;
+                if (found && found.type === "extra") {
+                  insomnia.environment.set("extraNumberAlias", found.alias);
                 }
             settings:
               renderRequestBody: true
@@ -1618,7 +1635,7 @@ collection:
               created: 1774240000033
               modified: 1776254400000
               isPrivate: false
-              description: Get detailed status of an extra number. During pairing, includes pairing.data (code or QR URI) and pairing.expires_at. Requires extraNumberAlias to be set — if empty, the request hits List Extra Numbers instead. status reads reconnecting while Turbo Notify brings the number back by itself.
+              description: Get detailed status of an extra number, including its external_id (null when not set). During pairing, includes pairing.data (the pairing code) and pairing.expires_at. Requires extraNumberAlias to be set; if empty, the request hits List Numbers instead. status reads reconnecting while Turbo Notify brings the number back by itself.
               sortKey: -600
             method: GET
             settings:
@@ -1672,7 +1689,7 @@ collection:
               created: 1774240000036
               modified: 1776254400000
               isPrivate: false
-              description: Schedule deletion. Immediate if refund-eligible (within 72h, no billed messages); otherwise deleted at billing cycle end. Returns scheduled_deletion_at, refund_eligible, refund_amount_cents, messages_sent, refund_status. When refund_eligible is true, refund_amount_cents reflects a real refund of the number's activation charge. refund_status (added 2026-08-29) distinguishes succeeded / not_applicable (either nothing was ever charged, or a concurrent request for the same number is already handling the refund, so this response has nothing further to report) / failed (a real charge existed and the gateway refund call failed, deletion still proceeds, refund needs manual reconciliation). refund_amount_cents alone could not tell not_applicable and failed apart (both render as 0).
+              description: Remove the extra number (disconnect it first). Depending on how the number was used, it is either removed right away with its activation charge refunded (refund_eligible true, scheduled_deletion_at is now, refund_amount_cents is the real refund), or its removal is scheduled for the end of the period already paid (refund_eligible false, it keeps working until scheduled_deletion_at, no refund). Returns scheduled_deletion_at, refund_eligible, refund_amount_cents, refund_status. refund_status is succeeded, not_applicable (nothing to refund) or failed (the number is removed and the refund is completed by the billing team); null when scheduled.
               sortKey: -200
             method: DELETE
             settings:
@@ -1684,13 +1701,13 @@ collection:
                 store: true
               rebuildPath: true
           - url: "{{ _.baseUrl }}/v1/numbers/{{ _.extraNumberAlias }}/pair"
-            name: Pair Extra Number (Linking Code)
+            name: Pair Extra Number (Pairing Code)
             meta:
               id: req_extra_pair
               created: 1774240000037
               modified: 1776254400000
               isPrivate: false
-              description: Start pairing via WhatsApp linking code. Poll 'Get Number Status' to retrieve the code and expiry once status is 'pairing'. Call again while 'pairing' to get a new code (a wrongly typed code is refused by WhatsApp for good). On 'failed', the status 'reason' says why. Limited to 10 calls/min per number and 30/min per account (429 pairing_rate_limited with Retry-After).
+              description: Start pairing via WhatsApp pairing code. Poll 'Get Number Status' to retrieve the code and expiry once status is 'pairing'. Call again while 'pairing' to get a new code (a wrongly typed code is refused by WhatsApp for good). On 'failed', the status 'reason' says why. Limited to 10 calls/min per number and 30/min per account (429 pairing_rate_limited with Retry-After).
               sortKey: -1000
             method: POST
             body:
@@ -1725,14 +1742,15 @@ collection:
               created: 1774240000038
               modified: 1776254400000
               isPrivate: false
-              description: Update alias or description. Provide at least one field. Captures new extraNumberAlias if alias changed.
+              description: Update alias, description or external_id. Provide at least one field. external_id takes a string to set or change it and null to remove it; one already used by another number answers 409 external_id_already_used. Captures new extraNumberAlias if alias changed.
               sortKey: -300
             method: PATCH
             body:
               mimeType: application/json
               text: |-
                 {
-                  "description": "Atualizado via Insomnia"
+                  "description": "Atualizado via Insomnia",
+                  "external_id": "{{ _.externalId }}"
                 }
             headers:
               - name: Content-Type
@@ -1763,41 +1781,6 @@ collection:
               description: Cancel a scheduled deletion before it takes effect. Returns 200 with status and at.
               sortKey: -100
             method: POST
-            settings:
-              renderRequestBody: true
-              encodeUrl: true
-              followRedirects: global
-              cookies:
-                send: true
-                store: true
-              rebuildPath: true
-          - url: "{{ _.baseUrl }}/v1/numbers/{{ _.extraNumberAlias }}/pair"
-            name: Pair Extra Number (QR Code)
-            meta:
-              id: req_extra_pair_qr
-              created: 1774240000042
-              modified: 1776254400000
-              isPrivate: false
-              description: Start pairing via QR code scan. Poll 'Get Number Status' for the QR data URI once status is 'pairing'.
-              sortKey: -900
-            method: POST
-            body:
-              mimeType: application/json
-              text: |-
-                {
-                  "method": "qr"
-                }
-            headers:
-              - name: Content-Type
-                value: application/json
-                description: ""
-                disabled: false
-            scripts:
-              afterResponse: |-
-                const body = insomnia.response.json();
-                if (insomnia.response.code === 202 && body.alias) {
-                  insomnia.environment.set("extraNumberAlias", body.alias);
-                }
             settings:
               renderRequestBody: true
               encodeUrl: true
@@ -1839,9 +1822,38 @@ collection:
               created: 1776254400021
               modified: 1776254400021
               isPrivate: false
-              description: Get status and details of the primary WhatsApp number (contact_id, name, type, alias, number, status, at). status reads reconnecting while Turbo Notify brings the number back by itself (a dropped connection or an internal transfer); at is then the moment it went offline, the same data.at a later number.disconnected carries if it is not back within about a minute.
+              description: Get status and details of the primary WhatsApp number (contact_id, name, type, alias, number, external_id, status, at). status reads reconnecting while Turbo Notify brings the number back by itself (a dropped connection or an internal transfer); at is then the moment it went offline, the same data.at a later number.disconnected carries if it is not back within about a minute.
               sortKey: -400
             method: GET
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrl }}/v1/numbers/main"
+            name: Update Main Number External ID
+            meta:
+              id: req_numbers_main_update
+              created: 1780840000003
+              modified: 1780840000003
+              isPrivate: false
+              description: Set, change or remove (null) the external_id of the main number. It is the only field accepted here; alias or description answer 403 main_number_update_not_allowed.
+              sortKey: -350
+            method: PATCH
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                  "external_id": null
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+                description: ""
+                disabled: false
             settings:
               renderRequestBody: true
               encodeUrl: true
@@ -1889,39 +1901,13 @@ collection:
     authentication:
       type: bearer
       token: "{{ _.apiKey }}"
-  - name: Health
-    meta:
-      id: fld_health
-      created: 1774240000040
-      modified: 1774240000040
-      sortKey: -200
-      description: Service health and availability checks (no auth required)
-    children:
-      - url: "{{ _.baseUrl }}/health"
-        name: Health Check
-        meta:
-          id: req_health_check
-          created: 1774240000041
-          modified: 1774240000041
-          isPrivate: false
-          description: Health check endpoint (no auth required). Returns the status of the service dependencies.
-          sortKey: -400
-        method: GET
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
   - name: Events
     meta:
       id: fld_events
       created: 1776254400000
       modified: 1776254400000
       sortKey: -500
-      description: Stripe-like event polling. Poll for async results (delivered, read, failed) instead of — or alongside — webhooks.
+      description: Stripe-like event polling. Poll for async results (delivered, read, failed) instead of, or alongside, webhooks.
     children:
       - url: "{{ _.baseUrl }}/v1/events"
         name: List Events
@@ -1930,7 +1916,7 @@ collection:
           created: 1776254400010
           modified: 1776254400010
           isPrivate: false
-          description: "Paginated event list. Available query params: limit (1-100, default 25), type, types[], request_id, created[gte], created[lte], starting_after (cursor), ending_before (cursor), number_alias (restrict results to one number's inbox — 'main' or an extra alias). Each item shares the same envelope {id, type, organization_id, number_alias, created_at, data} as the webhook body (byte-identical data). number_alias (directly below organization_id) is the Turbo Notify inbox handle the event belongs to ('main' or an extra number's alias string, never a UUID); it is present on events tied to a single number (message.*, number.*, group.*, contact.*, and both *.quota.* families — contacts and message/contact quotas are per-number) and omitted ONLY for storage.* (the sole account-wide event with no single owning number). Every event data is coherent with message.*: a flat top-level data.id (message -> msg_, contact -> id=ct_ [renamed from contact_id], group -> id=grp_ [flattened from group:{id,name}]; number.* has no data.id, alias is the handle) plus the tail channel:'whatsapp' + origin ('tn'|'native') + direction:'inbound' on all group.*/contact.*/*.picture_changed (no direction on number.* lifecycle, storage.*, *.quota.*). *.picture_changed serves a organization_storage picture as kind:'available' with a presigned url (presigned once at dispatch and stored in the event; polling serves the stored url, like message media). The from/to/participant party contact_id is unchanged. Timestamps: envelope `created_at` = when Turbo Notify emitted the event; `data.at` (when present) = the real WhatsApp action moment — distinct values, and for outbound message events (message.sent/replied/edited/deleted + *.failed) and the real-action number.* events (number.connected/disconnected/revoked/ connect.failed) `data.at` is the genuine WhatsApp moment, typically EARLIER than `created_at`. Three picture/snapshot events carry NO `data.at` (only the envelope `created_at`): contact.picture_changed, group.picture_changed, group.joined. All other group lifecycle events (group.name_changed, group.description_changed, group.settings_changed, group.participants_added/removed/promoted/demoted, group.left) DO carry `data.at`. Number reasons: number.disconnected always carries `data.reason` = connection_lost | service_interruption | replaced_by_another_device | disconnected_by_request; number.revoked carries logged_out_on_phone | replaced_by_another_device; number.connect.failed carries the pairing reasons of the number status. An outage Turbo Notify repairs by itself (connection_lost, service_interruption) is reported only if the number is not back within about a minute, so its `data.at` (the moment it went offline) can precede `created_at` by one to two minutes; back in time, neither number.disconnected nor number.connected is sent."
+          description: "Paginated event list. Available query params: limit (1-100, default 25), type, types[], request_id, created[gte], created[lte], starting_after (cursor), ending_before (cursor), number_alias (restrict results to one number, 'main' or an extra alias). Each item shares the same envelope {id, type, organization_id, number_alias, created_at, data} as the webhook body (byte-identical data). number_alias (directly below organization_id) is the Turbo Notify inbox handle the event belongs to ('main' or an extra number's alias string, never a UUID); it is present on events tied to a single number (message.*, number.*, group.*, contact.*, and both *.quota.* families, because contact and message quotas are per number) and omitted ONLY for storage.* (the sole account-wide event with no single owning number). Every event data is coherent with message.*: a flat top-level data.id (message -> msg_, contact -> id=ct_ [renamed from contact_id], group -> id=grp_ [flattened from group:{id,name}]; number.* has no data.id, alias is the handle) plus the tail channel:'whatsapp' + origin ('tn'|'native') + direction:'inbound' on all group.*/contact.*/*.picture_changed (no direction on number.* lifecycle, storage.*, *.quota.*). *.picture_changed serves a organization_storage picture as kind:'available' with a presigned url (presigned once at dispatch and stored in the event; polling serves the stored url, like message media). The from/to/participant party contact_id is unchanged. Timestamps: envelope `created_at` = when Turbo Notify emitted the event; `data.at` (when present) = the real WhatsApp action moment. They are distinct values, and for outbound message events (message.sent/replied/edited/deleted + *.failed) and the real-action number.* events (number.connected/disconnected/revoked/ connect.failed) `data.at` is the genuine WhatsApp moment, typically EARLIER than `created_at`. Three picture/snapshot events carry NO `data.at` (only the envelope `created_at`): contact.picture_changed, group.picture_changed, group.joined. All other group lifecycle events (group.name_changed, group.description_changed, group.settings_changed, group.participants_added/removed/promoted/demoted, group.left) DO carry `data.at`. Number reasons: number.disconnected always carries `data.reason` = connection_lost | service_interruption | replaced_by_another_device | disconnected_by_request; number.revoked carries logged_out_on_phone | replaced_by_another_device; number.connect.failed carries the pairing reasons of the number status. An outage Turbo Notify repairs by itself (connection_lost, service_interruption) is reported only if the number is not back within about a minute, so its `data.at` (the moment it went offline) can precede `created_at` by one to two minutes; back in time, neither number.disconnected nor number.connected is sent."
           sortKey: -400
         method: GET
         parameters:
@@ -1987,7 +1973,7 @@ collection:
       created: 1779148800000
       modified: 1779148800000
       sortKey: -500
-      description: "TN Contacts — passive observability of message traffic. Scope: contacts:read (list/detail/profile-picture); refresh requires contacts:write (round 61 finding — refresh mutates, queuing a real WhatsApp metadata IQ, so it moved off the read scope)."
+      description: "Contacts: the people your numbers exchange messages with. Scope: contacts:read (list/detail/profile-picture); refresh requires contacts:write (refresh asks WhatsApp for the contact's current data)."
     children:
       - url: "{{ _.baseUrl }}/v1/numbers/{{ _.numberAlias }}/contacts?limit=20"
         name: List contacts
@@ -2068,7 +2054,7 @@ collection:
           created: 1779148800005
           modified: 1779148800005
           isPrivate: false
-          description: "Snapshot da quota de contatos distintos, ancorada ao ciclo de billing da organização (substitui a antiga rolling window de 30d). Response: { used, quota, remaining, tier, cycle_start, cycle_end, resets_at } — resets_at == cycle_end sempre; o campo `window_days` foi REMOVIDO. `used` conta contatos contactados via TN no ciclo avaliado, novos OU recorrentes."
+          description: "Contact quota of the number, measured over the organization's billing cycle. Response: { used, quota, remaining, tier, cycle_start, cycle_end, resets_at }; resets_at equals cycle_end. `used` counts the contacts this number messaged through Turbo Notify in the cycle, new or returning."
           sortKey: 0
         method: GET
         settings:
@@ -2086,7 +2072,7 @@ collection:
           created: 1782000000005
           modified: 1782000000005
           isPrivate: false
-          description: "Snapshot da quota de mensagens enviadas via Turbo Notify, por número, ancorada ao ciclo de billing da organização (substitui a antiga rolling window de 30d). Response: { used, quota, remaining, tier, cycle_start, cycle_end, resets_at } — resets_at == cycle_end sempre; o campo `window_days` foi REMOVIDO."
+          description: "Message quota of the number (messages sent through Turbo Notify), measured over the organization's billing cycle. Response: { used, quota, remaining, tier, cycle_start, cycle_end, resets_at }; resets_at equals cycle_end."
           sortKey: 0
         method: GET
         settings:
@@ -2106,7 +2092,7 @@ collection:
       created: 1779148800100
       modified: 1779148800100
       sortKey: -450
-      description: "Usage snapshot — messages + contacts quotas. Auth: any authenticated API key (no scope required)."
+      description: "Usage snapshot: message and contact quotas. Auth: any authenticated API key (no scope required)."
     children:
       - url: "{{ _.baseUrl }}/v1/usage"
         name: Get unified usage
@@ -2115,7 +2101,7 @@ collection:
           created: 1779148800101
           modified: 1779148800101
           isPrivate: false
-          description: "Snapshot unificado: { messages: {used, quota, remaining, resets_at, tier}, contacts: {...}, numbers: [{alias, messages: {used, quota, remaining}, contacts: {...}}] }. Org-level `quota` = soma das allowances por número (per-number tier ceiling × nº de números vivos); `resets_at` = cycle_end avaliado da organização (`window_days` REMOVIDO). O array `numbers[]` é a quebra por número (main + extras), batched. Cache-Control: max-age=60."
+          description: "Usage of the whole account: { messages: {used, quota, remaining, resets_at, tier}, contacts: {...}, numbers: [{alias, messages: {used, quota, remaining}, contacts: {...}}] }. The account-level `quota` is the sum of every number's quota (the plan's per-number ceiling times the number of numbers); `resets_at` is the end of the organization's billing cycle. `numbers[]` breaks the usage down per number (main and extras). Cache-Control: max-age=60."
           sortKey: 0
         method: GET
         settings:
@@ -2133,7 +2119,7 @@ collection:
           created: 1779148800102
           modified: 1779148800102
           isPrivate: false
-          description: "Snapshot somente de mensagens: { messages: {used, quota, remaining, resets_at, tier}, numbers: [{alias, messages: {used, quota, remaining}}] } — mesma quebra per-number de GET /v1/usage, só a metade de mensagens. Ciclo avaliado da organização; `window_days` REMOVIDO."
+          description: "Message usage only: { messages: {used, quota, remaining, resets_at, tier}, numbers: [{alias, messages: {used, quota, remaining}}] }: the same per-number breakdown as GET /v1/usage, messages only, measured over the organization's billing cycle."
           sortKey: 0
         method: GET
         settings:
@@ -2153,7 +2139,7 @@ collection:
       created: 1780704000000
       modified: 1780704000000
       sortKey: -490
-      description: "WhatsApp Groups — system-managed, auto-discovered from inbound traffic. Scope: groups:read."
+      description: "WhatsApp groups, discovered automatically from the messages your numbers receive. Scope: groups:read."
     children:
       - url: "{{ _.baseUrl }}/v1/numbers/{{ _.numberAlias }}/groups?limit=20"
         name: List groups
@@ -2223,7 +2209,7 @@ collection:
       created: 1780704000010
       modified: 1780704000010
       sortKey: -480
-      description: "Organization — the authenticated organization's own account. Scope: organizations:read."
+      description: "Organization: the account the API key belongs to. Scope: organizations:read."
     children:
       - url: "{{ _.baseUrl }}/v1/organizations"
         name: List organizations
@@ -2250,7 +2236,7 @@ collection:
           created: 1780704000012
           modified: 1780704000012
           isPrivate: false
-          description: Fetch organization by org_id. The org_id must match the authenticated organization — attempting to access another organization's data returns 404.
+          description: Fetch organization by org_id. The org_id must match the authenticated organization; asking for another organization's data returns 404.
           sortKey: 0
         method: GET
         settings:
@@ -2278,6 +2264,7 @@ environments:
     reactionEventId: ""
     numberAlias: main
     extraNumberAlias: cliente_ana
+    externalId: cliente-4711
     recipientPhone: "+5511988887777"
     contactId: ct_00000000000000000000000000000000
     exampleGroupId: grp_00000000000000000000000000000000

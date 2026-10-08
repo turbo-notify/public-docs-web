@@ -15,7 +15,7 @@ O cadastro dispara uma cobrança pro-rata imediata, que cobre os dias restantes 
 
 A forma mais simples de adicionar um número extra é pelo dashboard do Turbo Notify. Acesse a página de <DashboardLink path="/numbers">Números</DashboardLink> e clique em **Adicionar número**.
 
-Informe o número de telefone com código do país e um alias: o cadastro é confirmado imediatamente, sem código de pareamento nesse momento. Em seguida, abra o número recém-criado, escolha o método de pareamento (QR code ou código de vinculação) e clique em **Vincular número** para gerar o código ou QR correspondente.
+Informe o número de telefone com código do país e um alias: o cadastro é confirmado imediatamente, sem código de pareamento nesse momento. Em seguida, abra o número recém-criado, escolha o método de pareamento (QR code ou código de pareamento) e clique em **Vincular número** para gerar o código ou QR correspondente.
 
 ## Cadastro via API
 
@@ -260,10 +260,11 @@ Veja os principais erros que podem ocorrer no cadastro de números extras:
 | `402`  | `extra_numbers_limit_reached` | A organização já atingiu o limite de números extras do plano (1.000 nos planos Empresarial e Personalizado). A resposta inclui `details.limit` e `details.current`. |
 | `402`  | `payment_declined`       | A cobrança pro-rata de ativação (veja [Cobrança de números extras](/numbers/billing/)) foi recusada pela forma de pagamento. Nenhum número é criado. |
 | `402`  | `payment_requires_authentication` | A forma de pagamento exige reautenticação (3DS) e não pode ser cobrada automaticamente. Nenhum número é criado. |
-| `403`  | `not_authorized`         | A chave de acesso está inválida ou ausente.            |
+| `401`  | `not_authenticated`      | A chave de acesso está inválida ou ausente.            |
 | `403`  | `insufficient_scope`     | A chave de acesso não possui o escopo `numbers:write` (resposta inclui `required_scope`). |
 | `409`  | `number_already_exists`  | O alias ou o número informado já está cadastrado na conta. |
 | `409`  | `external_id_already_used` | Outro número da sua conta já usa este `external_id`. |
 | `429`  | `number_creation_rate_limited` | A sua conta cadastrou números extras mais rápido do que o permitido. Nada foi cobrado. Aguarde os segundos do cabeçalho `Retry-After` e tente de novo. |
 | `500`  | `internal_error`         | Erro interno inesperado no servidor.                   |
+| `502`  | `integration_error`      | O processador de pagamento respondeu com erro à cobrança de ativação. Nenhum número é criado; tente novamente em instantes. |
 | `503`  | `payment_gateway_unavailable` | A cobrança de ativação não pôde ser confirmada a tempo. Nenhum número é criado; tente novamente. |

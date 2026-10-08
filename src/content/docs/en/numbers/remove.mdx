@@ -29,7 +29,7 @@ The `DELETE` response tells you what happened, in `refund_eligible`, `refund_amo
 
 ## Removing in the dashboard
 
-Open the <DashboardLink path="/numbers">Numbers</DashboardLink> page in the dashboard, find the number and click **Remove**. Confirm the action in the dialog.
+Open the <DashboardLink path="/numbers">Numbers</DashboardLink> page in the dashboard, open the number and click **Remove number**. Before you confirm, the panel shows what will happen: immediate removal, with the activation amount that will be refunded when there is one (**Remove** button), or a deletion scheduled for the end of the period already paid, with no refund (**Schedule deletion** button).
 
 ## Removing through the API
 
@@ -310,7 +310,7 @@ be disconnected before its deletion can be scheduled), check
 | :----: | -------------------------------- | --------------------------------------------------- |
 | `400`  | `invalid_status_for_deletion`   | The number is `connected`. Disconnect it before scheduling the deletion. |
 | `402`  | `feature_not_available`  | The current plan does not support extra numbers.    |
-| `403`  | `not_authorized`         | The API key is invalid or missing.                  |
+| `401`  | `not_authenticated`      | The API key is invalid or missing.                  |
 | `403`  | `insufficient_scope`     | The API key does not have the `numbers:write` scope (the response includes `required_scope`). |
 | `404`  | `extra_number_not_found` | The alias was not found in the account.             |
 | `500`  | `internal_error`         | Unexpected internal server error.                   |
@@ -324,7 +324,7 @@ be disconnected before its deletion can be scheduled), check
 | `402`  | `feature_not_available`  | The current plan does not support extra numbers.        |
 | `402`  | `payment_declined`       | The reactivation charge was declined. The deletion stays scheduled. |
 | `402`  | `payment_requires_authentication` | The payment method requires re-authentication (3DS). The deletion stays scheduled. |
-| `403`  | `not_authorized`         | The API key is invalid or missing.                      |
+| `401`  | `not_authenticated`      | The API key is invalid or missing.                      |
 | `403`  | `insufficient_scope`     | The API key does not have the `numbers:write` scope (the response includes `required_scope`). |
 | `404`  | `extra_number_not_found` | The alias was not found in the account.                 |
 | `500`  | `internal_error`         | Unexpected internal server error.                       |

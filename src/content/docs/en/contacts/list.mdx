@@ -33,7 +33,7 @@ To list the contacts of an extra number, use `/v1/numbers/{alias}/contacts` wher
 | --------- | ---- | ----------- |
 | `limit` | int | 1 to 200 (default 50) |
 | `cursor` | string | Opaque token returned in `cursor` |
-| `phone` | string | Exact match on E.164 (`+5511...`) |
+| `phone` | string | Exact match on an E.164 phone number. In the URL, write the `+` as `%2B` (`phone=%2B5511988887777`) or send digits only (`phone=5511988887777`): a bare `+` turns into a space and the filter finds nothing |
 | `name` | string | Partial match on the contact name |
 | `source` | enum | `inbound \| outbound \| self \| mention`: `mention` is a contact first seen because it was **mentioned** in a message; contacts created by a mention do **not** take a slot of the contact quota |
 | `contacted_in_cycle` | bool | Returns only the contacts you talked to through Turbo Notify within the current billing cycle (new or returning). A send that did not reach WhatsApp does not count |

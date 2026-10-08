@@ -452,7 +452,7 @@ asynchronous acceptance, and **no webhook event** is delivered for these request
 | `400`  | `groups_not_enabled`    | Group features are unavailable right now. Try again later; if it persists, contact support. |
 | `400`  | `invalid_recipient`     | The recipient given in `to` could not be resolved to a sendable address. Giving none, or more than one, of `number`, `group_id` and `contact_id` returns `422 validation_error`. |
 | `402`  | `feature_not_available` | The feature is not available on your plan. |
-| `403`  | `not_authorized`        | The API key is invalid or missing.                 |
+| `401`  | `not_authenticated`     | The API key is invalid or missing.                 |
 | `403`  | `insufficient_scope`    | The API key does not have the `messages:send` scope (the response includes `required_scope`). |
 | `404`  | `number_not_found`      | The `{alias}` in the path does not match any number on the account (on the flat route: the account has no main number yet). |
 | `404`  | `group_not_found`       | The `group_id` given in `to` was not found. |

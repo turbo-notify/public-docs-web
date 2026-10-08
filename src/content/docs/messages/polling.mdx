@@ -486,7 +486,7 @@ O registro do evento em si é descartado fisicamente após **90 dias**, um horiz
 | :----: | -------------- | --------- |
 | `400` | `invalid_event_id` | O cursor fornecido em `starting_after` ou `ending_before` não é um id de evento válido (`evt_` + 32 hex). Um cursor bem formado mas inexistente não gera erro. O filtro é simplesmente ignorado. |
 | `400` | `invalid_request_id` | O `request_id` informado não é um id de requisição válido (`req_` + 32 hex). O `X-Request-ID` devolvido em respostas `GET` é um UUID de correlação, **não** um `req_…`. Só o header devolvido pelos `POST` assíncronos serve como filtro aqui. |
-| `403` | `not_authorized` | A chave de acesso está inválida ou ausente. |
+| `401` | `not_authenticated` | A chave de acesso está inválida ou ausente. |
 | `403` | `insufficient_scope` | A chave de acesso não possui o escopo `events:read` (resposta inclui `required_scope`). |
 | `422` | `validation_error` | Um parâmetro de consulta não passou na validação (por exemplo `limit` fora do intervalo de 1 a 100 ou `created[gte]`/`created[lte]` fora do formato ISO 8601). A resposta traz `details.errors` com os campos rejeitados. |
 | `429` | `rate_limit_exceeded` | Limite de requisições ultrapassado. Aguarde antes de tentar novamente. |

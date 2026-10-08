@@ -486,7 +486,7 @@ The event record itself is permanently deleted after **90 days**, a fixed platfo
 | :----: | ---------- | ----------- |
 | `400` | `invalid_event_id` | The cursor given in `starting_after` or `ending_before` is not a valid event id (`evt_` + 32 hex). A well-formed but nonexistent cursor does not cause an error. The filter is simply ignored. |
 | `400` | `invalid_request_id` | The `request_id` given is not a valid request id (`req_` + 32 hex). The `X-Request-ID` returned in `GET` responses is a correlation UUID, **not** a `req_…`. Only the header returned by asynchronous `POST` requests works as a filter here. |
-| `403` | `not_authorized` | The API key is invalid or missing. |
+| `401` | `not_authenticated` | The API key is invalid or missing. |
 | `403` | `insufficient_scope` | The API key does not have the `events:read` scope (the response includes `required_scope`). |
 | `422` | `validation_error` | A query parameter failed validation (for example `limit` outside the 1 to 100 range, or `created[gte]`/`created[lte]` not in ISO 8601 format). The response carries `details.errors` with the rejected fields. |
 | `429` | `rate_limit_exceeded` | Request limit exceeded. Wait before trying again. |

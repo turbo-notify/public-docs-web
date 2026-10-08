@@ -33,6 +33,8 @@ does not remove it by mistake.
 
 ## Request the code
 
+The request body is optional. If you send `method`, the only accepted value is `"pairing_code"`: an extra number is always paired with a code. Any other value answers `422`.
+
 <Tabs>
   <TabItem label="cURL">
     ```bash title="turbo-notify.sh"
@@ -470,5 +472,5 @@ request a new code.
 | `404`  | `extra_number_not_found` | The alias does not exist in the account. |
 | `409`  | `not_pairing` | The number does not have `status: "pairing"`. |
 
-Both routes also return `403 not_authorized` (invalid or missing key) and
+Both routes also return `401 not_authenticated` (invalid or missing key) and
 `403 insufficient_scope` (missing the `numbers:write` scope).

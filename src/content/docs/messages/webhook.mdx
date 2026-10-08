@@ -170,7 +170,7 @@ formato** do `status.error` retornado por `GET /v1/numbers/{alias}/messages/{id}
 | `audio` | Transcrição (quando disponível) → legenda → `[Audio]` |
 | `document` | Legenda → nome do arquivo → `[Document]` |
 | `location` | Texto legível sem colchetes, ex.: `Av. Paulista, Sao Paulo, SP` |
-| `calendar` | Sem colchetes: dia da semana e mês abreviados em inglês, horário em UTC. Ex.: `Reuniao — Tue, 2 Jun 2026 14:00` |
+| `calendar` | Sem colchetes: dia da semana e mês abreviados em inglês, horário em UTC. Ex.: `Reunião — Tue, 2 Jun 2026 14:00` |
 | `contact` | `[Contact: nome]` ou `[Contact]` quando o cartão não traz nome |
 | `poll` | `""` (string vazia) |
 | `interactive` | Texto do corpo (`body`) da mensagem interativa, ou `[Interactive]` quando o corpo está vazio |
@@ -725,7 +725,7 @@ No `GET /v1/numbers/{alias}/messages/{id}`, o `mime_type` típico do bloco `audi
 Quando **BYO Speech-to-Text** está configurado para o número, mensagens de áudio inbound ganham o campo **`transcription`**: uma união discriminada por `kind` (omitida quando não é mensagem de áudio):
 
 - **`{"kind": "available", "text": "...", "language"?: "pt"}`**: transcrição concluída; `language` é o código BCP-47 do idioma detectado/configurado quando disponível.
-- **`{"kind": "unavailable", "reason": "...", "hint"?: "..."}`**: transcrição não disponível. `reason` é um destes 6 valores: `not_configured`, `provider_error`, `file_too_large` (áudio acima de 24 MB), `timeout`, `no_adapter` ou `internal_error`. `hint` é uma orientação opcional, escrita para quem lê o evento (com o link da tela **Transcrição** do dashboard quando há algo a ajustar lá).
+- **`{"kind": "unavailable", "reason": "...", "hint"?: "..."}`**: transcrição não disponível. `reason` é um destes 6 valores: `not_configured`, `provider_error`, `file_too_large` (áudio acima de 24 MB), `timeout`, `provider_not_supported` (o provedor de transcrição configurado não é suportado no momento) ou `internal_error`. `hint` é uma orientação opcional, escrita para quem lê o evento (com o link da tela **Transcrição** do dashboard quando há algo a ajustar lá).
 
 O fluxo da mensagem nunca é bloqueado por falha de transcrição.
 

@@ -299,7 +299,7 @@ Rejection happens in **two steps**, with different codes:
 | `id` | string | The organization's public identifier (`org_` + 32 hex) |
 | `name` | string | The organization's registered name |
 | `plan` | string | Identifier of the subscribed plan (e.g. `free`, `solo`, `business`, `custom`) |
-| `locale` | string | Configured language (e.g. `pt-BR`, `en`) |
+| `locale` | string | Language of the organization's communications, `pt-BR` or `en` (in the dashboard, **Organization > Communications language**). It does not change the format of API responses |
 | `timezone` | string | IANA time zone configured for the account (e.g. `America/Sao_Paulo`). **It does not affect the format of API dates**: it is only used to group the dashboard charts |
 | `suspended_at` | string\|null | ISO 8601 date and time of suspension; `null` when the organization is active |
 | `created_at` | string | ISO 8601 date and time the organization was created |
@@ -322,7 +322,7 @@ administrative settings do not appear in it.
 | Status | Error code                | Description                                              |
 | :----: | ------------------------- | -------------------------------------------------------- |
 | `400`  | `invalid_organization_id` | *(details only)* The `{organization_id}` given is not in the `org_` + 32 lowercase hex format (e.g. a UUID with hyphens, uppercase hex, an arbitrary string). |
-| `403`  | `not_authorized`          | The API key is invalid or missing.                       |
+| `401`  | `not_authenticated`       | The API key is invalid or missing.                       |
 | `403`  | `insufficient_scope`      | The API key does not have the `organizations:read` scope (the response includes `required_scope`). |
 | `404`  | `organization_not_found`  | *(details only)* The `{organization_id}` given is **well-formed**, but does not match the authenticated organization. An invalid format returns `400 invalid_organization_id`, not this code. |
 | `500`  | `internal_error`          | Unexpected internal server error.                        |

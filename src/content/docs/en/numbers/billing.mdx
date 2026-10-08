@@ -10,13 +10,13 @@ Extra numbers let you send messages from multiple WhatsApp numbers in the same a
 
 ## Who can use extra numbers
 
-Extra numbers are available on the **Business** (`BUSINESS`) and **Custom** (`CUSTOM`) plans. On the Free (`FREE`) and Solo (`SOLO`) plans, adding an extra number returns `402 feature_not_available`. You need to change plans first.
+Extra numbers are available on the **Business** (`BUSINESS`) and **Custom** (`CUSTOM`) plans. On the Free (`FREE`) and Lone Wolf (`SOLO`) plans, adding an extra number returns `402 feature_not_available`. You need to change plans first.
 
 Each plan has a maximum number of simultaneous extra numbers: **1,000** on the Business and Custom plans. See the full plan table in [Quota and usage](/en/usage/quota/).
 
 ## Price
 
-Each extra number costs **<Price item="extraNumber" />** per number, per month, on top of the Business plan. The currency follows the account: Brazilian real (BRL) in Brazil and US dollar (USD) everywhere else. The Custom plan negotiates the price based on the contracted volume. The exact amount for your account appears on the <DashboardLink path="/billing">Billing</DashboardLink> page of the dashboard.
+Each extra number costs **<Price item="extraNumber" currency="USD" />** per number, per month, on top of the Business plan, for accounts outside Brazil (billed in US dollars). Accounts in Brazil pay **<Price item="extraNumber" currency="BRL" />** per number, per month, in Brazilian real. On the Custom plan, terms are agreed with our sales team (sales@turbonotify.com). The exact amount for your account appears on the <DashboardLink path="/billing">Billing</DashboardLink> page of the dashboard.
 
 ## How billing works
 
@@ -37,7 +37,7 @@ The pro-rata activation charge is a one-off charge. From the next cycle on, the 
 
 If you remove an extra number right after adding it, before using it, the pro-rata charge made at activation may be **refunded automatically**. The `DELETE` response tells you what happened, in `refund_eligible`, `refund_amount_cents` and `refund_status` (see [Removing extra numbers](/en/numbers/remove/)).
 
-When the removal is **scheduled** (until the end of the number's paid cycle), the number stays in the account and keeps being charged normally at the start of each cycle until the deletion runs, with no refund of the charge already made.
+When the removal is **scheduled** (for the end of the number's paid cycle), the number stays in the account until then and the charge already made is not refunded. It is not included in the next cycle's invoice.
 
 Questions about a refund: write to billing@turbonotify.com.
 
@@ -58,7 +58,7 @@ The `DELETE` response tells you which path was taken, in `refund_eligible` (`tru
 The two paths affect the invoice differently:
 
 - **Immediate removal**: the number is deleted right away and the pro-rata charge made at activation is **refunded**. See [Numbers removed right after activation](#numbers-removed-right-after-activation-may-be-refunded).
-- **Scheduled removal**: the number stays in the account until the end of the paid cycle, so it **keeps being charged normally at the start of each cycle** in that interval, exactly like a number that is only disconnected (see [Pause instead of remove](#pause-instead-of-remove) below). Billing stops only when the deletion runs.
+- **Scheduled removal**: the number stays in the account until the end of the paid cycle, which was already charged and is not refunded. It is **not included in the next cycle's invoice**: billing stops with the deletion. A number that is only disconnected, by contrast, keeps being charged (see [Pause instead of remove](#pause-instead-of-remove) below).
 
 ### Pause instead of remove
 

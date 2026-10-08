@@ -31,7 +31,7 @@ cycle turns over.
 
 ## Plan table (per number, per cycle)
 
-Mapping to the commercial plan names: Free = `FREE` · Solo = `SOLO` · Business = `BUSINESS` · Custom = `CUSTOM`.
+Mapping to the commercial plan names: Free = `FREE` · Lone Wolf = `SOLO` · Business = `BUSINESS` · Custom = `CUSTOM`.
 
 | Plan       | Messages/cycle  | Distinct contacts/cycle  | Extra numbers (max.)  |
 | ---------- | --------------: | -----------------------: | ---------------------:|
@@ -41,7 +41,7 @@ Mapping to the commercial plan names: Free = `FREE` · Solo = `SOLO` · Business
 | `CUSTOM`   | 500,000         | 50,000                    | 1,000                  |
 
 Prices for each plan are on the **Billing** page of the dashboard and at
-[turbonotify.com](https://turbonotify.com). Your organization can ask
+[turbonotify.com](https://turbonotify.com/en/pricing). Your organization can ask
 support for a custom limit, which replaces the plan's per-number ceiling.
 
 The `tier` field in the responses below is always one of the 4 values above, in
@@ -264,8 +264,8 @@ Today the features restricted by plan are: reactions (`reactions`, SOLO+); typin
 indicator (`typing_indicator`, SOLO+, the base restriction, applied to every call); sending
 a message or typing indicator to a group (`groups:messages`, BUSINESS+, see
 [above](#sending-to-groups-requires-the-business-plan-or-higher)); detailed
-receipt history (`read_receipts`, BUSINESS+, see
-[Receipts](/en/messages/receipts/)); creating extra numbers (`extra_numbers`,
+receipt history and manually marking a chat as read (`read_receipts`, BUSINESS+, see
+[Receipts](/en/messages/receipts/) and [Mark as read](/en/other-features/mark-as-read/)); creating extra numbers (`extra_numbers`,
 not available on FREE/SOLO, see [Extra numbers](/en/numbers/add/)); and
 **webhook redelivery** (`webhooks:retries`, BUSINESS+; on `SOLO` each
 event gets **a single delivery attempt** and, if it fails, there is no other; see

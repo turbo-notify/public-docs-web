@@ -233,7 +233,7 @@ The main number also accepts an `external_id`, and only that: in `PATCH /v1/numb
 | `400`  | `reserved_alias`                | The new alias is `"main"`, reserved for the main number.       |
 | `400`  | `no_changes`                    | No field was sent, or the only field sent (`alias`) is the same as the current value. |
 | `402`  | `feature_not_available`         | The current plan does not support extra numbers.               |
-| `403`  | `not_authorized`                | The API key is invalid or missing.                             |
+| `401`  | `not_authenticated`             | The API key is invalid or missing.                             |
 | `403`  | `insufficient_scope`            | The API key does not have the `numbers:write` scope (the response includes `required_scope`). |
 | `403`  | `main_number_update_not_allowed` | On the main number (`main`), only `external_id` can be changed; `alias` and `description` cannot. |
 | `404`  | `extra_number_not_found`        | The alias in the path does not match any registered number.    |

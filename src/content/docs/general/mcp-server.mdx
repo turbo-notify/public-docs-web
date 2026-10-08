@@ -216,7 +216,7 @@ Nenhuma ferramenta inclui, renomeia, remove ou vincula número. O critério é: 
 | Incluir número extra | Cobra o cartão antes de provisionar. Uma ferramenta que o agente pode repetir é uma ferramenta que cobra duas vezes. |
 | Remover número | Agenda uma exclusão real e pode gerar estorno. |
 | [Renomear número](/numbers/update/) | Muda o endereço de uma caixa de entrada em uso. |
-| Vincular número (pareamento) | Metade do fluxo é uma pessoa digitando o código de vinculação no celular. |
+| Vincular número (pareamento) | Metade do fluxo é uma pessoa digitando o código de pareamento no celular. |
 | Cancelar exclusão agendada | Não existe como ferramenta própria: quem agendou decide desfazê-la. Reconectar com `connect_number` um número extra com exclusão agendada cancela a exclusão e pode cobrar (veja [Reconectar pode cobrar](#reconectar-pode-cobrar)). |
 
 Para essas operações, use o <DashboardLink path="/numbers">dashboard</DashboardLink> ou a [API REST](/numbers/add/).
@@ -257,7 +257,7 @@ Quando uma ferramenta não consegue fazer o que foi pedido, o agente recebe o mo
 | Argumento inválido | `invalid_request: <código>` | Corrija os argumentos e tente de novo. |
 | Número desconectado | `conflict: number_not_connected`, com a orientação para reconectar | Reconecte o número com `connect_number` (ou pelo dashboard, se o celular precisar ler um código de novo) e tente de novo. |
 | Número já no estado pedido | `conflict: already_connected`, `conflict: already_connecting` ou `conflict: already_disconnected` | Nada a fazer: numa repetição de `connect_number` ou `disconnect_number`, o número já está no estado pedido. |
-| Chave inválida ou revogada | `unauthorized: not_authorized` | Gere uma nova chave no dashboard. |
+| Chave inválida, revogada ou expirada | `unauthorized: not_authenticated`, com a orientação para trocar a chave | Gere uma nova chave no dashboard. |
 | Chave sem o escopo da ferramenta | `unauthorized: insufficient_scope` | Veja o escopo na tabela de [ferramentas](#ferramentas) e use uma chave que o tenha. |
 | Cota, plano ou pagamento | `payment_required: <código>` e o objeto `details` completo | Veja [Cota e uso](/usage/quota/#erros). |
 | Não encontrado | `not_found: <código>` | Confira o identificador ou o `number_alias`. |
@@ -272,7 +272,7 @@ Estes são respondidos antes de qualquer ferramenta rodar, então quem os vê é
 
 | Resposta | O que aconteceu | O que fazer |
 |---|---|---|
-| `401 unauthorized` | Uma conexão de streaming foi aberta sem chave. | Envie o cabeçalho `Authorization` também na conexão, não só nas chamadas. |
+| `401 not_authenticated` | Uma conexão de streaming foi aberta sem chave. | Envie o cabeçalho `Authorization` também na conexão, não só nas chamadas. |
 | `429 too_many_streams` | Esta chave já mantém 8 conexões de streaming abertas, ou o endereço de origem já mantém 64. | Feche as que não usa, ou reduza os processos conectados com a mesma chave ou o mesmo endereço. |
 | `429 rate_limit_exceeded` | Mais de 600 requisições em um minuto com esta chave, ou mais de 3000 em um minuto vindas do mesmo endereço. | Respeite o `Retry-After` da resposta. |
 
